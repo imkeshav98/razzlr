@@ -1,5 +1,5 @@
 {
   "extends": "@razzlr/config/tsconfig.base.json",
-  "compilerOptions": { "types": ["node"] },
-  "include": ["src", "scripts", "*.js"]
+  "compilerOptions": { "types": ["node"], "lib": ["ES2023", "DOM"] },
+  "include": ["src", "scripts", "browser", "specs", "*.js", "*.ts"]
 }

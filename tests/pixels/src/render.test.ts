@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { renderOnCpu } from '@razzlr/renderer'
+import { renderDesign } from '@razzlr/renderer'
 import { loadCanvasKit } from '@razzlr/renderer/node'
 import { parseDesign } from '@razzlr/schema'
 import { describe, expect, it } from 'vitest'
@@ -35,7 +35,7 @@ describe('Node CPU render', () => {
     rmSync(join(out, file.replace('.png', '.actual.png')), { force: true })
     rmSync(join(out, file.replace('.png', '.diff.png')), { force: true })
 
-    const rendered = renderOnCpu(ck, json, pageId, formatId, resources)
+    const rendered = renderDesign(ck, json, pageId, formatId, resources)
     if (UPDATE) {
       mkdirSync(join(REFERENCE_DIR, name), { recursive: true })
       writeFileSync(reference, rendered.png)
@@ -55,8 +55,8 @@ describe('Node CPU render', () => {
   it('renders the same pixels twice in a row', () => {
     const [first] = cases
     if (!first) throw new Error('no cases')
-    const a = renderOnCpu(ck, first.json, first.pageId, first.formatId, resources)
-    const b = renderOnCpu(ck, first.json, first.pageId, first.formatId, resources)
+    const a = renderDesign(ck, first.json, first.pageId, first.formatId, resources)
+    const b = renderDesign(ck, first.json, first.pageId, first.formatId, resources)
     expect(comparePixels(a, b).differing).toBe(0)
   })
 })

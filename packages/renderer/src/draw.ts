@@ -49,7 +49,8 @@ function drawLayer(ck: CanvasKit, canvas: Canvas, layer: SceneLayer, resources: 
     const layerPaint = new ck.Paint()
     layerPaint.setAlphaf(props.opacity)
     layerPaint.setBlendMode(blendMode(ck, props.blendMode))
-    canvas.saveLayer(layerPaint)
+    // An unbounded layer is the size of the whole page; bounds make a translucent shape ~50× cheaper.
+    canvas.saveLayer(layerPaint, layerBounds(ck, layer))
     layerPaint.delete()
     for (const effect of props.effects) {
       if (effect.type === 'dropShadow') withFilter(ck, canvas, dropShadow(ck, effect), content)
@@ -63,6 +64,24 @@ function drawLayer(ck: CanvasKit, canvas: Canvas, layer: SceneLayer, resources: 
     canvas.restore()
   }
   canvas.restore()
+}
+
+/**
+ * Where a layer can draw, in its own coordinates, or null when that isn't known before drawing:
+ * text can outgrow its box and a group's children can sit anywhere.
+ */
+function layerBounds(ck: CanvasKit, layer: SceneLayer) {
+  const { props } = layer
+  let outset = 2 // anti-aliased edges
+  if (layer.type === 'graphic') {
+    outset += Math.max(0, ...layer.props.strokes.map((s) => (s.align === 'inside' ? 0 : s.align === 'center' ? s.width / 2 : s.width)))
+  } else if (layer.type !== 'frame' || !layer.props.clip) {
+    return null
+  }
+  // A Gaussian blur fades out within three sigma.
+  const reach = Math.max(0, ...props.effects.map((e) => e.type === 'layerBlur' ? 3 * sigma(e.radius)
+    : Math.max(Math.abs(e.x), Math.abs(e.y)) + 3 * sigma(e.blur) + Math.max(0, e.spread)))
+  return ck.XYWHRect(props.x - outset - reach, props.y - outset - reach, props.width + 2 * (outset + reach), props.height + 2 * (outset + reach))
 }
 
 function drawContent(ck: CanvasKit, canvas: Canvas, layer: SceneLayer, resources: Resources) {

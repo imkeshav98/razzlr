@@ -28,7 +28,8 @@
       ],
       "passThroughEnv": [
         "PLAYWRIGHT_BROWSERS_PATH",
-        "CI"
+        "CI",
+        "GITHUB_STEP_SUMMARY"
       ]
     }
   }

@@ -1,5 +1,5 @@
 import { parseDesign } from '@razzlr/schema'
-import type { CanvasKit } from 'canvaskit-wasm'
+import type { CanvasKit, Surface } from 'canvaskit-wasm'
 import { drawScene } from './draw.ts'
 import { makeResources, type ResourceBytes } from './resources.ts'
 import { render } from './scene.ts'
@@ -12,16 +12,25 @@ export interface Rendered {
   png: Uint8Array
 }
 
+/** Makes the surface to draw on. The browser passes one that makes a WebGL surface. */
+export type SurfaceMaker = (ck: CanvasKit, width: number, height: number) => Surface | null
+
+/** The CPU surface: the only one exports may use (ADR-0005). */
+export const cpuSurface: SurfaceMaker = (ck, width, height) => ck.MakeSurface(width, height)
+
 /**
- * The render seam: design JSON in, pixels and PNG out, drawn on the CPU surface.
- * Every export goes through here, in Node and in the browser alike (ADR-0005).
+ * The render seam: design JSON in, pixels and PNG out, on the surface asked for.
+ * Exports always use `cpuSurface`; a WebGL render is for the screen, and is only read back
+ * here to measure how far the screen drifts from the export.
  */
-export function renderOnCpu(ck: CanvasKit, json: unknown, pageId: string, formatId: string, bytes: ResourceBytes): Rendered {
+export function renderDesign(
+  ck: CanvasKit, json: unknown, pageId: string, formatId: string, bytes: ResourceBytes, makeSurface: SurfaceMaker = cpuSurface,
+): Rendered {
   const parsed = parseDesign(json)
   if (!parsed.success) throw new Error(`invalid design:\n${parsed.errors.join('\n')}`)
   const scene = render(parsed.design, pageId, formatId)
-  const surface = ck.MakeSurface(scene.width, scene.height)
-  if (!surface) throw new Error(`CanvasKit could not make a ${scene.width}×${scene.height} CPU surface`)
+  const surface = makeSurface(ck, scene.width, scene.height)
+  if (!surface) throw new Error(`CanvasKit could not make a ${scene.width}×${scene.height} surface`)
   let resources: ReturnType<typeof makeResources> | undefined
   try {
     resources = makeResources(ck, bytes)
