@@ -1,0 +1,25 @@
+{
+  "name": "@razzlr/ai-drafts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "fonts": "NODE_USE_ENV_PROXY=1 node scripts/fetch-fonts.ts",
+    "run-test": "NODE_USE_ENV_PROXY=1 node scripts/run.ts",
+    "report": "node scripts/report.ts"
+  },
+  "devDependencies": {
+    "@razzlr/config": "workspace:*",
+    "@razzlr/fonts": "workspace:*",
+    "@razzlr/renderer": "workspace:*",
+    "@razzlr/schema": "workspace:*",
+    "@types/node": "^22.20.0",
+    "canvaskit-wasm": "0.42.0",
+    "eslint": "^9.39.0",
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.7",
+    "zod": "^4.6.0"
+  }
+}

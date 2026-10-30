@@ -1,0 +1,56 @@
+{
+  "id": "en-gym",
+  "language": "en",
+  "kind": "composite",
+  "format": {
+    "name": "Story 9:16",
+    "width": 1080,
+    "height": 1920
+  },
+  "brief": "New-year gym membership; an athlete mid-lift with bold diagonal shapes.",
+  "brand": {
+    "name": "IronHouse Gym",
+    "colors": [
+      "#000000",
+      "#FFD600",
+      "#FFFFFF"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Anton",
+        "weight": 400
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 600
+      }
+    },
+    "tone": "motivating"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "New year. Stronger you."
+    },
+    {
+      "role": "offer",
+      "text": "Join for ₹999/month"
+    },
+    {
+      "role": "subhead",
+      "text": "First week free"
+    },
+    {
+      "role": "cta",
+      "text": "Claim your pass"
+    },
+    {
+      "role": "legal",
+      "text": "Valid till 31 Jan 2027"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

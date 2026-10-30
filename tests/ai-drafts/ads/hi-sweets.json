@@ -1,0 +1,52 @@
+{
+  "id": "hi-sweets",
+  "language": "hi",
+  "kind": "photographic",
+  "format": {
+    "name": "Portrait 4:5",
+    "width": 1080,
+    "height": 1350
+  },
+  "brief": "Festive sweets delivery; a platter of laddoos and barfi.",
+  "brand": {
+    "name": "Mithaas",
+    "colors": [
+      "#880E4F",
+      "#FFF8E1",
+      "#F9A825"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Rozha One",
+        "weight": 400
+      },
+      "body": {
+        "family": "Mukta",
+        "weight": 400
+      }
+    },
+    "tone": "warm, festive"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "त्योहार की मिठास, घर तक"
+    },
+    {
+      "role": "subhead",
+      "text": "शुद्ध देसी घी में बनी मिठाइयाँ"
+    },
+    {
+      "role": "offer",
+      "text": "1 किलो पर 20% छूट"
+    },
+    {
+      "role": "cta",
+      "text": "ऑर्डर करें"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

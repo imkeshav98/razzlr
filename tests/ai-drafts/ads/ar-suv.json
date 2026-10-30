@@ -1,0 +1,52 @@
+{
+  "id": "ar-suv",
+  "language": "ar",
+  "kind": "composite",
+  "format": {
+    "name": "Landscape 1.91:1",
+    "width": 1200,
+    "height": 628
+  },
+  "brief": "SUV launch in the Gulf; the SUV on desert dunes with bold shapes.",
+  "brand": {
+    "name": "Sahara Motors",
+    "colors": [
+      "#3E2723",
+      "#FF8F00",
+      "#FFFFFF"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Almarai",
+        "weight": 800
+      },
+      "body": {
+        "family": "Almarai",
+        "weight": 400
+      }
+    },
+    "tone": "powerful"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "قوة تتحدى الصحراء"
+    },
+    {
+      "role": "subhead",
+      "text": "SX 2027 الجديدة كلياً"
+    },
+    {
+      "role": "offer",
+      "text": "ضمان ٥ سنوات"
+    },
+    {
+      "role": "cta",
+      "text": "احجز تجربة قيادة"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

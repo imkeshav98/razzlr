@@ -1,0 +1,52 @@
+{
+  "id": "en-pizza",
+  "language": "en",
+  "kind": "photographic",
+  "format": {
+    "name": "Square 1:1",
+    "width": 1080,
+    "height": 1080
+  },
+  "brief": "Tuesday pizza deal; two cheesy pizzas on a wooden table, top-down.",
+  "brand": {
+    "name": "Slice Republic",
+    "colors": [
+      "#D32F2F",
+      "#FFC107",
+      "#FFFFFF"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Archivo Black",
+        "weight": 400
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 600
+      }
+    },
+    "tone": "fun, punchy"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "2 large pizzas for $19.99"
+    },
+    {
+      "role": "subhead",
+      "text": "Tuesdays only"
+    },
+    {
+      "role": "code",
+      "text": "Use code TWOSDAY"
+    },
+    {
+      "role": "cta",
+      "text": "Order online"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

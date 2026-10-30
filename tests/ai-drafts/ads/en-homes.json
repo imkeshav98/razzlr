@@ -1,0 +1,52 @@
+{
+  "id": "en-homes",
+  "language": "en",
+  "kind": "composite",
+  "format": {
+    "name": "Square 1:1",
+    "width": 1080,
+    "height": 1080
+  },
+  "brief": "Luxury apartments; a modern tower at dusk with gold geometric shapes.",
+  "brand": {
+    "name": "Aurum Heights",
+    "colors": [
+      "#1C1C1C",
+      "#C9A227",
+      "#FFFFFF"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "DM Serif Display",
+        "weight": 400
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "premium"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "3 BHK homes from ₹1.2 Cr"
+    },
+    {
+      "role": "subhead",
+      "text": "Possession December 2027"
+    },
+    {
+      "role": "cta",
+      "text": "Book a site visit"
+    },
+    {
+      "role": "legal",
+      "text": "RERA No. P51800045678"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

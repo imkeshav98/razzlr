@@ -1,0 +1,48 @@
+{
+  "id": "en-soda",
+  "language": "en",
+  "kind": "graphical",
+  "format": {
+    "name": "Portrait 4:5",
+    "width": 1080,
+    "height": 1350
+  },
+  "brief": "Zero-sugar lime soda; a can with splashes and lime slices on bright green.",
+  "brand": {
+    "name": "Fizzco",
+    "colors": [
+      "#76FF03",
+      "#1B5E20",
+      "#FFFFFF"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Bebas Neue",
+        "weight": 400
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 600
+      }
+    },
+    "tone": "fresh, cheeky"
+  },
+  "texts": [
+    {
+      "role": "badge",
+      "text": "New flavour"
+    },
+    {
+      "role": "headline",
+      "text": "Zero sugar. Full fizz."
+    },
+    {
+      "role": "cta",
+      "text": "Grab a can"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

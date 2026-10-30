@@ -1,0 +1,52 @@
+{
+  "id": "ar-ramadan",
+  "language": "ar",
+  "kind": "graphical",
+  "format": {
+    "name": "Square 1:1",
+    "width": 1080,
+    "height": 1080
+  },
+  "brief": "Ramadan sale on an online store; lanterns and crescent on a deep blue ground.",
+  "brand": {
+    "name": "Souq Express",
+    "colors": [
+      "#0D1B4C",
+      "#F2C14E",
+      "#FFFFFF"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Tajawal",
+        "weight": 800
+      },
+      "body": {
+        "family": "Tajawal",
+        "weight": 400
+      }
+    },
+    "tone": "festive"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "عروض رمضان"
+    },
+    {
+      "role": "offer",
+      "text": "خصم حتى ٥٠٪ على كل شيء"
+    },
+    {
+      "role": "code",
+      "text": "الكود: RAMADAN50"
+    },
+    {
+      "role": "cta",
+      "text": "اطلب الآن"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

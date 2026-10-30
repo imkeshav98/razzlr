@@ -1,0 +1,52 @@
+{
+  "id": "en-ledgerly",
+  "language": "en",
+  "kind": "information",
+  "format": {
+    "name": "Landscape 1.91:1",
+    "width": 1200,
+    "height": 628
+  },
+  "brief": "Accounting software for small businesses; a laptop with a clean dashboard and a card of features.",
+  "brand": {
+    "name": "Ledgerly",
+    "colors": [
+      "#1B5E20",
+      "#E8F5E9",
+      "#212121"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Poppins",
+        "weight": 700
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "plain, helpful"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "Close your books in 2 days, not 10"
+    },
+    {
+      "role": "body",
+      "text": "Automatic bank sync · Real-time reports · GST-ready invoices"
+    },
+    {
+      "role": "badge",
+      "text": "14 days free"
+    },
+    {
+      "role": "cta",
+      "text": "Start free trial"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

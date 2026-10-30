@@ -1,0 +1,48 @@
+{
+  "id": "en-knitwear",
+  "language": "en",
+  "kind": "photographic",
+  "format": {
+    "name": "Square 1:1",
+    "width": 1080,
+    "height": 1080
+  },
+  "brief": "Autumn knitwear sale; a model in a cream sweater among autumn leaves.",
+  "brand": {
+    "name": "Maison Ivy",
+    "colors": [
+      "#5D4037",
+      "#F5F0E6",
+      "#A1887F"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "DM Serif Display",
+        "weight": 400
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "elegant"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "The Autumn Edit"
+    },
+    {
+      "role": "offer",
+      "text": "Up to 40% off knitwear"
+    },
+    {
+      "role": "cta",
+      "text": "Shop the edit"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

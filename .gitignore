@@ -13,3 +13,5 @@ next-env.d.ts
 tests/pixels/output/
 apps/web/public/vendor/
 tests/e2e/output/
+tests/ai-drafts/fonts/
+tests/ai-drafts/runs/

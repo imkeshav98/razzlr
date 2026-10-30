@@ -1,0 +1,52 @@
+{
+  "id": "hi-coaching",
+  "language": "hi",
+  "kind": "information",
+  "format": {
+    "name": "Square 1:1",
+    "width": 1080,
+    "height": 1080
+  },
+  "brief": "IIT-JEE coaching batch; a student studying with a card of batch details.",
+  "brand": {
+    "name": "Vidya Academy",
+    "colors": [
+      "#B71C1C",
+      "#FFFFFF",
+      "#FFC107"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Mukta",
+        "weight": 800
+      },
+      "body": {
+        "family": "Hind",
+        "weight": 400
+      }
+    },
+    "tone": "serious, encouraging"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "IIT-JEE 2027 की तैयारी"
+    },
+    {
+      "role": "subhead",
+      "text": "नया बैच 15 नवंबर से"
+    },
+    {
+      "role": "offer",
+      "text": "पहली कक्षा मुफ़्त"
+    },
+    {
+      "role": "cta",
+      "text": "अभी रजिस्टर करें"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

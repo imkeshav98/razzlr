@@ -1,0 +1,48 @@
+{
+  "id": "en-resort",
+  "language": "en",
+  "kind": "photographic",
+  "format": {
+    "name": "Landscape 1.91:1",
+    "width": 1200,
+    "height": 628
+  },
+  "brief": "Beach resort in Goa; infinity pool at sunset with palm trees.",
+  "brand": {
+    "name": "Casa Verde Resort",
+    "colors": [
+      "#00695C",
+      "#FFF8E1",
+      "#FF7043"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Abril Fatface",
+        "weight": 400
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "relaxed, premium"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "Your Goa escape starts here"
+    },
+    {
+      "role": "offer",
+      "text": "3 nights + breakfast from ₹18,500"
+    },
+    {
+      "role": "cta",
+      "text": "Book now"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

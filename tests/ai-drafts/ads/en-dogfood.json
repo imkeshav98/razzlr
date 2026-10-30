@@ -1,0 +1,56 @@
+{
+  "id": "en-dogfood",
+  "language": "en",
+  "kind": "graphical",
+  "format": {
+    "name": "Portrait 4:5",
+    "width": 1080,
+    "height": 1350
+  },
+  "brief": "Grain-free dog food; the bag cut out with a happy dog on a sunny ground.",
+  "brand": {
+    "name": "Pawsome Kitchen",
+    "colors": [
+      "#FF8F00",
+      "#FFF8E1",
+      "#3E2723"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Archivo Black",
+        "weight": 400
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "warm, playful"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "Real chicken. Real happy."
+    },
+    {
+      "role": "subhead",
+      "text": "Grain-free recipe for adult dogs"
+    },
+    {
+      "role": "price",
+      "text": "$24.99"
+    },
+    {
+      "role": "badge",
+      "text": "Vet approved"
+    },
+    {
+      "role": "cta",
+      "text": "Try it today"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

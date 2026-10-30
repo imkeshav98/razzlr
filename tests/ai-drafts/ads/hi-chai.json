@@ -1,0 +1,52 @@
+{
+  "id": "hi-chai",
+  "language": "hi",
+  "kind": "photographic",
+  "format": {
+    "name": "Portrait 4:5",
+    "width": 1080,
+    "height": 1350
+  },
+  "brief": "Assam tea; steaming kulhad chai with tea leaves on a rustic table.",
+  "brand": {
+    "name": "Chai Sutra",
+    "colors": [
+      "#4E342E",
+      "#FFF3E0",
+      "#2E7D32"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Yatra One",
+        "weight": 400
+      },
+      "body": {
+        "family": "Hind",
+        "weight": 400
+      }
+    },
+    "tone": "homely"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "हर घूँट में ताज़गी"
+    },
+    {
+      "role": "subhead",
+      "text": "असम की चुनिंदा पत्तियाँ"
+    },
+    {
+      "role": "price",
+      "text": "₹249 / 250 ग्राम"
+    },
+    {
+      "role": "cta",
+      "text": "आज ही ऑर्डर करें"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

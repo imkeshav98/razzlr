@@ -1,0 +1,56 @@
+{
+  "id": "en-earbuds",
+  "language": "en",
+  "kind": "graphical",
+  "format": {
+    "name": "Portrait 4:5",
+    "width": 1080,
+    "height": 1350
+  },
+  "brief": "Wireless earbuds with 40-hour battery, product floating on a dark gradient.",
+  "brand": {
+    "name": "Voltix",
+    "colors": [
+      "#111111",
+      "#00E5FF",
+      "#FFFFFF"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Bebas Neue",
+        "weight": 400
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "techy, bold"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "40 hours of battery. Zero wires."
+    },
+    {
+      "role": "subhead",
+      "text": "Voltix Pods Pro"
+    },
+    {
+      "role": "price",
+      "text": "₹4,999"
+    },
+    {
+      "role": "offer",
+      "text": "MRP ₹7,999"
+    },
+    {
+      "role": "cta",
+      "text": "Buy on voltix.in"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

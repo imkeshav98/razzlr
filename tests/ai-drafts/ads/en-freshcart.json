@@ -1,0 +1,56 @@
+{
+  "id": "en-freshcart",
+  "language": "en",
+  "kind": "information",
+  "format": {
+    "name": "Square 1:1",
+    "width": 1080,
+    "height": 1080
+  },
+  "brief": "10-minute grocery delivery app; a phone and fresh produce with a card of offers.",
+  "brand": {
+    "name": "FreshCart",
+    "colors": [
+      "#00A86B",
+      "#FFFFFF",
+      "#FFC400"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Poppins",
+        "weight": 800
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "quick, friendly"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "Groceries in 10 minutes"
+    },
+    {
+      "role": "body",
+      "text": "Free delivery over ₹199"
+    },
+    {
+      "role": "offer",
+      "text": "₹50 off your first order"
+    },
+    {
+      "role": "code",
+      "text": "Code FIRST50"
+    },
+    {
+      "role": "cta",
+      "text": "Download the app"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

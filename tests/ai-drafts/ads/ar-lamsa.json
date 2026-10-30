@@ -1,0 +1,48 @@
+{
+  "id": "ar-lamsa",
+  "language": "ar",
+  "kind": "photographic",
+  "format": {
+    "name": "Medium rectangle 300×250 at 2×",
+    "width": 600,
+    "height": 500
+  },
+  "brief": "Summer fashion sale; a model in a light summer dress.",
+  "brand": {
+    "name": "Lamsa",
+    "colors": [
+      "#E91E63",
+      "#FFFFFF",
+      "#212121"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Tajawal",
+        "weight": 800
+      },
+      "body": {
+        "family": "Tajawal",
+        "weight": 400
+      }
+    },
+    "tone": "chic"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "تخفيضات الصيف"
+    },
+    {
+      "role": "offer",
+      "text": "حتى ٧٠٪"
+    },
+    {
+      "role": "cta",
+      "text": "تسوقي الآن"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

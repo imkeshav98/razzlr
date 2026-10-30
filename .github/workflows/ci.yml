@@ -22,6 +22,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # hb-shape, the reference the shaping checks (#7) compare Skia's glyphs against.
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libharfbuzz-bin
+      # The brand fonts of the AI draft test (#24), pinned by hash in tests/ai-drafts/fonts.json.
+      - run: pnpm --filter @razzlr/ai-drafts fonts
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test

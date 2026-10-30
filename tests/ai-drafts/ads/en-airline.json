@@ -1,0 +1,52 @@
+{
+  "id": "en-airline",
+  "language": "en",
+  "kind": "photographic",
+  "format": {
+    "name": "Story 9:16",
+    "width": 1080,
+    "height": 1920
+  },
+  "brief": "Flight sale Delhi to Dubai; aircraft wing over clouds at golden hour.",
+  "brand": {
+    "name": "SkyHop Airlines",
+    "colors": [
+      "#1A237E",
+      "#FF6F00",
+      "#FFFFFF"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Poppins",
+        "weight": 800
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "upbeat"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "Delhi → Dubai from ₹8,999"
+    },
+    {
+      "role": "subhead",
+      "text": "One way, all taxes included"
+    },
+    {
+      "role": "cta",
+      "text": "Book by Nov 15"
+    },
+    {
+      "role": "legal",
+      "text": "Limited seats."
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

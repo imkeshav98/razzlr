@@ -1,0 +1,56 @@
+{
+  "id": "en-serum",
+  "language": "en",
+  "kind": "composite",
+  "format": {
+    "name": "Story 9:16",
+    "width": 1080,
+    "height": 1920
+  },
+  "brief": "Vitamin C face serum; a model's glowing skin with bold citrus shapes.",
+  "brand": {
+    "name": "Lumen Botanics",
+    "colors": [
+      "#F57C00",
+      "#FFF3E0",
+      "#4E342E"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "DM Serif Display",
+        "weight": 400
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "clean, confident"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "Glow, without the guesswork"
+    },
+    {
+      "role": "subhead",
+      "text": "Vitamin C + niacinamide serum"
+    },
+    {
+      "role": "price",
+      "text": "$34"
+    },
+    {
+      "role": "cta",
+      "text": "Shop now"
+    },
+    {
+      "role": "legal",
+      "text": "Dermatologist tested. 30 ml"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

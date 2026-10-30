@@ -1,0 +1,56 @@
+{
+  "id": "en-coffee",
+  "language": "en",
+  "kind": "photographic",
+  "format": {
+    "name": "Square 1:1",
+    "width": 1080,
+    "height": 1080
+  },
+  "brief": "Specialty coffee subscription; cosy morning kitchen, a bag of beans and a fresh cup.",
+  "brand": {
+    "name": "Brewline",
+    "colors": [
+      "#3B2417",
+      "#E9DCC9",
+      "#C8102E"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "DM Serif Display",
+        "weight": 400
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "warm, crafted"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "Mornings, sorted."
+    },
+    {
+      "role": "subhead",
+      "text": "Single-origin beans roasted every Monday"
+    },
+    {
+      "role": "offer",
+      "text": "20% off your first bag"
+    },
+    {
+      "role": "code",
+      "text": "Code: BREW20"
+    },
+    {
+      "role": "cta",
+      "text": "Order now"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

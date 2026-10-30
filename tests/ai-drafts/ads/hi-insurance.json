@@ -1,0 +1,52 @@
+{
+  "id": "hi-insurance",
+  "language": "hi",
+  "kind": "information",
+  "format": {
+    "name": "Landscape 1.91:1",
+    "width": 1200,
+    "height": 628
+  },
+  "brief": "Term life insurance; a happy family and a card of cover details.",
+  "brand": {
+    "name": "Suraksha Life",
+    "colors": [
+      "#0D47A1",
+      "#E3F2FD",
+      "#FF6F00"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Mukta",
+        "weight": 800
+      },
+      "body": {
+        "family": "Mukta",
+        "weight": 400
+      }
+    },
+    "tone": "reassuring"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "परिवार की सुरक्षा, आपकी ज़िम्मेदारी"
+    },
+    {
+      "role": "body",
+      "text": "₹1 करोड़ का कवर सिर्फ़ ₹490/माह में"
+    },
+    {
+      "role": "cta",
+      "text": "मुफ़्त कोटेशन पाएँ"
+    },
+    {
+      "role": "legal",
+      "text": "शर्तें लागू"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

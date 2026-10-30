@@ -1,0 +1,52 @@
+{
+  "id": "ar-qahwa",
+  "language": "ar",
+  "kind": "photographic",
+  "format": {
+    "name": "Story 9:16",
+    "width": 1080,
+    "height": 1920
+  },
+  "brief": "Specialty coffee shop; a latte with latte art in a modern café.",
+  "brand": {
+    "name": "Qahwa House",
+    "colors": [
+      "#4E342E",
+      "#F5F5F5",
+      "#26A69A"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Almarai",
+        "weight": 800
+      },
+      "body": {
+        "family": "Almarai",
+        "weight": 400
+      }
+    },
+    "tone": "inviting"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "قهوتك المختصة بانتظارك"
+    },
+    {
+      "role": "subhead",
+      "text": "حبوب محمصة يومياً"
+    },
+    {
+      "role": "offer",
+      "text": "اشتر ١ واحصل على ١ مجاناً"
+    },
+    {
+      "role": "cta",
+      "text": "زورونا اليوم"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

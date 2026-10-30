@@ -1,0 +1,56 @@
+{
+  "id": "en-ev",
+  "language": "en",
+  "kind": "composite",
+  "format": {
+    "name": "Landscape 1.91:1",
+    "width": 1200,
+    "height": 628
+  },
+  "brief": "Electric SUV launch; the car on a coastal road with bold speed shapes.",
+  "brand": {
+    "name": "Veloce EV",
+    "colors": [
+      "#0B0B0B",
+      "#00B0FF",
+      "#FFFFFF"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Bebas Neue",
+        "weight": 400
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "modern"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "0–100 km/h in 5.9 s"
+    },
+    {
+      "role": "subhead",
+      "text": "Range up to 520 km"
+    },
+    {
+      "role": "price",
+      "text": "From ₹21.9 lakh*"
+    },
+    {
+      "role": "cta",
+      "text": "Book a test drive"
+    },
+    {
+      "role": "legal",
+      "text": "*Ex-showroom price"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

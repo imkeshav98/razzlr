@@ -1,0 +1,56 @@
+{
+  "id": "hi-diwali",
+  "language": "hi",
+  "kind": "graphical",
+  "format": {
+    "name": "Square 1:1",
+    "width": 1080,
+    "height": 1080
+  },
+  "brief": "दिवाली सेल; gift boxes and diyas on a festive saffron ground.",
+  "brand": {
+    "name": "Utsav Mart",
+    "colors": [
+      "#E65100",
+      "#FFD54F",
+      "#3E0A00"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Rozha One",
+        "weight": 400
+      },
+      "body": {
+        "family": "Mukta",
+        "weight": 700
+      }
+    },
+    "tone": "festive"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "दिवाली धमाका सेल"
+    },
+    {
+      "role": "subhead",
+      "text": "हर ऑर्डर पर फ़्री डिलीवरी"
+    },
+    {
+      "role": "price",
+      "text": "सिर्फ़ ₹1,299"
+    },
+    {
+      "role": "code",
+      "text": "कोड: DIWALI25"
+    },
+    {
+      "role": "cta",
+      "text": "अभी ख़रीदें"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

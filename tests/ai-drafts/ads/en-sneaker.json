@@ -1,0 +1,56 @@
+{
+  "id": "en-sneaker",
+  "language": "en",
+  "kind": "graphical",
+  "format": {
+    "name": "Portrait 4:5",
+    "width": 1080,
+    "height": 1350
+  },
+  "brief": "Launch of a lightweight running shoe, the Aero 2, shown cut out on a bold coloured ground.",
+  "brand": {
+    "name": "Stridewell",
+    "colors": [
+      "#0D47A1",
+      "#FFEB3B",
+      "#FFFFFF"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Anton",
+        "weight": 400
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 600
+      }
+    },
+    "tone": "energetic"
+  },
+  "texts": [
+    {
+      "role": "badge",
+      "text": "New"
+    },
+    {
+      "role": "headline",
+      "text": "Run lighter."
+    },
+    {
+      "role": "subhead",
+      "text": "Stridewell Aero 2"
+    },
+    {
+      "role": "price",
+      "text": "$129"
+    },
+    {
+      "role": "cta",
+      "text": "Shop the Aero 2"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

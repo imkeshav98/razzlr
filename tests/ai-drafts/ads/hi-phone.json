@@ -1,0 +1,56 @@
+{
+  "id": "hi-phone",
+  "language": "hi",
+  "kind": "composite",
+  "format": {
+    "name": "Story 9:16",
+    "width": 1080,
+    "height": 1920
+  },
+  "brief": "Smartphone launch; the phone with bold neon shapes.",
+  "brand": {
+    "name": "Nova Mobile",
+    "colors": [
+      "#311B92",
+      "#00E5FF",
+      "#FFFFFF"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Poppins",
+        "weight": 800
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "youthful"
+  },
+  "texts": [
+    {
+      "role": "badge",
+      "text": "नया"
+    },
+    {
+      "role": "headline",
+      "text": "नया Nova X5"
+    },
+    {
+      "role": "subhead",
+      "text": "50MP कैमरा · 5000mAh बैटरी"
+    },
+    {
+      "role": "price",
+      "text": "₹14,999 से शुरू"
+    },
+    {
+      "role": "cta",
+      "text": "प्री-बुक करें"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

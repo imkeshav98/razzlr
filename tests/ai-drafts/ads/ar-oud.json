@@ -1,0 +1,52 @@
+{
+  "id": "ar-oud",
+  "language": "ar",
+  "kind": "photographic",
+  "format": {
+    "name": "Portrait 4:5",
+    "width": 1080,
+    "height": 1350
+  },
+  "brief": "Oud perfume collection; a dark glass bottle with smoke and gold light.",
+  "brand": {
+    "name": "Oud Al Layl",
+    "colors": [
+      "#1A1A1A",
+      "#C9A227",
+      "#F5E6C8"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Amiri",
+        "weight": 700
+      },
+      "body": {
+        "family": "Tajawal",
+        "weight": 400
+      }
+    },
+    "tone": "luxurious"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "عطر يروي حكايتك"
+    },
+    {
+      "role": "subhead",
+      "text": "مجموعة العود الجديدة"
+    },
+    {
+      "role": "price",
+      "text": "٢٩٩ درهم"
+    },
+    {
+      "role": "cta",
+      "text": "تسوّق الآن"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

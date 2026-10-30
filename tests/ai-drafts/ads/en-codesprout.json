@@ -1,0 +1,56 @@
+{
+  "id": "en-codesprout",
+  "language": "en",
+  "kind": "information",
+  "format": {
+    "name": "Landscape 1.91:1",
+    "width": 1200,
+    "height": 628
+  },
+  "brief": "Online Python course; a student at a laptop and a card of what's included.",
+  "brand": {
+    "name": "CodeSprout",
+    "colors": [
+      "#6A1B9A",
+      "#F3E5F5",
+      "#00C853"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Poppins",
+        "weight": 800
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "friendly"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "Learn Python in 30 days"
+    },
+    {
+      "role": "body",
+      "text": "Live classes · Projects · Certificate"
+    },
+    {
+      "role": "price",
+      "text": "₹2,499"
+    },
+    {
+      "role": "code",
+      "text": "Use SPROUT10 for 10% off"
+    },
+    {
+      "role": "cta",
+      "text": "Enroll now"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

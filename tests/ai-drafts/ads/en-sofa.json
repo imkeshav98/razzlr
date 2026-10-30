@@ -1,0 +1,48 @@
+{
+  "id": "en-sofa",
+  "language": "en",
+  "kind": "photographic",
+  "format": {
+    "name": "Medium rectangle 300×250 at 2×",
+    "width": 600,
+    "height": 500
+  },
+  "brief": "Furniture sale; a sofa in a bright living room.",
+  "brand": {
+    "name": "Oakline Furniture",
+    "colors": [
+      "#33691E",
+      "#FAFAFA",
+      "#FF6D00"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Poppins",
+        "weight": 800
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "simple"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "Sofa sale"
+    },
+    {
+      "role": "offer",
+      "text": "Up to 50% off"
+    },
+    {
+      "role": "cta",
+      "text": "Shop now"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

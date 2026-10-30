@@ -1,0 +1,56 @@
+{
+  "id": "en-card",
+  "language": "en",
+  "kind": "information",
+  "format": {
+    "name": "Landscape 1.91:1",
+    "width": 1200,
+    "height": 628
+  },
+  "brief": "Cashback credit card; the card with a grocery bag and a card of benefits.",
+  "brand": {
+    "name": "Northstar Bank",
+    "colors": [
+      "#0A2342",
+      "#2CA58D",
+      "#FFFFFF"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Poppins",
+        "weight": 700
+      },
+      "body": {
+        "family": "Poppins",
+        "weight": 400
+      }
+    },
+    "tone": "trustworthy"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "5% cashback on groceries"
+    },
+    {
+      "role": "body",
+      "text": "No annual fee for the first year"
+    },
+    {
+      "role": "subhead",
+      "text": "Apply in 5 minutes"
+    },
+    {
+      "role": "cta",
+      "text": "Apply now"
+    },
+    {
+      "role": "legal",
+      "text": "T&Cs apply. Subject to credit approval."
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}

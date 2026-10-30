@@ -1,0 +1,56 @@
+{
+  "id": "ar-telecom",
+  "language": "ar",
+  "kind": "information",
+  "format": {
+    "name": "Square 1:1",
+    "width": 1080,
+    "height": 1080
+  },
+  "brief": "Unlimited 5G plan; a phone with a card of plan details.",
+  "brand": {
+    "name": "Nojoom Telecom",
+    "colors": [
+      "#6A1B9A",
+      "#FFFFFF",
+      "#00E676"
+    ],
+    "fonts": {
+      "headline": {
+        "family": "Tajawal",
+        "weight": 800
+      },
+      "body": {
+        "family": "Tajawal",
+        "weight": 400
+      }
+    },
+    "tone": "clear"
+  },
+  "texts": [
+    {
+      "role": "headline",
+      "text": "باقة ٥جي بلا حدود"
+    },
+    {
+      "role": "body",
+      "text": "إنترنت غير محدود · ١٠٠٠ دقيقة محلية"
+    },
+    {
+      "role": "price",
+      "text": "١٤٩ ريال شهرياً"
+    },
+    {
+      "role": "cta",
+      "text": "اشترك الآن"
+    },
+    {
+      "role": "legal",
+      "text": "تطبق الشروط والأحكام"
+    }
+  ],
+  "source": {
+    "kind": "written",
+    "note": "Written for the test, modelled on a common kind of ad; brand is fictional."
+  }
+}
