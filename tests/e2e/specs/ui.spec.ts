@@ -63,7 +63,7 @@ test('in Arabic the chrome mirrors and reads right to left, the design does not'
 
   await page.goto(editorPath(designId))
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
-  await expect(page.getByTestId('status')).toHaveText('مباشر')
+  await expect(page.getByTestId('status')).toHaveText('تم الحفظ')
   const rail = await page.getByRole('button', { name: 'الطبقات' }).boundingBox()
   const stage = await page.getByTestId('stage').boundingBox()
   if (!rail || !stage) throw new Error('missing rail or stage')
