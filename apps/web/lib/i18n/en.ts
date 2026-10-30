@@ -48,7 +48,14 @@ export const en = {
       'Loading renderer': 'Loading renderer',
       'Loading fonts': 'Loading fonts',
       'Connecting': 'Connecting',
-      'Live': 'Live',
+      'Saved': 'Saved',
+      'Saving': 'Saving',
+      'Offline': 'Offline',
+    } as Record<string, string>,
+    statusHint: {
+      'Saved': 'Every edit is on the server',
+      'Saving': 'Sending your latest edits',
+      'Offline': 'saved on this device',
     } as Record<string, string>,
   },
   theme: {

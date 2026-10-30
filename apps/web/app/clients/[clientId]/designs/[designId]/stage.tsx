@@ -16,6 +16,14 @@ async function assetBytes(clientId: string, assetId: string) {
   return new Uint8Array(await response.arrayBuffer())
 }
 
+/** Asks the offline worker to keep this page and everything it has loaded so far. */
+async function keepForOffline() {
+  if (!('serviceWorker' in navigator)) return
+  const registration = await navigator.serviceWorker.ready
+  const urls = [location.href, ...performance.getEntriesByType('resource').map((entry) => entry.name)]
+  registration.active?.postMessage({ type: 'keep', urls })
+}
+
 export function EditorStage({ designId, designName, clientId, clientName, formatId, syncUrl }: {
   designId: string
   designName: string
@@ -29,6 +37,15 @@ export function EditorStage({ designId, designName, clientId, clientName, format
   const [status, setStatus] = useState('Starting')
   const [zoom, setZoom] = useState<number | null>(null)
   const [editor, setEditor] = useState<Editor | null>(null)
+
+  // Lets this page open again without a connection (#37): the worker keeps the page and what it
+  // loaded, and the design itself is in IndexedDB.
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+    navigator.serviceWorker.register('/sw.js').then(keepForOffline).catch(() => {
+      // Without the worker the editor still works online; only reopening offline is lost.
+    })
+  }, [])
 
   useEffect(() => {
     if (!canvas.current || !overlay.current) return
@@ -44,6 +61,8 @@ export function EditorStage({ designId, designName, clientId, clientName, format
         editor = started
         window.razzlr = started
         setEditor(started)
+        // CanvasKit and the fonts may have loaded before the worker was in charge.
+        void keepForOffline()
       })
       .catch((error: unknown) => {
         if (!unmounted.signal.aborted) setStatus(`Error: ${error instanceof Error ? error.message : String(error)}`)

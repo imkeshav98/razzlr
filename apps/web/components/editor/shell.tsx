@@ -4,12 +4,12 @@
 // a right inspector, a bottom tool dock and a slot for the mini bar above the selection. The
 // panels are empty until their tickets fill them; the stage in the middle is the editor itself.
 import {
-  CursorIcon, FrameCornersIcon, HandIcon, ImageIcon, ImagesIcon, PaletteIcon, PenNibIcon, ShapesIcon,
+  CloudArrowUpIcon, CloudCheckIcon, CloudSlashIcon, CursorIcon, FrameCornersIcon, HandIcon, ImageIcon, ImagesIcon, PaletteIcon, PenNibIcon, ShapesIcon,
   SlidersHorizontalIcon, SparkleIcon, StackIcon, TextTIcon, XIcon, type Icon,
 } from '@phosphor-icons/react'
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useLocale, useMessages } from '../../lib/i18n/client.tsx'
 import { dirOf } from '../../lib/i18n/index.ts'
@@ -39,6 +39,40 @@ const TOOLS: { id: Tool; icon: Icon; key: string }[] = [
 
 const CHROME = { duration: 0.18, ease: [0.2, 0.8, 0.2, 1] as const }
 
+/** The design's save state (#37) and how the badge shows it. */
+const SAVE: Record<string, { icon: Icon; tone: string }> = {
+  Saved: { icon: CloudCheckIcon, tone: 'border-success/30 text-success' },
+  Saving: { icon: CloudArrowUpIcon, tone: 'border-line text-muted' },
+  Offline: { icon: CloudSlashIcon, tone: 'border-warning/40 text-warning' },
+}
+/** Saving stays up at least this long, so a quick edit doesn't flicker the badge. */
+const SAVING_HOLD_MS = 600
+
+/**
+ * The status to show: the editor's own, except that Saving lingers a moment before Saved, so a
+ * stream of edits reads as one save rather than a blink per keystroke.
+ */
+function useShownStatus(status: string) {
+  const [shown, setShown] = useState(status)
+  const [savingSince, setSavingSince] = useState(0)
+  useEffect(() => {
+    if (status === 'Saving' && shown !== 'Saving') {
+      setSavingSince(Date.now())
+      setShown(status)
+      return
+    }
+    if (status === 'Saved' && shown === 'Saving') {
+      const wait = savingSince + SAVING_HOLD_MS - Date.now()
+      if (wait > 0) {
+        const timer = setTimeout(() => setShown(status), wait)
+        return () => clearTimeout(timer)
+      }
+    }
+    setShown(status)
+  }, [status, shown, savingSince])
+  return shown
+}
+
 export function EditorShell({ clientId, clientName, designName, status, onToolChange, children }: {
   clientId: string
   clientName: string
@@ -53,8 +87,9 @@ export function EditorShell({ clientId, clientName, designName, status, onToolCh
   const chrome = useReducedMotion() ? { duration: 0 } : CHROME
   const [panel, setPanel] = useState<Panel | null>(null)
   const [tool, setTool] = useState<Tool>('select')
-  const live = status === 'Live'
-  const failed = status.startsWith('Error')
+  const shown = useShownStatus(status)
+  const save = SAVE[shown]
+  const failed = shown.startsWith('Error')
   const panelTitle = (id: Panel) => t.editor[id]
   const panelEmpty = { layers: t.editor.layersEmpty, assets: t.editor.assetsEmpty, ai: t.editor.aiEmpty, brand: t.editor.brandEmpty }
 
@@ -73,16 +108,24 @@ export function EditorShell({ clientId, clientName, designName, status, onToolCh
             <div className="ms-auto flex items-center gap-2">
               <span
                 role="status"
+                aria-atomic="true"
                 aria-label={t.editor.status}
                 data-testid="status"
                 data-status={status}
+                data-ready={save ? '' : undefined}
+                title={save ? t.editor.statusHint[shown] : undefined}
                 className={cn(
-                  'flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium',
-                  failed ? 'border-danger/40 text-danger' : live ? 'border-success/30 text-success' : 'border-line text-muted',
+                  'flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors duration-[var(--chrome)]',
+                  failed ? 'border-danger/40 text-danger' : save ? save.tone : 'border-line text-muted',
                 )}
               >
-                <span aria-hidden className={cn('size-1.5 rounded-full', failed ? 'bg-danger' : live ? 'bg-success shadow-[0_0_0_3px_color-mix(in_srgb,var(--success)_22%,transparent)]' : 'animate-pulse bg-subtle')} />
-                {t.editor.statusText[status] ?? status}
+                {save ? (
+                  <save.icon size={14} weight={shown === 'Saved' ? 'fill' : 'regular'} aria-hidden className={cn(shown === 'Saving' && 'animate-pulse')} />
+                ) : (
+                  <span aria-hidden className={cn('size-1.5 rounded-full', failed ? 'bg-danger' : 'animate-pulse bg-subtle')} />
+                )}
+                {t.editor.statusText[shown] ?? shown}
+                {shown === 'Offline' && <span className="hidden font-normal text-muted md:inline">{t.editor.statusHint.Offline}</span>}
               </span>
               <span className="hidden sm:contents">
                 <LocaleSwitch />

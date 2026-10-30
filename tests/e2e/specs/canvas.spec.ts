@@ -101,7 +101,7 @@ async function open(page: Page, design: DesignInput) {
   page.on('pageerror', (error) => errors.push(error.message))
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(editorPath(id))
-  await expect(page.getByTestId('status')).toHaveText('Live', { timeout: 60_000 })
+  await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 60_000 })
   return { id, errors }
 }
 

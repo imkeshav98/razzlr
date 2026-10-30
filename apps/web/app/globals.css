@@ -31,6 +31,7 @@
   --accent-soft: rgb(255 46 126 / 0.14);
   --danger: #ff5a5f;
   --success: #3dd68c;
+  --warning: #f5b83d;
   --ring: #ff7aae;
   --shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 12px 32px -12px rgb(0 0 0 / 0.6);
   --glass: rgb(30 26 36 / 0.72);
@@ -58,6 +59,7 @@
   --accent-soft: rgb(209 15 98 / 0.1);
   --danger: #c42020;
   --success: #0f7246;
+  --warning: #8a5a00;
   --ring: #d10f62;
   --shadow: 0 1px 2px rgb(23 19 28 / 0.06), 0 12px 32px -16px rgb(23 19 28 / 0.22);
   --glass: rgb(255 255 255 / 0.78);
@@ -97,6 +99,7 @@
   --color-accent-soft: var(--accent-soft);
   --color-danger: var(--danger);
   --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-ring: var(--ring);
   --font-sans: var(--font-figtree), var(--font-noto-arabic), system-ui, sans-serif;
   --font-display: var(--font-bricolage), var(--font-figtree), system-ui, sans-serif;

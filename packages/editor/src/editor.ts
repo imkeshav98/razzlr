@@ -1,7 +1,7 @@
 // The editor: one infinite canvas per design with every page in every format as a frame (#36),
 // click to select, drag to move, typing into text, pan and zoom. It has no framework in it; the
 // page only hands it a canvas and an overlay the size of the stage.
-import { HocuspocusProvider } from '@hocuspocus/provider'
+import { HocuspocusProvider, WebSocketStatus } from '@hocuspocus/provider'
 import { anchorOffset, childrenOf, CommandError, openSession, readDesign, textAnchor, type Session, type TextAnchor } from '@razzlr/doc'
 import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
 import {
@@ -10,6 +10,7 @@ import {
 import { imageAssetIds, type Design } from '@razzlr/schema'
 import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from 'canvaskit-wasm'
 import canvasKitModule from 'canvaskit-wasm/full'
+import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
 import { fit, toScreen, toWorld, visibleRect, zoomAt, type Camera, type Viewport } from './camera.ts'
 import { frameAt, frameGrid, intersects, type Frame, type Rect } from './grid.ts'
@@ -30,6 +31,10 @@ export interface EditorOptions {
   assetBytes?: (assetId: string) => Promise<Uint8Array>
   /** The format to show first, zoomed to fit on the first page; every frame when left out. */
   formatId?: string
+  /**
+   * Loading steps, then once the design is open its save state (#37): Saving while the sync server
+   * has not yet got every edit, Saved once it has, Offline (kept on this device) without it.
+   */
   onStatus?: (status: string) => void
   /** Called with the zoom (1 is 100%) whenever it changes. */
   onZoom?: (zoom: number) => void
@@ -43,6 +48,10 @@ interface Picked { id: string; frame: string }
 interface Editing extends Picked { caret: TextAnchor; endGesture: () => void }
 /** What the select tool does with a drag on empty canvas and the hand tool with any drag. */
 export type Tool = 'select' | 'hand'
+
+/** Where the design's edits are, once it is open. */
+export type SaveState = 'Saved' | 'Saving' | 'Offline'
+export const SAVE_STATES: readonly string[] = ['Saved', 'Saving', 'Offline'] satisfies SaveState[]
 
 /** What one redraw did, for the frame budget checks. */
 export interface DrawInfo {
@@ -60,6 +69,8 @@ interface FrameCache { deps: unknown[]; scene: Scene; picture: SkPicture | null 
 
 const sameDeps = (a: unknown[], b: unknown[]) => a.length === b.length && a.every((x, i) => x === b[i])
 const ZOOM_STEP = 2
+/** How long the connection can be gone before the save state reads Offline. */
+const OFFLINE_AFTER_MS = 1500
 
 /**
  * Runs a command that edits from other tabs may have made impossible, such as typing into a layer
@@ -95,23 +106,34 @@ export async function startEditor(options: EditorOptions) {
   cache.resources(resourceBytes)
   status('Connecting')
   const doc = new Y.Doc()
+  // The design kept in this browser (#37): a crash, a closed tab or a reload without a connection
+  // loses nothing, and edits made offline merge when the sync server is back.
+  const local = new IndexeddbPersistence(`razzlr-design-${designId}`, doc)
   const provider = new HocuspocusProvider({
     url: syncUrl, name: designId, document: doc, token: options.syncToken,
     onAuthenticationFailed: ({ reason }) => status(`Error: the sync server refused this design (${reason})`),
   })
   try {
+    await local.whenSynced
+    // A copy on this device opens at once, even offline; a first visit waits for the sync server.
+    const kept = doc.store.clients.size > 0
     await new Promise<void>((resolve, reject) => {
       const stop = () => reject(new Error('stopped while connecting'))
       if (options.signal?.aborted) stop()
       options.signal?.addEventListener('abort', stop)
-      if (provider.synced) resolve()
+      if (kept || provider.synced) resolve()
       else provider.on('synced', () => resolve())
     })
-    // The first frame and any export need every image the design names, so they load first.
-    const images = await loadImages(imageAssetIds(readDesign(doc)), options)
-    return live(ck, cache, { ...resourceBytes, images }, doc, provider, options)
+    // The first frame and any export need every image the design names, so they load first;
+    // offline, a kept design opens without them and they load when they can.
+    const images = await loadImages(imageAssetIds(readDesign(doc)), options).catch((error: unknown) => {
+      if (kept) return {}
+      throw error
+    })
+    return live(ck, cache, { ...resourceBytes, images }, doc, provider, local, options)
   } catch (error) {
     provider.destroy()
+    await local.destroy()
     doc.destroy()
     cache.delete()
     throw error
@@ -129,12 +151,53 @@ async function loadImages(ids: string[], options: EditorOptions): Promise<Record
 /** The editor once the design has arrived: everything it makes is freed by `destroy`. */
 function live(
   ck: CanvasKit, cache: ResourceCache, firstBytes: Parameters<typeof renderDesign>[4],
-  doc: Y.Doc, provider: HocuspocusProvider, options: EditorOptions,
+  doc: Y.Doc, provider: HocuspocusProvider, local: IndexeddbPersistence, options: EditorOptions,
 ) {
   const { canvas, overlay } = options
   let resourceBytes = firstBytes
   let resources = cache.resources(resourceBytes)
   const status = options.onStatus ?? (() => {})
+
+  let connection = provider.configuration.websocketProvider.status
+  let shown: SaveState | null = null
+  let offlineTimer = 0
+  /**
+   * Shows where the edits are: on the sync server, on their way, or only on this device. A lost
+   * connection reads Offline after a moment, so a reconnect that takes a blink doesn't flash it.
+   */
+  const saveState = () => {
+    let next: SaveState
+    if (connection === WebSocketStatus.Connected) {
+      clearTimeout(offlineTimer)
+      offlineTimer = 0
+      next = provider.hasUnsyncedChanges ? 'Saving' : 'Saved'
+    } else if (!navigator.onLine) {
+      next = 'Offline'
+    } else {
+      if (!offlineTimer && shown !== 'Offline') {
+        offlineTimer = window.setTimeout(() => {
+          offlineTimer = 0
+          if (connection !== WebSocketStatus.Connected) show('Offline')
+        }, OFFLINE_AFTER_MS)
+      }
+      next = shown === 'Offline' ? 'Offline' : 'Saving'
+    }
+    show(next)
+  }
+  const show = (next: SaveState) => {
+    if (next === shown) return
+    shown = next
+    status(next)
+  }
+  const onConnection = ({ status: next }: { status: WebSocketStatus }) => {
+    connection = next
+    if (shown) saveState()
+  }
+  const onUnsynced = () => {
+    if (shown) saveState()
+  }
+  provider.on('status', onConnection)
+  provider.on('unsyncedChanges', onUnsynced)
 
   const maybeGl = ck.MakeWebGLContext(ck.GetWebGLContext(canvas))
   if (!maybeGl) throw new Error('this browser has no WebGL')
@@ -146,6 +209,13 @@ function live(
   // Removes every listener the editor adds, on destroy.
   const listening = new AbortController()
   const on = { signal: listening.signal }
+  // The browser knows first when the network goes: drop the socket rather than wait for it to time
+  // out, and connect again as soon as the network is back.
+  window.addEventListener('offline', () => {
+    provider.disconnect()
+    onConnection({ status: WebSocketStatus.Disconnected })
+  }, on)
+  window.addEventListener('online', () => void provider.connect(), on)
 
   let design: Design = session.design()
   let grid = frameGrid(design)
@@ -385,7 +455,11 @@ function live(
         resourceBytes = { ...resourceBytes, images: { ...resourceBytes.images, ...images } }
         resources = cache.resources(resourceBytes)
         redraw()
-      }, (error: unknown) => status(`Error: an image did not load (${error instanceof Error ? error.message : String(error)})`))
+      }, (error: unknown) => {
+        // Offline, an image waits for the connection; the next redraw asks for it again.
+        if (connection !== WebSocketStatus.Connected) return
+        status(`Error: an image did not load (${error instanceof Error ? error.message : String(error)})`)
+      })
         .finally(() => { for (const id of fresh) loading.delete(id) })
     }
     const key = missing.join('\n')
@@ -645,7 +719,7 @@ function live(
   else fitAll()
   options.onZoom?.(camera.zoom)
   draw()
-  status('Live')
+  saveState()
 
   const defaultFrame = (pageId?: string, formatId?: string) => {
     const page = pageId ?? firstPage()
@@ -714,7 +788,11 @@ function live(
       paragraphs.delete()
       layers.delete()
       session.destroy()
+      clearTimeout(offlineTimer)
+      provider.off('status', onConnection)
+      provider.off('unsyncedChanges', onUnsynced)
       provider.destroy()
+      void local.destroy()
       doc.destroy()
       cache.delete()
       clear.delete()
