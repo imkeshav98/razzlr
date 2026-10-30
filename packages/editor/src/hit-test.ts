@@ -24,6 +24,11 @@ const inside = (p: Point, layer: SceneLayer) => {
     const reach = Math.max(height / 2, ...layer.props.strokes.map((s) => s.width / 2)) + LINE_REACH
     return p.x >= x && p.x <= x + width && Math.abs(p.y - (y + height / 2)) <= reach
   }
+  if (layer.type === 'graphic' && layer.props.shape.kind === 'path') {
+    // A path can be a stroke alone, as thin as a line: it is picked near its box too (#45).
+    const reach = Math.max(0, ...layer.props.strokes.map((s) => s.width / 2)) + LINE_REACH
+    return p.x >= x - reach && p.x <= x + width + reach && p.y >= y - reach && p.y <= y + height + reach
+  }
   return p.x >= x && p.x <= x + width && p.y >= y && p.y <= y + height
 }
 

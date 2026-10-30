@@ -60,6 +60,10 @@ _Avoid_: Primitive, vector (a path is one kind of shape)
 A layer that combines the shapes inside it, live, by union, subtract, intersect or exclude, and paints the result with its own fills and strokes. It holds only graphics and booleans; editing one of them changes the result.
 _Avoid_: Compound path, merged shape (it is never flattened)
 
+**Anchor**:
+A point a path runs through. It may have a handle on each side that bends the segments meeting there; a smooth anchor's two handles point straight away from each other. The pen places anchors; editing a path moves, adds and deletes them.
+_Avoid_: Node (a node is a layer), vertex
+
 **Fill**:
 One paint on a layer: solid, gradient (linear, radial or angular), image or video. A crop is the fill's transform.
 _Avoid_: Background, colour (when a paint is meant)

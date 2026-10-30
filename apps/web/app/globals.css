@@ -238,6 +238,56 @@ body {
   background: #fff;
   box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.25);
 }
+/* Paths (#45): the outline being drawn or edited, its anchors, the handles in play, and the pen's next segment. */
+.stage-overlay .path-edit {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.stage-overlay .path-outline,
+.stage-overlay .pen-preview {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+.stage-overlay .pen-preview {
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.stage-overlay .path-handle-line {
+  stroke: var(--accent);
+  stroke-width: 1;
+}
+.stage-overlay .path-anchor,
+.stage-overlay .path-control {
+  position: absolute;
+  translate: -50% -50%;
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.25);
+}
+.stage-overlay .path-anchor {
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  background: #fff;
+}
+.stage-overlay .path-anchor[data-selected],
+.stage-overlay .path-anchor[data-closing] {
+  background: var(--accent);
+}
+.stage-overlay .path-anchor[data-closing] {
+  scale: 1.35;
+}
+.stage-overlay .path-control {
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid var(--accent);
+  border-radius: 1.5px;
+  background: #fff;
+  rotate: 45deg;
+}
 /* Snapping (#42): guides along the lines a drag lines up with, and equal gaps with their size. */
 .stage-overlay .guide {
   position: absolute;
