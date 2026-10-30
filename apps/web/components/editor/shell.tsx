@@ -167,7 +167,8 @@ export function EditorShell({ clientId, clientName, designName, status, tool: sh
               aria-label={t.editor.tools}
               data-testid="rail"
               className={cn(
-                'absolute z-20 flex gap-1 rounded-full surface-frost border p-1.5 shadow-panel',
+                // Clipped, so the AI button's moving glow stays inside and never shows on the canvas.
+                'absolute z-20 flex gap-1 overflow-hidden rounded-full surface-frost border p-1.5 shadow-panel',
                 // A vertical capsule at the start edge; on phones a tab bar floating at the bottom.
                 'start-3 top-1/2 -translate-y-1/2 flex-col max-sm:start-1/2 max-sm:top-auto max-sm:bottom-3 max-sm:translate-y-0 max-sm:flex-row max-sm:-translate-x-1/2 max-sm:rtl:translate-x-1/2',
               )}

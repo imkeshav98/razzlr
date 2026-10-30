@@ -147,10 +147,27 @@ const centre = (box: { x: number; y: number; width: number; height: number } | n
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 }
 
-/** The blob's centre and vertical scale on every frame for 600 ms from clicking the named panel button. */
+/**
+ * The blob's centre and vertical scale on every frame and style change for 900 ms from clicking
+ * the named panel button, and the vertical scale the blob starts from when it lands (read as it
+ * mounts, since a slow machine may draw no frame before it settles).
+ */
 async function blobPath(page: Page, name: string) {
-  const path = page.evaluate(() => new Promise<{ y: number; scaleY: number }[]>((resolve) => {
+  const path = page.evaluate(() => new Promise<{ landing: number; frames: { y: number; scaleY: number }[] }>((resolve) => {
     const seen: { y: number; scaleY: number }[] = []
+    let landing = 1
+    const rail = document.querySelector('[data-testid=rail]')
+    // Motion writes the blob's style on each step of the slide, so this also sees the steps a busy
+    // machine draws no frame for.
+    const watch = new MutationObserver(() => {
+      const blob = document.querySelector('[data-testid=rail-blob]')
+      const squish = blob?.firstElementChild
+      if (!blob || !(squish instanceof HTMLElement)) return
+      landing = Math.max(landing, new DOMMatrix(squish.style.transform || 'none').d)
+      const box = blob.getBoundingClientRect()
+      seen.push({ y: box.y + box.height / 2, scaleY: new DOMMatrix(getComputedStyle(squish).transform).d })
+    })
+    if (rail) watch.observe(rail, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] })
     const start = performance.now()
     const tick = () => {
       const blob = document.querySelector('[data-testid=rail-blob]')
@@ -159,8 +176,11 @@ async function blobPath(page: Page, name: string) {
         const box = blob.getBoundingClientRect()
         seen.push({ y: box.y + box.height / 2, scaleY: new DOMMatrix(getComputedStyle(squish).transform).d })
       }
-      if (performance.now() - start < 600) requestAnimationFrame(tick)
-      else resolve(seen)
+      if (performance.now() - start < 900) requestAnimationFrame(tick)
+      else {
+        watch.disconnect()
+        resolve({ landing, frames: seen })
+      }
     }
     requestAnimationFrame(tick)
   }))
@@ -188,15 +208,18 @@ test('the panels live in a capsule floating over the canvas', async ({ page }) =
   // The blob lands on the open panel's button and slides there, stretched, when another opens.
   await expect(page.getByTestId('rail-blob')).toHaveCount(0)
   await page.getByRole('button', { name: 'Layers' }).click()
-  await page.waitForTimeout(400)
-  expect(centre(await page.getByTestId('rail-blob').boundingBox()).y).toBeCloseTo(centre(await page.getByRole('button', { name: 'Layers' }).boundingBox()).y, 0)
+  const layers = centre(await page.getByRole('button', { name: 'Layers' }).boundingBox())
+  await expect.poll(async () => Math.abs(centre(await page.getByTestId('rail-blob').boundingBox()).y - layers.y)).toBeLessThan(1)
   await shoot(page, 'capsule-layers')
-  const path = await blobPath(page, 'Brand')
+  const { landing, frames: path } = await blobPath(page, 'Brand')
   const brand = centre(await page.getByRole('button', { name: 'Brand' }).boundingBox())
-  // It passes through the space between (a slide, not a jump), stretched, and settles on Brand.
-  const from = path[0]?.y ?? Number.NaN
-  expect(path.some((p) => p.y > from + 4 && p.y < brand.y - 4)).toBe(true)
-  expect(Math.max(...path.map((p) => p.scaleY))).toBeGreaterThan(1.05)
+  // A slide, not a jump: once the blob is on Brand, it is drawn back where Layers was and travels
+  // from there. (How many steps between a busy machine draws depends on its frame rate.) It lands
+  // stretched and settles on Brand.
+  const arrived = path.findIndex((p) => Math.abs(p.y - brand.y) < 4)
+  expect(arrived).toBeGreaterThanOrEqual(0)
+  expect(path.slice(arrived).some((p) => p.y < brand.y - 4)).toBe(true)
+  expect(landing).toBeGreaterThan(1.05)
   await expect.poll(async () => Math.abs(centre(await page.getByTestId('rail-blob').boundingBox()).y - brand.y)).toBeLessThan(1)
   await expect(page.getByRole('button', { name: 'Brand' })).toHaveAttribute('aria-expanded', 'true')
   await expect(page.getByRole('button', { name: 'Layers' })).toHaveAttribute('aria-expanded', 'false')
@@ -229,8 +252,9 @@ test('with reduced motion the blob jumps without sliding or squishing', async ({
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
   await page.getByRole('button', { name: 'Layers' }).click()
   const layers = centre(await page.getByRole('button', { name: 'Layers' }).boundingBox())
-  const path = await blobPath(page, 'Brand')
+  const { landing, frames: path } = await blobPath(page, 'Brand')
   const brand = centre(await page.getByRole('button', { name: 'Brand' }).boundingBox())
+  expect(landing).toBe(1)
   // Every frame has the blob on Layers (before the click lands) or on Brand, never between.
   expect(Math.abs((path.at(-1)?.y ?? Number.NaN) - brand.y)).toBeLessThan(1)
   for (const p of path) {
