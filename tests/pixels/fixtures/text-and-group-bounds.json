@@ -1,0 +1,74 @@
+{
+  "meta": { "schemaVersion": 1, "designId": "text-and-group-bounds", "name": "Text and group bounds", "kind": "single", "primaryFormatId": "sq" },
+  "formats": { "sq": { "name": "Square 1:1", "width": 1080, "height": 1080, "order": "a0" } },
+  "pages": { "p1": { "name": "Page 1", "order": "a0", "fills": [{ "type": "solid", "color": "#E8F5E9FF" }] } },
+  "nodes": {
+    "stripe": {
+      "type": "graphic", "parentId": "p1", "index": "a0", "name": "Stripe behind",
+      "props": { "x": 0, "y": 380, "width": 1080, "height": 200, "shape": { "kind": "rect" }, "fills": [{ "type": "solid", "color": "#1E88E5FF" }] }
+    },
+    "headline": {
+      "type": "text", "parentId": "p1", "index": "a1", "name": "Translucent shadowed headline",
+      "props": {
+        "x": 60, "y": 60, "width": 960, "height": 120, "opacity": 0.75,
+        "text": "Glow sale, 50% off",
+        "style": { "fontFamily": "Noto Sans", "fontSize": 96, "fontWeight": 800, "color": "#D81B60FF" },
+        "effects": [{ "type": "dropShadow", "x": 12, "y": 16, "blur": 24, "spread": 0, "color": "#00000099" }]
+      }
+    },
+    "overflow": {
+      "type": "text", "parentId": "p1", "index": "a2", "name": "Fixed box text that overflows, blurred",
+      "props": {
+        "x": 80, "y": 220, "width": 420, "height": 60, "boxMode": "fixed", "verticalAlign": "middle",
+        "text": "A paragraph far taller than its fixed box, so the lines spill above and below it.",
+        "style": { "fontFamily": "Noto Sans", "fontSize": 40, "color": "#263238FF", "lineHeight": 1.4 },
+        "effects": [{ "type": "layerBlur", "radius": 6 }]
+      }
+    },
+    "hindi": {
+      "type": "text", "parentId": "p1", "index": "a3", "name": "Hindi with multiply",
+      "props": {
+        "x": 560, "y": 400, "width": 460, "height": 160, "blendMode": "multiply", "opacity": 0.9,
+        "text": "श्री क्षेत्र की शानदार कीमतें",
+        "style": { "fontFamily": "Noto Sans Devanagari", "fontSize": 64, "fontWeight": 700, "color": "#FFB300FF" },
+        "runs": [{ "start": 0, "end": 4, "style": { "fontSize": 96 } }]
+      }
+    },
+    "badge": {
+      "type": "group", "parentId": "p1", "index": "a4", "name": "Translucent turned group",
+      "props": { "x": 120, "y": 640, "width": 380, "height": 300, "opacity": 0.7, "rotation": -12,
+        "effects": [{ "type": "dropShadow", "x": 0, "y": 20, "blur": 40, "spread": 6, "color": "#4A148CAA" }] }
+    },
+    "badge-bg": {
+      "type": "graphic", "parentId": "badge", "index": "a0", "name": "Badge disc",
+      "props": { "x": 160, "y": 660, "width": 300, "height": 260, "shape": { "kind": "ellipse" }, "fills": [{ "type": "solid", "color": "#7B1FA2FF" }] }
+    },
+    "badge-text": {
+      "type": "text", "parentId": "badge", "index": "a1", "name": "Arabic in the group",
+      "props": {
+        "x": 160, "y": 740, "width": 300, "height": 100, "align": "center", "rotation": 8,
+        "text": "خصم ٥٠٪ اليوم",
+        "style": { "fontFamily": "Noto Naskh Arabic", "fontSize": 56, "fontWeight": 700, "color": "#FFFFFFFF" },
+        "effects": [{ "type": "dropShadow", "x": 4, "y": 6, "blur": 8, "spread": 0, "color": "#000000AA" }]
+      }
+    },
+    "nest": {
+      "type": "group", "parentId": "p1", "index": "a5", "name": "Blurred group with a nested group",
+      "props": { "x": 600, "y": 660, "width": 400, "height": 320, "effects": [{ "type": "layerBlur", "radius": 10 }] }
+    },
+    "nest-inner": {
+      "type": "group", "parentId": "nest", "index": "a0", "name": "Inner translucent group",
+      "props": { "x": 620, "y": 680, "width": 360, "height": 280, "opacity": 0.5, "rotation": 20 }
+    },
+    "nest-square": {
+      "type": "graphic", "parentId": "nest-inner", "index": "a0", "name": "Square",
+      "props": { "x": 640, "y": 700, "width": 200, "height": 200, "shape": { "kind": "rect", "cornerRadius": 24 }, "fills": [{ "type": "solid", "color": "#00897BFF" }] }
+    },
+    "nest-word": {
+      "type": "text", "parentId": "nest-inner", "index": "a1", "name": "Word",
+      "props": { "x": 700, "y": 860, "width": 260, "height": 80, "boxMode": "autoWidth", "text": "Nested",
+        "style": { "fontFamily": "Noto Sans", "fontSize": 72, "fontWeight": 700, "color": "#FF7043FF" } }
+    }
+  },
+  "overrides": {}
+}

@@ -3,7 +3,7 @@ import { join } from 'node:path'
 
 export const FIXTURES_DIR = join(import.meta.dirname, '..', 'fixtures')
 
-/** The six spike test designs, by file name without `.json`. */
+/** The pixel test designs, by file name without `.json`. */
 export function loadFixtures(): { name: string; json: unknown }[] {
   return readdirSync(FIXTURES_DIR)
     .filter((f) => f.endsWith('.json'))
