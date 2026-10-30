@@ -25,7 +25,7 @@ function maxDelta(a: Pixels, b: Pixels) {
 }
 
 test('every fixture page and format is checked', () => {
-  expect(cases).toHaveLength(11)
+  expect(cases).toHaveLength(12)
 })
 
 for (const c of cases) {
