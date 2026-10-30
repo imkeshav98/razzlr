@@ -2,6 +2,7 @@ import type { Effect, Paint } from '@razzlr/schema'
 import type {
   Canvas, CanvasKit, FontCollection, Image, ImageFilter, Paint as CkPaint, Path, Shader,
 } from 'canvaskit-wasm'
+import { imageColorMatrix, LUMA_TO_ALPHA } from './adjust.ts'
 import { color } from './color.ts'
 import type { LayerPictures } from './pictures.ts'
 import type { Scene, SceneLayer } from './scene.ts'
@@ -64,9 +65,47 @@ function drawPageContent(ck: CanvasKit, canvas: Canvas, scene: Scene, resources:
   for (const fill of scene.fills) fillPath(ck, canvas, pagePath, fill, page, resources)
   pagePath.delete()
   const { layers } = resources
-  for (const layer of scene.layers) {
-    if (layers) canvas.drawPicture(layers.picture(ck, layer, resources, (into) => drawLayer(ck, into, layer, resources)))
-    else drawLayer(ck, canvas, layer, resources)
+  drawLayers(ck, canvas, scene.layers, resources, layers
+    ? (layer) => canvas.drawPicture(layers.picture(ck, layer, resources, (into) => drawLayer(ck, into, layer, resources)))
+    : (layer) => drawLayer(ck, canvas, layer, resources))
+}
+
+/**
+ * Draws one parent's layers in order. A mask isn't drawn (#48): the layers after it, up to the next
+ * mask, are drawn together, then kept only where the mask is opaque or, for a luminance mask, bright.
+ */
+function drawLayers(ck: CanvasKit, canvas: Canvas, layers: readonly SceneLayer[], resources: Resources, draw = (layer: SceneLayer) => drawLayer(ck, canvas, layer, resources)) {
+  for (let i = 0; i < layers.length; i++) {
+    const mask = layers[i] as SceneLayer
+    if (!mask.props.mask) {
+      draw(mask)
+      continue
+    }
+    let end = i + 1
+    while (end < layers.length && !layers[end]?.props.mask) end++
+    const masked = layers.slice(i + 1, end)
+    i = end - 1
+    if (masked.length === 0) continue
+    // Nothing shows outside what the mask draws, so the offscreen layers need be no bigger.
+    const reach = rotated(withEffects(drawnBounds(ck, mask, resources), mask.props.effects), mask.props, mask.props.rotation)
+    const bounds = ck.XYWHRect(reach.x - 1, reach.y - 1, reach.width + 2, reach.height + 2)
+    canvas.saveLayer(undefined, bounds)
+    for (const layer of masked) draw(layer)
+    const keep = new ck.Paint()
+    keep.setBlendMode(ck.BlendMode.DstIn)
+    const luminance = mask.props.mask === 'luminance'
+    if (luminance) {
+      const filter = ck.ColorFilter.MakeMatrix(LUMA_TO_ALPHA)
+      keep.setColorFilter(filter)
+      filter.delete()
+    }
+    canvas.saveLayer(keep, bounds)
+    keep.delete()
+    // Over black, what the mask leaves transparent is dark, and so hides too.
+    if (luminance) canvas.drawColor(ck.BLACK, ck.BlendMode.Src)
+    draw(mask)
+    canvas.restore()
+    canvas.restore()
   }
 }
 
@@ -171,12 +210,12 @@ function drawContent(ck: CanvasKit, canvas: Canvas, layer: SceneLayer, resources
       canvas.save()
       if (props.clip) canvas.clipPath(path, ck.ClipOp.Intersect, true)
       path.delete()
-      for (const child of layer.children) drawLayer(ck, canvas, child, resources)
+      drawLayers(ck, canvas, layer.children, resources)
       canvas.restore()
       return
     }
     case 'group':
-      for (const child of layer.children) drawLayer(ck, canvas, child, resources)
+      drawLayers(ck, canvas, layer.children, resources)
       return
   }
 }
@@ -560,6 +599,12 @@ function paintFor(ck: CanvasKit, fill: Paint, box: Box, resources: Resources): C
       if (!image) throw new Error(`no image for asset "${fill.assetId}"`)
       shader = imageShader(ck, image, fill, box)
       paint.setAlphaf(fill.opacity)
+      const matrix = imageColorMatrix(fill.adjust, fill.filter)
+      if (matrix) {
+        const filter = ck.ColorFilter.MakeMatrix(matrix)
+        paint.setColorFilter(filter)
+        filter.delete()
+      }
       break
     }
   }

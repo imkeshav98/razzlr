@@ -7,7 +7,7 @@ import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
 import {
   caretAt, caretPosition, drawPage, layerPictures, paragraphCache, selectionBoxes, render, renderDesign, resourceCache, sceneMemo, textMeasure, type MeasureText, type ResourceCache, type Resources, type Scene, type SceneLayer,
 } from '@razzlr/renderer'
-import { canHold, imageAssetIds, isContainer, LOCK_FLAGS, type Design } from '@razzlr/schema'
+import { canHold, imageAssetIds, isContainer, LOCK_FLAGS, type Design, type Paint } from '@razzlr/schema'
 import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from 'canvaskit-wasm'
 import canvasKitModule from 'canvaskit-wasm/full'
 import { IndexeddbPersistence } from 'y-indexeddb'
@@ -16,6 +16,7 @@ import { fit, toScreen, toWorld, visibleRect, zoomAt, type Camera, type Viewport
 import { frameAt, frameGrid, intersects, type Frame, type Rect } from './grid.ts'
 import { hitTest, type Point } from './hit-test.ts'
 import { align, distribute, type Alignment, type Distribution, type Offset } from './arrange.ts'
+import { coverCrop, cornersOfRect, cropOf, imageRect, panned, scaled } from './crop.ts'
 import { clickedBox, drawnBox, isShapeTool, newShape, newText, type ShapeTool } from './draw-tools.ts'
 import {
   anchorOf, constrain, deleteAnchors, formatPath, hitPath, isSmooth, moveAnchors, moveControl, offsetPath, parsePath, pathBounds, sameRef, segmentsOf, splitSegment,
@@ -275,6 +276,8 @@ function live(
   let editing: Editing | null = null
   /** The path layer whose points are being edited (#45), and which of its anchors are selected. */
   let pathEditing: { id: string; frame: string; selected: AnchorRef[] } | null = null
+  /** The layer whose image fill is being cropped on the stage (#48). */
+  let cropping: { id: string; frame: string } | null = null
   /**
    * The path the pen is drawing (#45), from its first click until it closes or is finished: its
    * anchors in its parent's coordinates, the one a drag is pulling handles from, and the layer
@@ -472,6 +475,7 @@ function live(
     selection = ids.length > 0 && frameOf(selection.frame) ? { ...selection, ids } : null
     if (entered && !design.nodes[entered]) entered = null
     if (pathEditing && (!selection?.ids.includes(pathEditing.id) || !isPath(design, pathEditing.id))) pathEditing = null
+    if (cropping && (!selection?.ids.includes(cropping.id) || selection.frame !== cropping.frame)) cropping = null
   }
   /** Selected layers that aren't inside another selected layer: the ones a transform moves. */
   function roots(from: Design = session.design()) {
@@ -517,6 +521,7 @@ function live(
   function select(ids: string[], frame: string) {
     selection = ids.length > 0 ? { ids, frame } : null
     if (pathEditing && (ids.length !== 1 || ids[0] !== pathEditing.id || frame !== pathEditing.frame)) pathEditing = null
+    if (cropping && (ids.length !== 1 || ids[0] !== cropping.id || frame !== cropping.frame)) cropping = null
     drawOverlay()
   }
 
@@ -557,6 +562,37 @@ function live(
     const moved = { x: round(corner.x - layer.start.x), y: round(corner.y - layer.start.y) }
     const input = { id: layer.id, d: formatPath(path, corner), dx: round(moved.x - layer.applied.x), dy: round(moved.y - layer.applied.y), width: round(b.width), height: round(b.height) }
     if (runQuietly(() => session.run('node.reshape', input))) layer.applied = moved
+  }
+
+  /**
+   * The image fill a crop works on (#48): the topmost of a layer's fills in a frame, with where the
+   * whole image sits for the crop it shows now (fill's when it has none of its own), the image and
+   * its size, and the layer's box with its containers, the box last.
+   */
+  function cropTarget(frame: Frame, id: string, from: Design = session.design()) {
+    const node = from.nodes[id]
+    const box = boxIn(frame, id, from)
+    if (!node || !box || !('fills' in node.props)) return null
+    const { fills } = { ...node.props, ...from.overrides[scope(frame)]?.[id] } as { fills: Paint[] }
+    const index = fills.findLastIndex((f) => f.type === 'image')
+    const fill = fills[index]
+    const image = fill?.type === 'image' ? resources.images.get(fill.assetId) : undefined
+    if (fill?.type !== 'image' || !image) return null
+    const size = { width: image.width(), height: image.height() }
+    const crop = fill.fit === 'crop' && fill.crop ? fill.crop : coverCrop(size, box)
+    return { fills, index, fill, image, size, box, rect: imageRect(crop, size, box), around: [...containersOf(frame, node.parentId, from), box] }
+  }
+  type CropTarget = NonNullable<ReturnType<typeof cropTarget>>
+  /** Each image as a URL for the crop's faint whole image, made once from the decoded image. */
+  const ghosts = new WeakMap<Image, string>()
+  function ghostOf(image: Image) {
+    let url = ghosts.get(image)
+    if (url === undefined) {
+      const png = image.encodeToBytes()
+      url = png ? URL.createObjectURL(new Blob([png.slice()], { type: 'image/png' })) : ''
+      ghosts.set(image, url)
+    }
+    return url
   }
 
   const px = (n: number) => `${n}px`
@@ -656,6 +692,33 @@ function live(
     return parts
   }
 
+  /** The crop being made (#48): the whole image, faint outside the layer, a handle on each corner. */
+  function cropParts(): HTMLElement[] {
+    const frame = cropping && frameOf(cropping.frame)
+    const target = frame && cropping && cropTarget(frame, cropping.id)
+    if (!frame || !target) return []
+    const { box, rect, around } = target
+    const whole = outline('crop-image', frame, drawnFrom({ ...rect, rotation: 0 }, around))
+    const ghost = document.createElement('div')
+    ghost.className = 'crop-ghost'
+    ghost.style.backgroundImage = `url("${ghostOf(target.image)}")`
+    // Clear over the box, where the layer shows the image itself.
+    const [l, t, r, b] = [box.x - rect.x, box.y - rect.y, box.x + box.width - rect.x, box.y + box.height - rect.y]
+      .map((v, i) => `${(v / (i % 2 === 0 ? rect.width : rect.height)) * 100}%`)
+    ghost.style.clipPath = `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${l} ${t}, ${l} ${b}, ${r} ${b}, ${r} ${t}, ${l} ${t})`
+    whole.append(ghost)
+    for (const i of cornersOfRect(rect).keys()) {
+      const handle = document.createElement('div')
+      handle.className = 'handle'
+      handle.dataset.cropCorner = String(i)
+      Object.assign(handle.style, { left: `${i === 1 || i === 2 ? 100 : 0}%`, top: `${i >= 2 ? 100 : 0}%` })
+      whole.append(handle)
+    }
+    const shown = outline('selection', frame, drawnFrom(box, around.slice(0, -1)))
+    shown.dataset.cropping = cropping?.id
+    return [whole, shown]
+  }
+
   let drawnFrames: Frame[] = []
   function drawOverlay() {
     const parts: Element[] = []
@@ -670,7 +733,7 @@ function live(
     const hoverFrame = hover && frameOf(hover.frame)
     const hoverBox = hoverFrame && hover && drawnBoxOf(hoverFrame, hover.id, design)
     if (hoverFrame && hoverBox) parts.push(outline('hover', hoverFrame, hoverBox))
-    parts.push(...(pathEditing ? [] : selectionParts()), ...pathParts())
+    parts.push(...(pathEditing || cropping ? [] : selectionParts()), ...pathParts(), ...cropParts())
     if (gesture?.kind === 'textBox') {
       // The box the text tool is drawing (#47), drawn as a marquee is.
       const box = document.createElement('div')
@@ -1026,6 +1089,7 @@ function live(
     | { kind: 'marquee'; from: Point; to: Point; base: string[]; baseFrame: string | null }
     | { kind: 'textSelect'; frame: Frame; around: Box[] }
     | { kind: 'textBox'; frame: Frame; around: Box[]; parentId: string; from: Point; to: Point }
+    | { kind: 'crop'; frame: Frame; around: Box[]; id: string; corner: number | null; grab: Point; start: CropTarget; roots: string[]; end: () => void }
     | { kind: 'draw'; tool: ShapeTool; frame: Frame; around: Box[]; from: Point; id: string; moved: boolean; roots: string[]; end: () => void }
     | {
       kind: 'path'; frame: Frame; around: Box[]; layer: Reshaping; path: PenPath; grab: Point; moved: boolean; roots: string[]; end: () => void
@@ -1242,6 +1306,12 @@ function live(
   }
   function cursorFor(screen: Point) {
     if (gesture?.kind === 'resize' || gesture?.kind === 'rotate') return
+    if (cropping) {
+      // Cropping, the image moves under the pointer; the box's handles are gone (#48).
+      hoverCursor = 'move'
+      showCursor()
+      return
+    }
     const under = handleUnder(screen)
     const rotation = selectionBox()?.drawn.rotation ?? 0
     hoverCursor = !under ? '' : under.kind === 'rotate' ? ROTATE_CURSOR
@@ -1274,6 +1344,7 @@ function live(
       return
     }
     if (pathEditing && startPathEdit(e, at)) return
+    if (cropping && startCrop(e, screen)) return
     const deepest = at && hitTest(cached(at.frame).scene.layers, at.p, pickable)
     if (at && editing && deepest?.id === editing.id && editing.frame === at.frame.key) {
       // In the text being edited (#47): a press puts the caret there, Shift extends the range to
@@ -1406,6 +1477,10 @@ function live(
       pathTo(gesture, p, e.shiftKey, e.altKey)
       return
     }
+    if (gesture.kind === 'crop') {
+      cropTo(gesture, p)
+      return
+    }
     // Holding Ctrl (⌘ on a Mac) turns snapping off for as long as it is held.
     const snap = !(e.ctrlKey || e.metaKey)
     if (gesture.kind === 'move') moveTo(gesture, p, e.shiftKey, snap)
@@ -1434,6 +1509,49 @@ function live(
     canvas.setPointerCapture(e.pointerId)
     gesture = { kind: 'draw', tool: shape, frame: at.frame, around, from, id, moved: false, roots: [id], end }
     runQuietly(() => session.run('node.update', { ids: [id], patch: drawnBox(shape, from, from, false, false) }))
+  }
+
+  /**
+   * A press while cropping (#48): on a corner of the image it scales it, on the image it moves it,
+   * and anywhere else it ends the crop and acts as a press does. Each drag is one undo step.
+   */
+  function startCrop(e: PointerEvent, screen: Point) {
+    const frame = cropping && frameOf(cropping.frame)
+    const target = frame && cropping && cropTarget(frame, cropping.id)
+    if (!frame || !target || !cropping) {
+      cropping = null
+      return false
+    }
+    const { rect, around } = target
+    const onScreen = (q: Point) => {
+      const page = pageFrom(q, around)
+      return toScreen(camera, { x: frame.x + page.x, y: frame.y + page.y })
+    }
+    const corner = cornersOfRect(rect).findIndex((q) => {
+      const c = onScreen(q)
+      return Math.hypot(c.x - screen.x, c.y - screen.y) <= HANDLE_REACH
+    })
+    const world = toWorld(camera, screen)
+    const grab = localTo({ x: world.x - frame.x, y: world.y - frame.y }, around)
+    const onImage = grab.x >= rect.x && grab.x <= rect.x + rect.width && grab.y >= rect.y && grab.y <= rect.y + rect.height
+    if (corner === -1 && !onImage) {
+      cropping = null
+      drawOverlay()
+      return false
+    }
+    canvas.setPointerCapture(e.pointerId)
+    gesture = { kind: 'crop', frame, around, id: cropping.id, corner: corner === -1 ? null : corner, grab, start: target, roots: [], end: session.beginGesture() }
+    return true
+  }
+  /** Writes the crop a drag gives, in this format, as the fill's own crop. */
+  function cropTo(g: Extract<Gesture, { kind: 'crop' }>, p: Point) {
+    const { start } = g
+    const rect = g.corner === null ? panned(start.rect, start.box, p.x - g.grab.x, p.y - g.grab.y) : scaled(start.rect, start.box, g.corner, p)
+    const c = cropOf(rect, start.size, start.box)
+    const crop = { x: Math.max(0, round(c.x)), y: Math.max(0, round(c.y)), width: round(c.width), height: round(c.height) }
+    const fills = start.fills.map((f, i) => (i === start.index ? { ...start.fill, fit: 'crop' as const, crop } : f))
+    runQuietly(() => session.run('node.update', { ids: [g.id], scope: scope(g.frame), patch: { fills } }))
+    drawOverlay()
   }
 
   /** A press with the text tool (#47): a click makes text that grows as it is typed, a drag a box of that size. */
@@ -1717,6 +1835,14 @@ function live(
       select([target(hit.id, at.frame.key)], at.frame.key)
       return
     }
+    if (cropTarget(at.frame, hit.id) && !design.nodes[hit.id]?.lock?.style) {
+      // Into cropping its image fill (#48).
+      stopEditing()
+      select([hit.id], at.frame.key)
+      cropping = { id: hit.id, frame: at.frame.key }
+      drawOverlay()
+      return
+    }
     if (isPath(design, hit.id) && !design.nodes[hit.id]?.lock?.style) {
       // Into a path's points (#45).
       stopEditing()
@@ -1855,6 +1981,12 @@ function live(
       finishPen()
       return true
     }
+    // Enter or Escape ends a crop (#48).
+    if (cropping && (action === 'deselect' || action === 'editPoints')) {
+      cropping = null
+      drawOverlay()
+      return true
+    }
     if (pathEditing) {
       if (action === 'deselect' || action === 'editPoints') {
         pathEditing = null
@@ -1921,10 +2053,28 @@ function live(
       case 'distributeVertical': distributeAlong('vertical')
         break
       case 'editPoints': {
-        // Enter on one path goes into its points (#45).
+        // Enter on one layer with an image fill crops it (#48); on one path, it goes into its points (#45).
         const [only] = selection.ids
-        if (selection.ids.length !== 1 || !only || !isPath(session.design(), only) || nodes[only]?.lock?.style) return false
-        pathEditing = { id: only, frame: frame.key, selected: [] }
+        if (selection.ids.length !== 1 || !only || nodes[only]?.lock?.style) return false
+        if (cropTarget(frame, only)) cropping = { id: only, frame: frame.key }
+        else if (isPath(session.design(), only)) pathEditing = { id: only, frame: frame.key, selected: [] }
+        else return false
+        break
+      }
+      case 'mask': {
+        // One layer becomes a mask for the layers after it in its parent, or plain again. Several
+        // are grouped first, and the bottom one masks the rest (#48).
+        if (ids.length === 1) {
+          const on = !nodes[ids[0] ?? '']?.props.mask
+          runQuietly(() => session.run('node.mask', { ids, mask: on ? 'alpha' : null }))
+          break
+        }
+        let group = ''
+        if (runQuietly(() => session.gesture(() => {
+          group = session.run('node.group', { ids })
+          const [[bottom] = []] = childrenOf(session.design(), group)
+          if (bottom) session.run('node.mask', { ids: [bottom], mask: 'alpha' })
+        }))) select([group], frame.key)
         break
       }
       case 'autoLayout': {

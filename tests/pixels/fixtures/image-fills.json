@@ -1,0 +1,782 @@
+{
+ "meta": {
+  "schemaVersion": 2,
+  "designId": "image-fills",
+  "name": "Image fills",
+  "kind": "single",
+  "primaryFormatId": "sq"
+ },
+ "formats": {
+  "sq": {
+   "name": "Square 1:1",
+   "width": 1080,
+   "height": 1080,
+   "order": "a0"
+  }
+ },
+ "pages": {
+  "p1": {
+   "name": "Page 1",
+   "order": "a0",
+   "fills": [
+    {
+     "type": "solid",
+     "color": "#FFF6E8FF"
+    }
+   ]
+  }
+ },
+ "nodes": {
+  "fill": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a0",
+   "name": "Fill in a rounded rect",
+   "props": {
+    "x": 40,
+    "y": 40,
+    "width": 230,
+    "height": 220,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 28
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "sneaker",
+      "fit": "fill"
+     }
+    ]
+   }
+  },
+  "fit": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a1",
+   "name": "Fit in an ellipse",
+   "props": {
+    "x": 300,
+    "y": 40,
+    "width": 230,
+    "height": 220,
+    "shape": {
+     "kind": "ellipse"
+    },
+    "fills": [
+     {
+      "type": "solid",
+      "color": "#2B1B4DFF"
+     },
+     {
+      "type": "image",
+      "assetId": "card-1-tall",
+      "fit": "fit"
+     }
+    ]
+   }
+  },
+  "crop": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a2",
+   "name": "Crop in a star, turned",
+   "props": {
+    "x": 560,
+    "y": 30,
+    "width": 230,
+    "height": 240,
+    "rotation": -8,
+    "shape": {
+     "kind": "star",
+     "points": 5,
+     "innerRadius": 0.5
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "sneaker",
+      "fit": "crop",
+      "crop": {
+       "x": 700,
+       "y": 300,
+       "width": 600,
+       "height": 560
+      }
+     }
+    ]
+   }
+  },
+  "tile": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a2V",
+   "name": "Tile in a turned rounded rect",
+   "props": {
+    "x": 830,
+    "y": 50,
+    "width": 200,
+    "height": 200,
+    "rotation": 10,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 40
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "tile",
+      "fit": "tile"
+     }
+    ]
+   }
+  },
+  "adj0": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a3",
+   "name": "Exposure up",
+   "props": {
+    "x": 40,
+    "y": 300,
+    "width": 150,
+    "height": 150,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 12
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-2",
+      "fit": "fill",
+      "adjust": {
+       "exposure": 60,
+       "contrast": 0,
+       "saturation": 0,
+       "temperature": 0,
+       "tint": 0
+      }
+     }
+    ]
+   }
+  },
+  "adj1": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a4",
+   "name": "Exposure down",
+   "props": {
+    "x": 210,
+    "y": 300,
+    "width": 150,
+    "height": 150,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 12
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-2",
+      "fit": "fill",
+      "adjust": {
+       "exposure": -60,
+       "contrast": 0,
+       "saturation": 0,
+       "temperature": 0,
+       "tint": 0
+      }
+     }
+    ]
+   }
+  },
+  "adj2": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a5",
+   "name": "Contrast up",
+   "props": {
+    "x": 380,
+    "y": 300,
+    "width": 150,
+    "height": 150,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 12
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-2",
+      "fit": "fill",
+      "adjust": {
+       "exposure": 0,
+       "contrast": 70,
+       "saturation": 0,
+       "temperature": 0,
+       "tint": 0
+      }
+     }
+    ]
+   }
+  },
+  "adj3": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a6",
+   "name": "Saturation down",
+   "props": {
+    "x": 550,
+    "y": 300,
+    "width": 150,
+    "height": 150,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 12
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-2",
+      "fit": "fill",
+      "adjust": {
+       "exposure": 0,
+       "contrast": 0,
+       "saturation": -80,
+       "temperature": 0,
+       "tint": 0
+      }
+     }
+    ]
+   }
+  },
+  "adj4": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a7",
+   "name": "Warmer",
+   "props": {
+    "x": 720,
+    "y": 300,
+    "width": 150,
+    "height": 150,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 12
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-2",
+      "fit": "fill",
+      "adjust": {
+       "exposure": 0,
+       "contrast": 0,
+       "saturation": 0,
+       "temperature": 70,
+       "tint": 0
+      }
+     }
+    ]
+   }
+  },
+  "adj5": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a8",
+   "name": "More magenta",
+   "props": {
+    "x": 890,
+    "y": 300,
+    "width": 150,
+    "height": 150,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 12
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-2",
+      "fit": "fill",
+      "adjust": {
+       "exposure": 0,
+       "contrast": 0,
+       "saturation": 0,
+       "temperature": 0,
+       "tint": 70
+      }
+     }
+    ]
+   }
+  },
+  "flt0": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a9",
+   "name": "Filter mono",
+   "props": {
+    "x": 40,
+    "y": 480,
+    "width": 150,
+    "height": 150,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 12
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-2",
+      "fit": "fill",
+      "filter": "mono"
+     }
+    ]
+   }
+  },
+  "flt1": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "aA",
+   "name": "Filter sepia",
+   "props": {
+    "x": 210,
+    "y": 480,
+    "width": 150,
+    "height": 150,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 12
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-2",
+      "fit": "fill",
+      "filter": "sepia"
+     }
+    ]
+   }
+  },
+  "flt2": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "aB",
+   "name": "Filter vivid",
+   "props": {
+    "x": 380,
+    "y": 480,
+    "width": 150,
+    "height": 150,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 12
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-2",
+      "fit": "fill",
+      "filter": "vivid",
+      "adjust": {
+       "exposure": -20,
+       "contrast": 0,
+       "saturation": 0,
+       "temperature": 0,
+       "tint": 0
+      }
+     }
+    ]
+   }
+  },
+  "flt3": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "aC",
+   "name": "Filter fade",
+   "props": {
+    "x": 550,
+    "y": 480,
+    "width": 150,
+    "height": 150,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 12
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-2",
+      "fit": "fill",
+      "filter": "fade"
+     }
+    ]
+   }
+  },
+  "flt4": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "aD",
+   "name": "Filter warm",
+   "props": {
+    "x": 720,
+    "y": 480,
+    "width": 150,
+    "height": 150,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 12
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-2",
+      "fit": "fill",
+      "filter": "warm"
+     }
+    ]
+   }
+  },
+  "flt5": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "aE",
+   "name": "Filter cool",
+   "props": {
+    "x": 890,
+    "y": 480,
+    "width": 150,
+    "height": 150,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 12
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-2",
+      "fit": "fill",
+      "filter": "cool"
+     }
+    ]
+   }
+  },
+  "starGroup": {
+   "type": "group",
+   "parentId": "p1",
+   "index": "aF",
+   "name": "Star mask",
+   "props": {
+    "x": 40,
+    "y": 670,
+    "width": 300,
+    "height": 300
+   }
+  },
+  "starMask": {
+   "type": "graphic",
+   "parentId": "starGroup",
+   "index": "a0",
+   "name": "Star mask",
+   "props": {
+    "x": 40,
+    "y": 670,
+    "width": 300,
+    "height": 300,
+    "shape": {
+     "kind": "star",
+     "points": 6,
+     "innerRadius": 0.6,
+     "cornerRadius": 10
+    },
+    "fills": [
+     {
+      "type": "solid",
+      "color": "#000000FF"
+     }
+    ],
+    "mask": "alpha"
+   }
+  },
+  "starPhoto": {
+   "type": "graphic",
+   "parentId": "starGroup",
+   "index": "a1",
+   "name": "Photo under the star",
+   "props": {
+    "x": 20,
+    "y": 650,
+    "width": 340,
+    "height": 340,
+    "shape": {
+     "kind": "rect"
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-3",
+      "fit": "fill"
+     }
+    ]
+   }
+  },
+  "starBand": {
+   "type": "graphic",
+   "parentId": "starGroup",
+   "index": "a2",
+   "name": "Band under the star",
+   "props": {
+    "x": 20,
+    "y": 880,
+    "width": 340,
+    "height": 60,
+    "shape": {
+     "kind": "rect"
+    },
+    "fills": [
+     {
+      "type": "solid",
+      "color": "#FF48B0CC"
+     }
+    ]
+   }
+  },
+  "vignette": {
+   "type": "frame",
+   "parentId": "p1",
+   "index": "aG",
+   "name": "Vignette",
+   "props": {
+    "x": 380,
+    "y": 670,
+    "width": 300,
+    "height": 300,
+    "fills": [
+     {
+      "type": "solid",
+      "color": "#15121AFF"
+     }
+    ],
+    "clip": true
+   }
+  },
+  "lumMask": {
+   "type": "graphic",
+   "parentId": "vignette",
+   "index": "a0",
+   "name": "Luminance mask",
+   "props": {
+    "x": 380,
+    "y": 670,
+    "width": 300,
+    "height": 300,
+    "shape": {
+     "kind": "ellipse"
+    },
+    "fills": [
+     {
+      "type": "radial",
+      "center": {
+       "x": 0.5,
+       "y": 0.5
+      },
+      "radius": 0.5,
+      "stops": [
+       {
+        "offset": 0,
+        "color": "#FFFFFFFF"
+       },
+       {
+        "offset": 0.55,
+        "color": "#FFFFFFFF"
+       },
+       {
+        "offset": 1,
+        "color": "#000000FF"
+       }
+      ]
+     }
+    ],
+    "mask": "luminance"
+   }
+  },
+  "lumPhoto": {
+   "type": "graphic",
+   "parentId": "vignette",
+   "index": "a1",
+   "name": "Photo faded at its edges",
+   "props": {
+    "x": 380,
+    "y": 670,
+    "width": 300,
+    "height": 300,
+    "shape": {
+     "kind": "rect"
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "sneaker",
+      "fit": "fill"
+     }
+    ]
+   }
+  },
+  "textGroup": {
+   "type": "group",
+   "parentId": "p1",
+   "index": "aH",
+   "name": "Text mask",
+   "props": {
+    "x": 720,
+    "y": 670,
+    "width": 320,
+    "height": 300
+   }
+  },
+  "word": {
+   "type": "text",
+   "parentId": "textGroup",
+   "index": "a0",
+   "name": "SALE",
+   "props": {
+    "x": 720,
+    "y": 670,
+    "width": 320,
+    "height": 150,
+    "text": "SALE",
+    "style": {
+     "fontFamily": "Noto Sans",
+     "fontSize": 120,
+     "fontWeight": 900,
+     "color": "#000000FF"
+    },
+    "align": "center",
+    "mask": "alpha"
+   }
+  },
+  "wordPhoto": {
+   "type": "graphic",
+   "parentId": "textGroup",
+   "index": "a1",
+   "name": "Photo in the letters",
+   "props": {
+    "x": 720,
+    "y": 670,
+    "width": 320,
+    "height": 150,
+    "shape": {
+     "kind": "rect"
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-1",
+      "fit": "fill",
+      "adjust": {
+       "exposure": 0,
+       "contrast": 30,
+       "saturation": 40,
+       "temperature": 0,
+       "tint": 0
+      }
+     }
+    ]
+   }
+  },
+  "turnMask": {
+   "type": "graphic",
+   "parentId": "textGroup",
+   "index": "a2",
+   "name": "Turned ellipse mask",
+   "props": {
+    "x": 760,
+    "y": 820,
+    "width": 240,
+    "height": 150,
+    "rotation": 20,
+    "shape": {
+     "kind": "ellipse"
+    },
+    "fills": [
+     {
+      "type": "solid",
+      "color": "#00000099"
+     }
+    ],
+    "mask": "alpha"
+   }
+  },
+  "turnPhoto": {
+   "type": "graphic",
+   "parentId": "textGroup",
+   "index": "a3",
+   "name": "Photo in the ellipse",
+   "props": {
+    "x": 720,
+    "y": 800,
+    "width": 320,
+    "height": 190,
+    "shape": {
+     "kind": "rect"
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "card-2",
+      "fit": "fill",
+      "filter": "sepia"
+     }
+    ]
+   }
+  },
+  "pill": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "b0",
+   "name": "Pill mask on the page",
+   "props": {
+    "x": 40,
+    "y": 995,
+    "width": 1000,
+    "height": 64,
+    "shape": {
+     "kind": "rect",
+     "cornerRadius": 32
+    },
+    "fills": [
+     {
+      "type": "solid",
+      "color": "#000000FF"
+     }
+    ],
+    "mask": "alpha"
+   }
+  },
+  "strip": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "b1",
+   "name": "Photo in the pill",
+   "props": {
+    "x": 0,
+    "y": 960,
+    "width": 1080,
+    "height": 120,
+    "shape": {
+     "kind": "rect"
+    },
+    "fills": [
+     {
+      "type": "image",
+      "assetId": "sneaker",
+      "fit": "fill",
+      "filter": "cool"
+     }
+    ]
+   }
+  }
+ },
+ "overrides": {}
+}

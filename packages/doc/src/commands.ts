@@ -215,6 +215,32 @@ export const nodeLock = defineCommand({
   },
 })
 
+/**
+ * Makes layers masks, or plain layers again (#48). A mask is the same in every format, so the flag
+ * is set on the base and any format's override of it goes.
+ */
+export const nodeMask = defineCommand({
+  name: 'node.mask',
+  input: z.object({ ids: NodeId.array().min(1), mask: z.enum(['alpha', 'luminance']).nullable() }),
+  check: ({ design }, { ids }) => {
+    for (const id of ids) {
+      const node = design.nodes[id]
+      if (!node) return `no layer "${id}"`
+      const locked = lockProblem(id, node, 'style')
+      if (locked) return locked
+    }
+    return undefined
+  },
+  apply: ({ r, design }, { ids, mask }) => {
+    for (const id of ids) {
+      const props = r.nodes.get(id)?.get('props') as Y.Map<unknown>
+      if (mask) props.set('mask', mask)
+      else props.delete('mask')
+      for (const scope of Object.keys(design.overrides)) r.overrides.delete(overrideKey(scope, id, 'mask'))
+    }
+  },
+})
+
 /** Each sibling list after a z-order change, as ids bottom to top. */
 function restack(order: string[], moving: Set<string>, to: 'forward' | 'backward' | 'front' | 'back') {
   if (to === 'front') return [...order.filter((id) => !moving.has(id)), ...order.filter((id) => moving.has(id))]
@@ -793,6 +819,7 @@ export const COMMANDS = {
   'node.move': nodeMove,
   'node.delete': nodeDelete,
   'node.lock': nodeLock,
+  'node.mask': nodeMask,
   'node.reorder': nodeReorder,
   'node.duplicate': nodeDuplicate,
   'node.group': nodeGroup,
