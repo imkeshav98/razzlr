@@ -1,7 +1,7 @@
-import { parseDesign } from '@razzlr/schema'
+import { parseDesign, type Design } from '@razzlr/schema'
 import { describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
-import { anchorOffset, loadDesign, openSession, readDesign, textAnchor, type DesignDoc, type Session } from './index.ts'
+import { anchorOffset, childrenOf, loadDesign, openSession, readDesign, textAnchor, type DesignDoc, type Session } from './index.ts'
 import { testDesign } from './test-design.ts'
 
 /** Two tabs on one design, each with its own doc, exchanging updates like the sync server would. */
@@ -145,22 +145,32 @@ describe('two tabs', () => {
     expect(readDesign(b)).toEqual(readDesign(a))
   })
 
-  it.each([3, 99, 4242])("each tab's session view equals a full read after every command, sync and repair (seed %i)", (seed) => {
+  it.each(process.env.MANY_SEEDS ? Array.from({ length: 300 }, (_, i) => i + 1000) : [3, 99, 4242])("each tab's session view equals a full read after every command, sync and repair (seed %i)", (seed) => {
     const { a, b, tabA, tabB, sync } = twoTabs()
     const random = seeded(seed)
     for (let i = 0; i < 200; i++) {
       randomCommand(tabA, a, random)
-      expect(tabA.design()).toEqual(readDesign(a))
+      expectFullRead(tabA, a)
       randomCommand(tabB, b, random)
-      expect(tabB.design()).toEqual(readDesign(b))
+      expectFullRead(tabB, b)
       if (random() < 0.3) {
         sync()
-        expect(tabA.design()).toEqual(readDesign(a))
-        expect(tabB.design()).toEqual(readDesign(b))
+        expectFullRead(tabA, a)
+        expectFullRead(tabB, b)
       }
     }
   })
 })
+
+/** A session's live design equals a full read of its document, layer order under every parent included. */
+function expectFullRead(tab: Session, doc: DesignDoc) {
+  const full = readDesign(doc)
+  const view = tab.design()
+  expect(view).toEqual(full)
+  const order = (design: Design) => Object.fromEntries([...Object.keys(design.pages), ...Object.keys(design.nodes)]
+    .map((id) => [id, childrenOf(design, id).map(([child]) => child)]))
+  expect(order(view)).toEqual(order(full))
+}
 
 function seeded(seed: number) {
   let s = seed
@@ -253,6 +263,20 @@ describe("a session's design view", () => {
     tabA.run('node.update', { ids: ['box'], patch: { x: 7 } })
     tabA.run('node.create', { id: 'c1', parentId: 'p1', layer: { type: 'group', name: 'G', props: { x: 0, y: 0, width: 1, height: 1 } } })
     expect(seen).toEqual(['deep: x 7, no c1', 'shallow: x 7, has c1', 'deep: x 7, has c1'])
+  })
+
+  it('hands out a live design: one read before an edit shows the edit, and a layer kept from before stays as it was', () => {
+    const { tabA, tabB, sync } = twoTabs()
+    const design = tabA.design()
+    const box = design.nodes.box
+    tabA.run('node.update', { ids: ['box'], patch: { x: 7 } })
+    tabB.run('node.update', { ids: ['headline'], scope: 'format:banner', patch: { y: 9 } })
+    sync()
+    expect(design.nodes.box?.props.x).toBe(7)
+    expect(design.overrides['format:banner']?.headline).toMatchObject({ y: 9 })
+    expect(box?.props.x).toBe(100)
+    tabA.run('node.delete', { ids: ['box'] })
+    expect(Object.keys(design.nodes)).not.toContain('box')
   })
 
   it('hands out a design that cannot be changed, so no caller can corrupt what later reads reuse', () => {
