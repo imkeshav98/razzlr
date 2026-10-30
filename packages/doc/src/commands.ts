@@ -209,6 +209,83 @@ export const pageAdd = defineCommand({
   },
 })
 
+const pagesInOrder = (design: Design) =>
+  Object.entries(design.pages).sort(([a, x], [b, y]) => (x.order < y.order ? -1 : x.order > y.order ? 1 : a < b ? -1 : 1))
+
+/** Every layer under a page or layer, parents before children. */
+function descendants(design: Design, parentId: string): string[] {
+  return childrenOf(design, parentId).flatMap(([id]) => [id, ...descendants(design, id)])
+}
+
+/** Renames a page. */
+export const pageUpdate = defineCommand({
+  name: 'page.update',
+  input: z.object({ id: PageId, name: z.string() }),
+  check: ({ design }, { id }) => (design.pages[id] ? undefined : `no page "${id}"`),
+  apply: ({ r }, { id, name }) => {
+    r.pages.get(id)?.set('name', name)
+  },
+})
+
+/**
+ * Copies a page right after itself: every layer with a fresh id, and every override those layers
+ * have in any format. Returns the new page's id.
+ */
+export const pageDuplicate = defineCommand({
+  name: 'page.duplicate',
+  input: z.object({ id: PageId, newId: PageId.optional(), name: z.string().optional() }),
+  check: (ctx, { id, newId }) => (ctx.design.pages[id] ? idProblem(ctx, newId) : `no page "${id}"`),
+  apply: ({ r, design }, { id, newId = nanoid(), name }) => {
+    const page = design.pages[id]
+    if (!page) return newId
+    const pages = pagesInOrder(design)
+    const next = pages[pages.findIndex(([other]) => other === id) + 1]?.[1].order ?? null
+    r.pages.set(newId, toYMap(Page.parse({ ...page, name: name ?? page.name, order: indexBetween(page.order, next) })))
+    const ids = new Map(descendants(design, id).map((old) => [old, nanoid()] as const))
+    for (const [old, fresh] of ids) {
+      const node = design.nodes[old]
+      if (!node) continue
+      r.nodes.set(fresh, toYNode({ ...node, parentId: node.parentId === id ? newId : ids.get(node.parentId) ?? newId }))
+      for (const [scope, byNode] of Object.entries(design.overrides)) {
+        for (const [path, value] of Object.entries(byNode[old] ?? {})) r.overrides.set(overrideKey(scope, fresh, path), value)
+      }
+    }
+    return newId
+  },
+})
+
+/** Moves a page ahead of another page, or to the end with null. */
+export const pageMove = defineCommand({
+  name: 'page.move',
+  input: z.object({ id: PageId, before: PageId.nullable() }),
+  check: ({ design }, { id, before }) => {
+    if (!design.pages[id]) return `no page "${id}"`
+    if (before && (before === id || !design.pages[before])) return `no other page "${before}" to go before`
+    return undefined
+  },
+  apply: ({ r, design }, { id, before }) => {
+    const others = pagesInOrder(design).filter(([other]) => other !== id)
+    const at = before === null ? others.length : others.findIndex(([other]) => other === before)
+    r.pages.get(id)?.set('order', indexBetween(others[at - 1]?.[1].order ?? null, others[at]?.[1].order ?? null))
+  },
+})
+
+/** Deletes a page and its layers; undo brings both back. A design keeps at least one page. */
+export const pageDelete = defineCommand({
+  name: 'page.delete',
+  input: z.object({ id: PageId }),
+  check: ({ design }, { id }) => {
+    if (!design.pages[id]) return `no page "${id}"`
+    if (Object.keys(design.pages).length === 1) return 'a design keeps at least one page'
+    return undefined
+  },
+  apply: ({ r, design }, { id }) => {
+    // Layers get the same tombstone node.delete gives them, so undo and other tabs' edits behave alike.
+    for (const node of descendants(design, id)) r.nodes.get(node)?.set(DELETED, true)
+    r.pages.delete(id)
+  },
+})
+
 const byOrder = (design: Design) =>
   Object.entries(design.formats).sort(([a, x], [b, y]) => (x.order < y.order ? -1 : x.order > y.order ? 1 : a < b ? -1 : 1))
 
@@ -302,6 +379,10 @@ export const COMMANDS = {
   'node.delete': nodeDelete,
   'text.edit': textEdit,
   'page.add': pageAdd,
+  'page.update': pageUpdate,
+  'page.duplicate': pageDuplicate,
+  'page.move': pageMove,
+  'page.delete': pageDelete,
   'format.add': formatAdd,
   'format.update': formatUpdate,
   'format.remove': formatRemove,

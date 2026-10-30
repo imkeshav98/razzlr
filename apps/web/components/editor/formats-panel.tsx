@@ -18,7 +18,7 @@ import { format } from '../../lib/i18n/index.ts'
 import { Button } from '../ui/button.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
 
-const ICON_BUTTON = 'grid size-7 shrink-0 cursor-pointer place-items-center rounded-row text-subtle transition-colors duration-[var(--chrome-fast)] hover:bg-hover hover:text-text disabled:pointer-events-none disabled:opacity-30'
+export const ICON_BUTTON = 'grid size-7 shrink-0 cursor-pointer place-items-center rounded-row text-subtle transition-colors duration-[var(--chrome-fast)] hover:bg-hover hover:text-text disabled:pointer-events-none disabled:opacity-30'
 
 /** The design as the editor holds it, kept current: every redraw hands over the latest one. */
 export function useEditorDesign(editor: Editor) {
@@ -52,7 +52,7 @@ function Proportion({ width, height, className }: { width: number; height: numbe
   )
 }
 
-export function FormatsPanel({ editor, onRemoved }: { editor: Editor; onRemoved: (name: string) => void }) {
+export function FormatsPanel({ editor, onRemoved }: { editor: Editor; onRemoved: (message: string) => void }) {
   const t = useMessages()
   const { design, focused } = useEditorDesign(editor)
   const formats = ordered(design)
@@ -147,7 +147,7 @@ export function FormatsPanel({ editor, onRemoved }: { editor: Editor; onRemoved:
                     disabled={primary || formats.length === 1}
                     onClick={() => {
                       run('format.remove', { id })
-                      onRemoved(f.name)
+                      onRemoved(format(t.editor.formats.removed, { name: f.name }))
                     }}
                     className={cn(ICON_BUTTON, 'hover:text-danger')}
                   >
@@ -281,8 +281,8 @@ export function FocusChip({ editor }: { editor: Editor }) {
 
 const TOAST_MS = 8000
 
-/** After a format is removed: says so, with undo, for a few seconds. */
-export function RemovedToast({ editor, name, onDone }: { editor: Editor; name: string; onDone: () => void }) {
+/** After a format or page is removed: says so, with undo, for a few seconds. */
+export function UndoToast({ editor, message, onDone }: { editor: Editor; message: string; onDone: () => void }) {
   const t = useMessages()
   // It stays while the pointer or focus is on it, so the undo can't vanish from under a click.
   const [held, setHeld] = useState(false)
@@ -290,7 +290,7 @@ export function RemovedToast({ editor, name, onDone }: { editor: Editor; name: s
     if (held) return
     const timer = setTimeout(onDone, TOAST_MS)
     return () => clearTimeout(timer)
-  }, [name, onDone, held])
+  }, [message, onDone, held])
   return (
     <div
       role="status"
@@ -301,7 +301,7 @@ export function RemovedToast({ editor, name, onDone }: { editor: Editor; name: s
       onBlur={() => setHeld(false)}
       className="rise pointer-events-auto flex h-10 items-center gap-2 rounded-card border border-line bg-raised ps-3.5 pe-1.5 text-[13px] shadow-panel">
       <TrashIcon size={14} aria-hidden className="text-subtle" />
-      <span>{format(t.editor.formats.removed, { name })}</span>
+      <span>{message}</span>
       <Button
         variant="ghost"
         className="h-7 px-2.5 text-xs font-semibold text-accent-text"
