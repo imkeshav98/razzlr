@@ -234,6 +234,8 @@ function live(
   const px = (n: number) => `${n}px`
   /** Screen pixels a frame needs before it gets a label. */
   const MIN_LABEL_WIDTH = 56
+  /** How far a label stays from the stage's start edge when its frame runs past it. */
+  const LABEL_INSET = 8
   /** A design-pixel box in a frame, as CSS on the overlay. */
   function placeBox(el: HTMLElement, frame: Frame, box: Rect) {
     const at = toScreen(camera, { x: frame.x + box.x, y: frame.y + box.y })
@@ -249,10 +251,12 @@ function live(
     label.dataset.frame = frame.key
     if (selected?.frame === frame.key || editing?.frame === frame.key) label.dataset.active = ''
     const at = toScreen(camera, frame)
-    const width = frame.width * camera.zoom
+    // A frame running off the stage's start keeps its label in view, along the part still showing.
+    const left = Math.max(at.x, LABEL_INSET)
+    const width = at.x + frame.width * camera.zoom - left
     // Too narrow to read even a cut name: zoomed far out, the frames speak for themselves.
     if (width < MIN_LABEL_WIDTH) return null
-    Object.assign(label.style, { left: px(at.x), top: px(at.y), width: px(width) })
+    Object.assign(label.style, { left: px(left), top: px(at.y), width: px(width) })
     const name = document.createElement('span')
     name.className = 'frame-name'
     const pages = new Set(drawnFrames.map((f) => f.pageId)).size > 1 || Object.keys(design.pages).length > 1
