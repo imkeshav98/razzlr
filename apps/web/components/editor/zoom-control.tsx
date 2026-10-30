@@ -1,7 +1,8 @@
 'use client'
 
 // The zoom pill at the stage's bottom corner (#36): out, the zoom (which fits every frame when
-// pressed), in. The same zooms are on Ctrl/Cmd+=, Ctrl/Cmd+- and Shift+1.
+// pressed), in. The same zooms are on Ctrl/Cmd+=, Ctrl/Cmd+- and Shift+1. On phones it moves to
+// the top corner, since the capsule takes the bottom (#82).
 import { MinusIcon, PlusIcon } from '@phosphor-icons/react'
 import { useMemo } from 'react'
 import { useLocale, useMessages } from '../../lib/i18n/client.tsx'
@@ -20,7 +21,7 @@ export function ZoomControl({ zoom, onZoomIn, onZoomOut, onFit }: {
   const percent = useMemo(() => new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }), [locale])
   const off = zoom === null
   return (
-    <div role="group" aria-label={t.editor.zoom} className="absolute end-4 bottom-4 z-10 flex items-center gap-0.5 rounded-card surface-frost border p-1 shadow-panel">
+    <div role="group" aria-label={t.editor.zoom} className="absolute end-4 bottom-4 z-10 flex max-sm:top-3 max-sm:bottom-auto items-center gap-0.5 rounded-card surface-frost border p-1 shadow-panel">
       <Tooltip label={`${t.editor.zoomOut} · ${t.editor.zoomOutKey}`}>
         <button type="button" aria-label={t.editor.zoomOut} disabled={off} onClick={onZoomOut} className={BUTTON}>
           <MinusIcon size={16} aria-hidden />

@@ -2,7 +2,7 @@
 // and the frame budget. Needs the API and the sync server: `docker compose up -d --wait`.
 import { expect, test, type Page } from '@playwright/test'
 import type { DesignInput } from '@razzlr/schema'
-import { designOf, editorPath, placed, screenPoint, settle, writeOutput } from '../support/editor.ts'
+import { designOf, editorPath, placed, screenPoint, settle, stageShot, writeOutput } from '../support/editor.ts'
 import { seed } from '../support/seed.ts'
 
 test.describe.configure({ timeout: 180_000 })
@@ -128,7 +128,7 @@ async function drag(page: Page, from: { x: number; y: number }, to: { x: number;
 test('a drag in the second format moves the layer there only; undo and override.reset put it back', async ({ page }) => {
   const { errors } = await open(page, fiveFormats(10))
   await page.keyboard.press('Escape')
-  const before = await page.getByTestId('stage').screenshot()
+  const before = await stageShot(page)
   writeOutput('canvas-0-fit-all.png', await page.screenshot())
 
   // Drag the box in Story from its centre by 100 × 50 design pixels, with the real mouse and
@@ -163,7 +163,7 @@ test('a drag in the second format moves the layer there only; undo and override.
   await page.keyboard.press('Escape')
   // Off the stage, so no hover outline is drawn over the layer.
   await page.mouse.move(0, 0)
-  await expect.poll(async () => (await page.getByTestId('stage').screenshot()).equals(before), { timeout: 10_000 }).toBe(true)
+  await expect.poll(async () => (await stageShot(page)).equals(before), { timeout: 10_000 }).toBe(true)
   expect(errors).toEqual([])
 })
 

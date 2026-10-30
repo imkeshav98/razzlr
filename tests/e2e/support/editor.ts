@@ -28,6 +28,12 @@ export async function openTabs(browser: Browser, count: number, existing?: strin
 
 export const editorPath = (designId: string) => `/clients/${DEV_CLIENT}/designs/${designId}`
 
+/**
+ * What the stage shows, with the panel capsule masked: it floats over the canvas (#82) and the AI
+ * button's glow is always moving, so two shots of the same design would otherwise differ there.
+ */
+export const stageShot = (page: Page) => page.getByTestId('stage').screenshot({ mask: [page.getByTestId('rail')] })
+
 /** The design as the tab's document holds it now, as JSON with sorted keys so two tabs compare equal. */
 export const designOf = (page: Page) =>
   page.evaluate(() => {
