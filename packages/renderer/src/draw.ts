@@ -57,8 +57,9 @@ function drawLayer(ck: CanvasKit, canvas: Canvas, layer: SceneLayer, resources: 
     for (const effect of props.effects) {
       if (effect.type === 'dropShadow') withFilter(ck, canvas, dropShadow(ck, effect), bounds, content)
     }
-    const blur = props.effects.find((e) => e.type === 'layerBlur')
-    if (blur && blur.radius > 0) {
+    // The first blur that blurs; a zero-radius one before it no longer hides it.
+    const blur = props.effects.find((e): e is Extract<Effect, { type: 'layerBlur' }> => e.type === 'layerBlur' && e.radius > 0)
+    if (blur) {
       withFilter(ck, canvas, ck.ImageFilter.MakeBlur(sigma(blur.radius), sigma(blur.radius), ck.TileMode.Decal, null), bounds, content)
     } else {
       content()
