@@ -1,0 +1,56 @@
+// English, the source catalog. Every string the UI shows lives in a catalog; components never hold
+// literal text (eslint react/jsx-no-literals).
+export const en = {
+  app: { name: 'Razzlr' },
+  library: {
+    clients: 'Clients',
+    clientsLead: 'Pick a client to see and make their designs.',
+    noClients: 'No clients yet.',
+    designs: 'Designs',
+    newDesign: 'New design',
+    designName: 'Design name',
+    designNamePlaceholder: 'Name a new design',
+    untitled: 'Untitled design',
+    noDesigns: 'No designs yet. Name one above to start.',
+    edited: 'Edited {when}',
+    back: 'All clients',
+  },
+  editor: {
+    status: 'Connection',
+    layers: 'Layers',
+    assets: 'Assets',
+    ai: 'AI',
+    brand: 'Brand',
+    closePanel: 'Close panel',
+    layersEmpty: 'Layers of this page will show here.',
+    assetsEmpty: 'Uploaded images will show here.',
+    aiEmpty: 'Ask for a draft, a rewrite or new sizes. Coming soon.',
+    brandEmpty: 'This client’s colours, fonts and logos will show here.',
+    inspector: 'Inspector',
+    inspectorEmpty: 'Select a layer to change it.',
+    tools: 'Tools',
+    toolSelect: 'Select',
+    toolFrame: 'Frame',
+    toolShape: 'Shape',
+    toolText: 'Text',
+    toolPen: 'Pen',
+    toolImage: 'Image',
+    toolHand: 'Hand',
+    statusText: {
+      'Starting': 'Starting',
+      'Loading renderer': 'Loading renderer',
+      'Loading fonts': 'Loading fonts',
+      'Connecting': 'Connecting',
+      'Live': 'Live',
+    } as Record<string, string>,
+  },
+  theme: {
+    label: 'Theme',
+    system: 'System',
+    light: 'Light',
+    dark: 'Dark',
+  },
+  language: { label: 'Language' },
+}
+
+export type Messages = typeof en

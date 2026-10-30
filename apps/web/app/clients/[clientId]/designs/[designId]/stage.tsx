@@ -1,10 +1,9 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { startEditor, type Editor } from '@razzlr/editor'
 import { fetchSyncToken } from './actions.ts'
-import styles from './stage.module.css'
+import { EditorShell } from '../../../../../components/editor/shell.tsx'
 
 declare global {
   interface Window { razzlr?: Editor }
@@ -49,19 +48,15 @@ export function EditorStage({ designId, designName, clientId, clientName, format
   }, [clientId, designId, formatId, syncUrl])
 
   return (
-    <main className={styles.page}>
-      <header className={styles.bar}>
-        <Link className={styles.name} href={`/clients/${clientId}`}>{clientName}</Link>
-        <h1 className={styles.design}>{designName}</h1>
-        <span className={styles.status} data-testid="status" role="status">{status}</span>
-      </header>
-      <div className={styles.stage}>
-        <div className={styles.frame}>
-          <canvas ref={canvas} className={styles.canvas} data-testid="stage" />
-          <div ref={overlay} className={styles.overlay} aria-hidden />
+    <EditorShell clientId={clientId} clientName={clientName} designName={designName} status={status}>
+      {/* The design is a picture, so it never mirrors: the stage stays left to right in Arabic too. */}
+      <div dir="ltr" className="absolute inset-0 grid place-items-center overflow-auto p-6 pb-20">
+        <div className="relative w-[min(720px,100%)] shadow-[0_0_0_1px_var(--line),0_24px_60px_-24px_rgb(0_0_0/0.55)]">
+          <canvas ref={canvas} className="block h-auto w-full cursor-default touch-none bg-white" data-testid="stage" />
+          <div ref={overlay} className="stage-overlay pointer-events-none absolute inset-0" aria-hidden />
+          <div data-slot="mini-bar" className="pointer-events-none absolute inset-x-0 -top-12 flex justify-center" />
         </div>
       </div>
-      <footer className={styles.hint}>Click to select · drag to move · double-click text to type · ⌘/Ctrl+Z to undo</footer>
-    </main>
+    </EditorShell>
   )
 }

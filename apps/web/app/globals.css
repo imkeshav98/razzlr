@@ -1,0 +1,185 @@
+/*
+ * Razzlr's design tokens (#51, Keshav's picks: Aurora, raspberry, dark by default).
+ * Themes change only these variables, through html[data-theme]: a script in the layout sets it
+ * from the person's pick or the system before first paint, and dark is the default. Components use the semantic names, never raw colours.
+ * tokens.test.ts checks every text token against the surfaces it sits on at 4.5:1 or more.
+ */
+@import 'tailwindcss';
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0e0c11;
+  --surface: #16131b;
+  --raised: #1e1a24;
+  --hover: #28232f;
+  --pressed: #312a39;
+  --line: #2e2836;
+  --line-strong: #453c50;
+  --canvas: #121016;
+  --canvas-dot: #2a2531;
+  --text: #f5f2f8;
+  --text-muted: #b8afc2;
+  --text-subtle: #9c93a6;
+  --accent: #ff2e7e;
+  --accent-text: #ff5c99;
+  --accent-solid: #d10f62;
+  --accent-solid-hover: #bd0d59;
+  --on-accent: #ffffff;
+  --accent-soft: rgb(255 46 126 / 0.14);
+  --danger: #ff5a5f;
+  --success: #3dd68c;
+  --ring: #ff7aae;
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 12px 32px -12px rgb(0 0 0 / 0.6);
+  --glass: rgb(30 26 36 / 0.72);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f6f4f8;
+  --surface: #ffffff;
+  --raised: #ffffff;
+  --hover: #efebf3;
+  --pressed: #e5e0ea;
+  --line: #e6e1eb;
+  --line-strong: #cfc8d6;
+  --canvas: #ebe8ee;
+  --canvas-dot: #d6d1dc;
+  --text: #17131c;
+  --text-muted: #554d5f;
+  --text-subtle: #6a6274;
+  --accent: #ff2e7e;
+  --accent-text: #c2185b;
+  --accent-solid: #d10f62;
+  --accent-solid-hover: #b80c55;
+  --on-accent: #ffffff;
+  --accent-soft: rgb(209 15 98 / 0.1);
+  --danger: #c42020;
+  --success: #0f7246;
+  --ring: #d10f62;
+  --shadow: 0 1px 2px rgb(23 19 28 / 0.06), 0 12px 32px -16px rgb(23 19 28 / 0.22);
+  --glass: rgb(255 255 255 / 0.78);
+}
+
+/* The AI gradient, pink → violet → orange; it never touches the canvas. */
+:root {
+  --ai-1: #ff2e7e;
+  --ai-2: #8b5cf6;
+  --ai-3: #ff8a3d;
+  --ai-gradient: linear-gradient(115deg, var(--ai-1), var(--ai-2) 55%, var(--ai-3));
+  --row: 32px;
+  --radius: 8px;
+  --radius-card: 12px;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --chrome-fast: 120ms;
+  --chrome: 180ms;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-hover: var(--hover);
+  --color-pressed: var(--pressed);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-canvas: var(--canvas);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-subtle: var(--text-subtle);
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-accent-solid: var(--accent-solid);
+  --color-accent-solid-hover: var(--accent-solid-hover);
+  --color-on-accent: var(--on-accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-figtree), var(--font-noto-arabic), system-ui, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-figtree), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --radius-row: var(--radius);
+  --radius-card: var(--radius-card);
+  --shadow-panel: var(--shadow);
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* The AI glow: a slow drift of the gradient behind AI controls only. */
+@keyframes ai-drift {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
+}
+.ai-glow {
+  background-image: var(--ai-gradient);
+  background-size: 200% 200%;
+  animation: ai-drift 6s ease-in-out infinite alternate;
+}
+
+@keyframes tooltip-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Lists rise in, a few items at a time; chrome motion stays under 200 ms. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.rise {
+  animation: rise var(--chrome) var(--ease-out) both;
+}
+
+/* The canvas backdrop: a quiet dot grid under the frames. */
+.canvas-dots {
+  background-color: var(--canvas);
+  background-image: radial-gradient(var(--canvas-dot) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* What the editor draws over the canvas, in design pixels (the stage keeps dir=ltr). */
+.stage-overlay .selection {
+  position: absolute;
+  outline: 2px solid var(--accent);
+  transform-origin: center;
+}
+.stage-overlay .caret {
+  position: absolute;
+  width: 2px;
+  margin-inline-start: -1px;
+  background: var(--accent);
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }

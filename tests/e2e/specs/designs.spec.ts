@@ -9,7 +9,7 @@ test('a design made from the client list opens in the editor and is there after 
   const name = `Autumn launch ${crypto.randomUUID().slice(0, 6)}`
 
   await page.goto('/')
-  await page.getByRole('link', { name: 'Harbour Coffee' }).click()
+  await page.getByRole('main').getByRole('link', { name: 'Harbour Coffee' }).click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Harbour Coffee')
   writeOutput('designs-1-client.png', await page.screenshot())
 
