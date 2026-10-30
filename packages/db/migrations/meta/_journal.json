@@ -15,6 +15,13 @@
       "when": 1793352361833,
       "tag": "0001_orgs-clients-designs",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793353407514,
+      "tag": "0002_assets",
+      "breakpoints": true
     }
   ]
 }

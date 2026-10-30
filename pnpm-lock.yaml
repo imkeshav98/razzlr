@@ -29,6 +29,9 @@ importers:
       '@razzlr/schema':
         specifier: workspace:*
         version: link:../../packages/schema
+      '@razzlr/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       '@razzlr/sync-token':
         specifier: workspace:*
         version: link:../../packages/sync-token
@@ -342,6 +345,28 @@ importers:
         specifier: ^3.2.7
         version: 3.2.7(@types/node@22.20.5)(tsx@4.23.15)
 
+  packages/storage:
+    dependencies:
+      aws4fetch:
+        specifier: ^1.0.20
+        version: 1.0.20
+    devDependencies:
+      '@razzlr/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.5
+      eslint:
+        specifier: ^9.39.0
+        version: 9.39.5
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.7
+        version: 3.2.7(@types/node@22.20.5)(tsx@4.23.15)
+
   packages/sync-token:
     devDependencies:
       '@razzlr/config':
@@ -371,6 +396,12 @@ importers:
       '@razzlr/editor':
         specifier: workspace:*
         version: link:../../packages/editor
+      '@razzlr/fonts':
+        specifier: workspace:*
+        version: link:../../packages/fonts
+      '@razzlr/renderer':
+        specifier: workspace:*
+        version: link:../../packages/renderer
       '@razzlr/schema':
         specifier: workspace:*
         version: link:../../packages/schema
@@ -1492,6 +1523,9 @@ packages:
 
   async-mutex@0.5.0:
     resolution: {integrity: sha512-1A94B18jkJ3DYq284ohPxoXbfTA5HsQ7/Mf4DEhcyLx3Bz27Rh59iScbB6EPiP+B+joue6YCxcMXSbFC1tZKwA==}
+
+  aws4fetch@1.0.20:
+    resolution: {integrity: sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g==}
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -3099,6 +3133,8 @@ snapshots:
   async-mutex@0.5.0:
     dependencies:
       tslib: 2.8.1
+
+  aws4fetch@1.0.20: {}
 
   balanced-match@1.0.2: {}
 

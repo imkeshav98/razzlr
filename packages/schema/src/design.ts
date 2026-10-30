@@ -373,3 +373,23 @@ export function parseDesignIncrementally(input: unknown): ParseResult {
   const overrides = Object.fromEntries(results.map(([scope, result]) => [scope, result.filled]))
   return { success: true, design: { ...head, nodes, overrides } }
 }
+
+/** Every asset an image fill of the design names, on pages, layers or format overrides, sorted. */
+export function imageAssetIds(design: Design): string[] {
+  const ids = new Set<string>()
+  const add = (fills: unknown) => {
+    if (!Array.isArray(fills)) return
+    for (const fill of fills) {
+      if (fill && typeof fill === 'object' && (fill as { type?: unknown }).type === 'image') {
+        const { assetId } = fill as { assetId?: unknown }
+        if (typeof assetId === 'string') ids.add(assetId)
+      }
+    }
+  }
+  for (const page of Object.values(design.pages)) add(page.fills)
+  for (const node of Object.values(design.nodes)) add((node.props as { fills?: unknown }).fills)
+  for (const byNode of Object.values(design.overrides)) {
+    for (const values of Object.values(byNode)) add(values.fills)
+  }
+  return [...ids].sort()
+}

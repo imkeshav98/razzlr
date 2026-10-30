@@ -1,7 +1,7 @@
 // The database's tables. Every row of agency data has an org, and every design a client of that
 // org; the API scopes every query by them. Change these, then write a migration with
 // `pnpm --filter @razzlr/db migration`.
-import { customType, foreignKey, index, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
+import { customType, foreignKey, index, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
 
 const bytea = customType<{ data: Uint8Array; driverData: Buffer }>({
   dataType: () => 'bytea',
@@ -48,3 +48,22 @@ export const designStates = pgTable('design_states', {
   state: bytea().notNull(),
   updatedAt: updatedAt(),
 })
+
+/**
+ * An image a client uploaded. The original is stored once per org under its SHA-256
+ * (orgs/<org>/originals/<sha256>); each client that uploads it gets one asset row.
+ */
+export const assets = pgTable('assets', {
+  id: text().primaryKey(),
+  orgId: text('org_id').notNull().references(() => orgs.id),
+  clientId: text('client_id').notNull(),
+  sha256: text().notNull(),
+  contentType: text('content_type', { enum: ['image/png', 'image/jpeg', 'image/webp'] }).notNull(),
+  byteSize: integer('byte_size').notNull(),
+  width: integer().notNull(),
+  height: integer().notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  unique('assets_client_sha256').on(t.clientId, t.sha256),
+  foreignKey({ name: 'assets_client_in_org', columns: [t.clientId, t.orgId], foreignColumns: [clients.id, clients.orgId] }),
+])

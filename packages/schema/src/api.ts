@@ -49,3 +49,50 @@ export const SyncToken = z.object({
   expiresAt: z.iso.datetime(),
 })
 export type SyncToken = z.infer<typeof SyncToken>
+
+/** The image types we accept and decode with CanvasKit (ADR-0006: images are fills). */
+export const ImageType = z.enum(['image/png', 'image/jpeg', 'image/webp'])
+export type ImageType = z.infer<typeof ImageType>
+
+/** Largest original we accept, in bytes. */
+export const MAX_UPLOAD_BYTES = 30 * 1024 * 1024
+
+const Sha256 = z.string().regex(/^[0-9a-f]{64}$/, 'a SHA-256 is 64 lowercase hex digits')
+
+export const AssetSummary = z.object({
+  id: RecordId,
+  clientId: RecordId,
+  sha256: Sha256,
+  contentType: ImageType,
+  byteSize: z.number().int().positive(),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  createdAt: z.iso.datetime(),
+})
+export type AssetSummary = z.infer<typeof AssetSummary>
+
+/** Asks to upload an original; the API answers with the asset when it already has those bytes. */
+export const StartUpload = z.object({
+  sha256: Sha256,
+  byteSize: z.number().int().positive().max(MAX_UPLOAD_BYTES),
+  contentType: ImageType,
+})
+export type StartUpload = z.infer<typeof StartUpload>
+
+export const UploadTicket = z.union([
+  z.object({ asset: AssetSummary, upload: z.null() }),
+  /** PUT the bytes to url with these headers, then record the asset with its sha256. */
+  z.object({ asset: z.null(), upload: z.object({ url: z.url(), headers: z.record(z.string(), z.string()), expiresAt: z.iso.datetime() }) }),
+])
+export type UploadTicket = z.infer<typeof UploadTicket>
+
+export const RecordAsset = z.object({ sha256: Sha256 })
+export type RecordAsset = z.infer<typeof RecordAsset>
+
+/** An asset and a short-lived URL to read its original. */
+export const AssetLink = z.object({
+  asset: AssetSummary,
+  url: z.url(),
+  expiresAt: z.iso.datetime(),
+})
+export type AssetLink = z.infer<typeof AssetLink>

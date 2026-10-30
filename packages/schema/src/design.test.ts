@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseDesign, parseDesignIncrementally } from './index.ts'
+import { imageAssetIds, parseDesign, parseDesignIncrementally } from './index.ts'
 
 /**
  * Parses with the full parser, checking on the way that the incremental one agrees exactly,
@@ -183,5 +183,23 @@ describe('parseDesignIncrementally', () => {
     if (!again.success) throw new Error('expected a design')
     expect(again.design.nodes.r1).toBe(first.design.nodes.r1)
     expect(again.design).toEqual(first.design)
+  })
+})
+
+describe('imageAssetIds', () => {
+  it('finds image fills on pages, layers and format overrides, once each', () => {
+    const image = (assetId: string) => ({ type: 'image', assetId })
+    const parsed = parseDesign({
+      meta: { schemaVersion: 1, designId: 'd', name: 'D', kind: 'single', primaryFormatId: 'sq' },
+      formats: { sq: { name: 'Square', width: 100, height: 100, order: 'a0' }, st: { name: 'Story', width: 100, height: 200, order: 'a1' } },
+      pages: { p1: { name: 'P', order: 'a0', fills: [image('page-bg')] } },
+      nodes: {
+        g: { type: 'graphic', parentId: 'p1', index: 'a0', name: 'G', props: { x: 0, y: 0, width: 10, height: 10, shape: { kind: 'rect' }, fills: [{ type: 'solid', color: '#000000FF' }, image('photo')] } },
+        h: { type: 'graphic', parentId: 'p1', index: 'a1', name: 'H', props: { x: 0, y: 0, width: 10, height: 10, shape: { kind: 'rect' }, fills: [image('photo')] } },
+      },
+      overrides: { 'format:st': { g: { fills: [image('story-photo')] } } },
+    })
+    if (!parsed.success) throw new Error(parsed.errors.join('\n'))
+    expect(imageAssetIds(parsed.design)).toEqual(['page-bg', 'photo', 'story-photo'])
   })
 })

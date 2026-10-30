@@ -1,10 +1,12 @@
 // The API's routes. Every route below /clients needs a session, and reads and writes only that
 // session's org; a client or design of another org is answered as if it didn't exist.
 import type { Db } from '@razzlr/db'
-import { CreateClient, CreateDesign, type ApiError, type SyncToken } from '@razzlr/schema'
+import { CreateClient, CreateDesign, RecordAsset, StartUpload, type ApiError, type AssetLink, type SyncToken } from '@razzlr/schema'
+import type { Storage } from '@razzlr/storage'
 import { signSyncToken } from '@razzlr/sync-token'
 import { Hono, type MiddlewareHandler } from 'hono'
 import type { z } from 'zod'
+import { findAsset, InvalidUpload, listAssets, originalKey, recordAsset, SIGNED_URL_SECONDS, startUpload } from './assets.ts'
 import { createClient, createDesign, findClient, findDesign, InvalidContent, listClients, listDesigns } from './designs.ts'
 import type { Session, SessionOf } from './session.ts'
 
@@ -12,7 +14,7 @@ type Env = { Variables: { session: Session } }
 
 const error = (message: string): ApiError => ({ error: message })
 
-export function createApp({ db, sessionOf, syncSecret }: { db: Db; sessionOf: SessionOf; syncSecret: string }) {
+export function createApp({ db, storage, sessionOf, syncSecret }: { db: Db; storage: Storage; sessionOf: SessionOf; syncSecret: string }) {
   const app = new Hono<Env>()
 
   app.get('/health', (c) => c.json({ ok: true }))
@@ -80,6 +82,45 @@ export function createApp({ db, sessionOf, syncSecret }: { db: Db; sessionOf: Se
     if (!design) return c.json(error('No such design'), 404)
     const { token, expiresAt } = signSyncToken(syncSecret, { designId: design.id, orgId, userId })
     return c.json({ token, expiresAt: new Date(expiresAt).toISOString() } satisfies SyncToken)
+  })
+
+  // Images: uploads go straight to storage through a signed URL, then are recorded here (#35).
+  app.get('/clients/:clientId/assets', async (c) => {
+    const { orgId } = c.var.session
+    const client = await findClient(db, orgId, c.req.param('clientId'))
+    if (!client) return c.json(error('No such client'), 404)
+    return c.json(await listAssets(db, orgId, client.id))
+  })
+
+  app.post('/clients/:clientId/assets/uploads', async (c) => {
+    const { orgId } = c.var.session
+    const client = await findClient(db, orgId, c.req.param('clientId'))
+    if (!client) return c.json(error('No such client'), 404)
+    const input = await body(c.req.raw, StartUpload)
+    if (input instanceof Response) return input
+    return c.json(await startUpload(db, storage, orgId, client.id, input))
+  })
+
+  app.post('/clients/:clientId/assets', async (c) => {
+    const { orgId } = c.var.session
+    const client = await findClient(db, orgId, c.req.param('clientId'))
+    if (!client) return c.json(error('No such client'), 404)
+    const input = await body(c.req.raw, RecordAsset)
+    if (input instanceof Response) return input
+    try {
+      return c.json(await recordAsset(db, storage, orgId, client.id, input.sha256), 201)
+    } catch (e) {
+      if (e instanceof InvalidUpload) return c.json(error(e.message), 400)
+      throw e
+    }
+  })
+
+  app.get('/clients/:clientId/assets/:assetId', async (c) => {
+    const { orgId } = c.var.session
+    const asset = await findAsset(db, orgId, c.req.param('clientId'), { id: c.req.param('assetId') })
+    if (!asset) return c.json(error('No such asset'), 404)
+    const url = await storage.signedGet(originalKey(orgId, asset.sha256), SIGNED_URL_SECONDS)
+    return c.json({ asset, url, expiresAt: new Date(Date.now() + SIGNED_URL_SECONDS * 1000).toISOString() } satisfies AssetLink)
   })
 
   app.onError((e, c) => {
