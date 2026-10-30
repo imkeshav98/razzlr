@@ -4,7 +4,7 @@ import { HocuspocusProvider } from '@hocuspocus/provider'
 import { anchorOffset, CommandError, openSession, readDesign, textAnchor, type Session, type TextAnchor } from '@razzlr/doc'
 import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
 import {
-  caretAt, caretPosition, drawScene, layoutText, makeResources, render, renderDesign, type Scene, type SceneLayer,
+  caretAt, caretPosition, drawScene, layoutText, render, renderDesign, resourceCache, type ResourceCache, type Scene, type SceneLayer,
 } from '@razzlr/renderer'
 import type { Design } from '@razzlr/schema'
 import type { CanvasKit, Surface } from 'canvaskit-wasm'
@@ -59,7 +59,9 @@ export async function startEditor(options: EditorOptions) {
   const ck: CanvasKit = await CanvasKitInit({ locateFile: (file: string) => `/vendor/${file}` })
   const fontBytes = await Promise.all(FONT_FACES.map(async (f) => ({ family: f.family, bytes: await bytes(`/vendor/fonts/${f.file}`) })))
   const resourceBytes = { fonts: fontBytes, fallbackFamilies: [...FALLBACK_FAMILIES], images: {} }
-  const resources = makeResources(ck, resourceBytes)
+  // One cache for the screen and exports: fonts and images are decoded once for the editor's life.
+  const cache = resourceCache(ck)
+  cache.resources(resourceBytes)
   status('Connecting')
   const doc = new Y.Doc()
   const provider = new HocuspocusProvider({ url: syncUrl, name: designId, document: doc })
@@ -71,21 +73,22 @@ export async function startEditor(options: EditorOptions) {
       if (provider.synced) resolve()
       else provider.on('synced', () => resolve())
     })
-    return live(ck, resources, resourceBytes, doc, provider, options)
+    return live(ck, cache, resourceBytes, doc, provider, options)
   } catch (error) {
     provider.destroy()
     doc.destroy()
-    resources.delete()
+    cache.delete()
     throw error
   }
 }
 
 /** The editor once the design has arrived: everything it makes is freed by `destroy`. */
 function live(
-  ck: CanvasKit, resources: ReturnType<typeof makeResources>, resourceBytes: Parameters<typeof renderDesign>[4],
+  ck: CanvasKit, cache: ResourceCache, resourceBytes: Parameters<typeof renderDesign>[4],
   doc: Y.Doc, provider: HocuspocusProvider, options: EditorOptions,
 ) {
   const { canvas, overlay, designId } = options
+  const resources = cache.resources(resourceBytes)
   const status = options.onStatus ?? (() => {})
 
   const first = readDesign(doc)
@@ -313,7 +316,7 @@ function live(
       return () => drawListeners.delete(listener)
     },
     /** The export render of what this tab holds now, on the CPU surface, as RGBA. */
-    exportPixels: () => renderDesign(ck, session.design(), pageId, formatId, resourceBytes).pixels,
+    exportPixels: () => renderDesign(ck, session.design(), pageId, formatId, resourceBytes, cache).pixels,
     synced: () => provider.synced && provider.unsyncedChanges === 0,
     destroy() {
       listening.abort()
@@ -324,7 +327,7 @@ function live(
       session.destroy()
       provider.destroy()
       doc.destroy()
-      resources.delete()
+      cache.delete()
       surface.dispose()
     },
   }
