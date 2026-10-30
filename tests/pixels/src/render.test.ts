@@ -11,6 +11,7 @@ import { comparePixels, decodePng, encodePng, fixtureResources, OUTPUT_DIR, REFE
 const CHECKED = ['english-sale-ad', 'shapes-and-effects']
 /** Set to rewrite the reference images from the current renderer, after checking the output by eye. */
 const UPDATE = process.env.UPDATE_REFERENCES === '1'
+if (UPDATE && process.env.CI) throw new Error('UPDATE_REFERENCES rewrites the references, so CI must never set it')
 
 const ck = await loadCanvasKit()
 const resources = fixtureResources()

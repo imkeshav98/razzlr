@@ -22,8 +22,9 @@ export function renderOnCpu(ck: CanvasKit, json: unknown, pageId: string, format
   const scene = render(parsed.design, pageId, formatId)
   const surface = ck.MakeSurface(scene.width, scene.height)
   if (!surface) throw new Error(`CanvasKit could not make a ${scene.width}×${scene.height} CPU surface`)
-  const resources = makeResources(ck, bytes)
+  let resources: ReturnType<typeof makeResources> | undefined
   try {
+    resources = makeResources(ck, bytes)
     drawScene(ck, surface.getCanvas(), scene, resources)
     surface.flush()
     const image = surface.makeImageSnapshot()
@@ -36,7 +37,7 @@ export function renderOnCpu(ck: CanvasKit, json: unknown, pageId: string, format
     if (!(pixels instanceof Uint8Array) || !png) throw new Error('CanvasKit could not read back the rendered pixels')
     return { width: scene.width, height: scene.height, pixels, png }
   } finally {
-    resources.delete()
+    resources?.delete()
     surface.delete()
   }
 }

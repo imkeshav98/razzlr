@@ -19,8 +19,8 @@ type GraphicLayer = Extract<SceneLayer, { type: 'graphic' }>
 /** Blur radii in the schema are twice the Gaussian sigma, as in CSS box-shadow and design tools. */
 const sigma = (radius: number) => radius / 2
 
-/** Arabic, Hebrew, Syriac, Thaana, NKo and their presentation forms. */
-const RTL_CHAR = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/
+/** Hebrew, Arabic, Syriac, Thaana, NKo, their presentation forms, and the right-to-left blocks beyond the BMP. */
+const RTL_CHAR = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF\u{10800}-\u{10FFF}\u{1E800}-\u{1EFFF}]/u
 const STRONG_CHAR = /[\p{L}]/u
 
 /**
@@ -101,7 +101,9 @@ function withFilter(ck: CanvasKit, canvas: Canvas, filter: ImageFilter, draw: ()
 function dropShadow(ck: CanvasKit, effect: Extract<Effect, { type: 'dropShadow' }>) {
   const spread = effect.spread > 0 ? ck.ImageFilter.MakeDilate(effect.spread, effect.spread, null)
     : effect.spread < 0 ? ck.ImageFilter.MakeErode(-effect.spread, -effect.spread, null) : null
-  return ck.ImageFilter.MakeDropShadowOnly(effect.x, effect.y, sigma(effect.blur), sigma(effect.blur), color(ck, effect.color), spread)
+  const shadow = ck.ImageFilter.MakeDropShadowOnly(effect.x, effect.y, sigma(effect.blur), sigma(effect.blur), color(ck, effect.color), spread)
+  spread?.delete()
+  return shadow
 }
 
 const rectPath = (ck: CanvasKit, box: Box) => new ck.PathBuilder().addRect(ck.XYWHRect(box.x, box.y, box.width, box.height)).detachAndDelete()
@@ -116,6 +118,8 @@ function shapePath(ck: CanvasKit, layer: GraphicLayer): Path {
     case 'ellipse':
       return new ck.PathBuilder().addOval(ck.XYWHRect(x, y, width, height)).detachAndDelete()
     case 'path': {
+      // Path data is drawn at its own size, placed at x and y. Scaling it with width and height
+      // arrives with adapt, which is the first thing to resize a path per format.
       const parsed = ck.Path.MakeFromSVGString(shape.d)
       if (!parsed) throw new Error(`layer "${layer.id}" has path data CanvasKit can't read`)
       const builder = new ck.PathBuilder(parsed)

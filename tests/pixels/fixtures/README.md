@@ -4,7 +4,7 @@ The six spike designs from the spike spec (#1), as JSON the schema validates (`p
 
 | Fixture | What it stresses |
 |---|---|
-| english-sale-ad | the price in a group inside a clipping frame; mixed weights and sizes, letter spacing, a cropped photo fill, a linear gradient band |
+| english-sale-ad | the price in a group inside a clipping frame that cuts off the was-price; mixed weights and sizes, letter spacing, a cropped photo fill, a linear gradient band |
 | hindi-ad | Devanagari conjuncts and matras (क्ष, श्री, कि), Latin digits and a rupee price |
 | arabic-ad | right to left, joining forms, a Latin brand name and numbers inside Arabic, end alignment |
 | shapes-and-effects | ellipses, a path with a hole, a radial gradient, drop shadow, layer blur, opacity, blend modes |

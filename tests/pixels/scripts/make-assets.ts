@@ -8,7 +8,7 @@ import type { Canvas, CanvasKit } from 'canvaskit-wasm'
 const ck: CanvasKit = await loadCanvasKit()
 const ASSETS_DIR = join(import.meta.dirname, '..', 'assets')
 
-type Scene = (canvas: Canvas, w: number, h: number) => void
+type Painter = (canvas: Canvas, w: number, h: number) => void
 
 const paint = (setup: (p: InstanceType<CanvasKit['Paint']>) => void) => {
   const p = new ck.Paint()
@@ -21,7 +21,7 @@ const linear = (x0: number, y0: number, x1: number, y1: number, colors: string[]
 const radial = (x: number, y: number, r: number, colors: string[]) =>
   ck.Shader.MakeRadialGradient([x, y], r, colors.map((c) => ck.parseColorString(c)), null, ck.TileMode.Clamp)
 
-const studio = (top: string, bottom: string, spot: string): Scene => (canvas, w, h) => {
+const studio = (top: string, bottom: string, spot: string): Painter => (canvas, w, h) => {
   canvas.drawPaint(paint((p) => p.setShader(linear(0, 0, 0, h, [top, bottom]))))
   canvas.drawPaint(paint((p) => p.setShader(radial(w * 0.5, h * 0.45, h * 0.7, [spot, 'rgba(255,255,255,0)']))))
   canvas.drawOval(ck.XYWHRect(w * 0.18, h * 0.78, w * 0.64, h * 0.08), paint((p) => {
@@ -30,7 +30,7 @@ const studio = (top: string, bottom: string, spot: string): Scene => (canvas, w,
   }))
 }
 
-const sneaker: Scene = (canvas, w, h) => {
+const sneaker: Painter = (canvas, w, h) => {
   studio('#FFE8D1', '#F2B48C', 'rgba(255,255,255,0.8)')(canvas, w, h)
   const s = h / 1200
   canvas.save()
@@ -49,13 +49,13 @@ const sneaker: Scene = (canvas, w, h) => {
   canvas.restore()
 }
 
-const card = (top: string, bottom: string, shape: string): Scene => (canvas, w, h) => {
+const card = (top: string, bottom: string, shape: string): Painter => (canvas, w, h) => {
   studio(top, bottom, 'rgba(255,255,255,0.6)')(canvas, w, h)
   canvas.drawCircle(w * 0.5, h * 0.48, Math.min(w, h) * 0.26, paint((p) => p.setShader(radial(w * 0.44, h * 0.4, Math.min(w, h) * 0.3, ['#FFFFFF', shape]))))
   canvas.drawRect(ck.XYWHRect(w * 0.08, h * 0.08, w * 0.12, h * 0.02), paint((p) => p.setColor(ck.parseColorString(shape))))
 }
 
-const assets: Record<string, [number, number, Scene]> = {
+const assets: Record<string, [number, number, Painter]> = {
   sneaker: [1920, 1200, sneaker],
   'card-1': [1600, 1040, card('#E3F2FD', '#90CAF9', '#1E88E5')],
   'card-2': [1600, 1040, card('#FCE4EC', '#F48FB1', '#D81B60')],

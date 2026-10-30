@@ -155,7 +155,7 @@
       "props": {
         "x": 40,
         "y": 920,
-        "width": 640,
+        "width": 220,
         "height": 120,
         "clip": true,
         "fills": [

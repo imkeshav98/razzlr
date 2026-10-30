@@ -16,19 +16,18 @@ export function makeResources(ck: CanvasKit, bytes: ResourceBytes): Resources & 
   const fonts = ck.FontCollection.Make()
   fonts.setDefaultFontManager(provider)
   const images = new Map<string, Image>()
+  const free = () => {
+    for (const image of images.values()) image.delete()
+    fonts.delete()
+    provider.delete()
+  }
   for (const [id, encoded] of Object.entries(bytes.images)) {
     const image = ck.MakeImageFromEncoded(encoded)
-    if (!image) throw new Error(`CanvasKit can't decode the image for asset "${id}"`)
+    if (!image) {
+      free()
+      throw new Error(`CanvasKit can't decode the image for asset "${id}"`)
+    }
     images.set(id, image)
   }
-  return {
-    fonts,
-    fallbackFamilies: bytes.fallbackFamilies,
-    images,
-    delete() {
-      for (const image of images.values()) image.delete()
-      fonts.delete()
-      provider.delete()
-    },
-  }
+  return { fonts, fallbackFamilies: bytes.fallbackFamilies, images, delete: free }
 }

@@ -138,9 +138,6 @@ importers:
       '@razzlr/config':
         specifier: workspace:*
         version: link:../config
-      '@razzlr/fonts':
-        specifier: workspace:*
-        version: link:../fonts
       '@types/node':
         specifier: ^22.20.0
         version: 22.20.5
