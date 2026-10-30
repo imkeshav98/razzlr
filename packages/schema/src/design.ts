@@ -3,6 +3,21 @@ import { LAYER_PROPS, type LayerType } from './layers.ts'
 import { Paint } from './paint.ts'
 import { FormatId, FractionalIndex, NodeId, PageId } from './primitives.ts'
 
+/**
+ * What can't be changed about a layer, each on its own (as in Polotno): its position, its size and
+ * rotation, its content (text), its style, and whether it can be deleted. Locking a layer on the
+ * stage sets all five; a layer whose position is locked can't be picked on the stage.
+ */
+export const LayerLock = z.object({
+  move: z.boolean().default(false),
+  resize: z.boolean().default(false),
+  content: z.boolean().default(false),
+  style: z.boolean().default(false),
+  delete: z.boolean().default(false),
+})
+export type LayerLock = z.infer<typeof LayerLock>
+export const LOCK_FLAGS = ['move', 'resize', 'content', 'style', 'delete'] as const satisfies (keyof LayerLock)[]
+
 const nodeBase = {
   parentId: z.union([PageId, NodeId]),
   index: FractionalIndex,
@@ -10,6 +25,8 @@ const nodeBase = {
   role: z.enum([
     'headline', 'subhead', 'body', 'price', 'cta', 'logo', 'product', 'person', 'background', 'badge', 'decoration',
   ]).optional(),
+  /** Left out while nothing is locked. */
+  lock: LayerLock.optional(),
 }
 
 const layerOf = <T extends LayerType>(type: T) =>

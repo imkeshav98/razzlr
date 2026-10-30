@@ -1,4 +1,4 @@
-import { Format, FormatId, formatIdOf, formatSizeProblem, Layer, LAYER_PROPS, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
+import { Format, FormatId, formatIdOf, formatSizeProblem, Layer, LAYER_PROPS, LayerLock, LOCK_FLAGS, type Layer as LayerT, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
 import { generateKeyBetween } from 'fractional-indexing'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
@@ -38,6 +38,18 @@ const parentProblem = (design: Design, parentId: string) => {
   if (parent && parent.type !== 'frame' && parent.type !== 'group') return `parent "${parentId}" is a ${parent.type}, which can't hold layers`
   return undefined
 }
+
+/** The lock flag a change to a property needs clear: position, size and rotation, content or style. */
+export function lockFor(path: string): keyof LayerLock | null {
+  if (path === 'x' || path === 'y') return 'move'
+  if (path === 'width' || path === 'height' || path === 'rotation') return 'resize'
+  if (path === 'visible') return null
+  if (path === 'text' || path === 'runs') return 'content'
+  return 'style'
+}
+
+const lockProblem = (id: string, node: LayerT, flag: keyof LayerLock | null) =>
+  flag && node.lock?.[flag] ? `"${id}" is locked (${flag})` : undefined
 
 const LayerInput = z.object({
   type: z.enum(Object.keys(LAYER_PROPS) as [keyof typeof LAYER_PROPS]),
@@ -79,6 +91,8 @@ export const nodeUpdate = defineCommand({
       if (!node) return `no layer "${id}"`
       for (const path of Object.keys(patch)) {
         if (!Object.hasOwn(LAYER_PROPS[node.type].shape, path)) return `a ${node.type} has no property "${path}"`
+        const locked = lockProblem(id, node, lockFor(path))
+        if (locked) return locked
         if (scope === 'base' && node.type === 'text' && (path === 'text' || path === 'runs')) return 'change text with text.edit'
       }
       if (scope !== 'base') {
@@ -156,7 +170,15 @@ export const nodeMove = defineCommand({
 export const nodeDelete = defineCommand({
   name: 'node.delete',
   input: z.object({ ids: NodeId.array().min(1) }),
-  check: ({ design }, { ids }) => ids.map((id) => (design.nodes[id] ? undefined : `no layer "${id}"`)).find(Boolean),
+  check: ({ design }, { ids }) => {
+    for (const id of ids) {
+      const node = design.nodes[id]
+      if (!node) return `no layer "${id}"`
+      const locked = [id, ...descendants(design, id)].map((inner) => lockProblem(inner, design.nodes[inner] as LayerT, 'delete')).find(Boolean)
+      if (locked) return locked
+    }
+    return undefined
+  },
   apply: ({ r, design }, { ids }) => {
     const doomed = new Set<string>()
     const take = (id: string) => {
@@ -168,6 +190,115 @@ export const nodeDelete = defineCommand({
     // A tombstone, not a removal: undo then just clears the flag, and edits another tab makes
     // to the layer meanwhile land in a live map instead of being lost (see DELETED in design-doc.ts).
     for (const id of doomed) r.nodes.get(id)?.set(DELETED, true)
+  },
+})
+
+/** Sets some of layers' lock flags, keeping the others; a layer with nothing locked loses the field. */
+export const nodeLock = defineCommand({
+  name: 'node.lock',
+  input: z.object({ ids: NodeId.array().min(1), lock: z.object(Object.fromEntries(LOCK_FLAGS.map((flag) => [flag, z.boolean().optional()]))) }),
+  check: ({ design }, { ids }) => ids.map((id) => (design.nodes[id] ? undefined : `no layer "${id}"`)).find(Boolean),
+  apply: ({ r, design }, { ids, lock }) => {
+    for (const id of ids) {
+      const next = LayerLock.parse({ ...design.nodes[id]?.lock, ...lock })
+      if (LOCK_FLAGS.some((flag) => next[flag])) r.nodes.get(id)?.set('lock', next)
+      else r.nodes.get(id)?.delete('lock')
+    }
+  },
+})
+
+/** Each sibling list after a z-order change, as ids bottom to top. */
+function restack(order: string[], moving: Set<string>, to: 'forward' | 'backward' | 'front' | 'back') {
+  if (to === 'front') return [...order.filter((id) => !moving.has(id)), ...order.filter((id) => moving.has(id))]
+  if (to === 'back') return [...order.filter((id) => moving.has(id)), ...order.filter((id) => !moving.has(id))]
+  const next = [...order]
+  // One step past the nearest sibling that isn't moving; a moving block keeps its own order.
+  const up = to === 'forward'
+  for (let i = up ? next.length - 2 : 1; up ? i >= 0 : i < next.length; i += up ? -1 : 1) {
+    const id = next[i] as string
+    const j = up ? i + 1 : i - 1
+    if (!moving.has(id) || moving.has(next[j] as string)) continue
+    next[i] = next[j] as string
+    next[j] = id
+  }
+  return next
+}
+
+/**
+ * Brings layers forward or back one step, or to the front or back, among their siblings. Only the
+ * moved layers get new indexes, so a concurrent change to the others merges.
+ */
+export const nodeReorder = defineCommand({
+  name: 'node.reorder',
+  input: z.object({ ids: NodeId.array().min(1), to: z.enum(['forward', 'backward', 'front', 'back']) }),
+  check: ({ design }, { ids }) => ids.map((id) => (design.nodes[id] ? undefined : `no layer "${id}"`)).find(Boolean),
+  apply: ({ r, design }, { ids, to }) => {
+    const moving = new Set(ids)
+    const parents = new Set(ids.map((id) => design.nodes[id]?.parentId as string))
+    for (const parentId of parents) {
+      const before = childrenOf(design, parentId)
+      const indexOf = new Map(before.map(([id, node]) => [id, node.index]))
+      const after = restack(before.map(([id]) => id), moving, to)
+      // Runs of moved layers get indexes between the unmoved neighbours around them, unless the
+      // ones they have already sit in order there.
+      for (let i = 0; i < after.length; i++) {
+        if (!moving.has(after[i] as string)) continue
+        let end = i
+        while (end + 1 < after.length && moving.has(after[end + 1] as string)) end++
+        const run = after.slice(i, end + 1)
+        const low = i > 0 ? indexOf.get(after[i - 1] as string) ?? null : null
+        const high = end + 1 < after.length ? indexOf.get(after[end + 1] as string) ?? null : null
+        const current = run.map((id) => indexOf.get(id) as string)
+        const fits = current.every((index, k) => (k === 0 ? low === null || index > low : index > (current[k - 1] as string)))
+          && (high === null || (current.at(-1) as string) < high)
+        if (!fits) {
+          let at = low
+          for (const id of run) {
+            at = indexBetween(at, high)
+            indexOf.set(id, at)
+            r.nodes.get(id)?.set('index', at)
+          }
+        }
+        i = end
+      }
+    }
+  },
+})
+
+/**
+ * Copies layers with fresh ids, each with every layer under it and their overrides in every
+ * format; `place` says where each copied root goes. Returns the old id to new id map.
+ */
+function copyLayers(r: CommandContext['r'], design: Design, roots: string[], place: (root: string) => { parentId: string; index: string }) {
+  const ids = new Map<string, string>()
+  for (const root of roots) for (const old of [root, ...descendants(design, root)]) ids.set(old, nanoid())
+  for (const [old, fresh] of ids) {
+    const node = design.nodes[old]
+    if (!node) continue
+    const placed = roots.includes(old) ? place(old) : { parentId: ids.get(node.parentId) ?? node.parentId, index: node.index }
+    r.nodes.set(fresh, toYNode({ ...node, ...placed }))
+    for (const [scope, byNode] of Object.entries(design.overrides)) {
+      for (const [path, value] of Object.entries(byNode[old] ?? {})) r.overrides.set(overrideKey(scope, fresh, path), value)
+    }
+  }
+  return ids
+}
+
+/** Copies layers in place, each right above its original. Returns the copies' ids, in order. */
+export const nodeDuplicate = defineCommand({
+  name: 'node.duplicate',
+  input: z.object({ ids: NodeId.array().min(1) }),
+  check: ({ design }, { ids }) => ids.map((id) => (design.nodes[id] ? undefined : `no layer "${id}"`)).find(Boolean),
+  apply: ({ r, design }, { ids }) => {
+    // A layer inside another one being copied comes along with it.
+    const roots = ids.filter((id) => !ids.some((other) => other !== id && isInside(design, id, other)))
+    const copies = copyLayers(r, design, roots, (root) => {
+      const node = design.nodes[root] as LayerT
+      const siblings = childrenOf(design, node.parentId)
+      const next = siblings[siblings.findIndex(([id]) => id === root) + 1]?.[1].index ?? null
+      return { parentId: node.parentId, index: indexBetween(node.index, next) }
+    })
+    return roots.map((root) => copies.get(root) as string)
   },
 })
 
@@ -185,6 +316,8 @@ export const textEdit = defineCommand({
     const node = design.nodes[id]
     if (!node) return `no layer "${id}"`
     if (node.type !== 'text') return `"${id}" is a ${node.type}, not a text layer`
+    const locked = lockProblem(id, node, op.kind === 'style' ? 'style' : 'content')
+    if (locked) return locked
     const end = op.at + (op.kind === 'insert' ? 0 : op.length)
     if (end > node.props.text.length) return `the range ${op.at}–${end} runs past the end of the text (${node.props.text.length})`
     return undefined
@@ -241,15 +374,7 @@ export const pageDuplicate = defineCommand({
     const pages = pagesInOrder(design)
     const next = pages[pages.findIndex(([other]) => other === id) + 1]?.[1].order ?? null
     r.pages.set(newId, toYMap(Page.parse({ ...page, name: name ?? page.name, order: indexBetween(page.order, next) })))
-    const ids = new Map(descendants(design, id).map((old) => [old, nanoid()] as const))
-    for (const [old, fresh] of ids) {
-      const node = design.nodes[old]
-      if (!node) continue
-      r.nodes.set(fresh, toYNode({ ...node, parentId: node.parentId === id ? newId : ids.get(node.parentId) ?? newId }))
-      for (const [scope, byNode] of Object.entries(design.overrides)) {
-        for (const [path, value] of Object.entries(byNode[old] ?? {})) r.overrides.set(overrideKey(scope, fresh, path), value)
-      }
-    }
+    copyLayers(r, design, childrenOf(design, id).map(([child]) => child), (root) => ({ parentId: newId, index: (design.nodes[root] as LayerT).index }))
     return newId
   },
 })
@@ -377,6 +502,9 @@ export const COMMANDS = {
   'override.reset': overrideReset,
   'node.move': nodeMove,
   'node.delete': nodeDelete,
+  'node.lock': nodeLock,
+  'node.reorder': nodeReorder,
+  'node.duplicate': nodeDuplicate,
   'text.edit': textEdit,
   'page.add': pageAdd,
   'page.update': pageUpdate,

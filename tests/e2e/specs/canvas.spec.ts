@@ -157,6 +157,8 @@ test('a drag in the second format moves the layer there only; undo and override.
   await settle([page])
   expect(JSON.parse(await designOf(page)).overrides['format:story']?.['p1-box']).toBeUndefined()
   await page.keyboard.press('Escape')
+  // Off the stage, so no hover outline is drawn over the layer.
+  await page.mouse.move(0, 0)
   await expect.poll(async () => (await page.getByTestId('stage').screenshot()).equals(before), { timeout: 10_000 }).toBe(true)
   expect(errors).toEqual([])
 })

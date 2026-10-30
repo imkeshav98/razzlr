@@ -7,7 +7,7 @@ import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
 import {
   caretAt, caretPosition, drawPage, layerPictures, layoutText, paragraphCache, render, renderDesign, resourceCache, sceneMemo, type ResourceCache, type Resources, type Scene, type SceneLayer,
 } from '@razzlr/renderer'
-import { imageAssetIds, type Design } from '@razzlr/schema'
+import { imageAssetIds, LOCK_FLAGS, type Design } from '@razzlr/schema'
 import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from 'canvaskit-wasm'
 import canvasKitModule from 'canvaskit-wasm/full'
 import { IndexeddbPersistence } from 'y-indexeddb'
@@ -15,6 +15,10 @@ import * as Y from 'yjs'
 import { fit, toScreen, toWorld, visibleRect, zoomAt, type Camera, type Viewport } from './camera.ts'
 import { frameAt, frameGrid, intersects, type Frame, type Rect } from './grid.ts'
 import { hitTest, type Point } from './hit-test.ts'
+import { NUDGE, NUDGE_FAR, shortcutFor, type ShortcutAction } from './shortcuts.ts'
+import {
+  angleOf, boundsOf, carry, centreOf, cornersOf, handleAt, HANDLES, normalAngle, resize as resizeBox, round, scaleWithin, snapAngle, turn, type Box, type Handle,
+} from './transform.ts'
 
 // CommonJS whose types claim an ES default export; the bundler hands over the init function itself.
 const CanvasKitInit = canvasKitModule as unknown as typeof import('canvaskit-wasm').default
@@ -44,6 +48,8 @@ export interface EditorOptions {
 
 /** A layer as one frame shows it: selection, dragging and typing all happen in one frame. */
 interface Picked { id: string; frame: string }
+/** The selected layers, all in one frame, in the order they were picked. */
+interface Selection { ids: string[]; frame: string }
 /** The caret is anchored in the text, so edits arriving from other tabs carry it along. */
 interface Editing extends Picked { caret: TextAnchor; endGesture: () => void }
 /** What the select tool does with a drag on empty canvas and the hand tool with any drag. */
@@ -225,7 +231,9 @@ function live(
   let grid = frameGrid(design, focused)
   let camera: Camera = { x: 0, y: 0, zoom: 1 }
   let tool: Tool = 'select'
-  let selected: Picked | null = null
+  let selection: Selection | null = null
+  /** The layer under the pointer, outlined while nothing is being dragged. */
+  let hovered: Picked | null = null
   let editing: Editing | null = null
   /** Called after every redraw with the design it drew; the two-tab test times edits with it. */
   const drawListeners = new Set<(design: Design, at: number, info: DrawInfo) => void>()
@@ -305,6 +313,56 @@ function live(
     return { ...found, layer: found.layer, ...layoutText(ck, found.layer.props, resources) }
   }
 
+  /**
+   * A layer's box in one frame, read from the document: the base with the format's overrides.
+   * Hidden layers have one too, so they move with a group and stay selected.
+   */
+  function boxIn(frame: Frame, id: string, from: Design = session.design()): Box | null {
+    const node = from.nodes[id]
+    if (!node) return null
+    const p = { ...node.props, ...from.overrides[scope(frame)]?.[id] } as { x: number; y: number; width: number; height: number; rotation?: number }
+    return { x: p.x, y: p.y, width: p.width, height: p.height, rotation: p.rotation ?? 0 }
+  }
+  /** Locked in place layers can't be picked on the stage: a click goes to what lies beneath. */
+  const pickable = (layer: SceneLayer) => !design.nodes[layer.id]?.lock?.move
+  /** Drops selected layers that are gone, and the selection once none are left or its frame is. */
+  function keepSelection() {
+    if (!selection) return
+    const ids = selection.ids.filter((id) => design.nodes[id])
+    selection = ids.length > 0 && frameOf(selection.frame) ? { ...selection, ids } : null
+  }
+  /** Selected layers that aren't inside another selected layer: the ones a transform moves. */
+  function roots(from: Design = session.design()) {
+    const ids = selection?.ids ?? []
+    const inside = (id: string) => {
+      for (let up = from.nodes[id]?.parentId; up && from.nodes[up]; up = from.nodes[up]?.parentId) if (ids.includes(up)) return true
+      return false
+    }
+    return ids.filter((id) => from.nodes[id] && !inside(id))
+  }
+  /** The box the handles go on: a single layer's own, turned with it, or the unturned box around several. */
+  function selectionBox(): { frame: Frame; box: Box } | null {
+    const frame = selection && frameOf(selection.frame)
+    if (!frame || !selection) return null
+    const boxes = selection.ids.map((id) => boxIn(frame, id)).filter((b): b is Box => b !== null)
+    if (boxes.length === 0) return null
+    return { frame, box: boxes.length === 1 ? boxes[0] as Box : boundsOf(boxes) }
+  }
+  /**
+   * What a press on a layer picks: a selected layer it is in, so the selection moves whole, or
+   * else the layer on the page that holds it, so a click on a group's child picks the group.
+   */
+  function target(hitId: string, frame: string) {
+    const chain: string[] = []
+    for (let up: string | undefined = hitId; up && design.nodes[up]; up = design.nodes[up]?.parentId) chain.push(up)
+    const selected = selection?.frame === frame ? chain.find((id) => selection?.ids.includes(id)) : undefined
+    return selected ?? chain.at(-1) ?? hitId
+  }
+  function select(ids: string[], frame: string) {
+    selection = ids.length > 0 ? { ids, frame } : null
+    drawOverlay()
+  }
+
   const px = (n: number) => `${n}px`
   /** Screen pixels a frame needs before it gets a label. */
   const MIN_LABEL_WIDTH = 56
@@ -323,7 +381,7 @@ function live(
     const label = document.createElement('div')
     label.className = 'frame-label'
     label.dataset.frame = frame.key
-    if (selected?.frame === frame.key || editing?.frame === frame.key) label.dataset.active = ''
+    if (selection?.frame === frame.key || editing?.frame === frame.key) label.dataset.active = ''
     const at = toScreen(camera, frame)
     // A frame running off the stage's start keeps its label in view, along the part still showing.
     const left = Math.max(at.x, LABEL_INSET)
@@ -345,6 +403,63 @@ function live(
     return label
   }
 
+  /** Room the tool dock takes along the bottom of the stage, which the size label stays out of. */
+  const SIZE_CLEARANCE = 72
+  /** A box on the overlay, turned as the layer is. */
+  function outline(className: string, frame: Frame, box: Box) {
+    const el = document.createElement('div')
+    el.className = className
+    placeBox(el, frame, box)
+    if (box.rotation) el.style.transform = `rotate(${box.rotation}deg)`
+    return el
+  }
+
+  /** Each selected layer's outline, then the box with its handles and the size under it. */
+  function selectionParts() {
+    const outer = selectionBox()
+    if (!outer || !selection) return []
+    const { frame, box } = outer
+    const parts: HTMLElement[] = []
+    const several = selection.ids.length > 1
+    if (several) {
+      for (const id of selection.ids) {
+        const b = boxIn(frame, id, design)
+        if (!b) continue
+        const member = outline('selection-member', frame, b)
+        member.dataset.layer = id
+        parts.push(member)
+      }
+    }
+    const el = outline('selection', frame, box)
+    el.dataset.frame = frame.key
+    el.dataset.count = String(selection.ids.length)
+    if (!several) el.dataset.layer = selection.ids[0]
+    // Handles only once the box is big enough on screen to grab them apart.
+    if (!editing && Math.min(box.width, box.height) * camera.zoom >= 2 * HANDLE_SIZE) {
+      for (const h of HANDLES) {
+        const handle = document.createElement('div')
+        handle.className = 'handle'
+        handle.dataset.handle = h
+        const at = handleAt(h)
+        Object.assign(handle.style, { left: `${at.x * 100}%`, top: `${at.y * 100}%` })
+        el.append(handle)
+      }
+    }
+    parts.push(el)
+    if (!editing) {
+      const corners = cornersOf(box).map((p) => toScreen(camera, { x: frame.x + p.x, y: frame.y + p.y }))
+      const size = document.createElement('div')
+      size.className = 'selection-size'
+      size.textContent = `${round(box.width, 0)} × ${round(box.height, 0)}`
+      // Under the box, or over it when the tool dock along the stage's bottom would cover it.
+      const below = Math.max(...corners.map((c) => c.y)) + 8
+      const top = below + 24 > viewport.height - SIZE_CLEARANCE ? Math.min(...corners.map((c) => c.y)) - 26 : below
+      Object.assign(size.style, { left: px((Math.min(...corners.map((c) => c.x)) + Math.max(...corners.map((c) => c.x))) / 2), top: px(top) })
+      parts.push(size)
+    }
+    return parts
+  }
+
   let drawnFrames: Frame[] = []
   function drawOverlay() {
     const parts: HTMLElement[] = []
@@ -352,15 +467,20 @@ function live(
       const label = frameLabel(frame, drawnFrames)
       if (label) parts.push(label)
     }
-    const picked = pickedLayer(selected)
-    if (picked) {
-      const box = document.createElement('div')
-      box.className = 'selection'
-      box.dataset.layer = picked.layer.id
-      box.dataset.frame = picked.frame.key
-      placeBox(box, picked.frame, picked.layer.props)
-      box.style.transform = `rotate(${picked.layer.props.rotation}deg)`
-      parts.push(box)
+    const hover = !gesture && hovered && !selection?.ids.includes(hovered.id) ? hovered : null
+    const hoverFrame = hover && frameOf(hover.frame)
+    const hoverBox = hoverFrame && hover && boxIn(hoverFrame, hover.id, design)
+    if (hoverFrame && hoverBox) parts.push(outline('hover', hoverFrame, hoverBox))
+    parts.push(...selectionParts())
+    if (gesture?.kind === 'marquee') {
+      const marquee = document.createElement('div')
+      marquee.className = 'marquee'
+      const from = toScreen(camera, gesture.from)
+      const to = toScreen(camera, gesture.to)
+      Object.assign(marquee.style, {
+        left: px(Math.min(from.x, to.x)), top: px(Math.min(from.y, to.y)), width: px(Math.abs(to.x - from.x)), height: px(Math.abs(to.y - from.y)),
+      })
+      parts.push(marquee)
     }
     const text = editingParagraph()
     const offset = editing && anchorOffset(doc, editing.caret)
@@ -391,7 +511,7 @@ function live(
     design = session.design()
     if (focused && !design.formats[focused]) focused = null
     grid = frameGrid(design, focused)
-    if (selected && !pickedLayer(selected)) selected = null
+    keepSelection()
     if (editing && !pickedLayer(editing)) stopEditing()
     if (!surface) return
 
@@ -435,6 +555,7 @@ function live(
     }
     c.restore()
     surface.flush()
+    rehover()
     drawOverlay()
     const info = { ms: performance.now() - started, drawn: drawnFrames.length, frames: grid.frames.length, recorded }
     const at = performance.timeOrigin + performance.now()
@@ -519,10 +640,11 @@ function live(
     if (frame) setCamera(fit(frame, viewport))
   }
   function fitSelection() {
-    const picked = pickedLayer(selected)
-    if (!picked) return fitAll()
-    const { frame, layer } = picked
-    setCamera(fit({ x: frame.x + layer.props.x, y: frame.y + layer.props.y, width: layer.props.width, height: layer.props.height }, viewport))
+    const outer = selectionBox()
+    if (!outer) return fitAll()
+    const { frame, box } = outer
+    const b = boundsOf([box])
+    setCamera(fit({ x: frame.x + b.x, y: frame.y + b.y, width: b.width, height: b.height }, viewport))
   }
   const zoomTo = (zoom: number, at: Point = centre()) => setCamera(zoomAt(camera, at, zoom))
 
@@ -551,12 +673,175 @@ function live(
     return offset
   }
 
-  let drag: { id: string; frame: Frame; from: Point; x: number; y: number; end: () => void } | null = null
+  /** What a drag on the stage is doing, from pointer down to up. */
+  type Gesture =
+    | { kind: 'move'; frame: Frame; from: Point; boxes: Map<string, Box>; end: () => void }
+    | { kind: 'resize'; frame: Frame; handle: Handle; outer: Box; grab: Point; roots: string[]; boxes: Map<string, Box>; end: () => void }
+    | { kind: 'rotate'; frame: Frame; outer: Box; from: number; roots: string[]; boxes: Map<string, Box>; end: () => void }
+    | { kind: 'marquee'; from: Point; to: Point; base: string[]; baseFrame: string | null }
+  let gesture: Gesture | null = null
+  /** A click on one of several selected layers selects it alone, unless the pointer moves first. */
+  let clickedAlone: string | null = null
   let pan: { from: Point; camera: Camera } | null = null
   let spaceHeld = false
   const panning = () => tool === 'hand' || spaceHeld
+
+  /** The boxes a transform changes: each root and every layer under it, as they are now. */
+  function startBoxes(frame: Frame, ids: string[]) {
+    const now = session.design()
+    const boxes = new Map<string, Box>()
+    const add = (id: string) => {
+      const box = boxIn(frame, id, now)
+      if (box) boxes.set(id, box)
+      for (const [child] of childrenOf(now, id)) add(child)
+    }
+    for (const id of ids) add(id)
+    return boxes
+  }
+  /** What each gesture has written so far, by its start boxes: `<id>|<property>`. */
+  const written = new WeakMap<Map<string, Box>, Set<string>>()
+  /**
+   * Writes new boxes as this format's overrides: the properties the gesture changes from where it
+   * started, including one it changed and has now put back. The rest is left to other tabs.
+   */
+  function writeBoxes(frame: Frame, start: Map<string, Box>, next: Map<string, Box>) {
+    const now = session.design()
+    const wrote = written.get(start) ?? new Set<string>()
+    written.set(start, wrote)
+    for (const [id, box] of next) {
+      const was = start.get(id)
+      const current = boxIn(frame, id, now)
+      const patch: Partial<Box> = {}
+      for (const key of ['x', 'y', 'width', 'height', 'rotation'] as const) {
+        if ((box[key] !== was?.[key] || wrote.has(`${id}|${key}`)) && box[key] !== current?.[key]) patch[key] = box[key]
+      }
+      for (const key of Object.keys(patch)) wrote.add(`${id}|${key}`)
+      // Another tab may delete or lock a layer mid-drag; the drag then just leaves it be.
+      if (Object.keys(patch).length > 0) runQuietly(() => session.run('node.update', { ids: [id], scope: scope(frame), patch }))
+    }
+  }
+  /** Every layer under `id` in the document, nearest first. */
+  const under = (id: string, from: Design): string[] => childrenOf(from, id).flatMap(([child]) => [child, ...under(child, from)])
+
+  function moveTo(g: Extract<Gesture, { kind: 'move' }>, p: Point, axisLock: boolean) {
+    let dx = p.x - g.from.x
+    let dy = p.y - g.from.y
+    // Shift keeps a move to one axis, whichever it has gone further along.
+    if (axisLock) {
+      if (Math.abs(dx) > Math.abs(dy)) dy = 0
+      else dx = 0
+    }
+    const next = new Map([...g.boxes].map(([id, b]) => [id, { ...b, x: Math.round(b.x + dx), y: Math.round(b.y + dy) }]))
+    writeBoxes(g.frame, g.boxes, next)
+  }
+
+  function resizeTo(g: Extract<Gesture, { kind: 'resize' }>, p: Point, keepRatio: boolean, fromCentre: boolean) {
+    // The handle follows the pointer from where it was grabbed, so a press off its centre doesn't jump.
+    const at = handleAt(g.handle)
+    const handle = turn({ x: g.outer.x + at.x * g.outer.width, y: g.outer.y + at.y * g.outer.height }, centreOf(g.outer), g.outer.rotation)
+    const outer = resizeBox(g.outer, g.handle, { x: handle.x + p.x - g.grab.x, y: handle.y + p.y - g.grab.y }, { keepRatio, fromCentre })
+    const next = new Map<string, Box>()
+    const now = session.design()
+    for (const root of g.roots) {
+      const was = g.boxes.get(root)
+      if (!was) continue
+      const box = g.roots.length === 1 ? outer : scaleWithin(was, g.outer, outer)
+      next.set(root, box)
+      // Layers inside a group or frame keep their place in it.
+      for (const id of under(root, now)) {
+        const inner = g.boxes.get(id)
+        if (inner) next.set(id, carry(inner, was, box))
+      }
+    }
+    writeBoxes(g.frame, g.boxes, new Map([...next].map(([id, b]) => [id, { ...b, x: round(b.x), y: round(b.y), width: round(b.width), height: round(b.height) }])))
+  }
+
+  function rotateTo(g: Extract<Gesture, { kind: 'rotate' }>, p: Point, snap: boolean) {
+    const centre = centreOf(g.outer)
+    const turned = angleOf(p, centre) - g.from
+    const next = new Map<string, Box>()
+    const now = session.design()
+    if (g.roots.length === 1) {
+      // One layer: its own angle snaps with shift. What is inside it turns with it as it is drawn.
+      const root = g.roots[0] as string
+      const angle = g.outer.rotation + turned
+      next.set(root, { ...g.outer, rotation: round(normalAngle(snap ? snapAngle(angle) : angle)) })
+    } else {
+      // Several: each turns about the selection's centre, by an angle that snaps with shift.
+      const delta = snap ? snapAngle(turned) : turned
+      for (const root of g.roots) {
+        const was = g.boxes.get(root)
+        if (!was) continue
+        const c = centreOf(was)
+        const moved = turn(c, centre, delta)
+        const dx = moved.x - c.x
+        const dy = moved.y - c.y
+        next.set(root, { ...was, x: round(was.x + dx), y: round(was.y + dy), rotation: round(normalAngle(was.rotation + delta)) })
+        for (const id of under(root, now)) {
+          const inner = g.boxes.get(id)
+          if (inner) next.set(id, { ...inner, x: round(inner.x + dx), y: round(inner.y + dy) })
+        }
+      }
+    }
+    writeBoxes(g.frame, g.boxes, next)
+  }
+
+  /** Top-level layers the marquee touches on the page it covers, with what was selected before. */
+  function marqueeSelect(g: Extract<Gesture, { kind: 'marquee' }>) {
+    const rect = { x: Math.min(g.from.x, g.to.x), y: Math.min(g.from.y, g.to.y), width: Math.abs(g.to.x - g.from.x), height: Math.abs(g.to.y - g.from.y) }
+    const frame = frameAt(grid.frames, g.from) ?? grid.frames.find((f) => intersects(f, rect))
+    if (!frame) return
+    const local = { x: rect.x - frame.x, y: rect.y - frame.y, width: rect.width, height: rect.height }
+    const hits = cached(frame).scene.layers
+      .filter((layer) => pickable(layer) && intersects(boundsOf([{ ...layer.props }]), local))
+      .map((layer) => layer.id)
+    const base = g.baseFrame === frame.key ? g.base : []
+    selection = hits.length + base.length > 0 ? { frame: frame.key, ids: [...base, ...hits.filter((id) => !base.includes(id))] } : null
+  }
+
+  /** Screen size of a handle, and how far from it a press still grabs it. */
+  const HANDLE_SIZE = 8
+  const HANDLE_REACH = 7
+  /** How far outside a corner a press turns the selection. */
+  const ROTATE_REACH = 24
+
+  /** The handle under a screen point: one to resize by, or the zone outside a corner to turn by. */
+  function handleUnder(screen: Point): { kind: 'resize'; handle: Handle } | { kind: 'rotate'; corner: number } | null {
+    const outer = selectionBox()
+    if (!outer || editing) return null
+    const { frame, box } = outer
+    const onScreen = (p: Point) => toScreen(camera, { x: frame.x + p.x, y: frame.y + p.y })
+    const c = centreOf(box)
+    const dist = (p: Point) => Math.hypot(p.x - screen.x, p.y - screen.y)
+    if (Math.min(box.width, box.height) * camera.zoom >= 2 * HANDLE_SIZE) {
+      for (const handle of HANDLES) {
+        const at = handleAt(handle)
+        if (dist(onScreen(turn({ x: box.x + at.x * box.width, y: box.y + at.y * box.height }, c, box.rotation))) <= HANDLE_REACH) return { kind: 'resize', handle }
+      }
+    }
+    const world = toWorld(camera, screen)
+    const local = turn({ x: world.x - frame.x, y: world.y - frame.y }, c, -box.rotation)
+    const inside = local.x >= box.x && local.x <= box.x + box.width && local.y >= box.y && local.y <= box.y + box.height
+    if (inside) return null
+    const corner = cornersOf(box).findIndex((p) => dist(onScreen(p)) <= ROTATE_REACH)
+    return corner === -1 ? null : { kind: 'rotate', corner }
+  }
+
+  /** Resize cursors point along the handle's direction as the box is turned. */
+  const RESIZE_CURSORS = ['ew-resize', 'nwse-resize', 'ns-resize', 'nesw-resize']
+  const HANDLE_ANGLE: Record<Handle, number> = { e: 0, se: 45, s: 90, sw: 135, w: 180, nw: 225, n: 270, ne: 315 }
+  const ROTATE_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M6 15a7 7 0 1 1 3 4.7" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/><path d="M6 15a7 7 0 1 1 3 4.7" fill="none" stroke="black" stroke-width="1.75" stroke-linecap="round"/><path d="M3 12l3 3.5 3.5-3" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12l3 3.5 3.5-3" fill="none" stroke="black" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>')}") 12 12, crosshair`
+  let hoverCursor = ''
   const showCursor = () => {
-    canvas.style.cursor = pan ? 'grabbing' : panning() ? 'grab' : ''
+    canvas.style.cursor = pan ? 'grabbing' : panning() ? 'grab' : hoverCursor
+  }
+  function cursorFor(screen: Point) {
+    if (gesture?.kind === 'resize' || gesture?.kind === 'rotate') return
+    const under = handleUnder(screen)
+    const rotation = selectionBox()?.box.rotation ?? 0
+    hoverCursor = !under ? '' : under.kind === 'rotate' ? ROTATE_CURSOR
+      : RESIZE_CURSORS[Math.round(((((HANDLE_ANGLE[under.handle] + rotation) % 180) + 180) % 180) / 45) % 4] ?? ''
+    showCursor()
   }
 
   canvas.addEventListener('pointerdown', (e) => {
@@ -569,50 +854,129 @@ function live(
       return
     }
     if (e.button !== 0) return
+    const screen = screenOf(e)
     const at = pointIn(e)
-    const hit = at && hitTest(cached(at.frame).scene.layers, at.p)
-    if (at && editing && hit?.id === editing.id && editing.frame === at.frame.key) {
+    const deepest = at && hitTest(cached(at.frame).scene.layers, at.p, pickable)
+    if (at && editing && deepest?.id === editing.id && editing.frame === at.frame.key) {
       editing.caret = textAnchor(doc, editing.id, caretFromPoint(at.p))
       drawOverlay()
       return
     }
     stopEditing()
-    selected = at && hit ? { id: hit.id, frame: at.frame.key } : null
-    drawOverlay()
-    if (!at || !hit) return
+    clickedAlone = null
+    const grabbed = handleUnder(screen)
+    const outer = selectionBox()
+    if (grabbed && outer && selection) {
+      canvas.setPointerCapture(e.pointerId)
+      const ids = roots()
+      const boxes = startBoxes(outer.frame, ids)
+      const end = session.beginGesture()
+      const world = toWorld(camera, screen)
+      const grab = { x: world.x - outer.frame.x, y: world.y - outer.frame.y }
+      if (grabbed.kind === 'resize') gesture = { kind: 'resize', frame: outer.frame, handle: grabbed.handle, outer: outer.box, grab, roots: ids, boxes, end }
+      else gesture = { kind: 'rotate', frame: outer.frame, outer: outer.box, from: angleOf(grab, centreOf(outer.box)), roots: ids, boxes, end }
+      drawOverlay()
+      return
+    }
+    const inSelection = (id: string) => selection?.frame === at?.frame.key && selection?.ids.includes(id)
+    // Inside the box around several selected layers, a press moves them all, gaps included.
+    const inOuter = at && outer && selection && selection.ids.length > 1 && outer.frame.key === at.frame.key
+      && at.p.x >= outer.box.x && at.p.x <= outer.box.x + outer.box.width && at.p.y >= outer.box.y && at.p.y <= outer.box.y + outer.box.height
+    const hit = at && deepest ? { id: target(deepest.id, at.frame.key) } : null
+    if (at && hit) {
+      if (e.shiftKey) {
+        // Shift adds a layer to the selection, or takes it out again.
+        if (inSelection(hit.id) && selection) {
+          select(selection.ids.filter((id) => id !== hit.id), selection.frame)
+          return
+        }
+        select(selection?.frame === at.frame.key ? [...selection.ids, hit.id] : [hit.id], at.frame.key)
+      } else if (inSelection(hit.id)) {
+        if ((selection?.ids.length ?? 0) > 1) clickedAlone = hit.id
+      } else {
+        select([hit.id], at.frame.key)
+      }
+    } else if (!inOuter) {
+      // Empty canvas: a marquee, adding to the selection with shift.
+      canvas.setPointerCapture(e.pointerId)
+      const from = toWorld(camera, screen)
+      const base = e.shiftKey ? selection?.ids ?? [] : []
+      const baseFrame = e.shiftKey ? selection?.frame ?? null : null
+      if (!e.shiftKey) selection = null
+      gesture = { kind: 'marquee', from, to: from, base, baseFrame }
+      drawOverlay()
+      return
+    }
+    const frame = at && frameOf(selection?.frame)
+    if (!at || !frame) return
     canvas.setPointerCapture(e.pointerId)
-    drag = { id: hit.id, frame: at.frame, from: at.p, x: hit.props.x, y: hit.props.y, end: session.beginGesture() }
+    gesture = { kind: 'move', frame, from: at.p, boxes: startBoxes(frame, roots()), end: session.beginGesture() }
+    drawOverlay()
   }, on)
+
+  /** Where the pointer last was over the stage, so the hover outline follows edits under it. */
+  let pointer: MouseEvent | null = null
+  function rehover() {
+    const at = pointer && !gesture && !panning() ? pointIn(pointer) : null
+    const hit = at && hitTest(cached(at.frame).scene.layers, at.p, pickable)
+    const next = at && hit ? { id: target(hit.id, at.frame.key), frame: at.frame.key } : null
+    const changed = next?.id !== hovered?.id || next?.frame !== hovered?.frame
+    hovered = next
+    return changed
+  }
+
   canvas.addEventListener('pointermove', (e) => {
+    pointer = e
     if (pan) {
       setCamera({ ...pan.camera, x: pan.camera.x + e.clientX - pan.from.x, y: pan.camera.y + e.clientY - pan.from.y })
       return
     }
-    if (!drag) return
-    const world = toWorld(camera, screenOf(e))
-    const { id, frame } = drag
-    const x = Math.round(drag.x + world.x - frame.x - drag.from.x)
-    const y = Math.round(drag.y + world.y - frame.y - drag.from.y)
-    // A move writes this format's override; the other formats keep their layout. Another tab may
-    // delete the layer mid-drag; the drag then just stops moving anything.
-    runQuietly(() => session.run('node.update', { ids: [id], scope: scope(frame), patch: { x, y } }))
+    const screen = screenOf(e)
+    if (!gesture) {
+      // Hovering: outline the layer under the pointer and show what a press on a handle would do.
+      cursorFor(screen)
+      if (rehover()) drawOverlay()
+      return
+    }
+    const world = toWorld(camera, screen)
+    if (gesture.kind === 'marquee') {
+      gesture.to = world
+      marqueeSelect(gesture)
+      drawOverlay()
+      return
+    }
+    clickedAlone = null
+    const p = { x: world.x - gesture.frame.x, y: world.y - gesture.frame.y }
+    if (gesture.kind === 'move') moveTo(gesture, p, e.shiftKey)
+    else if (gesture.kind === 'resize') resizeTo(gesture, p, e.shiftKey, e.altKey)
+    else rotateTo(gesture, p, e.shiftKey)
   }, on)
+
   const endDrag = () => {
-    drag?.end()
-    drag = null
+    if (gesture && gesture.kind !== 'marquee') gesture.end()
+    if (clickedAlone && selection) select([clickedAlone], selection.frame)
+    clickedAlone = null
+    gesture = null
     pan = null
     showCursor()
+    drawOverlay()
   }
   canvas.addEventListener('pointerup', endDrag, on)
   canvas.addEventListener('pointercancel', endDrag, on)
+  canvas.addEventListener('pointerleave', () => {
+    pointer = null
+    if (!hovered) return
+    hovered = null
+    drawOverlay()
+  }, on)
   canvas.addEventListener('dblclick', (e) => {
     if (panning()) return
     const at = pointIn(e)
-    const hit = at && hitTest(cached(at.frame).scene.layers, at.p)
-    if (!at || hit?.type !== 'text') return
+    const hit = at && hitTest(cached(at.frame).scene.layers, at.p, pickable)
+    if (!at || hit?.type !== 'text' || design.nodes[hit.id]?.lock?.content) return
     stopEditing()
-    selected = { id: hit.id, frame: at.frame.key }
-    editing = { ...selected, caret: textAnchor(doc, hit.id, 0), endGesture: session.beginGesture() }
+    selection = { ids: [hit.id], frame: at.frame.key }
+    editing = { id: hit.id, frame: at.frame.key, caret: textAnchor(doc, hit.id, 0), endGesture: session.beginGesture() }
     editing.caret = textAnchor(doc, hit.id, caretFromPoint(at.p))
     drawOverlay()
   }, on)
@@ -638,43 +1002,121 @@ function live(
   const inField = (target: EventTarget | null) =>
     target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
 
-  /** Canvas keys: zoom shortcuts and space to pan. Returns whether it handled the key. */
-  function viewKey(e: KeyboardEvent) {
-    const mod = e.metaKey || e.ctrlKey
-    if (e.shiftKey && !mod && e.code === 'Digit1') fitAll()
-    else if (e.shiftKey && !mod && e.code === 'Digit2') fitSelection()
-    else if ((e.shiftKey && !mod && e.code === 'Digit0') || (mod && e.key === '0')) zoomTo(1)
-    else if (mod && (e.key === '=' || e.key === '+')) zoomTo(camera.zoom * ZOOM_STEP)
-    else if (mod && e.key === '-') zoomTo(camera.zoom / ZOOM_STEP)
-    else if (e.code === 'Space' && !mod) {
-      if (!spaceHeld) {
-        spaceHeld = true
-        showCursor()
+  /** Moves the selection by whole pixels in its format, one undo step per press. */
+  function nudge(dx: number, dy: number) {
+    const frame = selection && frameOf(selection.frame)
+    if (!frame) return
+    const boxes = startBoxes(frame, roots())
+    session.gesture(() => writeBoxes(frame, boxes, new Map([...boxes].map(([id, b]) => [id, { ...b, x: b.x + dx, y: b.y + dy }]))))
+  }
+
+  /** The top-level layers of the selection's page, or the first page's, that can be picked. */
+  function selectAll() {
+    const frame = frameOf(selection?.frame) ?? frameOf(`${firstPage()}/${design.meta.primaryFormatId}`) ?? grid.frames[0]
+    if (!frame) return
+    select(cached(frame).scene.layers.filter(pickable).map((layer) => layer.id), frame.key)
+  }
+
+  /**
+   * Does what a shortcut names. Returns whether there was anything to do it to; the keys that act
+   * on the selection do nothing without one.
+   */
+  function perform(action: ShortcutAction): boolean {
+    const view: Partial<Record<ShortcutAction, () => void>> = {
+      undo: () => session.undo(),
+      redo: () => session.redo(),
+      zoomToFit: fitAll,
+      zoomToSelection: fitSelection,
+      zoomTo100: () => zoomTo(1),
+      zoomIn: () => zoomTo(camera.zoom * ZOOM_STEP),
+      zoomOut: () => zoomTo(camera.zoom / ZOOM_STEP),
+      selectAll,
+    }
+    const viewAction = view[action]
+    if (viewAction) {
+      if (action === 'undo' || action === 'redo') {
+        endDrag()
+        stopEditing()
       }
-    } else return false
+      viewAction()
+      return true
+    }
+    const frame = selection && frameOf(selection.frame)
+    if (!selection || !frame) return false
+    const ids = roots()
+    const nodes = session.design().nodes
+    const far = action.endsWith('Far') ? NUDGE_FAR : NUDGE
+    switch (action) {
+      case 'deselect': select([], frame.key)
+        break
+      case 'delete':
+        if (runQuietly(() => session.run('node.delete', { ids }))) select([], frame.key)
+        break
+      case 'duplicate': {
+        let copies: string[] = []
+        if (runQuietly(() => { copies = session.run('node.duplicate', { ids }) })) select(copies, frame.key)
+        break
+      }
+      case 'bringForward': runQuietly(() => session.run('node.reorder', { ids, to: 'forward' }))
+        break
+      case 'sendBackward': runQuietly(() => session.run('node.reorder', { ids, to: 'backward' }))
+        break
+      case 'bringToFront': runQuietly(() => session.run('node.reorder', { ids, to: 'front' }))
+        break
+      case 'sendToBack': runQuietly(() => session.run('node.reorder', { ids, to: 'back' }))
+        break
+      case 'lock': {
+        // Locks every flag, or unlocks them all when every selected layer is already locked.
+        const locked = selection.ids.every((id) => LOCK_FLAGS.every((flag) => nodes[id]?.lock?.[flag]))
+        runQuietly(() => session.run('node.lock', { ids: selection?.ids ?? [], lock: Object.fromEntries(LOCK_FLAGS.map((flag) => [flag, !locked])) }))
+        break
+      }
+      case 'hide': {
+        // Hidden in this format only, like a move; the layer stays selected so it can be shown again.
+        const shown = selection.ids.some((id) => visibleIn(frame, id))
+        runQuietly(() => session.run('node.update', { ids: selection?.ids ?? [], scope: scope(frame), patch: { visible: !shown } }))
+        break
+      }
+      case 'nudgeLeft': case 'nudgeLeftFar': nudge(-far, 0)
+        break
+      case 'nudgeRight': case 'nudgeRightFar': nudge(far, 0)
+        break
+      case 'nudgeUp': case 'nudgeUpFar': nudge(0, -far)
+        break
+      case 'nudgeDown': case 'nudgeDownFar': nudge(0, far)
+        break
+      default: return false
+    }
+    drawOverlay()
     return true
+  }
+  const visibleIn = (frame: Frame, id: string) => {
+    const now = session.design()
+    const value = now.overrides[scope(frame)]?.[id]?.visible ?? now.nodes[id]?.props.visible
+    return value !== false
   }
 
   function onKey(e: KeyboardEvent) {
     if (inField(e.target)) return
-    const mod = e.metaKey || e.ctrlKey
-    if (mod && e.key.toLowerCase() === 'z') {
+    const action = shortcutFor(e)
+    if (action === 'undo' || action === 'redo') {
       e.preventDefault()
-      endDrag()
-      stopEditing()
-      if (e.shiftKey) session.redo()
-      else session.undo()
+      perform(action)
       return
     }
     if (!editing) {
-      if (viewKey(e)) {
+      if (e.code === 'Space' && !(e.metaKey || e.ctrlKey)) {
         e.preventDefault()
-      } else if (e.key === 'Escape') {
-        selected = null
-        drawOverlay()
+        if (!spaceHeld) {
+          spaceHeld = true
+          showCursor()
+        }
+      } else if (action && perform(action)) {
+        e.preventDefault()
       }
       return
     }
+    const mod = e.metaKey || e.ctrlKey
     // The document, not the last drawn scene: keys can come faster than redraws.
     const node = session.design().nodes[editing.id]
     if (node?.type !== 'text') return
@@ -740,9 +1182,19 @@ function live(
     doc,
     /** The design as the document holds it now, which can be ahead of the last redraw. */
     design: () => session.design(),
-    selected: () => selected?.id ?? null,
+    /** The first selected layer, or null. */
+    selected: () => selection?.ids[0] ?? null,
+    /** Every selected layer, in the order they were picked. */
+    selection: () => [...(selection?.ids ?? [])],
     /** The frame the selection is in, as `<pageId>/<formatId>`. */
-    selectedFrame: () => selected?.frame ?? null,
+    selectedFrame: () => selection?.frame ?? null,
+    /** Selects layers in one frame, the first page in the primary format by default; none clears it. */
+    select(ids: string[], pageId?: string, formatId?: string) {
+      stopEditing()
+      select(ids.filter((id) => session.design().nodes[id]), defaultFrame(pageId, formatId).key)
+    },
+    /** Does what a shortcut does, as if its key was pressed on the stage. */
+    perform,
     frames: () => frameGrid(session.design(), focused).frames,
     /** The format the focus view shows alone, or null when every format shows. */
     focused: () => focused,
@@ -750,7 +1202,7 @@ function live(
     focus(formatId: string | null) {
       focused = formatId && design.formats[formatId] ? formatId : null
       grid = frameGrid(design, focused)
-      if (selected && !frameOf(selected.frame)) selected = null
+      if (selection && !frameOf(selection.frame)) selection = null
       if (editing && !frameOf(editing.frame)) stopEditing()
       fitAll()
     },

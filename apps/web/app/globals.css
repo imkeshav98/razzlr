@@ -204,10 +204,51 @@ body {
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
-.stage-overlay .selection {
+/* Selection (#40): the box with its handles, each selected layer's outline, hover and marquee. */
+.stage-overlay .selection,
+.stage-overlay .selection-member,
+.stage-overlay .hover {
   position: absolute;
-  outline: 2px solid var(--accent);
   transform-origin: center;
+}
+.stage-overlay .selection {
+  outline: 1.5px solid var(--accent);
+}
+.stage-overlay .selection-member {
+  outline: 1px solid var(--accent);
+  opacity: 0.7;
+}
+.stage-overlay .hover {
+  outline: 1.5px solid var(--accent);
+  opacity: 0.6;
+}
+.stage-overlay .handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  translate: -50% -50%;
+  border: 1.5px solid var(--accent);
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.25);
+}
+.stage-overlay .marquee {
+  position: absolute;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+}
+.stage-overlay .selection-size {
+  position: absolute;
+  translate: -50% 0;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--accent-solid);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .stage-overlay .caret {
   position: absolute;
