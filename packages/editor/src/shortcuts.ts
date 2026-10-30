@@ -16,6 +16,14 @@ export const SHORTCUTS = [
   { action: 'sendBackward', keys: ['Mod+BracketLeft'] },
   { action: 'bringToFront', keys: ['Mod+Shift+BracketRight'] },
   { action: 'sendToBack', keys: ['Mod+Shift+BracketLeft'] },
+  { action: 'alignLeft', keys: ['Alt+A'] },
+  { action: 'alignCentre', keys: ['Alt+H'] },
+  { action: 'alignRight', keys: ['Alt+D'] },
+  { action: 'alignTop', keys: ['Alt+W'] },
+  { action: 'alignMiddle', keys: ['Alt+V'] },
+  { action: 'alignBottom', keys: ['Alt+S'] },
+  { action: 'distributeHorizontal', keys: ['Alt+Shift+H'] },
+  { action: 'distributeVertical', keys: ['Alt+Shift+V'] },
   { action: 'lock', keys: ['Mod+Shift+L'] },
   { action: 'hide', keys: ['Mod+Shift+H'] },
   { action: 'nudgeLeft', keys: ['ArrowLeft'] },
@@ -31,6 +39,7 @@ export const SHORTCUTS = [
   { action: 'zoomTo100', keys: ['Shift+Digit0', 'Mod+Digit0'] },
   { action: 'zoomIn', keys: ['Mod+Equal', 'Mod+Shift+Equal', 'Mod+NumpadAdd'] },
   { action: 'zoomOut', keys: ['Mod+Minus', 'Mod+NumpadSubtract'] },
+  { action: 'toggleRulers', keys: ['Shift+R'] },
 ] as const satisfies readonly { action: string; keys: readonly string[] }[]
 
 export type ShortcutAction = (typeof SHORTCUTS)[number]['action']
@@ -54,7 +63,9 @@ export function shortcutFor(e: Pick<KeyboardEvent, 'key' | 'code' | 'ctrlKey' | 
   const mod = e.ctrlKey || e.metaKey
   for (const s of byAction) {
     if (s.mod !== mod || s.shift !== e.shiftKey || s.alt !== e.altKey) continue
-    if (isLetter(s.key) ? e.key.toUpperCase() === s.key : e.code === s.key) return s.action
+    // With Alt a Mac types another character (⌥A is å), so there the key's place decides.
+    const letter = isLetter(s.key) && (e.key.toUpperCase() === s.key || (e.altKey && e.code === `Key${s.key}`))
+    if (isLetter(s.key) ? letter : e.code === s.key) return s.action
   }
   return null
 }

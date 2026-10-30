@@ -238,6 +238,109 @@ body {
   background: #fff;
   box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.25);
 }
+/* Snapping (#42): guides along the lines a drag lines up with, and equal gaps with their size. */
+.stage-overlay .guide {
+  position: absolute;
+  outline: 0.5px solid var(--accent);
+}
+.stage-overlay .gap {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  outline: 0.5px dashed var(--accent);
+}
+.stage-overlay .gap > span {
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--accent-solid);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 14px;
+  font-variant-numeric: tabular-nums;
+}
+/* Rulers (#42) along the stage's top and start edges, in the selected frame's design pixels. */
+.stage-overlay .ruler,
+.stage-overlay .ruler-corner {
+  position: absolute;
+  overflow: hidden;
+  background-color: color-mix(in oklab, var(--surface) 92%, transparent);
+  backdrop-filter: blur(6px);
+}
+.stage-overlay .ruler {
+  background-image: linear-gradient(var(--line-strong), var(--line-strong));
+  background-repeat: repeat;
+}
+.stage-overlay .ruler[data-axis='x'] {
+  border-block-end: 1px solid var(--line);
+  background-image: repeating-linear-gradient(to right, var(--line-strong) 0 1px, transparent 1px 100%);
+  background-repeat: repeat-x;
+}
+.stage-overlay .ruler[data-axis='y'] {
+  border-inline-end: 1px solid var(--line);
+  background-image: repeating-linear-gradient(to bottom, var(--line-strong) 0 1px, transparent 1px 100%);
+  background-repeat: repeat-y;
+}
+.stage-overlay .ruler-corner {
+  border-block-end: 1px solid var(--line);
+  border-inline-end: 1px solid var(--line);
+}
+.stage-overlay .ruler-tick,
+.stage-overlay .ruler-end {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text-subtle);
+}
+.stage-overlay .ruler-end {
+  color: var(--accent-text);
+  font-weight: 600;
+}
+.stage-overlay .ruler[data-axis='x'] .ruler-tick,
+.stage-overlay .ruler[data-axis='x'] .ruler-end {
+  inset-block: 0;
+  padding-block-start: 3px;
+  padding-inline-start: 3px;
+  border-inline-start: 1px solid var(--line-strong);
+}
+.stage-overlay .ruler[data-axis='x'] .ruler-end {
+  translate: -50% 0;
+  border: 0;
+  padding-inline: 2px;
+  background: color-mix(in oklab, var(--surface) 92%, transparent);
+}
+.stage-overlay .ruler[data-axis='y'] .ruler-tick,
+.stage-overlay .ruler[data-axis='y'] .ruler-end {
+  /* Turned to read upwards from its place: the start border becomes the tick across the ruler. */
+  inset-inline-start: 0;
+  height: 20px;
+  line-height: 20px;
+  padding-inline-start: 3px;
+  border-inline-start: 1px solid var(--line-strong);
+  transform-origin: 0 0;
+  rotate: -90deg;
+}
+.stage-overlay .ruler[data-axis='y'] .ruler-end {
+  border: 0;
+  padding-inline-end: 2px;
+  background: color-mix(in oklab, var(--surface) 92%, transparent);
+}
+.stage-overlay .ruler-band {
+  position: absolute;
+  inset: 0;
+  background: var(--accent-soft);
+}
+.stage-overlay .ruler[data-axis='x'] .ruler-band {
+  inset-inline-start: auto;
+  inset-inline-end: auto;
+}
+.stage-overlay .ruler[data-axis='y'] .ruler-band {
+  inset-block-start: auto;
+  inset-block-end: auto;
+}
 .stage-overlay .marquee {
   position: absolute;
   border: 1px solid var(--accent);

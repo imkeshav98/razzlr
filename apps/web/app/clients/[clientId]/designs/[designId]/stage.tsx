@@ -5,6 +5,7 @@ import { startEditor, type Editor } from '@razzlr/editor'
 import { fetchSyncToken } from './actions.ts'
 import { EditorShell } from '../../../../../components/editor/shell.tsx'
 import { FocusChip, FormatsPanel, UndoToast } from '../../../../../components/editor/formats-panel.tsx'
+import { ArrangePanel } from '../../../../../components/editor/arrange-panel.tsx'
 import { PagesPanel } from '../../../../../components/editor/pages-panel.tsx'
 import { ZoomControl } from '../../../../../components/editor/zoom-control.tsx'
 
@@ -89,6 +90,7 @@ export function EditorStage({ designId, designName, clientId, clientName, format
       onToolChange={(tool) => editor?.setTool(tool === 'hand' ? 'hand' : 'select')}
       inspector={editor ? (
         <>
+          <ArrangePanel editor={editor} />
           <PagesPanel editor={editor} onRemoved={setRemoved} />
           <FormatsPanel editor={editor} onRemoved={setRemoved} />
         </>

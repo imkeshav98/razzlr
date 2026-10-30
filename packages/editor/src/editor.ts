@@ -15,7 +15,10 @@ import * as Y from 'yjs'
 import { fit, toScreen, toWorld, visibleRect, zoomAt, type Camera, type Viewport } from './camera.ts'
 import { frameAt, frameGrid, intersects, type Frame, type Rect } from './grid.ts'
 import { hitTest, type Point } from './hit-test.ts'
+import { align, distribute, type Alignment, type Distribution, type Offset } from './arrange.ts'
+import { rulerParts } from './rulers.ts'
 import { NUDGE, NUDGE_FAR, shortcutFor, type ShortcutAction } from './shortcuts.ts'
+import { SNAP_DISTANCE, snapMove, snapResize, snapTargets, type Gap, type Guide, type Targets } from './snap.ts'
 import {
   angleOf, boundsOf, carry, centreOf, cornersOf, handleAt, HANDLES, normalAngle, resize as resizeBox, round, scaleWithin, snapAngle, turn, type Box, type Handle,
 } from './transform.ts'
@@ -234,6 +237,12 @@ function live(
   let selection: Selection | null = null
   /** The group or frame double-clicked into: a click then picks what is directly inside it (#41). */
   let entered: string | null = null
+  /** What the drag in progress snapped to, shown as guides and equal gaps (#42). */
+  let snapped: { frame: Frame; guides: Guide[]; gaps: Gap[] } | null = null
+  let rulers = true
+  /** Told when the selection changes, so panels can follow it. */
+  const selectionListeners = new Set<(ids: string[]) => void>()
+  let lastSelection = ''
   /** The layer under the pointer, outlined while nothing is being dragged. */
   let hovered: Picked | null = null
   let editing: Editing | null = null
@@ -532,6 +541,12 @@ function live(
       })
       parts.push(marquee)
     }
+    if (snapped) parts.push(...snapParts(snapped))
+    if (rulers) {
+      const origin = frameOf(selection?.frame) ?? frameOf(hovered?.frame) ?? drawnFrames[0]
+      const outer = selectionBox()
+      if (origin) parts.push(...rulerParts(camera, viewport, origin, outer && outer.frame.key === origin.key ? boundsOf([outer.drawn]) : null))
+    }
     const text = editingParagraph()
     const offset = editing && anchorOffset(doc, editing.caret)
     if (text && offset !== null && offset !== undefined) {
@@ -546,6 +561,34 @@ function live(
       text?.paragraph.delete()
     }
     overlay.replaceChildren(...parts)
+    const now = selection ? `${selection.frame}|${selection.ids.join(',')}` : ''
+    if (now !== lastSelection) {
+      lastSelection = now
+      for (const listener of selectionListeners) listener(selection?.ids ?? [])
+    }
+  }
+
+  /** Snap guides as lines across the page, and equal gaps as marked spans with their size. */
+  function snapParts({ frame, guides, gaps }: NonNullable<typeof snapped>) {
+    const parts: HTMLElement[] = []
+    for (const g of guides) {
+      const line = document.createElement('div')
+      line.className = 'guide'
+      line.dataset.axis = g.axis
+      placeBox(line, frame, g.axis === 'x' ? { x: g.at, y: g.from, width: 0, height: g.to - g.from } : { x: g.from, y: g.at, width: g.to - g.from, height: 0 })
+      parts.push(line)
+    }
+    for (const g of gaps) {
+      const span = document.createElement('div')
+      span.className = 'gap'
+      span.dataset.axis = g.axis
+      placeBox(span, frame, g.axis === 'x' ? { x: g.from, y: g.at, width: g.to - g.from, height: 0 } : { x: g.at, y: g.from, width: 0, height: g.to - g.from })
+      const size = document.createElement('span')
+      size.textContent = String(round(g.to - g.from, 0))
+      span.append(size)
+      parts.push(span)
+    }
+    return parts
   }
 
   const backing = new ck.Paint()
@@ -725,8 +768,8 @@ function live(
 
   /** What a drag on the stage is doing, from pointer down to up. */
   type Gesture =
-    | { kind: 'move'; frame: Frame; around: Box[]; from: Point; roots: string[]; boxes: Map<string, Box>; end: () => void }
-    | { kind: 'resize'; frame: Frame; around: Box[]; handle: Handle; outer: Box; grab: Point; roots: string[]; boxes: Map<string, Box>; end: () => void }
+    | { kind: 'move'; frame: Frame; around: Box[]; from: Point; roots: string[]; boxes: Map<string, Box>; targets: Targets | null; end: () => void }
+    | { kind: 'resize'; frame: Frame; around: Box[]; handle: Handle; outer: Box; grab: Point; roots: string[]; boxes: Map<string, Box>; targets: Targets | null; end: () => void }
     | { kind: 'rotate'; frame: Frame; around: Box[]; outer: Box; from: number; roots: string[]; boxes: Map<string, Box>; end: () => void }
     | { kind: 'marquee'; from: Point; to: Point; base: string[]; baseFrame: string | null }
   let gesture: Gesture | null = null
@@ -773,7 +816,7 @@ function live(
   /** Every layer under `id` in the document, nearest first. */
   const under = (id: string, from: Design): string[] => childrenOf(from, id).flatMap(([child]) => [child, ...under(child, from)])
 
-  function moveTo(g: Extract<Gesture, { kind: 'move' }>, p: Point, axisLock: boolean) {
+  function moveTo(g: Extract<Gesture, { kind: 'move' }>, p: Point, axisLock: boolean, snap: boolean) {
     let dx = p.x - g.from.x
     let dy = p.y - g.from.y
     // Shift keeps a move to one axis, whichever it has gone further along.
@@ -781,15 +824,68 @@ function live(
       if (Math.abs(dx) > Math.abs(dy)) dy = 0
       else dx = 0
     }
-    const next = new Map([...g.boxes].map(([id, b]) => [id, { ...b, x: Math.round(b.x + dx), y: Math.round(b.y + dy) }]))
+    // A move lands on whole pixels, unless it snapped to a line that isn't on one.
+    let toX = Math.round
+    let toY = Math.round
+    snapped = null
+    const moving = g.roots.map((id) => g.boxes.get(id)).filter((b): b is Box => b !== undefined)
+    if (snap && g.targets && moving.length > 0) {
+      const from = boundsOf(moving)
+      const s = snapMove({ ...from, x: Math.round(from.x + dx), y: Math.round(from.y + dy) }, g.targets, SNAP_DISTANCE / camera.zoom, { x: axisLock && dx === 0, y: axisLock && dy === 0 })
+      if (s.dx !== 0) {
+        dx = Math.round(from.x + dx) + s.dx - from.x
+        toX = (n) => round(n)
+      }
+      if (s.dy !== 0) {
+        dy = Math.round(from.y + dy) + s.dy - from.y
+        toY = (n) => round(n)
+      }
+      snapped = { frame: g.frame, guides: s.guides, gaps: s.gaps }
+    }
+    const next = new Map([...g.boxes].map(([id, b]) => [id, { ...b, x: toX(b.x + dx), y: toY(b.y + dy) }]))
     writeBoxes(g.frame, g.boxes, next)
   }
 
-  function resizeTo(g: Extract<Gesture, { kind: 'resize' }>, p: Point, keepRatio: boolean, fromCentre: boolean) {
+  /**
+   * What a drag in a frame can snap to: the layers on the page as drawn and, inside a group or
+   * frame, the layers beside the selection and the container itself; and the format. Nothing
+   * inside a turned container snaps, since its lines don't run along the page.
+   */
+  function targetsFor(frame: Frame, ids: string[], around: Box[]): Targets | null {
+    if (around.some((b) => b.rotation !== 0)) return null
+    const now = session.design()
+    const format = now.formats[frame.formatId]
+    if (!format) return null
+    const holds = (id: string) => ids.some((selected) => {
+      for (let up: string | undefined = selected; up && now.nodes[up]; up = now.nodes[up]?.parentId) if (up === id) return true
+      return false
+    })
+    const others = cached(frame).scene.layers.filter((layer) => !holds(layer.id)).map((layer) => boundsOf([layer.props]))
+    const parent = now.nodes[ids[0] ?? '']?.parentId
+    if (parent && now.nodes[parent]) {
+      const box = boxIn(frame, parent, now)
+      if (box) others.push(box)
+      for (const [id] of childrenOf(now, parent)) {
+        const sibling = !ids.includes(id) && visibleIn(frame, id) && boxIn(frame, id, now)
+        if (sibling) others.push(boundsOf([sibling]))
+      }
+    }
+    return snapTargets(others, { x: 0, y: 0, width: format.width, height: format.height })
+  }
+
+  function resizeTo(g: Extract<Gesture, { kind: 'resize' }>, p: Point, keepRatio: boolean, fromCentre: boolean, snap: boolean) {
     // The handle follows the pointer from where it was grabbed, so a press off its centre doesn't jump.
     const at = handleAt(g.handle)
     const handle = turn({ x: g.outer.x + at.x * g.outer.width, y: g.outer.y + at.y * g.outer.height }, centreOf(g.outer), g.outer.rotation)
-    const outer = resizeBox(g.outer, g.handle, { x: handle.x + p.x - g.grab.x, y: handle.y + p.y - g.grab.y }, { keepRatio, fromCentre })
+    const to = { x: handle.x + p.x - g.grab.x, y: handle.y + p.y - g.grab.y }
+    let outer = resizeBox(g.outer, g.handle, to, { keepRatio, fromCentre })
+    snapped = null
+    // The dragged edges snap; a turned box has none that run along the page.
+    if (snap && g.targets && outer.rotation === 0) {
+      const s = snapResize(outer, g.handle, g.targets, SNAP_DISTANCE / camera.zoom)
+      if (s.dx !== 0 || s.dy !== 0) outer = resizeBox(g.outer, g.handle, { x: to.x + s.dx, y: to.y + s.dy }, { keepRatio, fromCentre })
+      snapped = { frame: g.frame, guides: s.guides, gaps: [] }
+    }
     const next = new Map<string, Box>()
     const now = session.design()
     for (const root of g.roots) {
@@ -924,7 +1020,7 @@ function live(
       const world = toWorld(camera, screen)
       const { around } = outer
       const grab = localTo({ x: world.x - outer.frame.x, y: world.y - outer.frame.y }, around)
-      if (grabbed.kind === 'resize') gesture = { kind: 'resize', frame: outer.frame, around, handle: grabbed.handle, outer: outer.box, grab, roots: ids, boxes, end }
+      if (grabbed.kind === 'resize') gesture = { kind: 'resize', frame: outer.frame, around, handle: grabbed.handle, outer: outer.box, grab, roots: ids, boxes, targets: targetsFor(outer.frame, ids, around), end }
       else gesture = { kind: 'rotate', frame: outer.frame, around, outer: outer.box, from: angleOf(grab, centreOf(outer.box)), roots: ids, boxes, end }
       drawOverlay()
       return
@@ -967,7 +1063,7 @@ function live(
     if (!at || !frame) return
     canvas.setPointerCapture(e.pointerId)
     const ids = roots()
-    gesture = { kind: 'move', frame, around, from: localTo(at.p, around), roots: ids, boxes: startBoxes(frame, ids), end: session.beginGesture() }
+    gesture = { kind: 'move', frame, around, from: localTo(at.p, around), roots: ids, boxes: startBoxes(frame, ids), targets: targetsFor(frame, ids, around), end: session.beginGesture() }
     drawOverlay()
   }, on)
 
@@ -1004,12 +1100,15 @@ function live(
     }
     clickedAlone = null
     const p = localTo({ x: world.x - gesture.frame.x, y: world.y - gesture.frame.y }, gesture.around)
-    if (gesture.kind === 'move') moveTo(gesture, p, e.shiftKey)
-    else if (gesture.kind === 'resize') resizeTo(gesture, p, e.shiftKey, e.altKey)
+    // Holding Ctrl (⌘ on a Mac) turns snapping off for as long as it is held.
+    const snap = !(e.ctrlKey || e.metaKey)
+    if (gesture.kind === 'move') moveTo(gesture, p, e.shiftKey, snap)
+    else if (gesture.kind === 'resize') resizeTo(gesture, p, e.shiftKey, e.altKey, snap)
     else rotateTo(gesture, p, e.shiftKey)
   }, on)
 
   const endDrag = () => {
+    snapped = null
     if (gesture && gesture.kind !== 'marquee') {
       hug(gesture.roots)
       gesture.end()
@@ -1080,6 +1179,39 @@ function live(
     if (live.length > 0) runQuietly(() => session.run('node.hug', { ids: live }))
   }
 
+  /**
+   * Moves each selected layer, with what is inside it, by an offset worked out from the boxes
+   * around them as drawn: align and distribute (#42). One undo step.
+   */
+  function arrange(offsets: (boxes: Rect[], within: Rect) => Offset[]) {
+    const frame = selection && frameOf(selection.frame)
+    const format = frame && design.formats[frame.formatId]
+    if (!frame || !format) return false
+    const now = session.design()
+    const ids = roots(now)
+    const boxes = startBoxes(frame, ids)
+    // One layer lines up with what holds it: its group or frame, or the format.
+    const parent = now.nodes[ids[0] ?? '']?.parentId
+    const holder = parent && now.nodes[parent] ? boxIn(frame, parent, now) : null
+    const within = holder ?? { x: 0, y: 0, width: format.width, height: format.height }
+    const moves = offsets(ids.map((id) => boundsOf([boxes.get(id) as Box])), within)
+    const next = new Map<string, Box>()
+    ids.forEach((id, i) => {
+      const { dx, dy } = moves[i] ?? { dx: 0, dy: 0 }
+      for (const inner of [id, ...under(id, now)]) {
+        const b = boxes.get(inner)
+        if (b) next.set(inner, { ...b, x: round(b.x + dx), y: round(b.y + dy) })
+      }
+    })
+    session.gesture(() => {
+      writeBoxes(frame, boxes, next)
+      hug(ids)
+    })
+    return true
+  }
+  const alignTo = (to: Alignment) => arrange((boxes, within) => align(boxes, to, within))
+  const distributeAlong = (axis: Distribution) => arrange((boxes) => distribute(boxes, axis))
+
   /** Moves the selection by whole pixels in its format, one undo step per press. */
   function nudge(dx: number, dy: number) {
     const frame = selection && frameOf(selection.frame)
@@ -1116,6 +1248,10 @@ function live(
       zoomIn: () => zoomTo(camera.zoom * ZOOM_STEP),
       zoomOut: () => zoomTo(camera.zoom / ZOOM_STEP),
       selectAll,
+      toggleRulers: () => {
+        rulers = !rulers
+        drawOverlay()
+      },
     }
     const viewAction = view[action]
     if (viewAction) {
@@ -1153,6 +1289,22 @@ function live(
         if (runQuietly(() => { group = session.run('node.group', { ids }) })) select([group], frame.key)
         break
       }
+      case 'alignLeft': alignTo('left')
+        break
+      case 'alignCentre': alignTo('centre')
+        break
+      case 'alignRight': alignTo('right')
+        break
+      case 'alignTop': alignTo('top')
+        break
+      case 'alignMiddle': alignTo('middle')
+        break
+      case 'alignBottom': alignTo('bottom')
+        break
+      case 'distributeHorizontal': distributeAlong('horizontal')
+        break
+      case 'distributeVertical': distributeAlong('vertical')
+        break
       case 'ungroup': {
         const groups = ids.filter((id) => nodes[id]?.type === 'group')
         if (groups.length === 0) return false
@@ -1305,6 +1457,13 @@ function live(
     },
     /** Does what a shortcut does, as if its key was pressed on the stage. */
     perform,
+    /** Calls back with the selected layers whenever the selection changes. */
+    onSelection(listener: (ids: string[]) => void) {
+      selectionListeners.add(listener)
+      return () => selectionListeners.delete(listener)
+    },
+    /** Whether the rulers along the stage's edges show. */
+    rulers: () => rulers,
     frames: () => frameGrid(session.design(), focused).frames,
     /** The format the focus view shows alone, or null when every format shows. */
     focused: () => focused,
@@ -1369,6 +1528,7 @@ function live(
       resized.disconnect()
       cancelAnimationFrame(pending)
       drawListeners.clear()
+      selectionListeners.clear()
       doc.off('update', redraw)
       for (const entry of frames.values()) entry.picture?.delete()
       frames.clear()
