@@ -67,8 +67,8 @@ test('in Arabic the chrome mirrors and reads right to left, the design does not'
   const rail = await page.getByRole('button', { name: 'الطبقات' }).boundingBox()
   const stage = await page.getByTestId('stage').boundingBox()
   if (!rail || !stage) throw new Error('missing rail or stage')
-  // The rail sits on the right of the stage in Arabic.
-  expect(rail.x).toBeGreaterThan(stage.x + stage.width)
+  // The capsule floats over the right side of the stage in Arabic.
+  expect(rail.x).toBeGreaterThan(stage.x + stage.width / 2)
   await expect(page.getByTestId('stage').locator('xpath=..')).toHaveCSS('direction', 'ltr')
   await page.getByRole('button', { name: 'الطبقات' }).click()
   await page.waitForTimeout(300)
@@ -138,4 +138,133 @@ test('floating chrome is frosted with grain in both themes', async ({ page }) =>
     if (!dock || !zoom) throw new Error('missing dock or zoom')
     writeOutput(`ui-${theme}-frost-dock.png`, await page.screenshot({ clip: { x: dock.x - 40, y: dock.y - 40, width: zoom.x + zoom.width - dock.x + 80, height: dock.height + 80 } }))
   }
+})
+
+// The floating capsule (#82): it floats over the canvas, a pink blob slides between its buttons,
+// flyouts are only as tall as their content, and on phones it is a tab bar at the bottom.
+const centre = (box: { x: number; y: number; width: number; height: number } | null) => {
+  if (!box) throw new Error('missing box')
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+}
+
+/** The blob's centre and vertical scale on every frame for 600 ms from clicking the named panel button. */
+async function blobPath(page: Page, name: string) {
+  const path = page.evaluate(() => new Promise<{ y: number; scaleY: number }[]>((resolve) => {
+    const seen: { y: number; scaleY: number }[] = []
+    const start = performance.now()
+    const tick = () => {
+      const blob = document.querySelector('[data-testid=rail-blob]')
+      const squish = blob?.firstElementChild
+      if (blob && squish) {
+        const box = blob.getBoundingClientRect()
+        seen.push({ y: box.y + box.height / 2, scaleY: new DOMMatrix(getComputedStyle(squish).transform).d })
+      }
+      if (performance.now() - start < 600) requestAnimationFrame(tick)
+      else resolve(seen)
+    }
+    requestAnimationFrame(tick)
+  }))
+  await page.getByRole('button', { name }).click()
+  return path
+}
+
+test('the panels live in a capsule floating over the canvas', async ({ page }) => {
+  const designId = await seed(liveDesign())
+  await setCookies(page, { theme: 'dark' })
+  await page.goto(editorPath(designId))
+  await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
+  const rail = page.getByTestId('rail')
+  const stage = await page.getByTestId('stage').boundingBox()
+  const box = await rail.boundingBox()
+  if (!stage || !box) throw new Error('missing rail or stage')
+  // Over the canvas at the start edge, centred top to bottom, round ends, frosted.
+  expect(box.x).toBeGreaterThan(stage.x)
+  expect(box.x - stage.x).toBeLessThan(24)
+  expect(Math.abs(centre(box).y - centre(stage).y)).toBeLessThan(4)
+  expect(box.height).toBeGreaterThan(box.width)
+  expect(Number.parseFloat(await rail.evaluate((el) => getComputedStyle(el).borderTopLeftRadius))).toBeGreaterThanOrEqual(box.width / 2)
+  expect(await rail.evaluate((el) => getComputedStyle(el).backdropFilter)).toContain('blur(18px)')
+
+  // The blob lands on the open panel's button and slides there, stretched, when another opens.
+  await expect(page.getByTestId('rail-blob')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Layers' }).click()
+  await page.waitForTimeout(400)
+  expect(centre(await page.getByTestId('rail-blob').boundingBox()).y).toBeCloseTo(centre(await page.getByRole('button', { name: 'Layers' }).boundingBox()).y, 0)
+  await shoot(page, 'capsule-layers')
+  const path = await blobPath(page, 'Brand')
+  const brand = centre(await page.getByRole('button', { name: 'Brand' }).boundingBox())
+  // It passes through the space between (a slide, not a jump), stretched, and settles on Brand.
+  const from = path[0]?.y ?? Number.NaN
+  expect(path.some((p) => p.y > from + 4 && p.y < brand.y - 4)).toBe(true)
+  expect(Math.max(...path.map((p) => p.scaleY))).toBeGreaterThan(1.05)
+  await expect.poll(async () => Math.abs(centre(await page.getByTestId('rail-blob').boundingBox()).y - brand.y)).toBeLessThan(1)
+  await expect(page.getByRole('button', { name: 'Brand' })).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByRole('button', { name: 'Layers' })).toHaveAttribute('aria-expanded', 'false')
+
+  // The flyout opens beside the capsule and is only as tall as what it holds.
+  const flyout = await page.getByTestId('flyout').boundingBox()
+  if (!flyout) throw new Error('missing flyout')
+  expect(flyout.x).toBeGreaterThan(box.x + box.width)
+  expect(flyout.height).toBeLessThan(stage.height / 2)
+
+  // Keyboard: the buttons take focus and toggle their panel with Enter. (Space is the canvas's pan
+  // key, which the editor takes before any button does.)
+  const ai = page.getByRole('button', { name: 'AI' })
+  await ai.focus()
+  await page.keyboard.press('Enter')
+  await expect(ai).toHaveAttribute('aria-expanded', 'true')
+  await expect(ai).toBeFocused()
+  await page.waitForTimeout(400)
+  await shoot(page, 'capsule-ai')
+  await page.keyboard.press('Enter')
+  await expect(ai).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.getByTestId('flyout')).toHaveCount(0)
+})
+
+test('with reduced motion the blob jumps without sliding or squishing', async ({ browser }) => {
+  const designId = await seed(liveDesign())
+  const context = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 1440, height: 900 } })
+  const page = await context.newPage()
+  await page.goto(editorPath(designId))
+  await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
+  await page.getByRole('button', { name: 'Layers' }).click()
+  const layers = centre(await page.getByRole('button', { name: 'Layers' }).boundingBox())
+  const path = await blobPath(page, 'Brand')
+  const brand = centre(await page.getByRole('button', { name: 'Brand' }).boundingBox())
+  // Every frame has the blob on Layers (before the click lands) or on Brand, never between.
+  expect(Math.abs((path.at(-1)?.y ?? Number.NaN) - brand.y)).toBeLessThan(1)
+  for (const p of path) {
+    expect(Math.min(Math.abs(p.y - layers.y), Math.abs(p.y - brand.y))).toBeLessThan(1)
+    expect(p.scaleY).toBe(1)
+  }
+  await context.close()
+})
+
+test('on a phone the capsule is a tab bar at the bottom', async ({ browser }) => {
+  const designId = await seed(liveDesign())
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true })
+  const page = await context.newPage()
+  await context.addCookies([{ name: 'theme', value: 'dark', url: 'http://localhost:3100' }])
+  await page.goto(editorPath(designId))
+  await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
+  const rail = await page.getByTestId('rail').boundingBox()
+  const dock = await page.getByRole('toolbar').boundingBox()
+  const zoom = await page.getByRole('group', { name: 'Zoom' }).boundingBox()
+  if (!rail || !dock || !zoom) throw new Error('missing chrome')
+  expect(rail.width).toBeGreaterThan(rail.height)
+  expect(Math.abs(centre(rail).x - 390 / 2)).toBeLessThan(2)
+  expect(844 - (rail.y + rail.height)).toBeLessThan(24)
+  // The dock sits above the tab bar and the zoom pill moves to the top, so nothing overlaps.
+  expect(dock.y + dock.height).toBeLessThanOrEqual(rail.y)
+  expect(zoom.y + zoom.height).toBeLessThan(dock.y)
+  await shoot(page, 'capsule-phone')
+  await page.getByRole('button', { name: 'Layers' }).tap()
+  const flyout = await page.getByTestId('flyout').boundingBox()
+  if (!flyout) throw new Error('missing flyout')
+  expect(flyout.y + flyout.height).toBeLessThanOrEqual(dock.y)
+  expect(flyout.x).toBeGreaterThanOrEqual(0)
+  expect(flyout.x + flyout.width).toBeLessThanOrEqual(390)
+  await page.waitForTimeout(400)
+  await shoot(page, 'capsule-phone-layers')
+  await context.close()
 })
