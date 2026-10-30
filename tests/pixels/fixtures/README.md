@@ -18,3 +18,9 @@ Image fills name assets (`sneaker`, `card-1` … `card-3`, `card-1-tall`): stand
 `../reference/<fixture>/<page>.<format>.png` is what the Node CPU render must match, pixel for pixel. A failing check writes `<page>.<format>.actual.png` and a `.diff.png` (differing pixels in magenta) to `../output/<fixture>/`. After an intended change, rewrite them with `UPDATE_REFERENCES=1 pnpm --filter @razzlr/pixels test`, then look at every changed image before committing.
 
 `invalid/` holds designs that must fail validation, each checked for its exact errors.
+
+## Text checks
+
+`src/shaping.test.ts` compares the glyph ids and positions SkParagraph produces with `hb-shape` (HarfBuzz's own command line tool, `apt install libharfbuzz-bin`) for every string in `src/text-samples.ts`. hb-shape doesn't do bidi, so the test splits right-to-left strings into number and Arabic runs itself.
+
+`src/caret.test.ts` clicks on every grapheme of those strings, and of Latin inside Arabic, and checks that the caret lands on the grapheme's near edge and that each grapheme has one selection box in its own direction.
