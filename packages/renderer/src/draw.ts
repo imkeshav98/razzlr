@@ -3,8 +3,9 @@ import type {
   Canvas, CanvasKit, FontCollection, Image, ImageFilter, Paint as CkPaint, Path, Shader,
 } from 'canvaskit-wasm'
 import { color } from './color.ts'
+import type { LayerPictures } from './pictures.ts'
 import type { Scene, SceneLayer } from './scene.ts'
-import { layoutText } from './text.ts'
+import { layoutText, type ParagraphCache } from './text.ts'
 
 /** What drawing needs besides the scene: fonts registered from our own files and images decoded by CanvasKit. */
 export interface Resources {
@@ -12,11 +13,25 @@ export interface Resources {
   /** Families tried, in order, for characters a layer's own font lacks. */
   fallbackFamilies: string[]
   images: ReadonlyMap<string, Image>
+  /** Paragraphs kept between draws, for the editor's screen; without it each draw lays out its text and frees it. */
+  paragraphs?: ParagraphCache
+  /** Top-level layers recorded between draws, for the editor's screen; without it each draw draws every layer. */
+  layers?: LayerPictures
+}
+
+/** A text layer laid out, from the paragraph cache when there is one; `done` frees what the cache doesn't own. */
+function laidOut(ck: CanvasKit, props: TextLayer['props'], resources: Resources) {
+  if (resources.paragraphs) return { ...resources.paragraphs.layout(ck, props, resources), done: () => {} }
+  const laid = layoutText(ck, props, resources)
+  return { ...laid, done: () => laid.paragraph.delete() }
 }
 
 type Box = { x: number; y: number; width: number; height: number }
 type TextLayer = Extract<SceneLayer, { type: 'text' }>
 type GraphicLayer = Extract<SceneLayer, { type: 'graphic' }>
+
+/** A clip wider than any page, so clipping to it changes nothing. */
+const EVERYWHERE = Float32Array.of(-1e6, -1e6, 1e6, 1e6)
 
 /** Blur radii in the schema are twice the Gaussian sigma, as in CSS box-shadow and design tools. */
 const sigma = (radius: number) => radius / 2
@@ -26,12 +41,31 @@ const sigma = (radius: number) => radius / 2
  * exports and on WebGL for the editor screen (ADR-0005), so only the surface differs.
  */
 export function drawScene(ck: CanvasKit, canvas: Canvas, scene: Scene, resources: Resources) {
-  const page = { x: 0, y: 0, width: scene.width, height: scene.height }
   canvas.clear(ck.TRANSPARENT)
+  drawPageContent(ck, canvas, scene, resources)
+}
+
+/**
+ * Draws a scene onto part of a bigger canvas, such as one frame of the editor's infinite canvas:
+ * nothing outside the page shows and nothing else on the canvas is cleared. The caller places it.
+ */
+export function drawPage(ck: CanvasKit, canvas: Canvas, scene: Scene, resources: Resources) {
+  canvas.save()
+  canvas.clipRect(ck.XYWHRect(0, 0, scene.width, scene.height), ck.ClipOp.Intersect, true)
+  drawPageContent(ck, canvas, scene, resources)
+  canvas.restore()
+}
+
+function drawPageContent(ck: CanvasKit, canvas: Canvas, scene: Scene, resources: Resources) {
+  const page = { x: 0, y: 0, width: scene.width, height: scene.height }
   const pagePath = rectPath(ck, page)
   for (const fill of scene.fills) fillPath(ck, canvas, pagePath, fill, page, resources)
   pagePath.delete()
-  for (const layer of scene.layers) drawLayer(ck, canvas, layer, resources)
+  const { layers } = resources
+  for (const layer of scene.layers) {
+    if (layers) canvas.drawPicture(layers.picture(ck, layer, resources, (into) => drawLayer(ck, into, layer, resources)))
+    else drawLayer(ck, canvas, layer, resources)
+  }
 }
 
 function drawLayer(ck: CanvasKit, canvas: Canvas, layer: SceneLayer, resources: Resources) {
@@ -54,6 +88,10 @@ function drawLayer(ck: CanvasKit, canvas: Canvas, layer: SceneLayer, resources: 
     layerPaint.setBlendMode(blendMode(ck, props.blendMode))
     canvas.saveLayer(layerPaint, bounds)
     layerPaint.delete()
+    // Changes no pixel, but keeps a recorded picture from folding the layer's opacity into its one
+    // draw (Skia's SkRecordOptimize), which rounds differently: the editor draws through pictures
+    // and must match exports exactly (#36).
+    canvas.clipRect(EVERYWHERE, ck.ClipOp.Intersect, false)
     for (const effect of props.effects) {
       if (effect.type === 'dropShadow') withFilter(ck, canvas, dropShadow(ck, effect), bounds, content)
     }
@@ -172,12 +210,12 @@ function childrenBounds(ck: CanvasKit, layer: SceneLayer, resources: Resources, 
  */
 function textBounds(ck: CanvasKit, layer: TextLayer, resources: Resources): Box {
   const { props } = layer
-  const { paragraph, dy } = layoutText(ck, props, resources)
+  const { paragraph, dy, done } = laidOut(ck, props, resources)
   let box: Box = props
   for (const line of paragraph.getLineMetrics()) {
     box = union(box, { x: props.x + line.left, y: props.y + dy + line.baseline - line.ascent, width: line.width, height: line.ascent + line.descent })
   }
-  paragraph.delete()
+  done()
   const largest = Math.max(props.style.fontSize, ...props.runs.map((r) => r.style.fontSize ?? 0))
   return outset(box, largest / 2)
 }
@@ -318,9 +356,9 @@ function imageShader(ck: CanvasKit, image: Image, fill: Extract<Paint, { type: '
 }
 
 function drawText(ck: CanvasKit, canvas: Canvas, layer: TextLayer, resources: Resources) {
-  const { paragraph, dy } = layoutText(ck, layer.props, resources)
+  const { paragraph, dy, done } = laidOut(ck, layer.props, resources)
   canvas.drawParagraph(paragraph, layer.props.x, layer.props.y + dy)
-  paragraph.delete()
+  done()
 }
 
 function blendMode(ck: CanvasKit, mode: SceneLayer['props']['blendMode']) {

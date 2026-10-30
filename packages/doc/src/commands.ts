@@ -108,6 +108,24 @@ export const nodeUpdate = defineCommand({
   },
 })
 
+/**
+ * Puts layers back to the base in one format: removes their overrides there, every one or only
+ * the named property paths. Values the layers don't override are left as they are.
+ */
+export const overrideReset = defineCommand({
+  name: 'override.reset',
+  input: z.object({ ids: NodeId.array().min(1), scope: FormatScope, paths: z.string().array().min(1).optional() }),
+  check: ({ design }, { ids, scope }) => {
+    if (!design.formats[formatIdOf(scope) ?? '']) return `no format "${formatIdOf(scope) ?? scope}"`
+    return ids.map((id) => (design.nodes[id] ? undefined : `no layer "${id}"`)).find(Boolean)
+  },
+  apply: ({ r, design }, { ids, scope, paths }) => {
+    for (const id of ids) {
+      for (const path of paths ?? Object.keys(design.overrides[scope]?.[id] ?? {})) r.overrides.delete(overrideKey(scope, id, path))
+    }
+  },
+})
+
 const isInside = (design: Design, id: string, maybeAncestor: string) => {
   for (let up: string | undefined = id; up; up = design.nodes[up]?.parentId) if (up === maybeAncestor) return true
   return false
@@ -204,6 +222,7 @@ export const formatAdd = defineCommand({
 export const COMMANDS = {
   'node.create': nodeCreate,
   'node.update': nodeUpdate,
+  'override.reset': overrideReset,
   'node.move': nodeMove,
   'node.delete': nodeDelete,
   'text.edit': textEdit,

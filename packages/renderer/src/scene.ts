@@ -20,19 +20,37 @@ export interface Scene {
   layers: SceneLayer[]
 }
 
+/**
+ * The scene layers built before, by format and node, for the editor (#36): with it, `render` hands
+ * back the same layer object while its node, its override in the format and its children are the
+ * same objects, so a cache can know an unchanged layer by identity alone.
+ */
+export type SceneMemo = Map<string, WeakMap<object, { override: unknown; layer: SceneLayer }>>
+export const sceneMemo = (): SceneMemo => new Map()
+
+const sameLayers = (a: SceneLayer[], b: SceneLayer[]) => a.length === b.length && a.every((layer, i) => layer === b[i])
+
 /** Builds the scene for one page in one format. Pure: the design is only read. */
-export function render(design: Design, pageId: string, formatId: string): Scene {
+export function render(design: Design, pageId: string, formatId: string, memo?: SceneMemo): Scene {
   const page = design.pages[pageId]
   if (!page) throw new Error(`no page "${pageId}"`)
   const format = design.formats[formatId]
   if (!format) throw new Error(`no format "${formatId}"`)
   const overrides = design.overrides[`format:${formatId}`] ?? {}
+  let built = memo?.get(formatId)
+  if (memo && !built) memo.set(formatId, (built = new WeakMap()))
 
   const layersUnder = (parentId: string): SceneLayer[] =>
     childrenOf(design, parentId).flatMap(([id, node]) => {
-      const props = { ...node.props, ...overrides[id] }
+      const override = overrides[id]
+      const props = { ...node.props, ...override }
       if (!props.visible) return []
-      return [{ id, type: node.type, props, children: layersUnder(id) } as SceneLayer]
+      const children = layersUnder(id)
+      const before = built?.get(node)
+      if (before && before.override === override && before.layer.id === id && sameLayers(before.layer.children, children)) return [before.layer]
+      const layer = { id, type: node.type, props, children } as SceneLayer
+      built?.set(node, { override, layer })
+      return [layer]
     })
 
   return { pageId, formatId, width: format.width, height: format.height, fills: page.fills, layers: layersUnder(pageId) }

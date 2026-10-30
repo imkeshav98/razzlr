@@ -107,6 +107,17 @@ describe('two tabs', () => {
     for (const doc of [a, b]) expect(readDesign(doc).nodes.box?.props.x).toBeTypeOf('number')
   })
 
+  it('undoing a drag that first overrode a layer in a format removes the override whole', () => {
+    const { a, b, tabA, sync } = twoTabs()
+    tabA.gesture(() => {
+      for (let i = 1; i <= 5; i++) tabA.run('node.update', { ids: ['box'], scope: 'format:banner', patch: { x: 100 + i, y: 100 + i } })
+    })
+    sync()
+    tabA.undo()
+    sync()
+    for (const doc of [a, b]) expect(readDesign(doc).overrides['format:banner']?.box).toBeUndefined()
+  })
+
   it('two tabs overriding the same layer in a new format at once keep both changes', () => {
     const { a, b, tabA, tabB, sync } = twoTabs()
     tabA.run('format.add', { id: 'story', name: 'Story', width: 1080, height: 1920 })

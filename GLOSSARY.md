@@ -117,6 +117,14 @@ The renderer's output for one page, format and variant: a resolved tree ready to
 **Surface**:
 Where a scene is drawn: the WebGL surface for the editor screen, or the CPU surface for every export.
 
+**Canvas**:
+The editor's one infinite view of a design: every page in every format, placed by an auto grid with pages as rows and formats as columns, so no position is stored.
+_Avoid_: Board, workspace
+
+**Canvas frame**:
+One page in one format as the canvas shows it (`Frame` in `packages/editor`). Not the frame layer type, which is a layer inside a page.
+_Avoid_: Artboard, tile, cell
+
 **Export parity**:
 CPU renders of the same design in the browser and in Node being pixel-identical (0 differing pixels).
 

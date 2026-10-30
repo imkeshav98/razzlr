@@ -56,6 +56,25 @@ describe('commands', () => {
     expect(design.overrides['format:banner']?.box).toEqual({ x: 8, width: 40 })
   })
 
+  it('override.reset puts layers back to the base in one format, and undo brings the overrides back', () => {
+    const doc = freshDoc()
+    const tab = openSession(doc)
+    tab.run('node.update', { ids: ['box'], scope: 'format:banner', patch: { x: 8, y: 4, width: 40 } })
+
+    tab.run('override.reset', { ids: ['box'], scope: 'format:banner', paths: ['x', 'y'] })
+    expect(readDesign(doc).overrides['format:banner']?.box).toEqual({ width: 40 })
+
+    tab.run('override.reset', { ids: ['box'], scope: 'format:banner' })
+    const design = readDesign(doc)
+    expect(design.overrides['format:banner']?.box).toBeUndefined()
+    expect(design.nodes.box?.props).toMatchObject({ x: 100, width: 200 })
+
+    tab.undo()
+    expect(readDesign(doc).overrides['format:banner']?.box).toEqual({ width: 40 })
+    expect(() => tab.run('override.reset', { ids: ['box'], scope: 'format:nope' })).toThrow(/no format "nope"/)
+    expect(() => tab.run('override.reset', { ids: ['gone'], scope: 'format:banner' })).toThrow(/no layer "gone"/)
+  })
+
   it('node.update refuses a patch that would make the layer invalid', () => {
     const tab = openSession(freshDoc())
     expect(() => tab.run('node.update', { ids: ['box'], patch: { opacity: 2 } })).toThrow(/node.update: box.opacity/)

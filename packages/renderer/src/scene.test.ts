@@ -1,6 +1,6 @@
 import { parseDesign, type Design, type DesignInput } from '@razzlr/schema'
 import { describe, expect, it } from 'vitest'
-import { render } from './scene.ts'
+import { render, sceneMemo } from './scene.ts'
 
 const input = (): DesignInput => ({
   meta: { schemaVersion: 1, designId: 'd1', name: 'Test', kind: 'single', primaryFormatId: 'sq' },
@@ -74,5 +74,25 @@ describe('render', () => {
   it('refuses a page or format the design does not have', () => {
     expect(() => render(design(), 'nope', 'sq')).toThrow('no page "nope"')
     expect(() => render(design(), 'p1', 'nope')).toThrow('no format "nope"')
+  })
+
+  it('with a memo, keeps a layer object while its node, override and children are the same objects', () => {
+    const memo = sceneMemo()
+    const d = design()
+    const first = render(d, 'p1', 'sq', memo)
+    const [headline, frame] = first.layers
+    // A new snapshot that changes only the box, the way the editor's design does.
+    const box = d.nodes['box']
+    if (box?.type !== 'graphic') throw new Error('no box')
+    const next: Design = { ...d, nodes: { ...d.nodes, box: { ...box, props: { ...box.props, x: 140 } } } }
+    const second = render(next, 'p1', 'sq', memo)
+    expect(second.layers[0]).toBe(headline)
+    expect(second.layers[1]).not.toBe(frame)
+    expect(second.layers[1]?.children[0]?.props.x).toBe(140)
+    // An override in another format changes nothing here, and the same snapshot gives the same layers.
+    const third = render({ ...next, overrides: { 'format:banner': { headline: { x: 1 } } } }, 'p1', 'sq', memo)
+    expect(third.layers[0]).toBe(headline)
+    expect(third.layers[1]).toBe(second.layers[1])
+    expect(render(next, 'p1', 'banner', memo).layers[0]).not.toBe(headline)
   })
 })

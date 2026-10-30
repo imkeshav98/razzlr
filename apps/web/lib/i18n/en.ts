@@ -36,6 +36,13 @@ export const en = {
     toolPen: 'Pen',
     toolImage: 'Image',
     toolHand: 'Hand',
+    zoom: 'Zoom',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
+    zoomFit: 'Zoom to fit',
+    zoomFitKey: 'Shift+1',
+    zoomInKey: 'Ctrl+=',
+    zoomOutKey: 'Ctrl+-',
     statusText: {
       'Starting': 'Starting',
       'Loading renderer': 'Loading renderer',

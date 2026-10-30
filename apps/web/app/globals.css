@@ -169,7 +169,38 @@ body {
   background-size: 20px 20px;
 }
 
-/* What the editor draws over the canvas, in design pixels (the stage keeps dir=ltr). */
+/* What the editor draws over the canvas, in screen pixels (the stage keeps dir=ltr). */
+.stage-overlay .frame-label {
+  position: absolute;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  height: 20px;
+  margin-top: -24px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+  color: var(--text-subtle);
+}
+.stage-overlay .frame-label[data-active] {
+  color: var(--accent-text);
+}
+.stage-overlay .frame-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.stage-overlay .frame-label[data-active] .frame-name {
+  color: inherit;
+}
+.stage-overlay .frame-size {
+  margin-inline-start: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
 .stage-overlay .selection {
   position: absolute;
   outline: 2px solid var(--accent);
