@@ -1,17 +1,13 @@
-import { Format, FormatId, Layer, LAYER_PROPS, NodeId, Page, PageId, parseDesignIncrementally, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
+import { Format, FormatId, formatIdOf, Layer, LAYER_PROPS, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
 import { generateKeyBetween } from 'fractional-indexing'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
+import { childrenOf } from './children.ts'
 import { defineCommand, type CommandContext } from './command.ts'
 import * as Y from 'yjs'
 import { DELETED, overrideKey, toYMap, toYNode } from './design-doc.ts'
 
-/** The layers directly under a page or layer, back to front. Ties in index break by id, the same on every device. */
-export function childrenOf(design: Design, parentId: string) {
-  return Object.entries(design.nodes)
-    .filter(([, n]) => n.parentId === parentId)
-    .sort(([a, x], [b, y]) => (x.index < y.index ? -1 : x.index > y.index ? 1 : a < b ? -1 : 1))
-}
+export { childrenOf }
 
 /**
  * A fractional index between two neighbours that never throws. Neighbours can tie (two tabs
@@ -69,9 +65,6 @@ export const nodeCreate = defineCommand({
   },
 })
 
-/** Turns `nodes.box.props.opacity: …` into `box.opacity: …` for command errors. */
-const shortErrors = (errors: string[]) => errors.map((e) => e.replace(/^nodes\.([\w-]+)\.props\./, '$1.').replace(/^overrides\.[^.]+\.([\w-]+)\./, '$1.')).join('; ')
-
 /** Base scope, or `format:<id>` to change one format only. */
 const Scope = z.union([z.literal('base'), FormatScope]).default('base')
 
@@ -79,25 +72,29 @@ export const nodeUpdate = defineCommand({
   name: 'node.update',
   input: z.object({ ids: NodeId.array().min(1), scope: Scope, patch: z.record(z.string(), z.unknown()) }),
   check: ({ design }, { ids, scope, patch }) => {
-    // The design as it would be, sharing every object the patch leaves alone, so the incremental
-    // parse only validates the patched layers and overrides again.
-    const nodes = { ...design.nodes }
-    const overrides: Record<string, Record<string, Record<string, unknown>>> = { ...design.overrides }
+    // Only the patched layers and their overrides are checked: nothing else changes (#29).
+    if (scope !== 'base' && !design.formats[formatIdOf(scope) ?? '']) return `no format "${formatIdOf(scope) ?? scope}"`
     for (const id of ids) {
-      const node = nodes[id]
+      const node = design.nodes[id]
       if (!node) return `no layer "${id}"`
       for (const path of Object.keys(patch)) {
         if (!Object.hasOwn(LAYER_PROPS[node.type].shape, path)) return `a ${node.type} has no property "${path}"`
         if (scope === 'base' && node.type === 'text' && (path === 'text' || path === 'runs')) return 'change text with text.edit'
       }
-      if (scope === 'base') nodes[id] = { ...node, props: { ...node.props, ...patch } } as typeof node
-      else {
-        const byNode = (overrides[scope] = { ...overrides[scope] })
-        byNode[id] = { ...byNode[id], ...patch }
+      if (scope !== 'base') {
+        const values = parseOverrideValues(scope, node, { ...design.overrides[scope]?.[id], ...patch })
+        if (!values.success) return values.errors.map((e) => `${id}.${e}`).join('; ')
+        continue
+      }
+      const layer = parseLayer({ ...node, props: { ...node.props, ...patch } })
+      if (!layer.success) return layer.errors.map((e) => `${id}.${e.replace(/^props\./, '')}`).join('; ')
+      // A new base value can make an override that merges with it invalid.
+      for (const [overrideScope, byNode] of Object.entries(design.overrides)) {
+        const values = byNode[id] && parseOverrideValues(overrideScope, layer.layer, byNode[id])
+        if (values && !values.success) return values.errors.map((e) => `${id}.${e}`).join('; ')
       }
     }
-    const result = parseDesignIncrementally({ ...design, nodes, overrides })
-    return result.success ? undefined : shortErrors(result.errors)
+    return undefined
   },
   apply: ({ r }, { ids, scope, patch }) => {
     for (const id of ids) {
@@ -143,7 +140,13 @@ export const nodeDelete = defineCommand({
   input: z.object({ ids: NodeId.array().min(1) }),
   check: ({ design }, { ids }) => ids.map((id) => (design.nodes[id] ? undefined : `no layer "${id}"`)).find(Boolean),
   apply: ({ r, design }, { ids }) => {
-    const doomed = new Set(Object.keys(design.nodes).filter((n) => ids.some((id) => isInside(design, n, id))))
+    const doomed = new Set<string>()
+    const take = (id: string) => {
+      if (doomed.has(id)) return
+      doomed.add(id)
+      for (const [child] of childrenOf(design, id)) take(child)
+    }
+    for (const id of ids) take(id)
     // A tombstone, not a removal: undo then just clears the flag, and edits another tab makes
     // to the layer meanwhile land in a live map instead of being lost (see DELETED in design-doc.ts).
     for (const id of doomed) r.nodes.get(id)?.set(DELETED, true)

@@ -264,6 +264,31 @@ function parsePair(scope: string, nodeId: string, node: Layer | undefined, props
   return filled
 }
 
+/** One layer, validated on its own: its type, props and defaults, but not its parent. Frozen. */
+export function parseLayer(input: unknown): { success: true; layer: Layer } | { success: false; errors: string[] } {
+  const cached = isRecord(input) ? layerCache.get(input) : undefined
+  if (cached) return { success: true, layer: cached }
+  const parsed = Layer.safeParse(input)
+  if (!parsed.success) return { success: false, errors: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`) }
+  const layer = deepFreeze(parsed.data)
+  if (isRecord(input)) layerCache.set(input, layer)
+  layerCache.set(layer, layer)
+  return { success: true, layer }
+}
+
+/**
+ * One layer's override values in one scope, checked against the layer as `parseDesign` checks
+ * them and filled with the same defaults. The scope itself is not checked against the formats.
+ */
+export function parseOverrideValues(
+  scope: string, layer: Layer, values: Record<string, unknown>,
+): { success: true; values: Record<string, unknown> } | { success: false; errors: string[] } {
+  const errors: string[] = []
+  checkOverride(scope, '', layer, values, (path, message) => errors.push(`${path.slice(3).join('.')}: ${message}`))
+  if (errors.length > 0) return { success: false, errors }
+  return { success: true, values: overrideDefaults(layer, values) }
+}
+
 /**
  * Checks one scope's overrides and fills their defaults. A scope object seen last time, whose
  * layers didn't change since, comes back as it was; one whose layers changed copies the last

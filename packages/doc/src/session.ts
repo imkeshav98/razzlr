@@ -116,7 +116,10 @@ export function openSession(doc: DesignDoc) {
     undo: () => stepThen(undoManager.undoStack, () => undoManager.undo()),
     redo: () => stepThen(undoManager.redoStack, () => undoManager.redo()),
     canUndo: () => undoManager.canUndo(),
-    /** The design as the document holds it now, validated; shared between reads, so never change it. */
+    /**
+     * The design, validated. It is live: it always shows the document as it is now, and can't be
+     * changed through. Its layers and override values are frozen and replaced when they change.
+     */
     design: () => view.read(),
     destroy: () => {
       view.destroy()

@@ -36,8 +36,8 @@ console.log(`readDesign (the whole design as validated JSON): ${time(() => readD
 // changed since the last command (#23).
 const session = openSession(doc)
 let x = 0
-console.log(`one node.update command: ${time(() => session.run('node.update', { ids: ['p7-title'], patch: { x: x++ % 200 } }), 201).toFixed(1)} ms median`)
-console.log(`one text.edit command (a typed key): ${time(() => session.run('text.edit', { id: 'p7-body', op: { kind: 'insert', at: 0, text: 'a' } }), 201).toFixed(1)} ms median`)
+console.log(`one node.update command: ${time(() => session.run('node.update', { ids: ['p7-title'], patch: { x: x++ % 200 } }), 201).toFixed(2)} ms median`)
+console.log(`one text.edit command (a typed key): ${time(() => session.run('text.edit', { id: 'p7-body', op: { kind: 'insert', at: 0, text: 'a' } }), 201).toFixed(2)} ms median`)
 
 // A working session: 1,000 more edits of the kinds people make, then the size again.
 for (let i = 0; i < 1000; i++) {
