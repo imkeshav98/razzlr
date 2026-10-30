@@ -2,7 +2,8 @@ import { z } from 'zod'
 import * as Y from 'yjs'
 import { CommandError } from './command.ts'
 import { COMMANDS, type CommandName } from './commands.ts'
-import { readDesign, root, type DesignDoc } from './design-doc.ts'
+import { root, type DesignDoc } from './design-doc.ts'
+import { designView } from './design-view.ts'
 
 type InputOf<N extends CommandName> = z.input<(typeof COMMANDS)[N]['input']>
 type ResultOf<N extends CommandName> = ReturnType<(typeof COMMANDS)[N]['apply']>
@@ -16,6 +17,7 @@ export function openSession(doc: DesignDoc) {
   const origin = { session: Symbol('session') }
   const r = root(doc)
   const roots = [r.meta, r.formats, r.pages, r.nodes, r.overrides]
+  const view = designView(doc)
   const undoManager = new Y.UndoManager(roots, { trackedOrigins: new Set([origin]), captureTimeout: 0 })
 
   // Yjs gap: when a set of a key won over another tab's concurrent set, undoing it deletes the key
@@ -67,7 +69,7 @@ export function openSession(doc: DesignDoc) {
     if (!parsed.success) {
       throw new CommandError(name, parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '))
     }
-    const ctx = { doc, r, design: readDesign(doc) }
+    const ctx = { doc, r, design: view.read() }
     const reason = command.check?.(ctx, parsed.data as never)
     if (reason) throw new CommandError(name, reason)
     let result: unknown
@@ -114,7 +116,10 @@ export function openSession(doc: DesignDoc) {
     undo: () => stepThen(undoManager.undoStack, () => undoManager.undo()),
     redo: () => stepThen(undoManager.redoStack, () => undoManager.redo()),
     canUndo: () => undoManager.canUndo(),
+    /** The design as the document holds it now, validated; shared between reads, so never change it. */
+    design: () => view.read(),
     destroy: () => {
+      view.destroy()
       for (const type of roots) type.unobserveDeep(collect)
       undoManager.off('stack-item-added', onStackItemAdded)
       undoManager.off('stack-item-updated', onStackItemUpdated)

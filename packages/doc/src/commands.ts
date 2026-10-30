@@ -1,4 +1,4 @@
-import { Format, FormatId, Layer, LAYER_PROPS, NodeId, Page, PageId, parseDesign, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
+import { Format, FormatId, Layer, LAYER_PROPS, NodeId, Page, PageId, parseDesignIncrementally, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
 import { generateKeyBetween } from 'fractional-indexing'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
@@ -79,21 +79,24 @@ export const nodeUpdate = defineCommand({
   name: 'node.update',
   input: z.object({ ids: NodeId.array().min(1), scope: Scope, patch: z.record(z.string(), z.unknown()) }),
   check: ({ design }, { ids, scope, patch }) => {
-    const candidate = structuredClone(design) as Design & { overrides: Record<string, Record<string, Record<string, unknown>>> }
+    // The design as it would be, sharing every object the patch leaves alone, so the incremental
+    // parse only validates the patched layers and overrides again.
+    const nodes = { ...design.nodes }
+    const overrides: Record<string, Record<string, Record<string, unknown>>> = { ...design.overrides }
     for (const id of ids) {
-      const node = candidate.nodes[id]
+      const node = nodes[id]
       if (!node) return `no layer "${id}"`
       for (const path of Object.keys(patch)) {
         if (!Object.hasOwn(LAYER_PROPS[node.type].shape, path)) return `a ${node.type} has no property "${path}"`
         if (scope === 'base' && node.type === 'text' && (path === 'text' || path === 'runs')) return 'change text with text.edit'
       }
-      if (scope === 'base') Object.assign(node.props, patch)
+      if (scope === 'base') nodes[id] = { ...node, props: { ...node.props, ...patch } } as typeof node
       else {
-        const byNode = (candidate.overrides[scope] ??= {})
+        const byNode = (overrides[scope] = { ...overrides[scope] })
         byNode[id] = { ...byNode[id], ...patch }
       }
     }
-    const result = parseDesign(candidate)
+    const result = parseDesignIncrementally({ ...design, nodes, overrides })
     return result.success ? undefined : shortErrors(result.errors)
   },
   apply: ({ r }, { ids, scope, patch }) => {

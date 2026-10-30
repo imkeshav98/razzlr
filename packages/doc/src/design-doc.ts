@@ -31,7 +31,7 @@ export const root = (doc: DesignDoc) => ({
 
 const SEP = '|'
 export const overrideKey = (scope: string, nodeId: string, path: string) => [scope, nodeId, path].join(SEP)
-const splitOverrideKey = (key: string) => {
+export const splitOverrideKey = (key: string) => {
   const [scope = '', nodeId = '', ...path] = key.split(SEP)
   return { scope, nodeId, path: path.join(SEP) }
 }
@@ -92,7 +92,7 @@ export function loadDesign(design: Design, doc: DesignDoc = new Y.Doc()): Design
   return doc
 }
 
-function nodeToJson(ynode: Y.Map<unknown>): Json {
+export function nodeToJson(ynode: Y.Map<unknown>): Json {
   const json: Json = {}
   for (const [k, v] of ynode.entries()) {
     if (k !== 'props' && k !== DELETED) json[k] = v
@@ -121,13 +121,18 @@ export function snapshot(doc: DesignDoc) {
   }
 }
 
+/** Built through Maps: an id such as `__proto__` from another tab stays a plain key. */
 function nestOverrides(flat: Y.Map<unknown>) {
-  const nested: Record<string, Record<string, Json>> = {}
+  const nested = new Map<string, Map<string, Map<string, unknown>>>()
   for (const [key, value] of flat.entries()) {
     const { scope, nodeId, path } = splitOverrideKey(key)
-    ;((nested[scope] ??= {})[nodeId] ??= {})[path] = value
+    const byNode = nested.get(scope) ?? new Map<string, Map<string, unknown>>()
+    nested.set(scope, byNode)
+    const props = byNode.get(nodeId) ?? new Map<string, unknown>()
+    byNode.set(nodeId, props)
+    props.set(path, value)
   }
-  return nested
+  return Object.fromEntries([...nested].map(([scope, byNode]) => [scope, Object.fromEntries([...byNode].map(([id, props]) => [id, Object.fromEntries(props)]))]))
 }
 
 /**
