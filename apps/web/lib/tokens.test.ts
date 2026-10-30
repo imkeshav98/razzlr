@@ -32,7 +32,7 @@ describe.each([['dark', "[data-theme='dark']"], ['light', "[data-theme='light']"
     expect(contrast(fg, bg)).toBeGreaterThanOrEqual(4.5)
   })
 
-  it('text on the raspberry buttons is at least 4.5:1', () => {
+  it('text on the pink buttons is at least 4.5:1', () => {
     for (const button of ['accent-solid', 'accent-solid-hover']) {
       expect(contrast(t['on-accent'] ?? '', t[button] ?? '')).toBeGreaterThanOrEqual(4.5)
     }
