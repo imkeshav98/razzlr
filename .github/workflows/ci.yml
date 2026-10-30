@@ -1,7 +1,9 @@
 name: CI
 
 on:
+  # A branch's commits are tested by its pull request; pushes are tested on main only, so no commit runs twice.
   push:
+    branches: [main]
   pull_request:
 
 concurrency:
