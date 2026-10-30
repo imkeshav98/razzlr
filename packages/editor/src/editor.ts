@@ -5,7 +5,7 @@ import { HocuspocusProvider, WebSocketStatus } from '@hocuspocus/provider'
 import { anchorOffset, childrenOf, CommandError, openSession, readDesign, textAnchor, type Session, type TextAnchor } from '@razzlr/doc'
 import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
 import {
-  caretAt, caretPosition, drawPage, layerPictures, layoutText, paragraphCache, render, renderDesign, resourceCache, sceneMemo, type ResourceCache, type Resources, type Scene, type SceneLayer,
+  caretAt, caretPosition, drawPage, layerPictures, layoutText, paragraphCache, render, renderDesign, resourceCache, sceneMemo, textMeasure, type MeasureText, type ResourceCache, type Resources, type Scene, type SceneLayer,
 } from '@razzlr/renderer'
 import { canHold, imageAssetIds, isContainer, LOCK_FLAGS, type Design } from '@razzlr/schema'
 import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from 'canvaskit-wasm'
@@ -317,12 +317,19 @@ function live(
     return deps
   }
 
+  // Auto layout measures text with the fonts the screen draws with (#46); a new font set measures anew.
+  let measuring: { for: Resources; measure: MeasureText } | null = null
+  const measureText = () => {
+    if (measuring?.for !== resources) measuring = { for: resources, measure: textMeasure(ck, resources) }
+    return measuring.measure
+  }
+
   function cached(frame: Frame): FrameCache {
     const deps = depsOf(frame)
     const entry = frames.get(frame.key)
     if (entry && sameDeps(entry.deps, deps)) return entry
     entry?.picture?.delete()
-    const fresh = { deps, scene: render(design, frame.pageId, frame.formatId, scenes), picture: null }
+    const fresh = { deps, scene: render(design, frame.pageId, frame.formatId, scenes, measureText()), picture: null }
     frames.set(frame.key, fresh)
     return fresh
   }
@@ -366,8 +373,21 @@ function live(
   function boxIn(frame: Frame, id: string, from: Design = session.design()): Box | null {
     const node = from.nodes[id]
     if (!node) return null
+    // Auto layout places and sizes a layer as the scene is built (#46): its box is the scene's.
+    if (laidOut(id, from)) {
+      const shown = find(cached(frame).scene.layers, id)
+      if (shown) return { x: shown.props.x, y: shown.props.y, width: shown.props.width, height: shown.props.height, rotation: shown.props.rotation }
+    }
     const p = { ...node.props, ...from.overrides[scope(frame)]?.[id] } as { x: number; y: number; width: number; height: number; rotation?: number }
     return { x: p.x, y: p.y, width: p.width, height: p.height, rotation: p.rotation ?? 0 }
+  }
+  /** Whether auto layout sizes or places a layer: an auto layout frame, or a layer anywhere inside one. */
+  function laidOut(id: string, from: Design) {
+    for (let up: string | undefined = id; up && from.nodes[up]; up = from.nodes[up]?.parentId) {
+      const node = from.nodes[up]
+      if (node?.type === 'frame' && (node.props.layout || Object.values(from.overrides).some((o) => o[up as string]?.layout))) return true
+    }
+    return false
   }
   /** The groups and frames a layer is inside, outermost first, as boxes in a frame. */
   function containersOf(frame: Frame, parentId: string | undefined, from: Design = session.design()): Box[] {
@@ -1767,6 +1787,19 @@ function live(
         pathEditing = { id: only, frame: frame.key, selected: [] }
         break
       }
+      case 'autoLayout': {
+        // Auto layout on for the selected frames, or off when every one has it already (#46).
+        const frames = ids.filter((id) => nodes[id]?.type === 'frame')
+        if (frames.length === 0) return false
+        const on = !frames.every((id) => {
+          const node = nodes[id]
+          return node?.type === 'frame' && node.props.layout !== undefined
+        })
+        runQuietly(() => session.gesture(() => {
+          for (const id of frames) session.run('node.autoLayout', { id, on })
+        }))
+        break
+      }
       case 'booleanUnion': combine('union')
         break
       case 'booleanSubtract': combine('subtract')
@@ -1977,6 +2010,11 @@ function live(
       const at = toScreen(camera, { x: frame.x + x, y: frame.y + y })
       const rect = canvas.getBoundingClientRect()
       return { x: rect.left + at.x, y: rect.top + at.y }
+    },
+    /** A layer's box as drawn in one frame, in design pixels, auto layout solved; the first page and the primary format by default. */
+    boxOf(id: string, pageId?: string, formatId?: string) {
+      const box = drawnBoxOf(defaultFrame(pageId, formatId), id)
+      return box && { x: box.x, y: box.y, width: box.width, height: box.height }
     },
     /** Resolves once what the screen shows is up to date: after the pending redraw, if there is one. */
     drawn: () => new Promise<void>((resolve) => {

@@ -1,5 +1,5 @@
 // The editor keeps laid-out text and recorded layers between redraws (#36); drawing from those caches must not change a pixel.
-import { drawScene, layerPictures, paragraphCache, render, renderDesign, resourceCache, sceneMemo } from '@razzlr/renderer'
+import { drawScene, layerPictures, paragraphCache, render, renderDesign, resourceCache, sceneMemo, textMeasure } from '@razzlr/renderer'
 import { loadCanvasKit } from '@razzlr/renderer/node'
 import { parseDesign } from '@razzlr/schema'
 import { afterAll, describe, expect, it, vi } from 'vitest'
@@ -13,6 +13,8 @@ const resources = cache.resources(bytes)
 const paragraphs = paragraphCache()
 const layers = layerPictures()
 const scenes = sceneMemo()
+/** Auto layout measures text as the editor does (#46). */
+const measure = textMeasure(ck, resources)
 afterAll(() => {
   layers.delete()
   paragraphs.delete()
@@ -45,10 +47,10 @@ function drawCached(scene: ReturnType<typeof render>) {
 describe('paragraph and layer caches', () => {
   it.each(cases)('$name $pageId in $formatId draws the same pixels from the cache, the second time without laying out or recording', ({ json, design, pageId, formatId }) => {
     const expected = renderDesign(ck, json, pageId, formatId, bytes, cache)
-    expect(comparePixels(expected, drawCached(render(design, pageId, formatId, scenes))).differing).toBe(0)
+    expect(comparePixels(expected, drawCached(render(design, pageId, formatId, scenes, measure))).differing).toBe(0)
     const builds = vi.spyOn(ck.ParagraphBuilder, 'MakeFromFontCollection')
     const recorders = vi.spyOn(ck, 'PictureRecorder')
-    expect(comparePixels(expected, drawCached(render(design, pageId, formatId, scenes))).differing).toBe(0)
+    expect(comparePixels(expected, drawCached(render(design, pageId, formatId, scenes, measure))).differing).toBe(0)
     expect(builds).not.toHaveBeenCalled()
     expect(recorders).not.toHaveBeenCalled()
     builds.mockRestore()

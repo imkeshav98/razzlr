@@ -1,5 +1,6 @@
 import { childrenOf } from '@razzlr/doc'
 import type { Design, Layer, Paint } from '@razzlr/schema'
+import { applyLayout, type MeasureText } from './layout.ts'
 
 /** One layer as a scene draws it: its props with the format's overrides applied, and its visible children. */
 export type SceneLayer = {
@@ -30,8 +31,11 @@ export const sceneMemo = (): SceneMemo => new Map()
 
 const sameLayers = (a: SceneLayer[], b: SceneLayer[]) => a.length === b.length && a.every((layer, i) => layer === b[i])
 
-/** Builds the scene for one page in one format. Pure: the design is only read. */
-export function render(design: Design, pageId: string, formatId: string, memo?: SceneMemo): Scene {
+/**
+ * Builds the scene for one page in one format, auto layout solved (#46). Pure: the design is only
+ * read. Without `measure`, text in an auto layout keeps the size its box says.
+ */
+export function render(design: Design, pageId: string, formatId: string, memo?: SceneMemo, measure?: MeasureText): Scene {
   const page = design.pages[pageId]
   if (!page) throw new Error(`no page "${pageId}"`)
   const format = design.formats[formatId]
@@ -53,5 +57,5 @@ export function render(design: Design, pageId: string, formatId: string, memo?: 
       return [layer]
     })
 
-  return { pageId, formatId, width: format.width, height: format.height, fills: page.fills, layers: layersUnder(pageId) }
+  return { pageId, formatId, width: format.width, height: format.height, fills: page.fills, layers: applyLayout(layersUnder(pageId), measure) }
 }

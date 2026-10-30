@@ -1,0 +1,1145 @@
+{
+  "meta": {
+    "schemaVersion": 2,
+    "designId": "auto-layout",
+    "name": "Auto layout",
+    "kind": "single",
+    "primaryFormatId": "sq"
+  },
+  "formats": {
+    "sq": {
+      "name": "Square",
+      "width": 1080,
+      "height": 1080,
+      "order": "a0"
+    }
+  },
+  "pages": {
+    "p1": {
+      "name": "Page 1",
+      "order": "a0",
+      "fills": [
+        {
+          "type": "solid",
+          "color": "#F6F3EEFF"
+        }
+      ]
+    }
+  },
+  "nodes": {
+    "btnLong": {
+      "type": "frame",
+      "parentId": "p1",
+      "index": "a0",
+      "name": "btnLong",
+      "props": {
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FF2E7EFF"
+          }
+        ],
+        "x": 60,
+        "y": 60,
+        "width": 10,
+        "height": 10,
+        "sizing": {
+          "width": "hug",
+          "height": "hug"
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 12,
+          "padding": {
+            "top": 18,
+            "right": 36,
+            "bottom": 18,
+            "left": 36
+          },
+          "align": "center"
+        }
+      }
+    },
+    "dot": {
+      "type": "graphic",
+      "parentId": "btnLong",
+      "index": "a0",
+      "name": "dot",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 14,
+        "height": 14,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FFFFFFFF"
+          }
+        ]
+      }
+    },
+    "btnLongLabel": {
+      "type": "text",
+      "parentId": "btnLong",
+      "index": "a1",
+      "name": "btnLongLabel",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "text": "Shop the summer sale",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 28,
+          "fontWeight": 700,
+          "color": "#FFFFFFFF"
+        },
+        "boxMode": "autoWidth"
+      }
+    },
+    "btnShort": {
+      "type": "frame",
+      "parentId": "p1",
+      "index": "a1",
+      "name": "btnShort",
+      "props": {
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1F2329FF"
+          }
+        ],
+        "x": 60,
+        "y": 170,
+        "width": 10,
+        "height": 10,
+        "sizing": {
+          "width": "hug",
+          "height": "hug"
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 12,
+          "padding": {
+            "top": 18,
+            "right": 36,
+            "bottom": 18,
+            "left": 36
+          },
+          "align": "center"
+        }
+      }
+    },
+    "dot2": {
+      "type": "graphic",
+      "parentId": "btnShort",
+      "index": "a0",
+      "name": "dot2",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 14,
+        "height": 14,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FF2E7EFF"
+          }
+        ]
+      }
+    },
+    "btnShortLabel": {
+      "type": "text",
+      "parentId": "btnShort",
+      "index": "a1",
+      "name": "btnShortLabel",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "text": "Buy",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 28,
+          "fontWeight": 700,
+          "color": "#FFFFFFFF"
+        },
+        "boxMode": "autoWidth"
+      }
+    },
+    "card": {
+      "type": "frame",
+      "parentId": "p1",
+      "index": "a2",
+      "name": "card",
+      "props": {
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FFFFFFFF"
+          }
+        ],
+        "x": 60,
+        "y": 290,
+        "width": 460,
+        "height": 10,
+        "sizing": {
+          "width": "fixed",
+          "height": "hug"
+        },
+        "effects": [
+          {
+            "type": "dropShadow",
+            "x": 0,
+            "y": 12,
+            "blur": 32,
+            "spread": 0,
+            "color": "#1F232933"
+          }
+        ],
+        "layout": {
+          "direction": "column",
+          "gap": 16,
+          "padding": {
+            "top": 32,
+            "right": 32,
+            "bottom": 32,
+            "left": 32
+          }
+        }
+      }
+    },
+    "photo": {
+      "type": "graphic",
+      "parentId": "card",
+      "index": "a0",
+      "name": "photo",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 180,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 16
+        },
+        "fills": [
+          {
+            "type": "linear",
+            "from": {
+              "x": 0,
+              "y": 0
+            },
+            "to": {
+              "x": 1,
+              "y": 1
+            },
+            "stops": [
+              {
+                "offset": 0,
+                "color": "#FFB020FF"
+              },
+              {
+                "offset": 1,
+                "color": "#FF2E7EFF"
+              }
+            ]
+          }
+        ],
+        "sizing": {
+          "width": "fill",
+          "height": "fixed"
+        }
+      }
+    },
+    "cardTitle": {
+      "type": "text",
+      "parentId": "card",
+      "index": "a1",
+      "name": "cardTitle",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "text": "Fresh roast, every single morning of the week",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 34,
+          "fontWeight": 800,
+          "color": "#1F2329FF"
+        },
+        "boxMode": "autoHeight",
+        "sizing": {
+          "width": "fill",
+          "height": "hug"
+        }
+      }
+    },
+    "cardBody": {
+      "type": "text",
+      "parentId": "card",
+      "index": "a2",
+      "name": "cardBody",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "text": "Beans from small farms, roasted in the harbour and ground the moment you order.",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 22,
+          "fontWeight": 400,
+          "color": "#5B6470FF"
+        },
+        "boxMode": "autoHeight",
+        "sizing": {
+          "width": "fill",
+          "height": "hug"
+        }
+      }
+    },
+    "cardBtn": {
+      "type": "frame",
+      "parentId": "card",
+      "index": "a3",
+      "name": "cardBtn",
+      "props": {
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FF2E7EFF"
+          }
+        ],
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "sizing": {
+          "width": "hug",
+          "height": "hug"
+        },
+        "layout": {
+          "direction": "row",
+          "padding": {
+            "top": 14,
+            "right": 28,
+            "bottom": 14,
+            "left": 28
+          }
+        }
+      }
+    },
+    "cardBtnLabel": {
+      "type": "text",
+      "parentId": "cardBtn",
+      "index": "a0",
+      "name": "cardBtnLabel",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "text": "Order now",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 24,
+          "fontWeight": 700,
+          "color": "#FFFFFFFF"
+        },
+        "boxMode": "autoWidth"
+      }
+    },
+    "badge": {
+      "type": "graphic",
+      "parentId": "card",
+      "index": "a4",
+      "name": "badge",
+      "props": {
+        "x": 440,
+        "y": 270,
+        "width": 100,
+        "height": 100,
+        "shape": {
+          "kind": "star",
+          "points": 12,
+          "innerRadius": 0.8
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#00A889FF"
+          }
+        ],
+        "absolute": true
+      }
+    },
+    "stats": {
+      "type": "frame",
+      "parentId": "p1",
+      "index": "a3",
+      "name": "stats",
+      "props": {
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#EEF1F5FF"
+          }
+        ],
+        "x": 580,
+        "y": 60,
+        "width": 440,
+        "height": 120,
+        "layout": {
+          "direction": "row",
+          "padding": {
+            "top": 0,
+            "right": 24,
+            "bottom": 0,
+            "left": 24
+          },
+          "justify": "space-between",
+          "align": "center"
+        }
+      }
+    },
+    "s1": {
+      "type": "graphic",
+      "parentId": "stats",
+      "index": "a0",
+      "name": "s1",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 80,
+        "height": 80,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 40
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#2F6BFFFF"
+          }
+        ]
+      }
+    },
+    "s2": {
+      "type": "graphic",
+      "parentId": "stats",
+      "index": "a1",
+      "name": "s2",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 80,
+        "height": 40,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 8
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#8E44FFFF"
+          }
+        ]
+      }
+    },
+    "s3": {
+      "type": "graphic",
+      "parentId": "stats",
+      "index": "a2",
+      "name": "s3",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 80,
+        "height": 60,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 8
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#00A889FF"
+          }
+        ]
+      }
+    },
+    "avatars": {
+      "type": "frame",
+      "parentId": "p1",
+      "index": "a4",
+      "name": "avatars",
+      "props": {
+        "fills": [],
+        "x": 580,
+        "y": 210,
+        "width": 10,
+        "height": 10,
+        "sizing": {
+          "width": "hug",
+          "height": "hug"
+        },
+        "layout": {
+          "direction": "row",
+          "gap": -24,
+          "padding": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          }
+        }
+      }
+    },
+    "av0": {
+      "type": "graphic",
+      "parentId": "avatars",
+      "index": "a0",
+      "name": "av0",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 72,
+        "height": 72,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FF5A36FF"
+          }
+        ],
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#FFFFFFFF"
+            },
+            "width": 4
+          }
+        ]
+      }
+    },
+    "av1": {
+      "type": "graphic",
+      "parentId": "avatars",
+      "index": "a1",
+      "name": "av1",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 72,
+        "height": 72,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FFB020FF"
+          }
+        ],
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#FFFFFFFF"
+            },
+            "width": 4
+          }
+        ]
+      }
+    },
+    "av2": {
+      "type": "graphic",
+      "parentId": "avatars",
+      "index": "a2",
+      "name": "av2",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 72,
+        "height": 72,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#2F6BFFFF"
+          }
+        ],
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#FFFFFFFF"
+            },
+            "width": 4
+          }
+        ]
+      }
+    },
+    "av3": {
+      "type": "graphic",
+      "parentId": "avatars",
+      "index": "a3",
+      "name": "av3",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 72,
+        "height": 72,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#8E44FFFF"
+          }
+        ],
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#FFFFFFFF"
+            },
+            "width": 4
+          }
+        ]
+      }
+    },
+    "tags": {
+      "type": "frame",
+      "parentId": "p1",
+      "index": "a5",
+      "name": "tags",
+      "props": {
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FFF8F0FF"
+          }
+        ],
+        "x": 580,
+        "y": 320,
+        "width": 440,
+        "height": 10,
+        "sizing": {
+          "width": "fixed",
+          "height": "hug"
+        },
+        "layout": {
+          "direction": "row",
+          "gap": 10,
+          "lineGap": 10,
+          "wrap": true,
+          "padding": {
+            "top": 16,
+            "right": 16,
+            "bottom": 16,
+            "left": 16
+          }
+        }
+      }
+    },
+    "tag0": {
+      "type": "frame",
+      "parentId": "tags",
+      "index": "a0",
+      "name": "tag0",
+      "props": {
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1F2329FF"
+          }
+        ],
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "sizing": {
+          "width": "hug",
+          "height": "hug"
+        },
+        "layout": {
+          "direction": "row",
+          "padding": {
+            "top": 8,
+            "right": 16,
+            "bottom": 8,
+            "left": 16
+          }
+        }
+      }
+    },
+    "tagText0": {
+      "type": "text",
+      "parentId": "tag0",
+      "index": "a0",
+      "name": "tagText0",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "text": "Espresso",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 20,
+          "fontWeight": 600,
+          "color": "#FFFFFFFF"
+        },
+        "boxMode": "autoWidth"
+      }
+    },
+    "tag1": {
+      "type": "frame",
+      "parentId": "tags",
+      "index": "a1",
+      "name": "tag1",
+      "props": {
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1F2329FF"
+          }
+        ],
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "sizing": {
+          "width": "hug",
+          "height": "hug"
+        },
+        "layout": {
+          "direction": "row",
+          "padding": {
+            "top": 8,
+            "right": 16,
+            "bottom": 8,
+            "left": 16
+          }
+        }
+      }
+    },
+    "tagText1": {
+      "type": "text",
+      "parentId": "tag1",
+      "index": "a0",
+      "name": "tagText1",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "text": "Flat white",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 20,
+          "fontWeight": 600,
+          "color": "#FFFFFFFF"
+        },
+        "boxMode": "autoWidth"
+      }
+    },
+    "tag2": {
+      "type": "frame",
+      "parentId": "tags",
+      "index": "a2",
+      "name": "tag2",
+      "props": {
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1F2329FF"
+          }
+        ],
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "sizing": {
+          "width": "hug",
+          "height": "hug"
+        },
+        "layout": {
+          "direction": "row",
+          "padding": {
+            "top": 8,
+            "right": 16,
+            "bottom": 8,
+            "left": 16
+          }
+        }
+      }
+    },
+    "tagText2": {
+      "type": "text",
+      "parentId": "tag2",
+      "index": "a0",
+      "name": "tagText2",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "text": "Cold brew",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 20,
+          "fontWeight": 600,
+          "color": "#FFFFFFFF"
+        },
+        "boxMode": "autoWidth"
+      }
+    },
+    "tag3": {
+      "type": "frame",
+      "parentId": "tags",
+      "index": "a3",
+      "name": "tag3",
+      "props": {
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1F2329FF"
+          }
+        ],
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "sizing": {
+          "width": "hug",
+          "height": "hug"
+        },
+        "layout": {
+          "direction": "row",
+          "padding": {
+            "top": 8,
+            "right": 16,
+            "bottom": 8,
+            "left": 16
+          }
+        }
+      }
+    },
+    "tagText3": {
+      "type": "text",
+      "parentId": "tag3",
+      "index": "a0",
+      "name": "tagText3",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "text": "Single origin",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 20,
+          "fontWeight": 600,
+          "color": "#FFFFFFFF"
+        },
+        "boxMode": "autoWidth"
+      }
+    },
+    "tag4": {
+      "type": "frame",
+      "parentId": "tags",
+      "index": "a4",
+      "name": "tag4",
+      "props": {
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1F2329FF"
+          }
+        ],
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "sizing": {
+          "width": "hug",
+          "height": "hug"
+        },
+        "layout": {
+          "direction": "row",
+          "padding": {
+            "top": 8,
+            "right": 16,
+            "bottom": 8,
+            "left": 16
+          }
+        }
+      }
+    },
+    "tagText4": {
+      "type": "text",
+      "parentId": "tag4",
+      "index": "a0",
+      "name": "tagText4",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "text": "Oat milk",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 20,
+          "fontWeight": 600,
+          "color": "#FFFFFFFF"
+        },
+        "boxMode": "autoWidth"
+      }
+    },
+    "tag5": {
+      "type": "frame",
+      "parentId": "tags",
+      "index": "a5",
+      "name": "tag5",
+      "props": {
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1F2329FF"
+          }
+        ],
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "sizing": {
+          "width": "hug",
+          "height": "hug"
+        },
+        "layout": {
+          "direction": "row",
+          "padding": {
+            "top": 8,
+            "right": 16,
+            "bottom": 8,
+            "left": 16
+          }
+        }
+      }
+    },
+    "tagText5": {
+      "type": "text",
+      "parentId": "tag5",
+      "index": "a0",
+      "name": "tagText5",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "text": "Decaf",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 20,
+          "fontWeight": 600,
+          "color": "#FFFFFFFF"
+        },
+        "boxMode": "autoWidth"
+      }
+    },
+    "tag6": {
+      "type": "frame",
+      "parentId": "tags",
+      "index": "a6",
+      "name": "tag6",
+      "props": {
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1F2329FF"
+          }
+        ],
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "sizing": {
+          "width": "hug",
+          "height": "hug"
+        },
+        "layout": {
+          "direction": "row",
+          "padding": {
+            "top": 8,
+            "right": 16,
+            "bottom": 8,
+            "left": 16
+          }
+        }
+      }
+    },
+    "tagText6": {
+      "type": "text",
+      "parentId": "tag6",
+      "index": "a0",
+      "name": "tagText6",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "text": "Pour over",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 20,
+          "fontWeight": 600,
+          "color": "#FFFFFFFF"
+        },
+        "boxMode": "autoWidth"
+      }
+    },
+    "turned": {
+      "type": "frame",
+      "parentId": "p1",
+      "index": "a6",
+      "name": "turned",
+      "props": {
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1F2329FF"
+          }
+        ],
+        "x": 620,
+        "y": 640,
+        "width": 360,
+        "height": 360,
+        "rotation": -8,
+        "layout": {
+          "direction": "column",
+          "gap": 12,
+          "padding": {
+            "top": 20,
+            "right": 20,
+            "bottom": 20,
+            "left": 20
+          },
+          "align": "center"
+        }
+      }
+    },
+    "t1": {
+      "type": "graphic",
+      "parentId": "turned",
+      "index": "a0",
+      "name": "t1",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 60,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 12
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FF2E7EFF"
+          }
+        ]
+      }
+    },
+    "t2": {
+      "type": "graphic",
+      "parentId": "turned",
+      "index": "a1",
+      "name": "t2",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 12
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FFB020FF"
+          }
+        ],
+        "sizing": {
+          "width": "fill",
+          "height": "fill"
+        }
+      }
+    },
+    "t3": {
+      "type": "graphic",
+      "parentId": "turned",
+      "index": "a2",
+      "name": "t3",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 120,
+        "height": 10,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 12
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#2F6BFFFF"
+          }
+        ],
+        "sizing": {
+          "width": "fixed",
+          "height": "fill"
+        }
+      }
+    },
+    "t4": {
+      "type": "text",
+      "parentId": "turned",
+      "index": "a3",
+      "name": "t4",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 10,
+        "height": 10,
+        "text": "Hugging text, centred",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 24,
+          "fontWeight": 700,
+          "color": "#FFFFFFFF"
+        },
+        "boxMode": "autoWidth"
+      }
+    }
+  },
+  "overrides": {}
+}

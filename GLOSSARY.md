@@ -64,6 +64,14 @@ _Avoid_: Compound path, merged shape (it is never flattened)
 A point a path runs through. It may have a handle on each side that bends the segments meeting there; a smooth anchor's two handles point straight away from each other. The pen places anchors; editing a path moves, adds and deletes them.
 _Avoid_: Node (a node is a layer), vertex
 
+**Auto layout**:
+A frame setting that places the frame's children in a row or a column, a gap apart inside its padding, lined up along and across the flow, and optionally wrapping onto more lines. It is solved when a scene is built, per format, so the editor and every export lay out alike. A child marked absolute keeps its own place.
+_Avoid_: Flexbox, stack, auto frame
+
+**Sizing**:
+How a layer in an auto layout frame takes its width and its height: fixed keeps its own size, hug fits what it holds (a text's words, a frame's children), and fill takes the room the frame has left.
+_Avoid_: Resizing, constraints (those pin a layer to its frame's edges)
+
 **Fill**:
 One paint on a layer: solid, gradient (linear, radial or angular), image or video. A crop is the fill's transform.
 _Avoid_: Background, colour (when a paint is meant)

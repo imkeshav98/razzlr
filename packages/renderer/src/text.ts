@@ -179,3 +179,18 @@ export function selectionBoxes(ck: CanvasKit, paragraph: Paragraph, start: numbe
     rtl: dir.value === ck.TextDirection.RTL.value,
   }))
 }
+
+/**
+ * Measures text for auto layout (#46), the way `layoutText` lays it out to draw: natural width
+ * (rounded up, as a text box that grows draws) or the height at a given width.
+ */
+export function textMeasure(ck: CanvasKit, resources: Pick<Resources, 'fonts' | 'fallbackFamilies'>) {
+  return (props: TextProps, width: number | null) => {
+    const { paragraph } = layoutText(ck, width === null ? { ...props, boxMode: 'autoWidth' } : { ...props, boxMode: 'autoHeight', width }, resources)
+    try {
+      return { width: width ?? Math.ceil(paragraph.getMaxIntrinsicWidth()), height: paragraph.getHeight() }
+    } finally {
+      paragraph.delete()
+    }
+  }
+}
