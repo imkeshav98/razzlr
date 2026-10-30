@@ -48,3 +48,12 @@ Used by `/wayfinder`. The **map** is a single issue with **child** issues as tic
 - **Frontier query**: list the map's open children (`gh issue list --state open`, scoped to the map's sub-issues / task list), drop any with an open blocker (see **Count open blockers**, or an open issue in the `Blocked by` line) or an assignee; first in map order wins.
 - **Claim**: `gh issue edit <n> --add-assignee @me`, the session's first write.
 - **Resolve**: `gh issue comment <n> --body "<answer>"`, then `gh issue close <n>`, then append a context pointer (gist + link) to the map's Decisions-so-far.
+
+## In Claude Code cloud sessions
+
+GitHub's GraphQL API is blocked there, so `gh issue create/view/list/edit` fail with HTTP 403. Use the REST API through `gh api` instead:
+
+- Create: `gh api repos/imkeshav98/razzlr/issues -f title=... -F body=@file.md -f 'labels[]=ready-for-agent'`
+- Read: `gh api repos/imkeshav98/razzlr/issues/<n>` and `.../issues/<n>/comments`
+- Sub-issue: `gh api --method POST repos/imkeshav98/razzlr/issues/<parent>/sub_issues -F sub_issue_id=<child-db-id>`
+- Blocked by: `gh api --method POST repos/imkeshav98/razzlr/issues/<n>/dependencies/blocked_by -F issue_id=<blocker-db-id>`

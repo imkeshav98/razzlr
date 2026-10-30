@@ -1,0 +1,29 @@
+{
+  "name": "@razzlr/config",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./eslint": "./eslint.config.js",
+    "./vitest": "./vitest.preset.js"
+  },
+  "bin": {
+    "razzlr-check-deps": "./bin/check-deps.js"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@eslint/js": "^9.39.0",
+    "globals": "^16.5.0",
+    "typescript-eslint": "^8.72.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "eslint": "^9.39.0",
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.7"
+  }
+}
