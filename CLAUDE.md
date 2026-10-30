@@ -20,6 +20,10 @@ pnpm + Turborepo monorepo. `apps/` deploy (web, api, sync, worker); `packages/` 
 
 Matt Pocock's skills are vendored in `.claude/skills/` (MIT, source commit in `.claude/skills/.source-commit`). Start with `/ask-matt` if unsure which flow fits.
 
+### UI/UX Pro Max
+
+Use `ui-ux-pro-max` (vendored in `.claude/skills/ui-ux-pro-max`, MIT, source commit in its `.source-commit`) for any work that changes how the app looks or is interacted with: the editor UI, panels, dashboards, review pages. It is not for the renderer or document model. Its `SKILL.md` names the search script with `${CLAUDE_PLUGIN_ROOT}`; in this repo run `python3 .claude/skills/ui-ux-pro-max/scripts/search.py "<query>" --domain <domain>` from the repo root.
+
 ### Issue tracker
 
 Issues and specs live in GitHub Issues on imkeshav98/razzlr. See `docs/agents/issue-tracker.md`.
