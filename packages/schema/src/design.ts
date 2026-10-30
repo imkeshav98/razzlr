@@ -143,7 +143,7 @@ function overrideDefaults(node: Layer, props: Record<string, unknown>) {
   const merged = propsInScope(node, props)
   if (!merged.success) return props
   const parsed = merged.data as Record<string, unknown>
-  const filled = Object.fromEntries(Object.keys(props).map((path) => [path, parsed[path]]))
+  const filled = deepFreeze(Object.fromEntries(Object.keys(props).map((path) => [path, parsed[path]])))
   // Filled values merge into the same props, so the result can be read again without parsing.
   byProps.set(props, filled)
   byProps.set(filled, filled)
@@ -180,6 +180,15 @@ export function parseDesign(input: unknown): ParseResult {
   }
 }
 
+/** Freezes an object and everything inside it, so a cached result can be shared safely. */
+function deepFreeze<T>(value: T): T {
+  if (typeof value === 'object' && value !== null && !Object.isFrozen(value)) {
+    Object.freeze(value)
+    for (const inner of Object.values(value)) deepFreeze(inner)
+  }
+  return value
+}
+
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 /** Validated layers by the object they came from; a validated layer maps to itself. */
 const layerCache = new WeakMap<object, Layer>()
@@ -207,7 +216,8 @@ export function parseDesignIncrementally(input: unknown): ParseResult {
     if (!layer) {
       const parsed = Layer.safeParse(raw)
       if (!parsed.success) return parseDesign(input)
-      layer = parsed.data
+      // Frozen: it is shared by every design parsed from this object from now on.
+      layer = deepFreeze(parsed.data)
       if (isRecord(raw)) layerCache.set(raw, layer)
       layerCache.set(layer, layer)
     }

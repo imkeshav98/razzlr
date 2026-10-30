@@ -121,13 +121,18 @@ export function snapshot(doc: DesignDoc) {
   }
 }
 
+/** Built through Maps: an id such as `__proto__` from another tab stays a plain key. */
 function nestOverrides(flat: Y.Map<unknown>) {
-  const nested: Record<string, Record<string, Json>> = {}
+  const nested = new Map<string, Map<string, Map<string, unknown>>>()
   for (const [key, value] of flat.entries()) {
     const { scope, nodeId, path } = splitOverrideKey(key)
-    ;((nested[scope] ??= {})[nodeId] ??= {})[path] = value
+    const byNode = nested.get(scope) ?? new Map<string, Map<string, unknown>>()
+    nested.set(scope, byNode)
+    const props = byNode.get(nodeId) ?? new Map<string, unknown>()
+    byNode.set(nodeId, props)
+    props.set(path, value)
   }
-  return nested
+  return Object.fromEntries([...nested].map(([scope, byNode]) => [scope, Object.fromEntries([...byNode].map(([id, props]) => [id, Object.fromEntries(props)]))]))
 }
 
 /**
