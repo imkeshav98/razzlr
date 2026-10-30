@@ -111,6 +111,21 @@ export function caretAt(ck: CanvasKit, paragraph: Paragraph, text: string, x: nu
   return best.offset
 }
 
+/**
+ * Where to draw the caret for an offset, in the paragraph's own coordinates: the trailing edge of
+ * the grapheme before it, or for offset 0 (and right after a line break) the leading edge of the
+ * grapheme after it. At a bidi boundary this is the edge next to the text just typed.
+ */
+export function caretPosition(ck: CanvasKit, paragraph: Paragraph, text: string, offset: number): { x: number; y: number; height: number } {
+  const boxes = boxesOf(ck, paragraph, text)
+  const before = boxes.find((b) => b.end === offset && text[offset - 1] !== '\n')
+  if (before) return { x: before.rtl ? before.x : before.x + before.width, y: before.y, height: before.height }
+  const after = boxes.find((b) => b.start === offset)
+  if (after) return { x: after.rtl ? after.x + after.width : after.x, y: after.y, height: after.height }
+  const [line] = paragraph.getLineMetrics()
+  return { x: 0, y: 0, height: line?.height ?? 0 }
+}
+
 export interface SelectionBox { x: number; y: number; width: number; height: number; rtl: boolean }
 
 /** The boxes that highlight a text range, one per run of one direction on one line. */

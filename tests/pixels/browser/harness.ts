@@ -1,6 +1,6 @@
 // Runs in Chromium. Bundled by specs/parity.fixture.ts and served from memory, with the
 // CanvasKit wasm, the font files and the fixture images beside it.
-import { FALLBACK_FAMILY, FONT_FACES } from '@razzlr/fonts'
+import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
 import { drawDesign, renderDesign, type ResourceBytes } from '@razzlr/renderer'
 import type { Surface } from 'canvaskit-wasm'
 import canvasKitModule from 'canvaskit-wasm/full'
@@ -19,7 +19,7 @@ const fonts = await Promise.all(FONT_FACES.map(async (f) => ({ family: f.family,
 
 async function resourcesFor(assetIds: string[]): Promise<ResourceBytes> {
   const images = Object.fromEntries(await Promise.all(assetIds.map(async (id) => [id, await bytes(`/assets/${id}.jpg`)] as const)))
-  return { fonts, fallbackFamilies: [FALLBACK_FAMILY], images }
+  return { fonts, fallbackFamilies: [...FALLBACK_FAMILIES], images }
 }
 
 /** One WebGL surface per size, kept for the page's life: Chromium allows only a few live WebGL contexts. */

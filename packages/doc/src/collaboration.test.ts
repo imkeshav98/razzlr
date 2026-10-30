@@ -68,6 +68,45 @@ describe('two tabs', () => {
     }
   })
 
+  it('a drag is one undo step, and undoing it leaves the other tab’s edits made during it', () => {
+    const { a, b, tabA, tabB, sync } = twoTabs()
+
+    tabA.gesture(() => {
+      for (let i = 1; i <= 30; i++) {
+        tabA.run('node.update', { ids: ['box'], patch: { x: 100 + i * 10 } })
+        if (i % 10 === 0) {
+          sync()
+          tabB.run('node.update', { ids: ['box'], patch: { y: 100 + i } })
+          sync()
+        }
+      }
+    })
+    tabA.run('node.update', { ids: ['box'], patch: { width: 50 } })
+    sync()
+
+    tabA.undo()
+    sync()
+    expect(readDesign(a).nodes.box?.props).toMatchObject({ x: 400, width: 200 })
+    tabA.undo()
+    sync()
+    expect(tabA.canUndo()).toBe(false)
+    for (const doc of [a, b]) expect(readDesign(doc).nodes.box?.props).toMatchObject({ x: 100, y: 130, width: 200 })
+  })
+
+  it('undoing a gesture that won over another tab’s edit restores the value from before the gesture', () => {
+    const { a, b, tabA, tabB, sync } = twoTabs()
+    tabB.run('node.update', { ids: ['box'], patch: { x: 7 } })
+    tabA.gesture(() => {
+      tabA.run('node.update', { ids: ['box'], patch: { x: 300 } })
+      tabA.run('node.update', { ids: ['box'], patch: { x: 310 } })
+    })
+    sync()
+    // Both tabs set x at once; whichever won, undoing A must not leave x unset.
+    tabA.undo()
+    sync()
+    for (const doc of [a, b]) expect(readDesign(doc).nodes.box?.props.x).toBeTypeOf('number')
+  })
+
   it('two tabs overriding the same layer in a new format at once keep both changes', () => {
     const { a, b, tabA, tabB, sync } = twoTabs()
     tabA.run('format.add', { id: 'story', name: 'Story', width: 1080, height: 1920 })

@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { FALLBACK_FAMILY } from '@razzlr/fonts'
+import { FALLBACK_FAMILIES } from '@razzlr/fonts'
 import { loadFontFiles } from '@razzlr/fonts/node'
 import type { ResourceBytes } from '@razzlr/renderer'
 import type { CanvasKit } from 'canvaskit-wasm'
@@ -13,7 +13,7 @@ export const OUTPUT_DIR = join(import.meta.dirname, '..', 'output')
 export function fixtureResources(): ResourceBytes {
   const images = Object.fromEntries(readdirSync(ASSETS_DIR).filter((f) => f.endsWith('.jpg'))
     .map((f) => [f.replace(/\.jpg$/, ''), new Uint8Array(readFileSync(join(ASSETS_DIR, f)))]))
-  return { fonts: loadFontFiles(), fallbackFamilies: [FALLBACK_FAMILY], images }
+  return { fonts: loadFontFiles(), fallbackFamilies: [...FALLBACK_FAMILIES], images }
 }
 
 export interface Pixels { width: number; height: number; pixels: Uint8Array }

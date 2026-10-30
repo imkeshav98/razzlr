@@ -40,7 +40,16 @@ export function openSession(doc: DesignDoc) {
     stackItem.meta.set('replaced', pending)
     pending = []
   }
+  // Inside a gesture, later commands merge into the gesture's one step. Its first replaced value
+  // for each key is the one from before the gesture, so later ones are not kept.
+  const onStackItemUpdated = ({ stackItem }: { stackItem: { meta: Map<string, unknown> } }) => {
+    const replaced = (stackItem.meta.get('replaced') ?? []) as Replaced[]
+    for (const r of pending) if (!replaced.some((x) => x.map === r.map && x.key === r.key)) replaced.push(r)
+    stackItem.meta.set('replaced', replaced)
+    pending = []
+  }
   undoManager.on('stack-item-added', onStackItemAdded)
+  undoManager.on('stack-item-updated', onStackItemUpdated)
 
   const repairOrigin = { restoreAfterUndo: true }
   const stepThen = (stack: { meta: Map<string, unknown> }[], step: () => void) => {
@@ -66,18 +75,49 @@ export function openSession(doc: DesignDoc) {
     doc.transact(() => {
       result = command.apply(ctx, parsed.data as never)
     }, origin)
-    undoManager.stopCapturing()
+    if (!inGesture) undoManager.stopCapturing()
     return result as ResultOf<N>
+  }
+
+  let inGesture = false
+  /**
+   * Starts one undo step that lasts until the returned function is called: every command run in
+   * between, such as each move of a drag or each key typed into a text, is undone together.
+   * Commands from other tabs are never part of it.
+   */
+  function beginGesture(): () => void {
+    if (inGesture) return () => {}
+    undoManager.stopCapturing()
+    inGesture = true
+    undoManager.captureTimeout = Number.POSITIVE_INFINITY
+    return () => {
+      inGesture = false
+      undoManager.captureTimeout = 0
+      undoManager.stopCapturing()
+    }
+  }
+
+  /** Runs `steps` as one gesture. */
+  function gesture<T>(steps: () => T): T {
+    const end = beginGesture()
+    try {
+      return steps()
+    } finally {
+      end()
+    }
   }
 
   return {
     run,
+    beginGesture,
+    gesture,
     undo: () => stepThen(undoManager.undoStack, () => undoManager.undo()),
     redo: () => stepThen(undoManager.redoStack, () => undoManager.redo()),
     canUndo: () => undoManager.canUndo(),
     destroy: () => {
       for (const type of roots) type.unobserveDeep(collect)
       undoManager.off('stack-item-added', onStackItemAdded)
+      undoManager.off('stack-item-updated', onStackItemUpdated)
       undoManager.destroy()
     },
   }

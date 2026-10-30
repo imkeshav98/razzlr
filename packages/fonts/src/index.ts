@@ -20,3 +20,9 @@ export const FONT_FACES: readonly FontFile[] = [
 
 /** Used for any character a layer's own family lacks, such as Latin digits inside Arabic text. */
 export const FALLBACK_FAMILY = 'Noto Sans'
+
+/**
+ * Tried in order for characters a layer's own family lacks, so Arabic or Hindi typed into a Latin
+ * headline draws in a script's font instead of as empty boxes. Noto Sans comes first.
+ */
+export const FALLBACK_FAMILIES: readonly string[] = [FALLBACK_FAMILY, 'Noto Sans Devanagari', 'Noto Naskh Arabic']
