@@ -129,6 +129,20 @@ describe('two tabs', () => {
     for (const doc of [a, b]) expect(readDesign(doc).overrides['format:story']?.box).toEqual({ x: 1, y: 2, width: 200, height: 100 })
   })
 
+  it('a move in a format another tab removed at once leaves no overrides behind', () => {
+    const { a, b, tabA, tabB, sync } = twoTabs()
+    tabA.run('format.add', { id: 'story', name: 'Story', width: 1080, height: 1920 })
+    sync()
+    tabA.run('format.remove', { id: 'story' })
+    tabB.run('node.update', { ids: ['box'], scope: 'format:story', patch: { x: 5 } })
+    sync()
+    for (const [doc, tab] of [[a, tabA], [b, tabB]] as const) {
+      expect(readDesign(doc).formats.story).toBeUndefined()
+      expect(readDesign(doc).overrides['format:story']).toBeUndefined()
+      expect(tab.design().overrides['format:story']).toBeUndefined()
+    }
+  })
+
   it('concurrent moves that would put two groups inside each other are repaired the same way in both tabs', () => {
     const { a, b, tabA, tabB, sync } = twoTabs()
     const group = { type: 'group', name: 'G', props: { x: 0, y: 0, width: 10, height: 10 } } as const

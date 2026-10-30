@@ -1,6 +1,7 @@
 type Json = Record<string, unknown>
 type NodeJson = { parentId: string } & Json
 type Snapshot = {
+  formats: Record<string, unknown>
   pages: Record<string, unknown>
   nodes: Record<string, Json>
   overrides: Record<string, unknown>
@@ -13,7 +14,7 @@ const orderOf = (page: unknown) => String((page as { order?: unknown } | undefin
 /**
  * Concurrent edits can merge into a state no single command allows: two moves that put layers
  * inside each other, a child added to a group another tab deleted, an override written for a
- * deleted layer, a key an undo left unset. These rules turn any merged state into a valid one.
+ * deleted layer or a removed format, a key an undo left unset. These rules turn any merged state into a valid one.
  * They read only the merged state, so every device repairs it the same way, and they never
  * write: the next edit carries on from the repaired view. The snapshot is not changed either: a
  * repaired layer is a copy, and every other object comes back as it was, so a reader can keep
@@ -67,10 +68,17 @@ export function repair<S extends Snapshot>(snapshot: S): { snapshot: S; repairs:
     }
   }
 
-  // 4. Overrides of layers that no longer exist mean nothing.
-  const orphaned = Object.values(s.overrides).some((byNode) => Object.keys(byNode as Json).some((id) => !nodes.has(id)))
+  // 4. Overrides of layers or formats that no longer exist mean nothing. A format removed while
+  // another tab copied layers into it, say, leaves values in its scope.
+  const formatGone = (scope: string) => scope.startsWith('format:') && !Object.hasOwn(s.formats, scope.slice('format:'.length))
+  const orphaned = Object.entries(s.overrides).some(([scope, byNode]) => formatGone(scope) || Object.keys(byNode as Json).some((id) => !nodes.has(id)))
   if (repairs.length === 0 && !orphaned) return { snapshot: s, repairs }
-  const overrides = Object.fromEntries(Object.entries(s.overrides).map(([scope, byNode]) => [scope, Object.fromEntries(
+  const live = Object.entries(s.overrides).filter(([scope]) => {
+    if (!formatGone(scope)) return true
+    repairs.push(`dropped ${scope} overrides of a removed format`)
+    return false
+  })
+  const overrides = Object.fromEntries(live.map(([scope, byNode]) => [scope, Object.fromEntries(
     Object.entries(byNode as Json).filter(([id]) => {
       if (nodes.has(id)) return true
       repairs.push(`dropped ${scope} overrides of deleted layer "${id}"`)
