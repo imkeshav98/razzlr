@@ -7,6 +7,7 @@ The spike designs from the spike spec (#1), as JSON the schema validates (`pnpm 
 | english-sale-ad | the price in a group inside a clipping frame that cuts off the was-price; mixed weights and sizes, letter spacing, a cropped photo fill, a linear gradient band |
 | hindi-ad | Devanagari conjuncts and matras (क्ष, श्री, कि), Latin digits and a rupee price |
 | arabic-ad | right to left, joining forms, a Latin brand name and numbers inside Arabic, end alignment |
+| auto-layout | auto layout (#46): buttons that hug labels of two lengths; a card column that hugs, a photo that fills its width, text that fills the width and wraps, a button, and an absolute badge; space-between stats; overlapping avatars on a negative gap; tags that wrap onto lines; a turned column whose children fill its height |
 | shapes-and-booleans | preset shapes and booleans (#44): rects with their own corner radii, polygons and stars, plain, rounded, turned, dashed and stroked inside; lines with arrow, triangle and circle ends, dashed, thick and turned; a live boolean for each operation; a turned subtract with a turned cutter and a line operand that adds nothing; a boolean nested in another, with a shadow; a translucent union with a hidden operand |
 | shapes-and-effects | ellipses, a path with a hole, a radial gradient, drop shadow, layer blur, opacity, blend modes |
 | carousel | three pages in two formats; the portrait format overrides layout, one image and one text |

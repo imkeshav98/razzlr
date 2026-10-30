@@ -17,6 +17,14 @@ const commonProps = {
   opacity: z.number().min(0).max(1).default(1),
   blendMode: BlendMode.default('normal'),
   effects: Effect.array().default([]),
+  /**
+   * How the layer sizes along each axis inside an auto layout frame, or, for such a frame and for
+   * text, on its own (#46): fixed at its width or height, hugging what it holds, or filling the
+   * room its auto layout parent leaves. Left out, text hugs as its box mode says and the rest is fixed.
+   */
+  sizing: z.object({ width: z.enum(['fixed', 'hug', 'fill']), height: z.enum(['fixed', 'hug', 'fill']) }).optional(),
+  /** Inside an auto layout frame, stays where it is put instead of taking its turn in the flow (#46). */
+  absolute: z.boolean().optional(),
 }
 
 export const PER_FORMAT_PROPS = ['x', 'y', 'width', 'height', 'rotation', 'visible'] as const
@@ -80,11 +88,28 @@ export const GraphicProps = z.object({
   strokes: Stroke.array().default([]),
 })
 
+/**
+ * A frame's auto layout (#46): its children in a row or a column, `gap` apart, inside its
+ * paddings, lined up along the flow (`justify`) and across it (`align`). Gaps and paddings may be
+ * negative, so children overlap. With `wrap`, a row or column runs on into more, `lineGap` apart.
+ */
+export const AutoLayout = z.object({
+  direction: z.enum(['row', 'column']),
+  gap: z.number().default(0),
+  padding: z.object({ top: z.number(), right: z.number(), bottom: z.number(), left: z.number() }).default({ top: 0, right: 0, bottom: 0, left: 0 }),
+  justify: z.enum(['start', 'center', 'end', 'space-between']).default('start'),
+  align: z.enum(['start', 'center', 'end']).default('start'),
+  wrap: z.boolean().default(false),
+  lineGap: z.number().default(0),
+})
+
 export const FrameProps = z.object({
   ...commonProps,
   blendMode: ContainerBlendMode.default('pass-through'),
   clip: z.boolean().default(true),
   fills: Paint.array().default([]),
+  /** Lays out the frame's children (#46); left out, they stay where they are put. */
+  layout: AutoLayout.optional(),
 })
 
 export const GroupProps = z.object({ ...commonProps, blendMode: ContainerBlendMode.default('pass-through') })

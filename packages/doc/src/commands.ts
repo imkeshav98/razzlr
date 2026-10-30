@@ -7,6 +7,7 @@ import { defineCommand, type CommandContext } from './command.ts'
 import * as Y from 'yjs'
 import { DELETED, overrideKey, splitOverrideKey, toYMap, toYNode } from './design-doc.ts'
 import { boundsOf, centreOf, normalAngle, round, turn } from './geometry.ts'
+import { inferLayout } from './infer-layout.ts'
 import { Placement } from './placement.ts'
 
 export { childrenOf }
@@ -527,6 +528,47 @@ export const nodeReshape = defineCommand({
   },
 })
 
+/**
+ * Switches a frame's auto layout on or off (#46). On, its settings are read off where its
+ * children are, in every format, and the children are put in the order the flow takes them, so a
+ * frame whose children already sit in an even row or column looks the same. Off, the layout goes
+ * from the base and every format.
+ */
+export const nodeAutoLayout = defineCommand({
+  name: 'node.autoLayout',
+  input: z.object({ id: NodeId, on: z.boolean() }),
+  check: ({ design }, { id }) => {
+    const node = design.nodes[id]
+    if (!node) return `no layer "${id}"`
+    if (node.type !== 'frame') return `"${id}" is a ${node.type}; only frames have auto layout`
+    return lockProblem(id, node, 'style')
+  },
+  apply: ({ r, design }, { id, on }) => {
+    const props = r.nodes.get(id)?.get('props') as Y.Map<unknown>
+    const scopes = Object.keys(design.formats).map((f) => `format:${f}` as const)
+    if (!on) {
+      props.delete('layout')
+      for (const scope of scopes) r.overrides.delete(overrideKey(scope, id, 'layout'))
+      return
+    }
+    const place = new Placement(design)
+    const flow = childrenOf(design, id).filter(([, node]) => !node.props.absolute)
+    const inferIn = (scope: 'base' | `format:${string}`) => inferLayout(place.get(scope, id), flow.map(([kid]) => [kid, place.get(scope, kid)]))
+    const { order, layout } = inferIn('base')
+    props.set('layout', layout)
+    for (const scope of scopes) {
+      const here = inferIn(scope).layout
+      if (JSON.stringify(here) !== JSON.stringify(layout)) r.overrides.set(overrideKey(scope, id, 'layout'), here)
+      else r.overrides.delete(overrideKey(scope, id, 'layout'))
+    }
+    // The flow follows the children's order: they swap places in it, leaving absolute ones where they are.
+    const slots = flow.map(([, node]) => node.index).sort()
+    order.forEach((kid, i) => {
+      if (design.nodes[kid]?.index !== slots[i]) r.nodes.get(kid)?.set('index', slots[i])
+    })
+  },
+})
+
 const TextOp = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('insert'), at: z.number().int().min(0), text: z.string().min(1) }),
   z.object({ kind: z.literal('delete'), at: z.number().int().min(0), length: z.number().int().positive() }),
@@ -735,6 +777,7 @@ export const COMMANDS = {
   'node.ungroup': nodeUngroup,
   'node.hug': nodeHug,
   'node.reshape': nodeReshape,
+  'node.autoLayout': nodeAutoLayout,
   'text.edit': textEdit,
   'page.add': pageAdd,
   'page.update': pageUpdate,

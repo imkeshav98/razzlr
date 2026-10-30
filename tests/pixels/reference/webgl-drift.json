@@ -8,6 +8,15 @@
       "maxDelta": 16
     }
   },
+  "auto-layout p1.sq": {
+    "differing": 45639,
+    "percent": 3.913,
+    "maxDelta": 74,
+    "limit": {
+      "percent": 4.941,
+      "maxDelta": 90
+    }
+  },
   "carousel p1.pt": {
     "differing": 4951,
     "percent": 0.34,
