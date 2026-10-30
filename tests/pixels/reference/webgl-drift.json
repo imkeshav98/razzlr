@@ -98,6 +98,15 @@
       "maxDelta": 59
     }
   },
+  "shapes-and-booleans p1.sq": {
+    "differing": 25082,
+    "percent": 2.15,
+    "maxDelta": 111,
+    "limit": {
+      "percent": 2.738,
+      "maxDelta": 127
+    }
+  },
   "shapes-and-effects p1.sq": {
     "differing": 155918,
     "percent": 13.367,

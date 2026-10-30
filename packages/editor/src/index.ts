@@ -1,5 +1,6 @@
 export { SAVE_STATES, startEditor, type DrawInfo, type Editor, type EditorOptions, type SaveState, type Tool } from './editor.ts'
 export { type Camera } from './camera.ts'
+export { SHAPE_TOOLS, type ShapeTool } from './draw-tools.ts'
 export { type Frame } from './grid.ts'
 export { hitTest, type Point } from './hit-test.ts'
 export { pressFor, SHORTCUTS, shortcutFor, type ShortcutAction } from './shortcuts.ts'

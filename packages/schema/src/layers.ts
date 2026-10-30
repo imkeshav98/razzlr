@@ -39,9 +39,36 @@ export const Stroke = z.object({
   miterLimit: z.number().min(1).default(4),
 })
 
+/** What the end of a line looks like (#44). */
+export const LineEnd = z.enum(['none', 'arrow', 'triangle', 'circle'])
+
+const Radius = z.number().min(0)
+
 export const Shape = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('rect'), cornerRadius: z.number().min(0).default(0) }),
+  z.object({
+    kind: z.literal('rect'),
+    cornerRadius: Radius.default(0),
+    /** Each corner's own radius, from the top left clockwise (#44); when set, `cornerRadius` is unused. */
+    corners: z.tuple([Radius, Radius, Radius, Radius]).optional(),
+  }),
   z.object({ kind: z.literal('ellipse') }),
+  /** A regular polygon in the layer's box, its first corner at the top centre (#44). */
+  z.object({ kind: z.literal('polygon'), sides: z.number().int().min(3).max(100).default(5), cornerRadius: Radius.default(0) }),
+  /**
+   * A star in the layer's box, its first point at the top centre (#44). Its inner corners sit at
+   * `innerRadius` of the way out, as a share of the box.
+   */
+  z.object({
+    kind: z.literal('star'),
+    points: z.number().int().min(3).max(100).default(5),
+    innerRadius: z.number().min(0).max(1).default(0.382),
+    cornerRadius: Radius.default(0),
+  }),
+  /**
+   * A straight line across the middle of the layer's box, from its start edge to its end edge,
+   * drawn by the layer's strokes; rotation turns it (#44). The ends take the first stroke's size.
+   */
+  z.object({ kind: z.literal('line'), start: LineEnd.default('none'), end: LineEnd.default('none') }),
   /** SVG path data in the layer's own box; evenodd lets a path have holes. */
   z.object({ kind: z.literal('path'), d: z.string().min(1), fillRule: z.enum(['nonzero', 'evenodd']).default('nonzero') }),
 ])
@@ -61,6 +88,21 @@ export const FrameProps = z.object({
 })
 
 export const GroupProps = z.object({ ...commonProps, blendMode: ContainerBlendMode.default('pass-through') })
+
+/** How a boolean layer combines its shapes, in order: the first with each of the others (#44). */
+export const BooleanOp = z.enum(['union', 'subtract', 'intersect', 'exclude'])
+
+/**
+ * A live boolean of the shapes inside it (#44): their outlines combined by `op` and painted with
+ * the boolean's own fills and strokes. The shapes keep their own properties, so they can still be
+ * moved and edited; their paints don't show.
+ */
+export const BooleanProps = z.object({
+  ...commonProps,
+  op: BooleanOp.default('union'),
+  fills: Paint.array().default([]),
+  strokes: Stroke.array().default([]),
+})
 
 const textStyleFields = {
   fontFamily: z.string().min(1),
@@ -109,11 +151,25 @@ export const TextProps = z.object({
   }
 })
 
-/** The layer types in the spike: four of the seven in ADR-0006 (#1 leaves boolean, instance and lottie for later). */
+/** Five of the seven layer types in ADR-0006: boolean arrived with #44; instance and lottie come later. */
 export const LAYER_PROPS = {
   frame: FrameProps,
   group: GroupProps,
   graphic: GraphicProps,
   text: TextProps,
+  boolean: BooleanProps,
 } as const
+
+/** Layer types that hold other layers, and which types each can hold. */
+export const CONTAINERS = {
+  frame: ['frame', 'group', 'graphic', 'text', 'boolean'],
+  group: ['frame', 'group', 'graphic', 'text', 'boolean'],
+  boolean: ['graphic', 'boolean'],
+} as const satisfies Partial<Record<LayerType, readonly LayerType[]>>
+
+/** Whether a layer of type `parent` can hold one of type `child`. */
+export const canHold = (parent: string, child: string) =>
+  Object.hasOwn(CONTAINERS, parent) && (CONTAINERS[parent as keyof typeof CONTAINERS] as readonly string[]).includes(child)
+/** Whether a layer of this type holds other layers. */
+export const isContainer = (type: string) => Object.hasOwn(CONTAINERS, type)
 export type LayerType = keyof typeof LAYER_PROPS

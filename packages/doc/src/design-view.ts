@@ -1,4 +1,4 @@
-import { formatIdOf, parseDesignIncrementally, parseLayer, parseOverrideValues, SCHEMA_VERSION, type Design, type Layer } from '@razzlr/schema'
+import { canHold, formatIdOf, parseDesignIncrementally, parseLayer, parseOverrideValues, SCHEMA_VERSION, type Design, type Layer } from '@razzlr/schema'
 import type * as Y from 'yjs'
 import { buildChildIndex, registerChildIndex, siblingOrder } from './children.ts'
 import { DELETED, nodeToJson, readDesign, root, splitOverrideKey, type DesignDoc } from './design-doc.ts'
@@ -160,7 +160,7 @@ export function designView(doc: DesignDoc) {
       if (Object.hasOwn(pages, id)) return false
       if (!Object.hasOwn(pages, layer.parentId)) {
         const parent = next(layer.parentId)
-        if (!parent || (parent.type !== 'frame' && parent.type !== 'group')) return false
+        if (!parent || !canHold(parent.type, layer.type)) return false
       }
       for (let up = layer.parentId, steps = 0; !Object.hasOwn(pages, up); steps++) {
         const above = next(up)

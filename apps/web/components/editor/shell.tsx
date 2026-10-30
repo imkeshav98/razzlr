@@ -7,6 +7,7 @@ import {
   CloudArrowUpIcon, CloudCheckIcon, CloudSlashIcon, CursorIcon, FrameCornersIcon, HandIcon, ImageIcon, ImagesIcon, PaletteIcon, PenNibIcon, ShapesIcon,
   SlidersHorizontalIcon, SparkleIcon, StackIcon, TextTIcon, XIcon, type Icon,
 } from '@phosphor-icons/react'
+import type { ShapeTool } from '@razzlr/editor'
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
 import { useEffect, useState, type ReactNode } from 'react'
@@ -17,6 +18,7 @@ import { BrandMark } from '../brand-mark.tsx'
 import { LocaleSwitch } from '../locale-switch.tsx'
 import { ThemeSwitch } from '../theme-switch.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
+import { ShapeTools } from './shape-menu.tsx'
 
 type Panel = 'layers' | 'assets' | 'ai' | 'brand'
 export type Tool = 'select' | 'frame' | 'shape' | 'text' | 'pen' | 'image' | 'hand'
@@ -73,12 +75,16 @@ function useShownStatus(status: string) {
   return shown
 }
 
-export function EditorShell({ clientId, clientName, designName, status, onToolChange, inspector, children }: {
+export function EditorShell({ clientId, clientName, designName, status, tool: shownTool, shape = 'rect', onToolChange, inspector, children }: {
   clientId: string
   clientName: string
   designName: string
   status: string
-  onToolChange?: (tool: Tool) => void
+  /** The tool in use, when the editor decides it (a key, or drawing a shape ends); the dock keeps its own otherwise. */
+  tool?: Tool
+  /** The shape the shape tool draws (#44). */
+  shape?: ShapeTool
+  onToolChange?: (tool: Tool, shape: ShapeTool) => void
   /** The inspector's contents once the design is open; an empty state until then. */
   inspector?: ReactNode
   children: ReactNode
@@ -88,7 +94,8 @@ export function EditorShell({ clientId, clientName, designName, status, onToolCh
   // Motion's own reduced-motion mode still fades; chrome should simply appear.
   const chrome = useReducedMotion() ? { duration: 0 } : CHROME
   const [panel, setPanel] = useState<Panel | null>(null)
-  const [tool, setTool] = useState<Tool>('select')
+  const [ownTool, setTool] = useState<Tool>('select')
+  const tool = shownTool ?? ownTool
   const shown = useShownStatus(status)
   const save = SAVE[shown]
   const failed = shown.startsWith('Error')
@@ -192,6 +199,19 @@ export function EditorShell({ clientId, clientName, designName, status, onToolCh
               {children}
               <div role="toolbar" aria-label={t.editor.tools} className="absolute inset-x-0 bottom-4 z-10 mx-auto flex w-max items-center gap-0.5 rounded-card border border-line bg-[var(--glass)] p-1 shadow-panel backdrop-blur-xl">
                 {TOOLS.map(({ id, icon: ToolIcon, key }) => {
+                  if (id === 'shape') {
+                    return (
+                      <ShapeTools
+                        key={id}
+                        active={tool === 'shape'}
+                        shape={shape}
+                        onPick={(picked) => {
+                          setTool('shape')
+                          onToolChange?.('shape', picked)
+                        }}
+                      />
+                    )
+                  }
                   const label = t.editor[`tool${id[0]?.toUpperCase()}${id.slice(1)}` as `tool${Capitalize<Tool>}`]
                   const on = tool === id
                   return (
@@ -200,9 +220,10 @@ export function EditorShell({ clientId, clientName, designName, status, onToolCh
                         type="button"
                         aria-label={label}
                         aria-pressed={on}
+                        data-tool={id}
                         onClick={() => {
                           setTool(id)
-                          onToolChange?.(id)
+                          onToolChange?.(id, shape)
                         }}
                         className={cn(
                           'grid size-9 cursor-pointer place-items-center rounded-row transition-colors duration-[var(--chrome-fast)]',

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { startEditor, type Editor } from '@razzlr/editor'
+import { SHAPE_TOOLS, startEditor, type Editor, type ShapeTool, type Tool } from '@razzlr/editor'
 import { fetchSyncToken } from './actions.ts'
 import { EditorShell } from '../../../../../components/editor/shell.tsx'
 import { FocusChip, FormatsPanel, UndoToast } from '../../../../../components/editor/formats-panel.tsx'
@@ -41,6 +41,20 @@ export function EditorStage({ designId, designName, clientId, clientName, format
   const [zoom, setZoom] = useState<number | null>(null)
   const [editor, setEditor] = useState<Editor | null>(null)
   const [removed, setRemoved] = useState<string | null>(null)
+  // The dock follows the editor's tool: a key picks one, and drawing a shape goes back to select.
+  const [tool, setEditorTool] = useState<Tool>('select')
+  const [shape, setShape] = useState<ShapeTool>('rect')
+  useEffect(() => {
+    if (!editor) return
+    const stop = editor.onTool((next) => {
+      setEditorTool(next)
+      if ((SHAPE_TOOLS as readonly string[]).includes(next)) setShape(next as ShapeTool)
+    })
+    return () => {
+      stop()
+    }
+  }, [editor])
+  const dockTool = tool === 'hand' ? 'hand' : tool === 'select' ? 'select' : 'shape'
   const dismissRemoved = useCallback(() => setRemoved(null), [])
 
   // Lets this page open again without a connection (#37): the worker keeps the page and what it
@@ -87,7 +101,12 @@ export function EditorStage({ designId, designName, clientId, clientName, format
       clientName={clientName}
       designName={designName}
       status={status}
-      onToolChange={(tool) => editor?.setTool(tool === 'hand' ? 'hand' : 'select')}
+      tool={dockTool}
+      shape={shape}
+      onToolChange={(tool, picked) => {
+        setShape(picked)
+        editor?.setTool(tool === 'hand' ? 'hand' : tool === 'shape' ? picked : 'select')
+      }}
       inspector={editor ? (
         <>
           <ArrangePanel editor={editor} />
