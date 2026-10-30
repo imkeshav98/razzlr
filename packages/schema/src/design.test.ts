@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { parseDesign } from './index.ts'
+import { parseDesign, parseDesignIncrementally } from './index.ts'
+
+/**
+ * Parses with the full parser, checking on the way that the incremental one agrees exactly,
+ * on a fresh input and again on the same one (the second time from its cache).
+ */
+const parse = (input: unknown) => {
+  const full = parseDesign(input)
+  expect(parseDesignIncrementally(structuredClone(input))).toEqual(full)
+  expect(parseDesignIncrementally(input)).toEqual(full)
+  expect(parseDesignIncrementally(input)).toEqual(full)
+  return full
+}
 
 /** The smallest valid design: one page, one format, one rectangle. */
 const minimal = () => ({
@@ -24,7 +36,7 @@ const minimal = () => ({
 
 describe('parseDesign', () => {
   it('accepts a minimal design and fills in defaults', () => {
-    const result = parseDesign(minimal())
+    const result = parse(minimal())
     expect(result.success).toBe(true)
     if (!result.success) return
     const box = result.design.nodes.r1
@@ -36,7 +48,7 @@ describe('parseDesign', () => {
   const errorsFor = (mutate: (d: ReturnType<typeof minimal>) => void) => {
     const d = minimal()
     mutate(d)
-    const result = parseDesign(d)
+    const result = parse(d)
     return result.success ? [] : result.errors
   }
 
@@ -51,7 +63,7 @@ describe('parseDesign', () => {
         r1: { x: 4, width: 60, visible: false, effects: [{ type: 'dropShadow', x: 0, y: 2, blur: 4, color: '#00000080' }] },
       },
     })
-    const result = parseDesign(d)
+    const result = parse(d)
     if (!result.success) throw new Error(result.errors.join('\n'))
     expect(result.design.overrides['format:banner']?.r1?.effects).toEqual([
       { type: 'dropShadow', x: 0, y: 2, blur: 4, spread: 0, color: '#00000080' },
@@ -143,9 +155,33 @@ describe('text runs', () => {
         runs: [{ start: 0, end: 2, style: { color: '#FF0000FF' } }],
       },
     }
-    const result = parseDesign(d)
+    const result = parse(d)
     if (!result.success) throw new Error(result.errors.join('\n'))
     const t1 = result.design.nodes.t1
     expect(t1?.type === 'text' && t1.props.runs).toEqual([{ start: 0, end: 2, style: { color: '#FF0000FF' } }])
+  })
+})
+
+describe('parseDesignIncrementally', () => {
+  it('reuses the validated layer for an unchanged layer object, and validates a replaced one again', () => {
+    const d = minimal()
+    const r2 = { ...d.nodes.r1, name: 'Second' }
+    const nodes = { ...d.nodes, r2 }
+    const first = parseDesignIncrementally({ ...d, nodes })
+    const changed = { ...d, nodes: { ...nodes, r2: { ...r2, props: { ...r2.props, x: 5 } } } }
+    const second = parseDesignIncrementally(changed)
+    if (!first.success || !second.success) throw new Error('expected both to parse')
+    expect(second.design.nodes.r1).toBe(first.design.nodes.r1)
+    expect(second.design.nodes.r2).not.toBe(first.design.nodes.r2)
+    expect(second.design.nodes.r2?.props.x).toBe(5)
+  })
+
+  it('accepts its own output as input and returns the same layers', () => {
+    const first = parseDesignIncrementally(minimal())
+    if (!first.success) throw new Error('expected a design')
+    const again = parseDesignIncrementally(first.design)
+    if (!again.success) throw new Error('expected a design')
+    expect(again.design.nodes.r1).toBe(first.design.nodes.r1)
+    expect(again.design).toEqual(first.design)
   })
 })

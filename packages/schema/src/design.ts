@@ -51,25 +51,45 @@ export const Scope = z.string().refine((s) => formatIdOf(s) !== undefined, 'the 
 /** overrides[scope][nodeId][propertyPath] = value. Any property can be overridden per format. */
 const Overrides = z.record(Scope, z.record(NodeId, z.record(z.string(), z.unknown())))
 
-const DesignShape = z.object({
+/** Everything in a design but its layers and overrides: small, so always validated whole. */
+const DesignHead = z.object({
   meta: DesignMeta,
   formats: z.record(FormatId, Format),
   pages: z.record(PageId, Page),
+})
+
+const DesignShape = z.object({
+  ...DesignHead.shape,
   nodes: z.record(NodeId, Layer),
   overrides: Overrides.default({}),
 })
 type DesignShape = z.infer<typeof DesignShape>
 
+type InScope = ReturnType<(typeof LAYER_PROPS)[LayerType]['safeParse']> & {
+  /** Overridden paths the layer's type doesn't have. */
+  unknownPaths: string[]
+}
+/** Merged props by layer, then by override object: both are only ever replaced, never changed. */
+const inScopeCache = new WeakMap<Layer, WeakMap<object, InScope>>()
+
 /** A layer's props as one format sees them: its own props with that format's overrides on top. */
-function propsInScope(node: Layer, overrides: Record<string, unknown>) {
+function propsInScope(node: Layer, overrides: Record<string, unknown>): InScope {
+  const byOverrides = inScopeCache.get(node) ?? new WeakMap<object, InScope>()
+  inScopeCache.set(node, byOverrides)
+  const cached = byOverrides.get(overrides)
+  if (cached) return cached
   const schema = LAYER_PROPS[node.type]
   const known = Object.fromEntries(Object.entries(overrides).filter(([path]) => Object.hasOwn(schema.shape, path)))
-  return schema.safeParse({ ...node.props, ...known })
+  const unknownPaths = Object.keys(overrides).filter((path) => !Object.hasOwn(schema.shape, path))
+  const merged = Object.assign(schema.safeParse({ ...node.props, ...known }), { unknownPaths })
+  byOverrides.set(overrides, merged)
+  return merged
 }
 
-function checkDesign(d: DesignShape, ctx: z.RefinementCtx) {
-  const fail = (path: PropertyKey[], message: string) => ctx.addIssue({ code: 'custom', path, message })
+type Fail = (path: PropertyKey[], message: string) => void
 
+/** The rules no single part can check alone: parents, cycles, and overrides against their layers. */
+function checkDesign(d: DesignShape, fail: Fail) {
   if (!d.formats[d.meta.primaryFormatId]) fail(['meta', 'primaryFormatId'], `no format "${d.meta.primaryFormatId}"`)
   if (Object.keys(d.pages).length === 0) fail(['pages'], 'a design needs a page')
 
@@ -102,10 +122,8 @@ function checkDesign(d: DesignShape, ctx: z.RefinementCtx) {
         fail(['overrides', scope, nodeId], `no layer "${nodeId}"`)
         continue
       }
-      for (const path of Object.keys(props)) {
-        if (!Object.hasOwn(LAYER_PROPS[node.type].shape, path)) fail(['overrides', scope, nodeId, path], `a ${node.type} has no property "${path}"`)
-      }
       const merged = propsInScope(node, props)
+      for (const path of merged.unknownPaths) fail(['overrides', scope, nodeId, path], `a ${node.type} has no property "${path}"`)
       for (const issue of merged.success ? [] : merged.error.issues) {
         fail(['overrides', scope, nodeId, ...issue.path], issue.message)
       }
@@ -113,21 +131,40 @@ function checkDesign(d: DesignShape, ctx: z.RefinementCtx) {
   }
 }
 
+/** Each override object with its defaults filled, by layer and then by the override object. */
+const defaultsCache = new WeakMap<Layer, WeakMap<object, Record<string, unknown>>>()
+
+/** One layer's overrides in one scope with the same defaults as base values; unchanged objects come back unchanged. */
+function overrideDefaults(node: Layer, props: Record<string, unknown>) {
+  const byProps = defaultsCache.get(node) ?? new WeakMap<object, Record<string, unknown>>()
+  defaultsCache.set(node, byProps)
+  const cached = byProps.get(props)
+  if (cached) return cached
+  const merged = propsInScope(node, props)
+  if (!merged.success) return props
+  const parsed = merged.data as Record<string, unknown>
+  const filled = Object.fromEntries(Object.keys(props).map((path) => [path, parsed[path]]))
+  // Filled values merge into the same props, so the result can be read again without parsing.
+  byProps.set(props, filled)
+  byProps.set(filled, filled)
+  inScopeCache.get(node)?.set(filled, merged)
+  return filled
+}
+
 /** Gives override values the same defaults as base values, so a renderer never sees a half-filled paint or effect. */
 function withOverrideDefaults(d: DesignShape): DesignShape {
   const overrides = Object.fromEntries(Object.entries(d.overrides).map(([scope, byNode]) => [scope, Object.fromEntries(
     Object.entries(byNode).map(([nodeId, props]) => {
       const node = d.nodes[nodeId]
-      const merged = node && propsInScope(node, props)
-      if (!merged?.success) return [nodeId, props]
-      const parsed = merged.data as Record<string, unknown>
-      return [nodeId, Object.fromEntries(Object.keys(props).map((path) => [path, parsed[path]]))]
+      return [nodeId, node ? overrideDefaults(node, props) : props]
     }),
   )]))
   return { ...d, overrides }
 }
 
-export const Design = DesignShape.superRefine(checkDesign).transform(withOverrideDefaults)
+export const Design = DesignShape
+  .superRefine((d, ctx) => checkDesign(d, (path, message) => ctx.addIssue({ code: 'custom', path, message })))
+  .transform(withOverrideDefaults)
 export type Design = z.infer<typeof Design>
 export type DesignInput = z.input<typeof Design>
 
@@ -141,4 +178,61 @@ export function parseDesign(input: unknown): ParseResult {
     success: false,
     errors: result.error.issues.map((i) => `${i.path.join('.') || '(design)'}: ${i.message}`),
   }
+}
+
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
+/** Validated layers by the object they came from; a validated layer maps to itself. */
+const layerCache = new WeakMap<object, Layer>()
+const validIds = new Set<string>()
+const validScopes = new Set<string>()
+
+/**
+ * Validates a design like `parseDesign`, with the same result, but reuses what it validated
+ * before for every layer object and override object it has seen: a design read again after one
+ * edit only validates what the edit replaced. Inputs must never be changed after being passed in;
+ * replace an object instead. Anything invalid goes through `parseDesign` for its exact errors.
+ */
+export function parseDesignIncrementally(input: unknown): ParseResult {
+  if (!isRecord(input) || !isRecord(input.nodes) || !(input.overrides === undefined || isRecord(input.overrides))) return parseDesign(input)
+  const head = DesignHead.safeParse(input)
+  if (!head.success) return parseDesign(input)
+
+  const nodes: Record<string, Layer> = {}
+  for (const [id, raw] of Object.entries(input.nodes)) {
+    if (!validIds.has(id)) {
+      if (!NodeId.safeParse(id).success) return parseDesign(input)
+      validIds.add(id)
+    }
+    let layer = isRecord(raw) ? layerCache.get(raw) : undefined
+    if (!layer) {
+      const parsed = Layer.safeParse(raw)
+      if (!parsed.success) return parseDesign(input)
+      layer = parsed.data
+      if (isRecord(raw)) layerCache.set(raw, layer)
+      layerCache.set(layer, layer)
+    }
+    nodes[id] = layer
+  }
+
+  const overrides: DesignShape['overrides'] = {}
+  for (const [scope, byNode] of Object.entries(input.overrides ?? {})) {
+    if (!validScopes.has(scope)) {
+      if (!Scope.safeParse(scope).success) return parseDesign(input)
+      validScopes.add(scope)
+    }
+    if (!isRecord(byNode)) return parseDesign(input)
+    for (const [nodeId, props] of Object.entries(byNode)) {
+      if (!isRecord(props)) return parseDesign(input)
+      if (!validIds.has(nodeId)) {
+        if (!NodeId.safeParse(nodeId).success) return parseDesign(input)
+        validIds.add(nodeId)
+      }
+    }
+    overrides[scope] = byNode as Record<string, Record<string, unknown>>
+  }
+
+  const shape: DesignShape = { ...head.data, nodes, overrides }
+  let failed = false
+  checkDesign(shape, () => { failed = true })
+  return failed ? parseDesign(input) : { success: true, design: withOverrideDefaults(shape) }
 }

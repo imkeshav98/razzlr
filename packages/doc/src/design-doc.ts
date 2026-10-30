@@ -31,7 +31,7 @@ export const root = (doc: DesignDoc) => ({
 
 const SEP = '|'
 export const overrideKey = (scope: string, nodeId: string, path: string) => [scope, nodeId, path].join(SEP)
-const splitOverrideKey = (key: string) => {
+export const splitOverrideKey = (key: string) => {
   const [scope = '', nodeId = '', ...path] = key.split(SEP)
   return { scope, nodeId, path: path.join(SEP) }
 }
@@ -92,7 +92,7 @@ export function loadDesign(design: Design, doc: DesignDoc = new Y.Doc()): Design
   return doc
 }
 
-function nodeToJson(ynode: Y.Map<unknown>): Json {
+export function nodeToJson(ynode: Y.Map<unknown>): Json {
   const json: Json = {}
   for (const [k, v] of ynode.entries()) {
     if (k !== 'props' && k !== DELETED) json[k] = v

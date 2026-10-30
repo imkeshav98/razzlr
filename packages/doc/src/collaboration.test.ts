@@ -144,6 +144,22 @@ describe('two tabs', () => {
     sync()
     expect(readDesign(b)).toEqual(readDesign(a))
   })
+
+  it.each([3, 99, 4242])("each tab's session view equals a full read after every command, sync and repair (seed %i)", (seed) => {
+    const { a, b, tabA, tabB, sync } = twoTabs()
+    const random = seeded(seed)
+    for (let i = 0; i < 200; i++) {
+      randomCommand(tabA, a, random)
+      expect(tabA.design()).toEqual(readDesign(a))
+      randomCommand(tabB, b, random)
+      expect(tabB.design()).toEqual(readDesign(b))
+      if (random() < 0.3) {
+        sync()
+        expect(tabA.design()).toEqual(readDesign(a))
+        expect(tabB.design()).toEqual(readDesign(b))
+      }
+    }
+  })
 })
 
 function seeded(seed: number) {

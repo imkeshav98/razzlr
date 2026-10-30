@@ -31,10 +31,12 @@ const update = Y.encodeStateAsUpdate(doc)
 console.log(`load the state into a new doc: ${time(() => Y.applyUpdate(new Y.Doc(), update), 9).toFixed(1)} ms median`)
 console.log(`readDesign (the whole design as validated JSON): ${time(() => readDesign(doc), 9).toFixed(1)} ms median`)
 
-// One command reads the design to check its input, so its cost grows with the design.
+// A command checks its input against the session's design view, which only validates what
+// changed since the last command (#23).
 const session = openSession(doc)
 let x = 0
-console.log(`one node.update command: ${time(() => session.run('node.update', { ids: ['p7-title'], patch: { x: x++ % 200 } }), 51).toFixed(1)} ms median`)
+console.log(`one node.update command: ${time(() => session.run('node.update', { ids: ['p7-title'], patch: { x: x++ % 200 } }), 201).toFixed(1)} ms median`)
+console.log(`one text.edit command (a typed key): ${time(() => session.run('text.edit', { id: 'p7-body', op: { kind: 'insert', at: 0, text: 'a' } }), 201).toFixed(1)} ms median`)
 
 // A working session: 1,000 more edits of the kinds people make, then the size again.
 for (let i = 0; i < 1000; i++) {

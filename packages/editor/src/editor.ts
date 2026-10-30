@@ -161,7 +161,7 @@ function live(
   }
 
   function draw() {
-    design = readDesign(doc)
+    design = session.design()
     scene = render(design, pageId, formatId)
     if (selected && !find(scene.layers, selected)) selected = null
     if (editing && !find(scene.layers, editing.id)) stopEditing()
@@ -266,7 +266,7 @@ function live(
       return
     }
     // The document, not the last drawn scene: keys can come faster than redraws.
-    const node = readDesign(doc).nodes[editing.id]
+    const node = session.design().nodes[editing.id]
     if (node?.type !== 'text') return
     const text = node.props.text
     const edges = graphemeEdges(text)
@@ -306,14 +306,14 @@ function live(
     session,
     doc,
     /** The design as the document holds it now, which can be ahead of the last redraw. */
-    design: () => readDesign(doc),
+    design: () => session.design(),
     selected: () => selected,
     onDraw(listener: (design: Design, at: number) => void) {
       drawListeners.add(listener)
       return () => drawListeners.delete(listener)
     },
     /** The export render of what this tab holds now, on the CPU surface, as RGBA. */
-    exportPixels: () => renderDesign(ck, readDesign(doc), pageId, formatId, resourceBytes).pixels,
+    exportPixels: () => renderDesign(ck, session.design(), pageId, formatId, resourceBytes).pixels,
     synced: () => provider.synced && provider.unsyncedChanges === 0,
     destroy() {
       listening.abort()

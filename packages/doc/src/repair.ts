@@ -15,10 +15,12 @@ const orderOf = (page: unknown) => String((page as { order?: unknown } | undefin
  * inside each other, a child added to a group another tab deleted, an override written for a
  * deleted layer, a key an undo left unset. These rules turn any merged state into a valid one.
  * They read only the merged state, so every device repairs it the same way, and they never
- * write: the next edit carries on from the repaired view.
+ * write: the next edit carries on from the repaired view. The snapshot is not changed either: a
+ * repaired layer is a copy, and every other object comes back as it was, so a reader can keep
+ * what it validated for them.
  */
 export function repair<S extends Snapshot>(snapshot: S): { snapshot: S; repairs: string[] } {
-  const s = structuredClone(snapshot)
+  const s = snapshot
   const repairs: string[] = []
   const firstPage = Object.entries(s.pages).sort(([a, x], [b, y]) => byCodeUnits(orderOf(x), orderOf(y)) || byCodeUnits(a, b))[0]?.[0]
   if (!firstPage) return { snapshot: s, repairs }
@@ -41,12 +43,12 @@ export function repair<S extends Snapshot>(snapshot: S): { snapshot: S; repairs:
     const node = nodes.get(id) as NodeJson
     if (typeof node.index !== 'string') {
       repairs.push(`"${id}" lost its index; put at the back`)
-      node.index = 'a0'
+      nodes.set(id, { ...node, index: 'a0' })
     }
     const parent = nodes.get(node.parentId)
     if (!s.pages[node.parentId] && (!parent || !containers.has(String(parent.type)))) {
       repairs.push(`"${id}" lost its parent "${String(node.parentId)}"; moved to page "${firstPage}"`)
-      node.parentId = firstPage
+      nodes.set(id, { ...(nodes.get(id) as NodeJson), parentId: firstPage })
     }
   }
 
@@ -58,7 +60,7 @@ export function repair<S extends Snapshot>(snapshot: S): { snapshot: S; repairs:
       if (at !== -1) {
         const breakAt = path.slice(at).sort(byCodeUnits)[0] as string
         repairs.push(`"${breakAt}" was inside itself; moved to page "${firstPage}"`)
-        ;(nodes.get(breakAt) as NodeJson).parentId = firstPage
+        nodes.set(breakAt, { ...(nodes.get(breakAt) as NodeJson), parentId: firstPage })
         break
       }
       path.push(up)
@@ -66,6 +68,8 @@ export function repair<S extends Snapshot>(snapshot: S): { snapshot: S; repairs:
   }
 
   // 4. Overrides of layers that no longer exist mean nothing.
+  const orphaned = Object.values(s.overrides).some((byNode) => Object.keys(byNode as Json).some((id) => !nodes.has(id)))
+  if (repairs.length === 0 && !orphaned) return { snapshot: s, repairs }
   const overrides = Object.fromEntries(Object.entries(s.overrides).map(([scope, byNode]) => [scope, Object.fromEntries(
     Object.entries(byNode as Json).filter(([id]) => {
       if (nodes.has(id)) return true
