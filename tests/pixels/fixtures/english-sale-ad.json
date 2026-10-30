@@ -137,7 +137,7 @@
         "runs": [
           {
             "start": 4,
-            "end": 21,
+            "end": 23,
             "style": {
               "fontWeight": 700
             }
@@ -155,7 +155,7 @@
       "props": {
         "x": 40,
         "y": 920,
-        "width": 640,
+        "width": 220,
         "height": 120,
         "clip": true,
         "fills": [

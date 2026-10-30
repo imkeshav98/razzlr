@@ -10,3 +10,4 @@ test-results/
 !.env.example
 .vercel
 next-env.d.ts
+tests/pixels/output/
