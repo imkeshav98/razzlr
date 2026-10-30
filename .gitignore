@@ -13,3 +13,7 @@ next-env.d.ts
 tests/pixels/output/
 apps/web/public/vendor/
 tests/e2e/output/
+
+# Python bytecode, written when the skills' scripts run.
+__pycache__/
+*.pyc
