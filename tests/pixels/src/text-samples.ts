@@ -1,4 +1,4 @@
-/** Strings for the shaping and caret checks (#7), each set in one family and weight. */
+/** Strings for the shaping and caret checks (#7), each set in one family and weight, with Noto Sans for what that family lacks. */
 export interface TextSample { label: string; text: string; family: string; weight: number; rtl?: boolean }
 
 export const SAMPLES: TextSample[] = [
@@ -6,10 +6,12 @@ export const SAMPLES: TextSample[] = [
   { label: 'Hindi body', text: 'क्षमता से ज़्यादा बचत, किफ़ायती दाम', family: 'Noto Sans Devanagari', weight: 400 },
   { label: 'Hindi price', text: 'सिर्फ़ ₹1,299', family: 'Noto Sans Devanagari', weight: 700 },
   { label: 'Hindi conjuncts and matras', text: 'क्ष त्र ज्ञ श्री कि की कु क्षि', family: 'Noto Sans Devanagari', weight: 400 },
+  { label: 'Hindi anusvara, chandrabindu, visarga, digits and eyelash ra', text: 'हिंदी चाँद दुःख १२३४ र्‍य', family: 'Noto Sans Devanagari', weight: 400 },
   { label: 'Arabic headline', text: 'تخفيضات الصيف', family: 'Noto Naskh Arabic', weight: 700, rtl: true },
-  { label: 'Arabic body', text: 'احصل على حذاء الجديد بخصم 40 اليوم فقط', family: 'Noto Naskh Arabic', weight: 400, rtl: true },
+  { label: 'Arabic body', text: 'احصل على حذاء Nike Air الجديد بخصم 40% اليوم فقط', family: 'Noto Naskh Arabic', weight: 400, rtl: true },
   { label: 'Arabic price', text: 'السعر 299 ر.س', family: 'Noto Naskh Arabic', weight: 700, rtl: true },
   { label: 'Arabic lam-alef and marks', text: 'لا إلى سَلام', family: 'Noto Naskh Arabic', weight: 400, rtl: true },
+  { label: 'Arabic shadda, tatweel, ZWNJ and Arabic-Indic digits', text: 'مُحَمَّد كـــبير می‌خواهم ٢٠٢٦', family: 'Noto Naskh Arabic', weight: 400, rtl: true },
   { label: 'English', text: 'Summer sale: office-ready fit', family: 'Noto Sans', weight: 400 },
 ]
 

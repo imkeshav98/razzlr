@@ -62,26 +62,50 @@ function autoDirection(text: string): 'ltr' | 'rtl' {
   return 'ltr'
 }
 
+const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+
+interface GraphemeBox extends SelectionBox { start: number; end: number; line: number }
+
+/** Every grapheme's box, measured once per paragraph: a drag asks for the caret every frame. */
+const graphemeBoxes = new WeakMap<Paragraph, GraphemeBox[]>()
+
+function boxesOf(ck: CanvasKit, paragraph: Paragraph, text: string): GraphemeBox[] {
+  let boxes = graphemeBoxes.get(paragraph)
+  if (!boxes) {
+    // getLineNumberAt answers 0 for every offset in CanvasKit 0.42, so lines come from their metrics.
+    const lines = paragraph.getLineMetrics()
+    boxes = [...graphemeSegmenter.segment(text)].flatMap((g) => {
+      const end = g.index + g.segment.length
+      const line = lines.find((l) => g.index >= l.startIndex && g.index < l.endIndex)?.lineNumber ?? -1
+      return selectionBoxes(ck, paragraph, g.index, end).map((box) => ({ ...box, start: g.index, end, line }))
+    })
+    graphemeBoxes.set(paragraph, boxes)
+  }
+  return boxes
+}
+
 /**
- * The text offset a click lands on, in the paragraph's own coordinates. It is always the near
- * edge of the grapheme (as Unicode segments them) whose box is closest to the click, judged by
- * that grapheme's direction. Hit-testing our own grapheme boxes, rather than asking SkParagraph
- * for the glyph under the point, keeps a reph or a split matra from sending the caret to the
+ * The text offset a click lands on, in the paragraph's own coordinates: the line under the click
+ * (or the nearest one), then the grapheme on it nearest the click, then that grapheme's near edge
+ * by its own direction. Graphemes are Unicode's (Intl.Segmenter), and the hit-test uses their
+ * boxes rather than SkParagraph's glyph lookup, which sends a click on a Devanagari reph to the
  * wrong grapheme.
  */
 export function caretAt(ck: CanvasKit, paragraph: Paragraph, text: string, x: number, y: number): number {
-  let best = { offset: 0, distance: Number.POSITIVE_INFINITY }
-  for (const g of new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text)) {
-    const end = g.index + g.segment.length
-    for (const box of selectionBoxes(ck, paragraph, g.index, end)) {
-      const dx = Math.max(box.x - x, 0, x - (box.x + box.width))
-      const dy = Math.max(box.y - y, 0, y - (box.y + box.height))
-      // A click is on a line before it is beside a grapheme, so vertical distance counts first.
-      const distance = dy * 1e6 + dx
-      if (distance < best.distance) {
-        const beforeMiddle = x < box.x + box.width / 2
-        best = { offset: beforeMiddle !== box.rtl ? g.index : end, distance }
-      }
+  const lines = paragraph.getLineMetrics()
+  if (lines.length === 0) return 0
+  const lineGap = (l: (typeof lines)[number]) => {
+    const top = l.baseline - l.ascent
+    return Math.max(top - y, 0, y - (top + l.height))
+  }
+  const line = lines.reduce((best, l) => (lineGap(l) < lineGap(best) ? l : best))
+  let best = { offset: line.startIndex, distance: Number.POSITIVE_INFINITY }
+  for (const box of boxesOf(ck, paragraph, text)) {
+    if (box.line !== line.lineNumber) continue
+    const distance = Math.max(box.x - x, 0, x - (box.x + box.width))
+    if (distance < best.distance) {
+      const beforeMiddle = x < box.x + box.width / 2
+      best = { offset: beforeMiddle !== box.rtl ? box.start : box.end, distance }
     }
   }
   return best.offset
@@ -91,7 +115,7 @@ export interface SelectionBox { x: number; y: number; width: number; height: num
 
 /** The boxes that highlight a text range, one per run of one direction on one line. */
 export function selectionBoxes(ck: CanvasKit, paragraph: Paragraph, start: number, end: number): SelectionBox[] {
-  return paragraph.getRectsForRange(start, end, ck.RectHeightStyle.Tight, ck.RectWidthStyle.Tight).map(({ rect, dir }) => ({
+  return paragraph.getRectsForRange(start, end, ck.RectHeightStyle.Max, ck.RectWidthStyle.Tight).map(({ rect, dir }) => ({
     x: rect[0] ?? 0, y: rect[1] ?? 0, width: (rect[2] ?? 0) - (rect[0] ?? 0), height: (rect[3] ?? 0) - (rect[1] ?? 0),
     rtl: dir.value === ck.TextDirection.RTL.value,
   }))
