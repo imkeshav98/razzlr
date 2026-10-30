@@ -16,6 +16,12 @@ pnpm + Turborepo monorepo. `apps/` deploy (web, api, sync, worker); `packages/` 
 - Fonts and images are loaded from bytes we control, never from the system or the browser's decoder.
 - Never put server addresses or secrets in the repo.
 
+## Pull requests
+
+One ticket, one PR, closing its issue. Keshav's standing rule: merge your own PR (merge commit, not squash) as soon as CI is green on its head; he reviews after merge. GitHub auto-merge needs branch protection, which this private repo can't have on the Free plan (checked via the API on 2026-10-30).
+
+Test every user-facing feature in a real browser (Playwright on Chromium) and put the evidence in the PR: screenshots, numbers, the test cases run. Only ask Keshav when a decision is needed.
+
 ## Agent skills
 
 Matt Pocock's skills are vendored in `.claude/skills/` (MIT, source commit in `.claude/skills/.source-commit`). Start with `/ask-matt` if unsure which flow fits.
