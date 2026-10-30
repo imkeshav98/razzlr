@@ -3,7 +3,7 @@
 import { randomUUID } from 'node:crypto'
 import type { AddressInfo } from 'node:net'
 import { HocuspocusProvider } from '@hocuspocus/provider'
-import { clients, designs, designStates, migrateDatabase, openDatabase, orgs } from '@razzlr/db'
+import { brands, designs, designStates, migrateDatabase, openDatabase, workspaces } from '@razzlr/db'
 import { signSyncToken } from '@razzlr/sync-token'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
@@ -18,13 +18,13 @@ let url = ''
 const run = randomUUID().slice(0, 8)
 const design = `design-${run}`
 const other = `design-other-${run}`
-const who = { orgId: `org-${run}`, userId: 'user-1' }
+const who = { workspaceId: `workspace-${run}`, userId: 'user-1' }
 
 beforeAll(async () => {
   await migrateDatabase(db)
-  await db.insert(orgs).values({ id: who.orgId, name: 'Org' })
-  await db.insert(clients).values({ id: `client-${run}`, orgId: who.orgId, name: 'Client' })
-  await db.insert(designs).values([design, other].map((id) => ({ id, orgId: who.orgId, clientId: `client-${run}`, name: id, kind: 'single' as const })))
+  await db.insert(workspaces).values({ id: who.workspaceId, name: 'Workspace' })
+  await db.insert(brands).values({ id: `brand-${run}`, workspaceId: who.workspaceId, name: 'Brand' })
+  await db.insert(designs).values([design, other].map((id) => ({ id, workspaceId: who.workspaceId, brandId: `brand-${run}`, name: id, kind: 'single' as const })))
   const doc = new Y.Doc()
   doc.getMap('meta').set('name', 'stored')
   await db.insert(designStates).values({ designId: design, state: Y.encodeStateAsUpdate(doc) })

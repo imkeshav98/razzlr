@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { signSyncToken, SYNC_TOKEN_TTL_MS, syncTokenSecret, verifySyncToken } from './index.ts'
 
 const secret = 'a'.repeat(32)
-const who = { designId: 'design-1', orgId: 'org-1', userId: 'user-1' }
+const who = { designId: 'design-1', workspaceId: 'workspace-1', userId: 'user-1' }
 
 describe('sync tokens', () => {
   it('accepts a fresh token for its design', () => {

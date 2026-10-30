@@ -10,12 +10,12 @@ import { renderDesign } from '@razzlr/renderer'
 import { loadCanvasKit } from '@razzlr/renderer/node'
 import { AssetLink, AssetSummary, UploadTicket, type DesignInput } from '@razzlr/schema'
 import { editorPath, exportHashOf, writeOutput } from '../support/editor.ts'
-import { API_URL, DEV_CLIENT, seed } from '../support/seed.ts'
+import { API_URL, DEV_BRAND, seed } from '../support/seed.ts'
 
 const photo = new Uint8Array(readFileSync(join(import.meta.dirname, '..', '..', 'pixels', 'assets', 'sneaker.jpg')))
 
 async function api(path: string, body?: unknown) {
-  const response = await fetch(`${API_URL}/clients/${DEV_CLIENT}${path}`, body === undefined ? {} : {
+  const response = await fetch(`${API_URL}/brands/${DEV_BRAND}${path}`, body === undefined ? {} : {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
   })
   if (!response.ok) throw new Error(`${path}: ${response.status} ${await response.text()}`)
@@ -78,11 +78,11 @@ test('an uploaded image exports with the same pixels in the browser and in Node'
   expect(browserHash).toBe(nodeHash)
 })
 
-test('the editor cannot read another client’s image', async ({ page }) => {
+test('the editor cannot read another brand’s image', async ({ page }) => {
   const asset = await upload(photo)
-  const response = await page.request.get(`/clients/dev-client-cycles/assets/${asset.id}`)
+  const response = await page.request.get(`/brands/dev-brand-cycles/assets/${asset.id}`)
   expect(response.status()).toBe(404)
-  const own = await page.request.get(`/clients/${DEV_CLIENT}/assets/${asset.id}`)
+  const own = await page.request.get(`/brands/${DEV_BRAND}/assets/${asset.id}`)
   expect(own.status()).toBe(200)
   expect(new Uint8Array(await own.body())).toEqual(photo)
 })

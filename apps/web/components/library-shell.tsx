@@ -1,17 +1,17 @@
-// The app outside the editor: an icon rail, a secondary panel of clients and the main column.
+// The app outside the editor: an icon rail, a secondary panel of brands and the main column.
 import { SquaresFourIcon } from '@phosphor-icons/react/ssr'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { cn } from '../lib/cn.ts'
-import type { Messages } from '../lib/i18n/index.ts'
-import type { ClientSummary } from '@razzlr/schema'
+import type { BrandWords, Messages } from '../lib/i18n/index.ts'
+import type { BrandSummary } from '@razzlr/schema'
 import { BrandMark } from './brand-mark.tsx'
 import { LocaleSwitch } from './locale-switch.tsx'
 import { ThemeSwitch } from './theme-switch.tsx'
 
 const initials = (name: string) => name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase()
 
-export function ClientAvatar({ name, active = false }: { name: string; active?: boolean }) {
+export function BrandAvatar({ name, active = false }: { name: string; active?: boolean }) {
   return (
     <span
       aria-hidden
@@ -25,10 +25,12 @@ export function ClientAvatar({ name, active = false }: { name: string; active?: 
   )
 }
 
-export function LibraryShell({ t, clients, activeClientId, children }: {
+export function LibraryShell({ t, words, brands, activeBrandId, children }: {
   t: Messages
-  clients: ClientSummary[]
-  activeClientId?: string
+  /** "Clients" in an agency workspace, "Brands" otherwise. */
+  words: BrandWords
+  brands: BrandSummary[]
+  activeBrandId?: string
   children: ReactNode
 }) {
   return (
@@ -38,31 +40,31 @@ export function LibraryShell({ t, clients, activeClientId, children }: {
           <BrandMark size={32} />
         </Link>
         <div className="flex gap-1 md:mt-4 md:flex-col">
-          <Link href="/" aria-label={t.library.clients} aria-current="page" className="grid size-10 place-items-center rounded-row bg-accent-soft text-accent-text">
+          <Link href="/" aria-label={words.title} aria-current="page" className="grid size-10 place-items-center rounded-row bg-accent-soft text-accent-text">
             <SquaresFourIcon size={20} weight="fill" aria-hidden />
           </Link>
         </div>
       </nav>
 
-      <aside aria-label={t.library.clients} className="hidden w-64 shrink-0 flex-col border-e border-line bg-surface md:flex">
+      <aside aria-label={words.title} className="hidden w-64 shrink-0 flex-col border-e border-line bg-surface md:flex">
         <div className="flex h-14 items-center px-4">
-          <h2 className="font-display text-[15px] font-semibold tracking-tight">{t.library.clients}</h2>
+          <h2 className="font-display text-[15px] font-semibold tracking-tight">{words.title}</h2>
         </div>
         <ul className="flex flex-col gap-0.5 px-2">
-          {clients.map((client) => {
-            const active = client.id === activeClientId
+          {brands.map((brand) => {
+            const active = brand.id === activeBrandId
             return (
-              <li key={client.id}>
+              <li key={brand.id}>
                 <Link
-                  href={`/clients/${client.id}`}
+                  href={`/brands/${brand.id}`}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
                     'flex h-10 items-center gap-2.5 rounded-row px-2 text-[13px] transition-colors duration-[var(--chrome-fast)]',
                     active ? 'bg-hover font-semibold text-text' : 'text-muted hover:bg-hover hover:text-text',
                   )}
                 >
-                  <ClientAvatar name={client.name} active={active} />
-                  <span className="truncate">{client.name}</span>
+                  <BrandAvatar name={brand.name} active={active} />
+                  <span className="truncate">{brand.name}</span>
                 </Link>
               </li>
             )

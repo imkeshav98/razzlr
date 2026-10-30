@@ -1,19 +1,23 @@
 # Razzlr
 
-The design editor and AI ad flow for agencies. This glossary covers the document model the editor, renderer and AI jobs share, and the agency records around it.
+The design editor and AI ad flow for solo marketers, companies and agencies. This glossary covers the document model the editor, renderer and AI jobs share, and the workspace records around it.
 
-## Agency
+## Workspace
 
-**Org**:
-An agency account: its seats, clients, AI credits and billing.
-_Avoid_: Workspace, team, tenant
+**Workspace**:
+Whoever signs up and pays: its seats, brands, AI credits and billing. A person can belong to several. See ADR-0011.
+_Avoid_: Org, account, team, tenant
 
-**Client**:
-A brand the agency works for. Every design, brand kit and asset belongs to exactly one client.
-_Avoid_: Customer, account, brand
+**Workspace kind**:
+Who a workspace is for: solo, company or agency, asked at onboarding. It changes defaults and words only, never what is stored: an agency workspace calls its brands "Clients".
+_Avoid_: Plan, tier (those are billing)
+
+**Brand**:
+What a workspace makes work for: a solo user's business, a company's product line or region, or an agency's client. Every design, brand kit and asset belongs to exactly one brand, and a brand is a wall: nothing crosses from one brand to another.
+_Avoid_: Client (except as an agency workspace's word for a brand in UI copy), customer, project
 
 **Brand kit**:
-A client's logo, colours, fonts and tone of voice, applied automatically. Its colours and fonts are exposed to designs as variables.
+A brand's logo, colours, fonts and tone of voice, applied automatically. Its colours and fonts are exposed to designs as variables.
 _Avoid_: Brand guide, theme, style
 
 **Reviewer**:

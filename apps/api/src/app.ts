@@ -1,13 +1,13 @@
-// The API's routes. Every route below /clients needs a session, and reads and writes only that
-// session's org; a client or design of another org is answered as if it didn't exist.
+// The API's routes. /workspace and every route below /brands need a session, and reads and writes only that
+// session's workspace; a brand or design of another workspace is answered as if it didn't exist.
 import type { Db } from '@razzlr/db'
-import { CreateClient, CreateDesign, RecordAsset, StartUpload, type ApiError, type AssetLink, type SyncToken } from '@razzlr/schema'
+import { CreateBrand, CreateDesign, RecordAsset, StartUpload, UpdateWorkspace, type ApiError, type AssetLink, type SyncToken } from '@razzlr/schema'
 import type { Storage } from '@razzlr/storage'
 import { signSyncToken } from '@razzlr/sync-token'
 import { Hono, type MiddlewareHandler } from 'hono'
 import type { z } from 'zod'
 import { findAsset, InvalidUpload, listAssets, originalKey, recordAsset, SIGNED_URL_SECONDS, startUpload } from './assets.ts'
-import { createClient, createDesign, findClient, findDesign, InvalidContent, listClients, listDesigns } from './designs.ts'
+import { createBrand, createDesign, findBrand, findDesign, findWorkspace, InvalidContent, listBrands, listDesigns, setWorkspaceKind } from './designs.ts'
 import type { Session, SessionOf } from './session.ts'
 
 type Env = { Variables: { session: Session } }
@@ -25,8 +25,9 @@ export function createApp({ db, storage, sessionOf, syncSecret }: { db: Db; stor
     c.set('session', session)
     await next()
   }
-  app.use('/clients', requireSession)
-  app.use('/clients/*', requireSession)
+  app.use('/workspace', requireSession)
+  app.use('/brands', requireSession)
+  app.use('/brands/*', requireSession)
 
   /** The body parsed with `schema`, or a 400 response saying what's wrong with it. */
   async function body<T extends z.ZodType>(request: Request, schema: T): Promise<z.infer<T> | Response> {
@@ -41,85 +42,98 @@ export function createApp({ db, storage, sessionOf, syncSecret }: { db: Db; stor
     return parsed.data
   }
 
-  app.get('/clients', async (c) => c.json(await listClients(db, c.var.session.orgId)))
+  app.get('/workspace', async (c) => {
+    const workspace = await findWorkspace(db, c.var.session.workspaceId)
+    return workspace ? c.json(workspace) : c.json(error('No such workspace'), 404)
+  })
 
-  app.post('/clients', async (c) => {
-    const input = await body(c.req.raw, CreateClient)
+  // Onboarding asks who Razzlr is for; the answer only changes defaults and words (ADR-0011).
+  app.patch('/workspace', async (c) => {
+    const input = await body(c.req.raw, UpdateWorkspace)
     if (input instanceof Response) return input
-    return c.json(await createClient(db, c.var.session.orgId, input.name), 201)
+    const workspace = await setWorkspaceKind(db, c.var.session.workspaceId, input.kind)
+    return workspace ? c.json(workspace) : c.json(error('No such workspace'), 404)
   })
 
-  app.get('/clients/:clientId/designs', async (c) => {
-    const { orgId } = c.var.session
-    const client = await findClient(db, orgId, c.req.param('clientId'))
-    if (!client) return c.json(error('No such client'), 404)
-    return c.json(await listDesigns(db, orgId, client.id))
+  app.get('/brands', async (c) => c.json(await listBrands(db, c.var.session.workspaceId)))
+
+  app.post('/brands', async (c) => {
+    const input = await body(c.req.raw, CreateBrand)
+    if (input instanceof Response) return input
+    return c.json(await createBrand(db, c.var.session.workspaceId, input.name), 201)
   })
 
-  app.post('/clients/:clientId/designs', async (c) => {
-    const { orgId } = c.var.session
-    const client = await findClient(db, orgId, c.req.param('clientId'))
-    if (!client) return c.json(error('No such client'), 404)
+  app.get('/brands/:brandId/designs', async (c) => {
+    const { workspaceId } = c.var.session
+    const brand = await findBrand(db, workspaceId, c.req.param('brandId'))
+    if (!brand) return c.json(error('No such brand'), 404)
+    return c.json(await listDesigns(db, workspaceId, brand.id))
+  })
+
+  app.post('/brands/:brandId/designs', async (c) => {
+    const { workspaceId } = c.var.session
+    const brand = await findBrand(db, workspaceId, c.req.param('brandId'))
+    if (!brand) return c.json(error('No such brand'), 404)
     const input = await body(c.req.raw, CreateDesign)
     if (input instanceof Response) return input
     try {
-      return c.json(await createDesign(db, orgId, client.id, input.name, input.content), 201)
+      return c.json(await createDesign(db, workspaceId, brand.id, input.name, input.content), 201)
     } catch (e) {
       if (e instanceof InvalidContent) return c.json(error(`The design is not valid: ${e.message}`), 400)
       throw e
     }
   })
 
-  app.get('/clients/:clientId/designs/:designId', async (c) => {
-    const design = await findDesign(db, c.var.session.orgId, c.req.param('clientId'), c.req.param('designId'))
+  app.get('/brands/:brandId/designs/:designId', async (c) => {
+    const design = await findDesign(db, c.var.session.workspaceId, c.req.param('brandId'), c.req.param('designId'))
     return design ? c.json(design) : c.json(error('No such design'), 404)
   })
 
-  // A token for the sync server, only after the same org and client checks as opening the design.
-  app.post('/clients/:clientId/designs/:designId/sync-token', async (c) => {
-    const { orgId, userId } = c.var.session
-    const design = await findDesign(db, orgId, c.req.param('clientId'), c.req.param('designId'))
+  // A token for the sync server, only after the same workspace and brand checks as opening the design.
+  app.post('/brands/:brandId/designs/:designId/sync-token', async (c) => {
+    const { workspaceId, userId } = c.var.session
+    const design = await findDesign(db, workspaceId, c.req.param('brandId'), c.req.param('designId'))
     if (!design) return c.json(error('No such design'), 404)
-    const { token, expiresAt } = signSyncToken(syncSecret, { designId: design.id, orgId, userId })
+    const { token, expiresAt } = signSyncToken(syncSecret, { designId: design.id, workspaceId, userId })
     return c.json({ token, expiresAt: new Date(expiresAt).toISOString() } satisfies SyncToken)
   })
 
   // Images: uploads go straight to storage through a signed URL, then are recorded here (#35).
-  app.get('/clients/:clientId/assets', async (c) => {
-    const { orgId } = c.var.session
-    const client = await findClient(db, orgId, c.req.param('clientId'))
-    if (!client) return c.json(error('No such client'), 404)
-    return c.json(await listAssets(db, orgId, client.id))
+  app.get('/brands/:brandId/assets', async (c) => {
+    const { workspaceId } = c.var.session
+    const brand = await findBrand(db, workspaceId, c.req.param('brandId'))
+    if (!brand) return c.json(error('No such brand'), 404)
+    return c.json(await listAssets(db, workspaceId, brand.id))
   })
 
-  app.post('/clients/:clientId/assets/uploads', async (c) => {
-    const { orgId } = c.var.session
-    const client = await findClient(db, orgId, c.req.param('clientId'))
-    if (!client) return c.json(error('No such client'), 404)
+  app.post('/brands/:brandId/assets/uploads', async (c) => {
+    const { workspaceId } = c.var.session
+    const brand = await findBrand(db, workspaceId, c.req.param('brandId'))
+    if (!brand) return c.json(error('No such brand'), 404)
     const input = await body(c.req.raw, StartUpload)
     if (input instanceof Response) return input
-    return c.json(await startUpload(db, storage, orgId, client.id, input))
+    return c.json(await startUpload(db, storage, workspaceId, brand.id, input))
   })
 
-  app.post('/clients/:clientId/assets', async (c) => {
-    const { orgId } = c.var.session
-    const client = await findClient(db, orgId, c.req.param('clientId'))
-    if (!client) return c.json(error('No such client'), 404)
+  app.post('/brands/:brandId/assets', async (c) => {
+    const { workspaceId } = c.var.session
+    const brand = await findBrand(db, workspaceId, c.req.param('brandId'))
+    if (!brand) return c.json(error('No such brand'), 404)
     const input = await body(c.req.raw, RecordAsset)
     if (input instanceof Response) return input
     try {
-      return c.json(await recordAsset(db, storage, orgId, client.id, input.sha256), 201)
+      return c.json(await recordAsset(db, storage, workspaceId, brand.id, input.sha256), 201)
     } catch (e) {
       if (e instanceof InvalidUpload) return c.json(error(e.message), 400)
       throw e
     }
   })
 
-  app.get('/clients/:clientId/assets/:assetId', async (c) => {
-    const { orgId } = c.var.session
-    const asset = await findAsset(db, orgId, c.req.param('clientId'), { id: c.req.param('assetId') })
+  app.get('/brands/:brandId/assets/:assetId', async (c) => {
+    const { workspaceId } = c.var.session
+    const asset = await findAsset(db, workspaceId, c.req.param('brandId'), { id: c.req.param('assetId') })
     if (!asset) return c.json(error('No such asset'), 404)
-    const url = await storage.signedGet(originalKey(orgId, asset.sha256), SIGNED_URL_SECONDS)
+    const url = await storage.signedGet(originalKey(workspaceId, asset.sha256), SIGNED_URL_SECONDS)
     return c.json({ asset, url, expiresAt: new Date(Date.now() + SIGNED_URL_SECONDS * 1000).toISOString() } satisfies AssetLink)
   })
 

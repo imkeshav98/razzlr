@@ -16,7 +16,7 @@ export function createSyncServer({ db, secret, port, onDestroy }: { db: Db; secr
       const checked = verifySyncToken(secret, token, documentName)
       // Throwing refuses the connection; the provider hears "permission denied".
       if (!checked.ok) throw new Error(checked.reason)
-      return { userId: checked.payload.userId, orgId: checked.payload.orgId }
+      return { userId: checked.payload.userId, workspaceId: checked.payload.workspaceId }
     },
     // The API creates every design with its first state and runs the migrations; this only reads
     // and replaces states.

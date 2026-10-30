@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { LibraryShell } from '../../../components/library-shell.tsx'
 import { buttonStyles } from '../../../components/ui/button.tsx'
-import { createDesign, listClients, listDesigns } from '../../../lib/api.ts'
-import { format } from '../../../lib/i18n/index.ts'
+import { createDesign, getWorkspace, listBrands, listDesigns } from '../../../lib/api.ts'
+import { brandWords, format } from '../../../lib/i18n/index.ts'
 import { getLocale, getMessages } from '../../../lib/i18n/server.ts'
 
 export const dynamic = 'force-dynamic'
@@ -17,32 +17,33 @@ function tileOf(id: string) {
   return `linear-gradient(135deg, oklch(0.62 0.15 ${hue}), oklch(0.45 0.12 ${(hue + 40) % 360}))`
 }
 
-export default async function ClientPage({ params }: { params: Promise<{ clientId: string }> }) {
-  const { clientId } = await params
-  const [t, locale, clients] = await Promise.all([getMessages(), getLocale(), listClients()])
-  const client = clients.find((c) => c.id === clientId)
-  if (!client) notFound()
-  const designs = await listDesigns(client.id)
+export default async function BrandPage({ params }: { params: Promise<{ brandId: string }> }) {
+  const { brandId } = await params
+  const [t, locale, workspace, brands] = await Promise.all([getMessages(), getLocale(), getWorkspace(), listBrands()])
+  const words = brandWords(t, workspace.kind)
+  const brand = brands.find((c) => c.id === brandId)
+  if (!brand) notFound()
+  const designs = await listDesigns(brand.id)
   const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' })
   const untitled = t.library.untitled
 
   async function create(form: FormData) {
     'use server'
     const name = String(form.get('name') ?? '').trim() || untitled
-    const design = await createDesign(clientId, name)
-    redirect(`/clients/${clientId}/designs/${design.id}`)
+    const design = await createDesign(brandId, name)
+    redirect(`/brands/${brandId}/designs/${design.id}`)
   }
 
   return (
-    <LibraryShell t={t} clients={clients} activeClientId={client.id}>
+    <LibraryShell t={t} words={words} brands={brands} activeBrandId={brand.id}>
       <Link href="/" className="inline-flex items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-text md:hidden">
         <ArrowLeftIcon size={14} aria-hidden className="rtl:-scale-x-100" />
-        {t.library.back}
+        {words.all}
       </Link>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[13px] font-medium text-subtle">{t.library.designs}</p>
-          <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">{client.name}</h1>
+          <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">{brand.name}</h1>
         </div>
         <form action={create} className="flex w-full gap-2 sm:w-auto">
           <label className="sr-only" htmlFor="design-name">{t.library.designName}</label>
@@ -70,7 +71,7 @@ export default async function ClientPage({ params }: { params: Promise<{ clientI
           <ul aria-label={t.library.designs} className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
             {designs.map((design, i) => (
               <li key={design.id} className="rise" style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
-                <Link href={`/clients/${client.id}/designs/${design.id}`} className="group block rounded-card focus-visible:outline-offset-4">
+                <Link href={`/brands/${brand.id}/designs/${design.id}`} className="group block rounded-card focus-visible:outline-offset-4">
                   <div className="canvas-dots relative grid aspect-[4/3] place-items-center overflow-hidden rounded-card border border-line transition-[border-color,transform,box-shadow] duration-[var(--chrome)] ease-[var(--ease-out)] group-hover:-translate-y-0.5 group-hover:border-line-strong group-hover:shadow-panel">
                     <div
                       aria-hidden

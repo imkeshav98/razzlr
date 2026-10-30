@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, type Browser, type Page } from '@playwright/test'
-import { DEV_CLIENT, liveDesign, seed } from './seed.ts'
+import { DEV_BRAND, liveDesign, seed } from './seed.ts'
 
 /** Where the live editing checks leave their screenshots and numbers; CI uploads it. */
 export const OUTPUT = join(import.meta.dirname, '..', 'output')
@@ -26,7 +26,7 @@ export async function openTabs(browser: Browser, count: number, existing?: strin
   return { designId, tabs, errors }
 }
 
-export const editorPath = (designId: string) => `/clients/${DEV_CLIENT}/designs/${designId}`
+export const editorPath = (designId: string) => `/brands/${DEV_BRAND}/designs/${designId}`
 
 /** The design as the tab's document holds it now, as JSON with sorted keys so two tabs compare equal. */
 export const designOf = (page: Page) =>
