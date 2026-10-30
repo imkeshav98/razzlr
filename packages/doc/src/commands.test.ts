@@ -270,6 +270,11 @@ describe('commands', () => {
     expect(order()).toEqual(['p3', 'p1', 'p2'])
     tab.run('page.update', { id: 'p2', name: 'Offer' })
     expect(readDesign(doc).pages.p2?.name).toBe('Offer')
+    // The Page card (#83) sets a page's background without touching its name; undo takes it back.
+    tab.run('page.update', { id: 'p2', fills: [{ type: 'solid', color: '#FF48B0FF' }] })
+    expect(readDesign(doc).pages.p2).toMatchObject({ name: 'Offer', fills: [{ type: 'solid', color: '#FF48B0FF' }] })
+    tab.undo()
+    expect(readDesign(doc).pages.p2?.fills).toEqual([])
     expect(() => tab.run('page.move', { id: 'p2', before: 'nope' })).toThrow(/no other page/)
   })
 

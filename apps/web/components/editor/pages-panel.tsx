@@ -10,12 +10,13 @@ import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
+import { CARD, CardHeader } from './card.tsx'
 import { ICON_BUTTON, useEditorDesign } from './formats-panel.tsx'
 
 const ordered = (design: Design) =>
   Object.entries(design.pages).sort(([a, x], [b, y]) => (x.order < y.order ? -1 : x.order > y.order ? 1 : a < b ? -1 : 1))
 
-export function PagesPanel({ editor, onRemoved }: { editor: Editor; onRemoved: (message: string) => void }) {
+export function PagesPanel({ editor, onRemoved, onShow }: { editor: Editor; onRemoved: (message: string) => void; onShow?: (pageId: string) => void }) {
   const t = useMessages()
   const { design } = useEditorDesign(editor)
   const pages = ordered(design)
@@ -26,6 +27,7 @@ export function PagesPanel({ editor, onRemoved }: { editor: Editor; onRemoved: (
 
   const show = (id: string) => {
     setCurrent(id)
+    onShow?.(id)
     // After the command's redraw, so a new page's row is in the grid already.
     requestAnimationFrame(() => editor.fitPage(id))
   }
@@ -43,18 +45,14 @@ export function PagesPanel({ editor, onRemoved }: { editor: Editor; onRemoved: (
   }
 
   return (
-    <section aria-labelledby="pages-title" className="border-b border-line">
-      <div className="flex h-10 items-center justify-between ps-4 pe-2">
-        <h3 id="pages-title" className="text-xs font-semibold tracking-wide text-muted">
-          {t.editor.pages.title}
-          <span className="ms-1.5 font-mono font-normal text-subtle tabular-nums">{pages.length}</span>
-        </h3>
+    <section aria-labelledby="pages-title" className={CARD}>
+      <CardHeader id="pages-title" title={t.editor.pages.title} count={pages.length}>
         <Tooltip label={t.editor.pages.add}>
           <button type="button" aria-label={t.editor.pages.add} onClick={add} className={ICON_BUTTON}>
             <PlusIcon size={16} aria-hidden />
           </button>
         </Tooltip>
-      </div>
+      </CardHeader>
       <ol aria-label={t.editor.pages.title} className="pb-2" data-testid="pages">
         {pages.map(([id, page], i) => (
           <li

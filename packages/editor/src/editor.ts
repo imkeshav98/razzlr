@@ -12,7 +12,7 @@ import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from 'canv
 import canvasKitModule from 'canvaskit-wasm/full'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
-import { fit, toScreen, toWorld, visibleRect, zoomAt, type Camera, type Viewport } from './camera.ts'
+import { fit, NO_INSETS, toScreen, toWorld, visibleRect, zoomAt, type Camera, type Insets, type Viewport } from './camera.ts'
 import { frameAt, frameGrid, intersects, type Frame, type Rect } from './grid.ts'
 import { hitTest, type Point } from './hit-test.ts'
 import { align, distribute, type Alignment, type Distribution, type Offset } from './arrange.ts'
@@ -235,6 +235,8 @@ function live(
   let surface: Surface | null = null
   let dpr = 1
   let viewport: Viewport = { width: 1, height: 1 }
+  // The stage's edges that floating chrome covers; fitting centres in what is left (#83).
+  let insets = NO_INSETS
   const session: Session = openSession(doc)
   // Removes every listener the editor adds, on destroy.
   const listening = new AbortController()
@@ -1034,17 +1036,17 @@ function live(
   const centre = (): Point => ({ x: viewport.width / 2, y: viewport.height / 2 })
   function fitAll() {
     // The focus view's chip sits over the stage's top edge: leave it room above the frame's label.
-    setCamera(fit(grid.bounds, viewport, focused ? FOCUS_PADDING : undefined))
+    setCamera(fit(grid.bounds, viewport, focused ? FOCUS_PADDING : undefined, insets))
   }
   function fitFrame(frame: Frame | undefined) {
-    if (frame) setCamera(fit(frame, viewport))
+    if (frame) setCamera(fit(frame, viewport, undefined, insets))
   }
   function fitSelection() {
     const outer = selectionBox()
     if (!outer) return fitAll()
     const { frame, box } = outer
     const b = boundsOf([box])
-    setCamera(fit({ x: frame.x + b.x, y: frame.y + b.y, width: b.width, height: b.height }, viewport))
+    setCamera(fit({ x: frame.x + b.x, y: frame.y + b.y, width: b.width, height: b.height }, viewport, undefined, insets))
   }
   const zoomTo = (zoom: number, at: Point = centre()) => setCamera(zoomAt(camera, at, zoom))
 
@@ -2343,6 +2345,10 @@ function live(
     camera: () => camera,
     viewport: () => viewport,
     setCamera,
+    /** The stage's edges floating chrome covers, in screen pixels; later fits keep clear of them. */
+    setInsets(next: Insets) {
+      insets = next
+    },
     zoomTo,
     zoomIn: () => zoomTo(camera.zoom * ZOOM_STEP),
     zoomOut: () => zoomTo(camera.zoom / ZOOM_STEP),
@@ -2356,7 +2362,7 @@ function live(
       if (!first) return
       const right = Math.max(...row.map((f) => f.x + f.width))
       const bottom = Math.max(...row.map((f) => f.y + f.height))
-      setCamera(fit({ x: first.x, y: first.y, width: right - first.x, height: bottom - first.y }, viewport, focused ? FOCUS_PADDING : undefined))
+      setCamera(fit({ x: first.x, y: first.y, width: right - first.x, height: bottom - first.y }, viewport, focused ? FOCUS_PADDING : undefined, insets))
     },
     setTool,
     tool: () => tool,

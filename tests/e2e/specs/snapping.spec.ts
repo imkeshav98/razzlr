@@ -70,7 +70,8 @@ test('a drag snaps to another layer with a guide, and not with Ctrl held', async
 test('the inspector aligns and distributes three layers, one undo step each', async ({ browser }) => {
   const { page, errors } = await openStage(browser, design())
   const arrange = page.getByTestId('arrange')
-  await expect(arrange.locator('[data-action="alignTop"]')).toBeDisabled()
+  // The Arrange card shows only once something is selected (#83).
+  await expect(arrange).toHaveCount(0)
 
   await click(page, 230, 180)
   await click(page, 530, 180, ['Shift'])

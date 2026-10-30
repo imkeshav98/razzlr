@@ -3,10 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { SHAPE_TOOLS, startEditor, type Editor, type ShapeTool, type Tool } from '@razzlr/editor'
 import { fetchSyncToken } from './actions.ts'
-import { EditorShell } from '../../../../../components/editor/shell.tsx'
-import { FocusChip, FormatsPanel, UndoToast } from '../../../../../components/editor/formats-panel.tsx'
-import { ArrangePanel } from '../../../../../components/editor/arrange-panel.tsx'
-import { PagesPanel } from '../../../../../components/editor/pages-panel.tsx'
+import { EditorShell, type ChromeInsets } from '../../../../../components/editor/shell.tsx'
+import { FocusChip, UndoToast } from '../../../../../components/editor/formats-panel.tsx'
+import { PropertyCards } from '../../../../../components/editor/property-cards.tsx'
 import { ZoomControl } from '../../../../../components/editor/zoom-control.tsx'
 
 declare global {
@@ -56,6 +55,20 @@ export function EditorStage({ designId, designName, clientId, clientName, format
   }, [editor])
   const dockTool = tool === 'hand' || tool === 'select' || tool === 'pen' || tool === 'text' ? tool : 'shape'
   const dismissRemoved = useCallback(() => setRemoved(null), [])
+
+  // The stage's edges the capsule, cards and dock cover (#83): the editor fits the ads between
+  // them. The first time they are known the design is fitted again, since it opened fitted to the
+  // whole stage.
+  const [insets, setInsets] = useState<ChromeInsets | null>(null)
+  const fittedTo = useRef<Editor | null>(null)
+  useEffect(() => {
+    if (!editor || !insets) return
+    editor.setInsets(insets)
+    if (fittedTo.current !== editor) {
+      fittedTo.current = editor
+      editor.fitAll()
+    }
+  }, [editor, insets])
 
   // Lets this page open again without a connection (#37): the worker keeps the page and what it
   // loaded, and the design itself is in IndexedDB.
@@ -107,13 +120,8 @@ export function EditorStage({ designId, designName, clientId, clientName, format
         setShape(picked)
         editor?.setTool(tool === 'hand' || tool === 'pen' || tool === 'text' ? tool : tool === 'shape' ? picked : 'select')
       }}
-      inspector={editor ? (
-        <>
-          <ArrangePanel editor={editor} />
-          <PagesPanel editor={editor} onRemoved={setRemoved} />
-          <FormatsPanel editor={editor} onRemoved={setRemoved} />
-        </>
-      ) : undefined}
+      onInsets={setInsets}
+      inspector={editor ? <PropertyCards editor={editor} onRemoved={setRemoved} /> : undefined}
     >
       {/* The design is a picture, so it never mirrors: the stage stays left to right in Arabic too. */}
       <div dir="ltr" className="absolute inset-0">

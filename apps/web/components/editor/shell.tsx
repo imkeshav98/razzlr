@@ -1,8 +1,9 @@
 'use client'
 
 // The editor's chrome (#51): a capsule floating over the canvas whose buttons open flyouts (Layers,
-// Assets, AI, Brand; #82), a right inspector, a bottom tool dock and a slot for the mini bar above
-// the selection. The panels are empty until their tickets fill them; the stage is the editor itself.
+// Assets, AI, Brand; #82), property cards floating at the top end (#83), a bottom tool dock and a
+// slot for the mini bar above the selection. The canvas runs edge to edge under all of it; the
+// stage is the editor itself, told which edges the chrome covers so it fits the ads between.
 import {
   CloudArrowUpIcon, CloudCheckIcon, CloudSlashIcon, CursorIcon, FrameCornersIcon, HandIcon, ImageIcon, ImagesIcon, PaletteIcon, PenNibIcon, ShapesIcon,
   SlidersHorizontalIcon, SparkleIcon, StackIcon, TextTIcon, XIcon, type Icon,
@@ -10,7 +11,7 @@ import {
 import type { ShapeTool } from '@razzlr/editor'
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useLocale, useMessages } from '../../lib/i18n/client.tsx'
 import { dirOf } from '../../lib/i18n/index.ts'
@@ -20,14 +21,16 @@ import { ThemeSwitch } from '../theme-switch.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { ShapeTools } from './shape-menu.tsx'
 
-type Panel = 'layers' | 'assets' | 'ai' | 'brand'
+type Panel = 'layers' | 'assets' | 'ai' | 'brand' | 'properties'
 export type Tool = 'select' | 'frame' | 'shape' | 'text' | 'pen' | 'image' | 'hand'
 
-const PANELS: { id: Panel; icon: Icon }[] = [
+const PANELS: { id: Panel; icon: Icon; phone?: true }[] = [
   { id: 'layers', icon: StackIcon },
   { id: 'assets', icon: ImagesIcon },
   { id: 'ai', icon: SparkleIcon },
   { id: 'brand', icon: PaletteIcon },
+  // On phones the property cards are a bottom sheet, opened from the tab bar.
+  { id: 'properties', icon: SlidersHorizontalIcon, phone: true },
 ]
 const TOOLS: { id: Tool; icon: Icon; key: string }[] = [
   { id: 'select', icon: CursorIcon, key: 'V' },
@@ -92,7 +95,30 @@ function useShownStatus(status: string) {
   return shown
 }
 
-export function EditorShell({ clientId, clientName, designName, status, tool: shownTool, shape = 'rect', onToolChange, inspector, children }: {
+/** The stage's edges the floating chrome covers, in CSS pixels, left and right as on screen. */
+export interface ChromeInsets { top: number; right: number; bottom: number; left: number }
+
+/**
+ * Measures how much of the stage the capsule, the cards and the dock cover. A piece in the stage's
+ * lower part covers the bottom (the dock, and the capsule when it is the phones' tab bar); one on
+ * the left or right of the middle covers that side. The phones' open sheet spans the stage, so
+ * fitting around it would leave nothing: it counts for nothing, as do hidden pieces.
+ */
+function measureInsets(stage: DOMRect, pieces: (Element | null)[]): ChromeInsets {
+  const insets = { top: 0, right: 0, bottom: 0, left: 0 }
+  const gap = 12
+  for (const piece of pieces) {
+    const box = piece?.getBoundingClientRect()
+    if (!box || box.width === 0 || box.height === 0) continue
+    if (box.top > stage.top + stage.height * 0.6) insets.bottom = Math.max(insets.bottom, stage.bottom - box.top + gap)
+    else if (box.width > stage.width * 0.6) continue
+    else if (box.left + box.width / 2 < stage.left + stage.width / 2) insets.left = Math.max(insets.left, box.right - stage.left + gap)
+    else insets.right = Math.max(insets.right, stage.right - box.left + gap)
+  }
+  return insets
+}
+
+export function EditorShell({ clientId, clientName, designName, status, tool: shownTool, shape = 'rect', onToolChange, onInsets, inspector, children }: {
   clientId: string
   clientName: string
   designName: string
@@ -102,7 +128,9 @@ export function EditorShell({ clientId, clientName, designName, status, tool: sh
   /** The shape the shape tool draws (#44). */
   shape?: ShapeTool
   onToolChange?: (tool: Tool, shape: ShapeTool) => void
-  /** The inspector's contents once the design is open; an empty state until then. */
+  /** Called with the stage's edges the chrome covers, whenever they change. */
+  onInsets?: (insets: ChromeInsets) => void
+  /** The property cards, once the design is open. */
   inspector?: ReactNode
   children: ReactNode
 }) {
@@ -118,8 +146,32 @@ export function EditorShell({ clientId, clientName, designName, status, tool: sh
   const shown = useShownStatus(status)
   const save = SAVE[shown]
   const failed = shown.startsWith('Error')
-  const panelTitle = (id: Panel) => t.editor[id]
+  const panelTitle = (id: Panel) => (id === 'properties' ? t.editor.inspector : t.editor[id])
   const panelEmpty = { layers: t.editor.layersEmpty, assets: t.editor.assetsEmpty, ai: t.editor.aiEmpty, brand: t.editor.brandEmpty }
+  const flyout = panel === 'properties' ? null : panel
+  const hasCards = Boolean(inspector)
+
+  const stage = useRef<HTMLElement>(null)
+  const rail = useRef<HTMLElement>(null)
+  const cards = useRef<HTMLElement>(null)
+  const dock = useRef<HTMLDivElement>(null)
+  const reported = useRef('')
+  const report = useRef(onInsets)
+  report.current = onInsets
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (!stage.current) return
+      const insets = measureInsets(stage.current.getBoundingClientRect(), [rail.current, cards.current, dock.current])
+      const key = JSON.stringify(insets)
+      if (key === reported.current) return
+      reported.current = key
+      report.current?.(insets)
+    }
+    const watch = new ResizeObserver(measure)
+    for (const el of [stage.current, rail.current, cards.current, dock.current]) if (el) watch.observe(el)
+    measure()
+    return () => watch.disconnect()
+  }, [hasCards])
 
   return (
     <MotionConfig reducedMotion="user">
@@ -164,6 +216,7 @@ export function EditorShell({ clientId, clientName, designName, status, tool: sh
 
           <div className="relative flex min-h-0">
             <nav
+              ref={rail}
               aria-label={t.editor.tools}
               data-testid="rail"
               className={cn(
@@ -173,7 +226,7 @@ export function EditorShell({ clientId, clientName, designName, status, tool: sh
                 'start-3 top-1/2 -translate-y-1/2 flex-col max-sm:start-1/2 max-sm:top-auto max-sm:bottom-3 max-sm:translate-y-0 max-sm:flex-row max-sm:-translate-x-1/2 max-sm:rtl:translate-x-1/2',
               )}
             >
-              {PANELS.map(({ id, icon: PanelIcon }) => {
+              {PANELS.map(({ id, icon: PanelIcon, phone: phoneOnly }) => {
                 const open = panel === id
                 const ai = id === 'ai'
                 return (
@@ -182,11 +235,12 @@ export function EditorShell({ clientId, clientName, designName, status, tool: sh
                       type="button"
                       aria-label={panelTitle(id)}
                       aria-expanded={open}
-                      aria-controls="editor-flyout"
+                      aria-controls={id === 'properties' ? 'editor-cards' : 'editor-flyout'}
                       data-panel={id}
                       onClick={() => setPanel(open ? null : id)}
                       className={cn(
                         'relative grid size-10 cursor-pointer place-items-center rounded-full transition-colors duration-[var(--chrome-fast)]',
+                        phoneOnly && 'sm:hidden',
                         open ? 'text-on-accent' : 'text-subtle hover:bg-hover hover:text-text',
                         ai && !open && 'text-accent-text',
                       )}
@@ -212,32 +266,32 @@ export function EditorShell({ clientId, clientName, designName, status, tool: sh
             </nav>
 
             <AnimatePresence>
-              {panel && (
+              {flyout && (
                 <motion.section
-                  key={panel}
+                  key={flyout}
                   id="editor-flyout"
-                  aria-label={panelTitle(panel)}
+                  aria-label={panelTitle(flyout)}
                   initial={{ opacity: 0, x: rtl ? 12 : -12 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: rtl ? 12 : -12 }}
                   transition={chrome}
                   data-testid="flyout"
-                  className="absolute start-[4.75rem] top-3 z-10 flex max-h-[calc(100%-1.5rem)] w-72 flex-col overflow-hidden rounded-card surface-frost border shadow-panel max-sm:inset-x-3 max-sm:start-3 max-sm:top-auto max-sm:bottom-[8.5rem] max-sm:w-auto"
+                  className="absolute start-[4.75rem] top-7 z-10 flex max-h-[calc(100%-2.5rem)] w-72 flex-col overflow-hidden rounded-card surface-frost border shadow-panel max-sm:inset-x-3 max-sm:start-3 max-sm:top-auto max-sm:bottom-[8.5rem] max-sm:w-auto"
                 >
                   <div className="flex h-12 shrink-0 items-center justify-between border-b border-line ps-4 pe-2">
-                    <h2 className={cn('font-display text-[15px] font-semibold tracking-tight', panel === 'ai' && 'bg-[image:var(--ai-gradient)] bg-clip-text text-transparent')}>{panelTitle(panel)}</h2>
+                    <h2 className={cn('font-display text-[15px] font-semibold tracking-tight', flyout === 'ai' && 'bg-[image:var(--ai-gradient)] bg-clip-text text-transparent')}>{panelTitle(flyout)}</h2>
                     <button type="button" aria-label={t.editor.closePanel} onClick={() => setPanel(null)} className="grid size-8 cursor-pointer place-items-center rounded-row text-subtle hover:bg-hover hover:text-text">
                       <XIcon size={16} aria-hidden />
                     </button>
                   </div>
-                  <p className="p-4 text-[13px] text-muted">{panelEmpty[panel]}</p>
+                  <p className="p-4 text-[13px] text-muted">{panelEmpty[flyout]}</p>
                 </motion.section>
               )}
             </AnimatePresence>
 
-            <main className="canvas-dots relative min-w-0 flex-1 overflow-hidden">
+            <main ref={stage} className="canvas-dots relative min-w-0 flex-1 overflow-hidden">
               {children}
-              <div role="toolbar" aria-label={t.editor.tools} className="absolute inset-x-0 bottom-4 z-10 mx-auto flex w-max max-sm:bottom-[4.75rem] items-center gap-0.5 rounded-card surface-frost border p-1 shadow-panel">
+              <div ref={dock} role="toolbar" aria-label={t.editor.tools} className="absolute inset-x-0 bottom-4 z-10 mx-auto flex w-max max-sm:bottom-[4.75rem] items-center gap-0.5 rounded-card surface-frost border p-1 shadow-panel">
                 {TOOLS.map(({ id, icon: ToolIcon, key }) => {
                   if (id === 'shape') {
                     return (
@@ -278,13 +332,24 @@ export function EditorShell({ clientId, clientName, designName, status, tool: sh
               </div>
             </main>
 
-            <aside aria-label={t.editor.inspector} className="hidden w-72 shrink-0 flex-col border-s border-line bg-surface lg:flex">
-              <div className="flex h-12 items-center gap-2 border-b border-line px-4">
-                <SlidersHorizontalIcon size={16} aria-hidden className="text-subtle" />
-                <h2 className="text-[13px] font-semibold">{t.editor.inspector}</h2>
-              </div>
-              {inspector ?? <div className="grid flex-1 place-items-center p-6 text-center text-[13px] text-subtle">{t.editor.inspectorEmpty}</div>}
-            </aside>
+            {hasCards && (
+              <aside
+                ref={cards}
+                id="editor-cards"
+                aria-label={t.editor.inspector}
+                data-testid="cards"
+                data-open={panel === 'properties' ? '' : undefined}
+                className={cn(
+                  // A stack at the top end, below the ruler, each card only as tall as its content; past
+                  // the room above the zoom pill the stack scrolls. Its gaps let clicks through.
+                  'pointer-events-none absolute end-3 top-7 z-20 flex max-h-[calc(100%-6.25rem)] w-72 flex-col gap-2 overflow-y-auto overscroll-contain [scrollbar-width:none] *:pointer-events-auto',
+                  // On phones, a bottom sheet over the dock, opened from the tab bar.
+                  'max-sm:inset-x-2 max-sm:top-auto max-sm:bottom-[4.75rem] max-sm:max-h-[55%] max-sm:w-auto max-sm:not-data-[open]:hidden',
+                )}
+              >
+                {inspector}
+              </aside>
+            )}
           </div>
         </div>
     </MotionConfig>
