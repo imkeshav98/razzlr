@@ -1,3 +1,4 @@
+export { imageColorMatrix, type ColorMatrix } from './adjust.ts'
 export { drawPage, drawScene, type Resources } from './draw.ts'
 export { layerPictures, type LayerPictures } from './pictures.ts'
 export { makeResources, resourceCache, type ResourceBytes, type ResourceCache } from './resources.ts'

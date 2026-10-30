@@ -50,6 +50,7 @@ export const SHORTCUTS = [
   { action: 'toolText', keys: ['T'] },
   { action: 'editPoints', keys: ['Enter'] },
   { action: 'autoLayout', keys: ['Shift+A'] },
+  { action: 'mask', keys: ['Mod+Alt+M'] },
   { action: 'booleanUnion', keys: ['Mod+Alt+U'] },
   { action: 'booleanSubtract', keys: ['Mod+Alt+S'] },
   { action: 'booleanIntersect', keys: ['Mod+Alt+I'] },

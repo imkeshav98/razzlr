@@ -1,36 +1,15 @@
 // Image uploads (#35): an image uploaded through a signed URL renders the same in the editor's
 // export and in Node, both from the bytes stored for its asset id.
 import { createHash } from 'node:crypto'
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
 import { FALLBACK_FAMILIES } from '@razzlr/fonts'
 import { loadFontFiles } from '@razzlr/fonts/node'
 import { renderDesign } from '@razzlr/renderer'
 import { loadCanvasKit } from '@razzlr/renderer/node'
-import { AssetLink, AssetSummary, UploadTicket, type DesignInput } from '@razzlr/schema'
+import { AssetLink, type DesignInput } from '@razzlr/schema'
+import { api, photo, upload } from '../support/assets.ts'
 import { editorPath, exportHashOf, writeOutput } from '../support/editor.ts'
-import { API_URL, DEV_BRAND, seed } from '../support/seed.ts'
-
-const photo = new Uint8Array(readFileSync(join(import.meta.dirname, '..', '..', 'pixels', 'assets', 'sneaker.jpg')))
-
-async function api(path: string, body?: unknown) {
-  const response = await fetch(`${API_URL}/brands/${DEV_BRAND}${path}`, body === undefined ? {} : {
-    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
-  })
-  if (!response.ok) throw new Error(`${path}: ${response.status} ${await response.text()}`)
-  return response.json() as Promise<unknown>
-}
-
-/** Uploads the way the browser will: ask, PUT to the signed URL, record. */
-async function upload(bytes: Uint8Array<ArrayBuffer>) {
-  const sha256 = createHash('sha256').update(bytes).digest('hex')
-  const ticket = UploadTicket.parse(await api('/assets/uploads', { sha256, byteSize: bytes.length, contentType: 'image/jpeg' }))
-  if (ticket.asset) return ticket.asset
-  const put = await fetch(ticket.upload.url, { method: 'PUT', body: bytes, headers: ticket.upload.headers })
-  expect(put.status).toBe(200)
-  return AssetSummary.parse(await api('/assets', { sha256 }))
-}
+import { DEV_BRAND, seed } from '../support/seed.ts'
 
 const adWith = (assetId: string): DesignInput => ({
   meta: { schemaVersion: 2, designId: 'replaced-by-the-api', name: 'Sneaker ad', kind: 'single', primaryFormatId: 'sq' },

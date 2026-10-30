@@ -51,4 +51,16 @@ describe('hitTest', () => {
     // Between its shapes, nothing: a boolean has no box of its own to click.
     expect(hitTest([combined], { x: 150, y: 50 })).toBeNull()
   })
+
+  it('never picks a mask, and picks what it masks only inside it, up to the next mask', () => {
+    const mask = { ...box('mask', 0, 0, 100, 100), props: { ...box('mask', 0, 0, 100, 100).props, mask: 'alpha' } } as SceneLayer
+    const layers = [box('under', 0, 0, 300, 300), mask, box('masked', 50, 50, 100, 100), { ...mask, id: 'next', props: { ...mask.props, x: 200 } } as SceneLayer, box('after', 120, 120, 30, 30)]
+    expect(hitTest(layers, { x: 75, y: 75 })?.id).toBe('masked')
+    // Outside the mask the masked layer isn't there, nor is the mask: what lies under is picked.
+    expect(hitTest(layers, { x: 110, y: 110 })?.id).toBe('under')
+    expect(hitTest(layers, { x: 10, y: 10 })?.id).toBe('under')
+    // The next mask starts a run of its own, which the layer after it is in.
+    expect(hitTest(layers, { x: 130, y: 130 })?.id).toBe('under')
+    expect(hitTest([box('under', 0, 0, 300, 300), mask, box('masked', 50, 50, 100, 100), box('after', 120, 120, 30, 30)], { x: 130, y: 130 })?.id).toBe('under')
+  })
 })

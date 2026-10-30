@@ -92,6 +92,14 @@ _Avoid_: Auto size, fit text
 One paint on a layer: solid, gradient (linear, radial or angular), image or video. A crop is the fill's transform.
 _Avoid_: Background, colour (when a paint is meant)
 
+**Adjustment**:
+A change to an image fill's colours, pushed either way from none: exposure, contrast, saturation, temperature or tint. A filter (mono, sepia, vivid, fade, warm, cool) is a look laid on after them.
+_Avoid_: Effect (that is a shadow, glow or blur on the layer), edit
+
+**Mask**:
+A layer that is not drawn itself: the layers after it in the same parent, up to the next mask, show only where it is opaque (alpha) or bright (luminance).
+_Avoid_: Clipping mask, stencil
+
 **Pass-through**:
 How a group or frame blends by default: it adds no layer of its own, so each child blends with whatever is under the group. Any other blend mode first draws the children together, then blends the result.
 _Avoid_: Isolated (that is any other mode)

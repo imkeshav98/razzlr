@@ -256,6 +256,18 @@ body {
   background: #fff;
   box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.25);
 }
+/* Cropping an image fill (#48): the whole image, faint where the layer doesn't show it, with a handle on each corner. */
+.stage-overlay .crop-image {
+  position: absolute;
+  transform-origin: center;
+  outline: 1px dashed var(--accent);
+}
+.stage-overlay .crop-ghost {
+  position: absolute;
+  inset: 0;
+  background-size: 100% 100%;
+  opacity: 0.4;
+}
 /* Paths (#45): the outline being drawn or edited, its anchors, the handles in play, and the pen's next segment. */
 .stage-overlay .path-edit {
   position: absolute;

@@ -7,6 +7,7 @@ The spike designs from the spike spec (#1), as JSON the schema validates (`pnpm 
 | english-sale-ad | the price in a group inside a clipping frame that cuts off the was-price; mixed weights and sizes, letter spacing, a cropped photo fill, a linear gradient band |
 | hindi-ad | Devanagari conjuncts and matras (क्ष, श्री, कि), Latin digits and a rupee price |
 | arabic-ad | right to left, joining forms, a Latin brand name and numbers inside Arabic, end alignment |
+| image-fills | image fills (#48): fill, fit, crop and tile in a rounded rect, an ellipse, a turned star and a turned rounded rect; each adjustment and each filter; a star alpha mask over a photo and a translucent band; a radial luminance mask fading a photo in a clipping frame; bold text as a mask, then a turned translucent ellipse mask taking the next layer; a pill on the page masking the photo strip after it |
 | auto-layout | auto layout (#46): buttons that hug labels of two lengths; a card column that hugs, a photo that fills its width, text that fills the width and wraps, a button, and an absolute badge; space-between stats; overlapping avatars on a negative gap; tags that wrap onto lines; a turned column whose children fill its height |
 | text-styles | text styles (#47) in English, Hindi and Arabic: a filled outline and a hollow one, strikethrough and underline runs, upper and title case with a Latin word inside Devanagari and Arabic, bullet and numbered lists that wrap clear of their markers (on the right for Arabic) with paragraph spacing, two lines and an ellipsis, shrink to fit growing to fill a box and one too small held at its least size and cut to a line |
 | shapes-and-booleans | preset shapes and booleans (#44): rects with their own corner radii, polygons and stars, plain, rounded, turned, dashed and stroked inside; lines with arrow, triangle and circle ends, dashed, thick and turned; a live boolean for each operation; a turned subtract with a turned cutter and a line operand that adds nothing; a boolean nested in another, with a shadow; a translucent union with a hidden operand |
@@ -18,7 +19,7 @@ The spike designs from the spike spec (#1), as JSON the schema validates (`pnpm 
 | strokes-and-effects | schema version 2 (#43): angular gradients on a fill and a stroke, dashes with an odd list and an offset, butt, round and square caps, mitre, round and bevel joins and a miter limit, inner shadows, glow on a shape and on text, background blur behind a turned translucent card, and groups of multiplied circles that pass through, are drawn together, and pass through at 60% opacity |
 | stress | 300 layers and long wrapped paragraphs in all three scripts |
 
-Image fills name assets (`sneaker`, `card-1` … `card-3`, `card-1-tall`): stand-in photos in `../assets/`, drawn by `scripts/make-assets.ts`.
+Image fills name assets (`sneaker`, `card-1` … `card-3`, `card-1-tall`, `tile`): stand-in photos in `../assets/`, drawn by `scripts/make-assets.ts`.
 
 ## Reference images
 
