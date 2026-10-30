@@ -14,10 +14,13 @@
   "dependencies": {
     "@razzlr/editor": "workspace:*",
     "@razzlr/fonts": "workspace:*",
+    "@razzlr/schema": "workspace:*",
     "canvaskit-wasm": "0.42.0",
     "next": "^16.4.3",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.0"
   },
   "devDependencies": {
     "@razzlr/config": "workspace:*",

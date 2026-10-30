@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { startEditor, type Editor } from '@razzlr/editor'
 import styles from './stage.module.css'
@@ -8,7 +9,14 @@ declare global {
   interface Window { razzlr?: Editor }
 }
 
-export function EditorStage({ designId, formatId, syncUrl }: { designId: string; formatId: string | undefined; syncUrl: string }) {
+export function EditorStage({ designId, designName, clientId, clientName, formatId, syncUrl }: {
+  designId: string
+  designName: string
+  clientId: string
+  clientName: string
+  formatId: string | undefined
+  syncUrl: string
+}) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const overlay = useRef<HTMLDivElement>(null)
   const [status, setStatus] = useState('Starting')
@@ -36,8 +44,8 @@ export function EditorStage({ designId, formatId, syncUrl }: { designId: string;
   return (
     <main className={styles.page}>
       <header className={styles.bar}>
-        <span className={styles.name}>Razzlr</span>
-        <span className={styles.design}>{designId}</span>
+        <Link className={styles.name} href={`/clients/${clientId}`}>{clientName}</Link>
+        <h1 className={styles.design}>{designName}</h1>
         <span className={styles.status} data-testid="status" role="status">{status}</span>
       </header>
       <div className={styles.stage}>

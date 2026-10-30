@@ -1,5 +1,6 @@
-# Local and CI services for live editing (#8): Postgres and the sync server.
-# Start with `docker compose up -d --wait`; the sync server runs from this checkout's installed packages.
+# Local and CI services: Postgres, the API (#33) and the sync server (#8).
+# Start with `docker compose up -d --wait`; the servers run from this checkout's installed packages.
+# The API runs the migrations on start, so the sync server waits for it.
 services:
   postgres:
     image: postgres:16-alpine
@@ -11,6 +12,28 @@ services:
       - "127.0.0.1:55432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U razzlr -d razzlr"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  api:
+    image: node:22.22.0-slim
+    working_dir: /repo
+    command: ["node", "apps/api/src/main.ts"]
+    environment:
+      DATABASE_URL: postgres://razzlr:razzlr-local@postgres:5432/razzlr
+      API_PORT: "8787"
+      # Local and CI only: every request is the development user (apps/api/src/session.ts).
+      RAZZLR_DEV_SESSION: "on"
+    volumes:
+      - ./:/repo:ro
+    ports:
+      - "127.0.0.1:8787:8787"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8787/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
       interval: 2s
       timeout: 3s
       retries: 30
@@ -27,7 +50,7 @@ services:
     ports:
       - "127.0.0.1:1234:1234"
     depends_on:
-      postgres:
+      api:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:1234').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]

@@ -2,30 +2,31 @@ import { execFileSync } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, type Browser, type Page } from '@playwright/test'
-import { liveDesign, seed } from './seed.ts'
+import { DEV_CLIENT, liveDesign, seed } from './seed.ts'
 
 /** Where the live editing checks leave their screenshots and numbers; CI uploads it. */
 export const OUTPUT = join(import.meta.dirname, '..', 'output')
 
 /**
  * Opens a design in `count` tabs, each in its own browser context, all live. Without a design id
- * it seeds a fresh one; with one it opens what the sync server already has.
+ * it creates a fresh one; with one it opens what the sync server already has.
  */
 export async function openTabs(browser: Browser, count: number, existing?: string) {
-  const designId = existing ?? `live-${crypto.randomUUID()}`
-  if (!existing) await seed(liveDesign(designId))
+  const designId = existing ?? await seed(liveDesign())
   const tabs: Page[] = []
   const errors: string[] = []
   for (let i = 0; i < count; i++) {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } })
     const page = await context.newPage()
     page.on('pageerror', (error) => errors.push(`tab ${i + 1}: ${error.message}`))
-    await page.goto(`/edit/${designId}`)
+    await page.goto(editorPath(designId))
     await expect(page.getByTestId('status')).toHaveText('Live', { timeout: 30_000 })
     tabs.push(page)
   }
   return { designId, tabs, errors }
 }
+
+export const editorPath = (designId: string) => `/clients/${DEV_CLIENT}/designs/${designId}`
 
 /** The design as the tab's document holds it now, as JSON with sorted keys so two tabs compare equal. */
 export const designOf = (page: Page) =>
@@ -76,10 +77,10 @@ export function restartSyncServer() {
   execFileSync('docker', ['compose', 'up', '-d', '--wait', 'sync'], { cwd: root, stdio: 'pipe' })
 }
 
-/** Whether Postgres has stored the design since `since`; the table is apps/sync's `designs`. */
+/** Whether the sync server has stored the design's state since `since` (packages/db's design_states). */
 export function storedAfter(designId: string, since: Date) {
   const root = join(import.meta.dirname, '..', '..', '..')
-  const sql = `select count(*) from designs where id = '${designId.replace(/'/g, "''")}' and updated_at > '${since.toISOString()}'`
+  const sql = `select count(*) from design_states where design_id = '${designId.replace(/'/g, "''")}' and updated_at > '${since.toISOString()}'`
   const out = execFileSync('docker', ['compose', 'exec', '-T', 'postgres', 'psql', '-U', 'razzlr', '-d', 'razzlr', '-tAc', sql], { cwd: root, encoding: 'utf8' })
   return out.trim() === '1'
 }

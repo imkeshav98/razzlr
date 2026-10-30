@@ -23,8 +23,9 @@
   border-bottom: 1px solid var(--line);
 }
 
-.name { font-weight: 700; }
-.design { color: var(--muted); font-family: ui-monospace, monospace; }
+.name { color: var(--muted); text-decoration: none; }
+.name:hover { color: var(--ink); }
+.design { margin: 0; font-size: 14px; font-weight: 700; }
 .status { margin-left: auto; color: var(--muted); }
 
 .stage {
