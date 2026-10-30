@@ -1,0 +1,6872 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "designId": "stress",
+    "name": "Stress",
+    "kind": "single",
+    "primaryFormatId": "sq"
+  },
+  "formats": {
+    "sq": {
+      "name": "Square 1:1",
+      "width": 1080,
+      "height": 1080,
+      "order": "a0"
+    }
+  },
+  "pages": {
+    "p1": {
+      "name": "Page 1",
+      "order": "a0",
+      "fills": [
+        {
+          "type": "solid",
+          "color": "#FFFFFFFF"
+        }
+      ]
+    }
+  },
+  "nodes": {
+    "n0": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a000",
+      "name": "Shape 0",
+      "props": {
+        "x": 448,
+        "y": 734,
+        "width": 173,
+        "height": 131,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#7B4432FF"
+          }
+        ]
+      }
+    },
+    "n1": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a001",
+      "name": "Shape 1",
+      "props": {
+        "x": 859,
+        "y": 156,
+        "width": 87,
+        "height": 62,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#54935EFF"
+          }
+        ]
+      }
+    },
+    "n2": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a002",
+      "name": "Shape 2",
+      "props": {
+        "x": 887,
+        "y": 262,
+        "width": 120,
+        "height": 164,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#7B783EFF"
+          }
+        ]
+      }
+    },
+    "n3": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a003",
+      "name": "Shape 3",
+      "props": {
+        "x": 270,
+        "y": 326,
+        "width": 67,
+        "height": 84,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#F8BFD0FF"
+          }
+        ]
+      }
+    },
+    "n4": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a004",
+      "name": "Shape 4",
+      "props": {
+        "x": 729,
+        "y": 918,
+        "width": 128,
+        "height": 24,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FC5FAEFF"
+          }
+        ]
+      }
+    },
+    "n5": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a005",
+      "name": "Shape 5",
+      "props": {
+        "x": 481,
+        "y": 941,
+        "width": 40,
+        "height": 124,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#24CECBFF"
+          }
+        ]
+      }
+    },
+    "n6": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a006",
+      "name": "Shape 6",
+      "props": {
+        "x": 336,
+        "y": 900,
+        "width": 196,
+        "height": 134,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#125984FF"
+          }
+        ]
+      }
+    },
+    "n7": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a007",
+      "name": "Shape 7",
+      "props": {
+        "x": 38,
+        "y": 813,
+        "width": 73,
+        "height": 147,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#18AA1BFF"
+          }
+        ]
+      }
+    },
+    "n8": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a008",
+      "name": "Shape 8",
+      "props": {
+        "x": 281,
+        "y": 348,
+        "width": 59,
+        "height": 97,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#CFFA62FF"
+          }
+        ]
+      }
+    },
+    "n9": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a009",
+      "name": "Paragraph 9",
+      "props": {
+        "x": 618,
+        "y": 239,
+        "width": 360,
+        "height": 420,
+        "text": "Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n10": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a010",
+      "name": "Shape 10",
+      "props": {
+        "x": 975,
+        "y": 845,
+        "width": 45,
+        "height": 63,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#898C2BFF"
+          }
+        ]
+      }
+    },
+    "n11": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a011",
+      "name": "Shape 11",
+      "props": {
+        "x": 631,
+        "y": 262,
+        "width": 20,
+        "height": 106,
+        "rotation": -30,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#D602D5FF"
+          }
+        ]
+      }
+    },
+    "n12": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a012",
+      "name": "Shape 12",
+      "props": {
+        "x": 204,
+        "y": 12,
+        "width": 177,
+        "height": 146,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C57DBAFF"
+          }
+        ]
+      }
+    },
+    "n13": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a013",
+      "name": "Shape 13",
+      "props": {
+        "x": 474,
+        "y": 726,
+        "width": 192,
+        "height": 125,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#8271A6FF"
+          }
+        ]
+      }
+    },
+    "n14": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a014",
+      "name": "Shape 14",
+      "props": {
+        "x": 69,
+        "y": 372,
+        "width": 102,
+        "height": 86,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#DC508BFF"
+          }
+        ]
+      }
+    },
+    "n15": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a015",
+      "name": "Shape 15",
+      "props": {
+        "x": 526,
+        "y": 926,
+        "width": 56,
+        "height": 54,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#489BE7FF"
+          }
+        ]
+      }
+    },
+    "n16": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a016",
+      "name": "Shape 16",
+      "props": {
+        "x": 326,
+        "y": 950,
+        "width": 159,
+        "height": 105,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#EE94D0FF"
+          }
+        ]
+      }
+    },
+    "n17": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a017",
+      "name": "Shape 17",
+      "props": {
+        "x": 142,
+        "y": 526,
+        "width": 77,
+        "height": 128,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#16A618FF"
+          }
+        ]
+      }
+    },
+    "n18": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a018",
+      "name": "Shape 18",
+      "props": {
+        "x": 387,
+        "y": 194,
+        "width": 162,
+        "height": 49,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#518C0DFF"
+          }
+        ]
+      }
+    },
+    "n19": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a019",
+      "name": "Paragraph 19",
+      "props": {
+        "x": 332,
+        "y": 555,
+        "width": 360,
+        "height": 420,
+        "text": "हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n20": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a020",
+      "name": "Shape 20",
+      "props": {
+        "x": 839,
+        "y": 328,
+        "width": 157,
+        "height": 165,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#0F752EFF"
+          }
+        ]
+      }
+    },
+    "n21": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a021",
+      "name": "Shape 21",
+      "props": {
+        "x": 277,
+        "y": 831,
+        "width": 189,
+        "height": 110,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C5DC27FF"
+          }
+        ]
+      }
+    },
+    "n22": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a022",
+      "name": "Shape 22",
+      "props": {
+        "x": 456,
+        "y": 580,
+        "width": 46,
+        "height": 51,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C1C2ABFF"
+          }
+        ]
+      }
+    },
+    "n23": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a023",
+      "name": "Shape 23",
+      "props": {
+        "x": 616,
+        "y": 142,
+        "width": 95,
+        "height": 173,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#0B4C9EFF"
+          }
+        ]
+      }
+    },
+    "n24": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a024",
+      "name": "Shape 24",
+      "props": {
+        "x": 269,
+        "y": 799,
+        "width": 142,
+        "height": 37,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#2D07FAFF"
+          }
+        ]
+      }
+    },
+    "n25": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a025",
+      "name": "Shape 25",
+      "props": {
+        "x": 372,
+        "y": 127,
+        "width": 78,
+        "height": 63,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#8056D0FF"
+          }
+        ]
+      }
+    },
+    "n26": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a026",
+      "name": "Shape 26",
+      "props": {
+        "x": 592,
+        "y": 434,
+        "width": 130,
+        "height": 109,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#846EB3FF"
+          }
+        ]
+      }
+    },
+    "n27": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a027",
+      "name": "Shape 27",
+      "props": {
+        "x": 1000,
+        "y": 972,
+        "width": 21,
+        "height": 146,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#78DBCDFF"
+          }
+        ]
+      }
+    },
+    "n28": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a028",
+      "name": "Shape 28",
+      "props": {
+        "x": 179,
+        "y": 668,
+        "width": 97,
+        "height": 30,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#0C7771FF"
+          }
+        ]
+      }
+    },
+    "n29": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a029",
+      "name": "Paragraph 29",
+      "props": {
+        "x": 40,
+        "y": 272,
+        "width": 360,
+        "height": 420,
+        "text": "حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. ",
+        "direction": "rtl",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n30": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a030",
+      "name": "Shape 30",
+      "props": {
+        "x": 543,
+        "y": 663,
+        "width": 200,
+        "height": 75,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#65CFDCFF"
+          }
+        ]
+      }
+    },
+    "n31": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a031",
+      "name": "Shape 31",
+      "props": {
+        "x": 120,
+        "y": 222,
+        "width": 70,
+        "height": 46,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#97D2F1FF"
+          }
+        ]
+      }
+    },
+    "n32": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a032",
+      "name": "Shape 32",
+      "props": {
+        "x": 841,
+        "y": 5,
+        "width": 70,
+        "height": 175,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#AFDDFBFF"
+          }
+        ]
+      }
+    },
+    "n33": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a033",
+      "name": "Shape 33",
+      "props": {
+        "x": 132,
+        "y": 410,
+        "width": 97,
+        "height": 188,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#A54606FF"
+          }
+        ]
+      }
+    },
+    "n34": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a034",
+      "name": "Shape 34",
+      "props": {
+        "x": 615,
+        "y": 964,
+        "width": 178,
+        "height": 173,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#F70269FF"
+          }
+        ]
+      }
+    },
+    "n35": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a035",
+      "name": "Shape 35",
+      "props": {
+        "x": 717,
+        "y": 592,
+        "width": 197,
+        "height": 128,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#D65CD7FF"
+          }
+        ]
+      }
+    },
+    "n36": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a036",
+      "name": "Shape 36",
+      "props": {
+        "x": 395,
+        "y": 970,
+        "width": 138,
+        "height": 166,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#7B28C6FF"
+          }
+        ]
+      }
+    },
+    "n37": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a037",
+      "name": "Shape 37",
+      "props": {
+        "x": 356,
+        "y": 788,
+        "width": 153,
+        "height": 194,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1FE588FF"
+          }
+        ]
+      }
+    },
+    "n38": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a038",
+      "name": "Shape 38",
+      "props": {
+        "x": 812,
+        "y": 180,
+        "width": 144,
+        "height": 157,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#35717DFF"
+          }
+        ]
+      }
+    },
+    "n39": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a039",
+      "name": "Paragraph 39",
+      "props": {
+        "x": 270,
+        "y": 145,
+        "width": 360,
+        "height": 420,
+        "text": "Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n40": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a040",
+      "name": "Shape 40",
+      "props": {
+        "x": 630,
+        "y": 952,
+        "width": 39,
+        "height": 29,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#0C2EF9FF"
+          }
+        ]
+      }
+    },
+    "n41": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a041",
+      "name": "Shape 41",
+      "props": {
+        "x": 963,
+        "y": 75,
+        "width": 54,
+        "height": 145,
+        "rotation": -30,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#0EAE1CFF"
+          }
+        ]
+      }
+    },
+    "n42": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a042",
+      "name": "Shape 42",
+      "props": {
+        "x": 676,
+        "y": 752,
+        "width": 89,
+        "height": 23,
+        "rotation": -30,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#6AA290FF"
+          }
+        ]
+      }
+    },
+    "n43": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a043",
+      "name": "Shape 43",
+      "props": {
+        "x": 800,
+        "y": 860,
+        "width": 161,
+        "height": 87,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#67A0EFFF"
+          }
+        ]
+      }
+    },
+    "n44": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a044",
+      "name": "Shape 44",
+      "props": {
+        "x": 538,
+        "y": 272,
+        "width": 191,
+        "height": 126,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#03F008FF"
+          }
+        ]
+      }
+    },
+    "n45": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a045",
+      "name": "Shape 45",
+      "props": {
+        "x": 917,
+        "y": 570,
+        "width": 113,
+        "height": 127,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#7AB9CAFF"
+          }
+        ]
+      }
+    },
+    "n46": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a046",
+      "name": "Shape 46",
+      "props": {
+        "x": 44,
+        "y": 486,
+        "width": 59,
+        "height": 56,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#B555C2FF"
+          }
+        ]
+      }
+    },
+    "n47": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a047",
+      "name": "Shape 47",
+      "props": {
+        "x": 27,
+        "y": 933,
+        "width": 45,
+        "height": 110,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#B70BB0FF"
+          }
+        ]
+      }
+    },
+    "n48": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a048",
+      "name": "Shape 48",
+      "props": {
+        "x": 50,
+        "y": 905,
+        "width": 43,
+        "height": 161,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1DD5A2FF"
+          }
+        ]
+      }
+    },
+    "n49": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a049",
+      "name": "Paragraph 49",
+      "props": {
+        "x": 553,
+        "y": 849,
+        "width": 360,
+        "height": 420,
+        "text": "हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n50": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a050",
+      "name": "Shape 50",
+      "props": {
+        "x": 324,
+        "y": 122,
+        "width": 61,
+        "height": 76,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#DE66AEFF"
+          }
+        ]
+      }
+    },
+    "n51": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a051",
+      "name": "Shape 51",
+      "props": {
+        "x": 641,
+        "y": 997,
+        "width": 175,
+        "height": 127,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#D10A8BFF"
+          }
+        ]
+      }
+    },
+    "n52": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a052",
+      "name": "Shape 52",
+      "props": {
+        "x": 971,
+        "y": 683,
+        "width": 150,
+        "height": 109,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#88F897FF"
+          }
+        ]
+      }
+    },
+    "n53": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a053",
+      "name": "Shape 53",
+      "props": {
+        "x": 107,
+        "y": 577,
+        "width": 27,
+        "height": 122,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#6CB7DBFF"
+          }
+        ]
+      }
+    },
+    "n54": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a054",
+      "name": "Shape 54",
+      "props": {
+        "x": 478,
+        "y": 907,
+        "width": 63,
+        "height": 133,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#6695ADFF"
+          }
+        ]
+      }
+    },
+    "n55": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a055",
+      "name": "Shape 55",
+      "props": {
+        "x": 718,
+        "y": 919,
+        "width": 82,
+        "height": 134,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#62E09EFF"
+          }
+        ]
+      }
+    },
+    "n56": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a056",
+      "name": "Shape 56",
+      "props": {
+        "x": 258,
+        "y": 755,
+        "width": 71,
+        "height": 39,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#8935C1FF"
+          }
+        ]
+      }
+    },
+    "n57": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a057",
+      "name": "Shape 57",
+      "props": {
+        "x": 148,
+        "y": 217,
+        "width": 110,
+        "height": 50,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C1B936FF"
+          }
+        ]
+      }
+    },
+    "n58": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a058",
+      "name": "Shape 58",
+      "props": {
+        "x": 310,
+        "y": 511,
+        "width": 87,
+        "height": 159,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#77BB8CFF"
+          }
+        ]
+      }
+    },
+    "n59": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a059",
+      "name": "Paragraph 59",
+      "props": {
+        "x": 650,
+        "y": 629,
+        "width": 360,
+        "height": 420,
+        "text": "حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. ",
+        "direction": "rtl",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n60": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a060",
+      "name": "Shape 60",
+      "props": {
+        "x": 462,
+        "y": 535,
+        "width": 86,
+        "height": 103,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#A55D60FF"
+          }
+        ]
+      }
+    },
+    "n61": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a061",
+      "name": "Shape 61",
+      "props": {
+        "x": 434,
+        "y": 11,
+        "width": 134,
+        "height": 123,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C9D4E3FF"
+          }
+        ]
+      }
+    },
+    "n62": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a062",
+      "name": "Shape 62",
+      "props": {
+        "x": 206,
+        "y": 629,
+        "width": 75,
+        "height": 199,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#065692FF"
+          }
+        ]
+      }
+    },
+    "n63": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a063",
+      "name": "Shape 63",
+      "props": {
+        "x": 214,
+        "y": 466,
+        "width": 78,
+        "height": 114,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#D96C93FF"
+          }
+        ]
+      }
+    },
+    "n64": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a064",
+      "name": "Shape 64",
+      "props": {
+        "x": 263,
+        "y": 389,
+        "width": 124,
+        "height": 65,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#16731FFF"
+          }
+        ]
+      }
+    },
+    "n65": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a065",
+      "name": "Shape 65",
+      "props": {
+        "x": 992,
+        "y": 134,
+        "width": 91,
+        "height": 31,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#407902FF"
+          }
+        ]
+      }
+    },
+    "n66": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a066",
+      "name": "Shape 66",
+      "props": {
+        "x": 542,
+        "y": 905,
+        "width": 47,
+        "height": 157,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E79EB1FF"
+          }
+        ]
+      }
+    },
+    "n67": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a067",
+      "name": "Shape 67",
+      "props": {
+        "x": 771,
+        "y": 445,
+        "width": 125,
+        "height": 101,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#EA155CFF"
+          }
+        ]
+      }
+    },
+    "n68": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a068",
+      "name": "Shape 68",
+      "props": {
+        "x": 683,
+        "y": 711,
+        "width": 43,
+        "height": 161,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#2D21A0FF"
+          }
+        ]
+      }
+    },
+    "n69": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a069",
+      "name": "Paragraph 69",
+      "props": {
+        "x": 475,
+        "y": 521,
+        "width": 360,
+        "height": 420,
+        "text": "Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n70": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a070",
+      "name": "Shape 70",
+      "props": {
+        "x": 322,
+        "y": 325,
+        "width": 84,
+        "height": 144,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#CF8D21FF"
+          }
+        ]
+      }
+    },
+    "n71": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a071",
+      "name": "Shape 71",
+      "props": {
+        "x": 448,
+        "y": 679,
+        "width": 23,
+        "height": 53,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#497FF7FF"
+          }
+        ]
+      }
+    },
+    "n72": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a072",
+      "name": "Shape 72",
+      "props": {
+        "x": 182,
+        "y": 23,
+        "width": 100,
+        "height": 170,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#4DB58BFF"
+          }
+        ]
+      }
+    },
+    "n73": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a073",
+      "name": "Shape 73",
+      "props": {
+        "x": 171,
+        "y": 977,
+        "width": 20,
+        "height": 140,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#8E5A99FF"
+          }
+        ]
+      }
+    },
+    "n74": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a074",
+      "name": "Shape 74",
+      "props": {
+        "x": 319,
+        "y": 309,
+        "width": 123,
+        "height": 193,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#0A6FF1FF"
+          }
+        ]
+      }
+    },
+    "n75": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a075",
+      "name": "Shape 75",
+      "props": {
+        "x": 170,
+        "y": 146,
+        "width": 145,
+        "height": 28,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#AA5466FF"
+          }
+        ]
+      }
+    },
+    "n76": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a076",
+      "name": "Shape 76",
+      "props": {
+        "x": 674,
+        "y": 605,
+        "width": 49,
+        "height": 190,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#31D88CFF"
+          }
+        ]
+      }
+    },
+    "n77": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a077",
+      "name": "Shape 77",
+      "props": {
+        "x": 675,
+        "y": 746,
+        "width": 110,
+        "height": 131,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#257BFAFF"
+          }
+        ]
+      }
+    },
+    "n78": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a078",
+      "name": "Shape 78",
+      "props": {
+        "x": 242,
+        "y": 850,
+        "width": 41,
+        "height": 127,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#43B824FF"
+          }
+        ]
+      }
+    },
+    "n79": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a079",
+      "name": "Paragraph 79",
+      "props": {
+        "x": 68,
+        "y": 251,
+        "width": 360,
+        "height": 420,
+        "text": "हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n80": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a080",
+      "name": "Shape 80",
+      "props": {
+        "x": 916,
+        "y": 714,
+        "width": 127,
+        "height": 119,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#70400CFF"
+          }
+        ]
+      }
+    },
+    "n81": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a081",
+      "name": "Shape 81",
+      "props": {
+        "x": 522,
+        "y": 821,
+        "width": 181,
+        "height": 40,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C97F04FF"
+          }
+        ]
+      }
+    },
+    "n82": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a082",
+      "name": "Shape 82",
+      "props": {
+        "x": 279,
+        "y": 927,
+        "width": 155,
+        "height": 33,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#809382FF"
+          }
+        ]
+      }
+    },
+    "n83": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a083",
+      "name": "Shape 83",
+      "props": {
+        "x": 585,
+        "y": 995,
+        "width": 61,
+        "height": 86,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#654EEBFF"
+          }
+        ]
+      }
+    },
+    "n84": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a084",
+      "name": "Shape 84",
+      "props": {
+        "x": 522,
+        "y": 501,
+        "width": 80,
+        "height": 124,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#6A0BB5FF"
+          }
+        ]
+      }
+    },
+    "n85": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a085",
+      "name": "Shape 85",
+      "props": {
+        "x": 254,
+        "y": 721,
+        "width": 63,
+        "height": 152,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#70F4C1FF"
+          }
+        ]
+      }
+    },
+    "n86": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a086",
+      "name": "Shape 86",
+      "props": {
+        "x": 109,
+        "y": 39,
+        "width": 120,
+        "height": 35,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#066DA1FF"
+          }
+        ]
+      }
+    },
+    "n87": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a087",
+      "name": "Shape 87",
+      "props": {
+        "x": 259,
+        "y": 468,
+        "width": 35,
+        "height": 169,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#3A2DECFF"
+          }
+        ]
+      }
+    },
+    "n88": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a088",
+      "name": "Shape 88",
+      "props": {
+        "x": 173,
+        "y": 700,
+        "width": 161,
+        "height": 69,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#6D119FFF"
+          }
+        ]
+      }
+    },
+    "n89": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a089",
+      "name": "Paragraph 89",
+      "props": {
+        "x": 452,
+        "y": 812,
+        "width": 360,
+        "height": 420,
+        "text": "حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. ",
+        "direction": "rtl",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n90": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a090",
+      "name": "Shape 90",
+      "props": {
+        "x": 205,
+        "y": 278,
+        "width": 115,
+        "height": 77,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FD390AFF"
+          }
+        ]
+      }
+    },
+    "n91": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a091",
+      "name": "Shape 91",
+      "props": {
+        "x": 60,
+        "y": 491,
+        "width": 184,
+        "height": 140,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#AC1BD7FF"
+          }
+        ]
+      }
+    },
+    "n92": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a092",
+      "name": "Shape 92",
+      "props": {
+        "x": 259,
+        "y": 219,
+        "width": 116,
+        "height": 75,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#EAB022FF"
+          }
+        ]
+      }
+    },
+    "n93": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a093",
+      "name": "Shape 93",
+      "props": {
+        "x": 395,
+        "y": 384,
+        "width": 56,
+        "height": 134,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#D9F7A9FF"
+          }
+        ]
+      }
+    },
+    "n94": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a094",
+      "name": "Shape 94",
+      "props": {
+        "x": 956,
+        "y": 415,
+        "width": 162,
+        "height": 188,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#B067D7FF"
+          }
+        ]
+      }
+    },
+    "n95": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a095",
+      "name": "Shape 95",
+      "props": {
+        "x": 618,
+        "y": 723,
+        "width": 105,
+        "height": 180,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#360CC2FF"
+          }
+        ]
+      }
+    },
+    "n96": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a096",
+      "name": "Shape 96",
+      "props": {
+        "x": 382,
+        "y": 493,
+        "width": 54,
+        "height": 42,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#3BBF1BFF"
+          }
+        ]
+      }
+    },
+    "n97": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a097",
+      "name": "Shape 97",
+      "props": {
+        "x": 527,
+        "y": 706,
+        "width": 82,
+        "height": 149,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9F8AE4FF"
+          }
+        ]
+      }
+    },
+    "n98": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a098",
+      "name": "Shape 98",
+      "props": {
+        "x": 603,
+        "y": 201,
+        "width": 155,
+        "height": 120,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#EA6098FF"
+          }
+        ]
+      }
+    },
+    "n99": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a099",
+      "name": "Paragraph 99",
+      "props": {
+        "x": 364,
+        "y": 697,
+        "width": 360,
+        "height": 420,
+        "text": "Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n100": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a100",
+      "name": "Shape 100",
+      "props": {
+        "x": 478,
+        "y": 903,
+        "width": 123,
+        "height": 61,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#BB123AFF"
+          }
+        ]
+      }
+    },
+    "n101": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a101",
+      "name": "Shape 101",
+      "props": {
+        "x": 779,
+        "y": 759,
+        "width": 180,
+        "height": 151,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#D40DB3FF"
+          }
+        ]
+      }
+    },
+    "n102": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a102",
+      "name": "Shape 102",
+      "props": {
+        "x": 306,
+        "y": 96,
+        "width": 54,
+        "height": 49,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#859EAFFF"
+          }
+        ]
+      }
+    },
+    "n103": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a103",
+      "name": "Shape 103",
+      "props": {
+        "x": 623,
+        "y": 358,
+        "width": 153,
+        "height": 76,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#13937DFF"
+          }
+        ]
+      }
+    },
+    "n104": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a104",
+      "name": "Shape 104",
+      "props": {
+        "x": 827,
+        "y": 620,
+        "width": 184,
+        "height": 151,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C56F35FF"
+          }
+        ]
+      }
+    },
+    "n105": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a105",
+      "name": "Shape 105",
+      "props": {
+        "x": 817,
+        "y": 877,
+        "width": 152,
+        "height": 35,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#78F9EAFF"
+          }
+        ]
+      }
+    },
+    "n106": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a106",
+      "name": "Shape 106",
+      "props": {
+        "x": 85,
+        "y": 785,
+        "width": 84,
+        "height": 188,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#41A8B7FF"
+          }
+        ]
+      }
+    },
+    "n107": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a107",
+      "name": "Shape 107",
+      "props": {
+        "x": 525,
+        "y": 905,
+        "width": 84,
+        "height": 128,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#98937EFF"
+          }
+        ]
+      }
+    },
+    "n108": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a108",
+      "name": "Shape 108",
+      "props": {
+        "x": 176,
+        "y": 151,
+        "width": 139,
+        "height": 91,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#437587FF"
+          }
+        ]
+      }
+    },
+    "n109": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a109",
+      "name": "Paragraph 109",
+      "props": {
+        "x": 397,
+        "y": 262,
+        "width": 360,
+        "height": 420,
+        "text": "हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n110": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a110",
+      "name": "Shape 110",
+      "props": {
+        "x": 538,
+        "y": 598,
+        "width": 174,
+        "height": 130,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E8B9B5FF"
+          }
+        ]
+      }
+    },
+    "n111": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a111",
+      "name": "Shape 111",
+      "props": {
+        "x": 191,
+        "y": 468,
+        "width": 66,
+        "height": 178,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#F61AAAFF"
+          }
+        ]
+      }
+    },
+    "n112": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a112",
+      "name": "Shape 112",
+      "props": {
+        "x": 311,
+        "y": 392,
+        "width": 182,
+        "height": 121,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#815E0DFF"
+          }
+        ]
+      }
+    },
+    "n113": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a113",
+      "name": "Shape 113",
+      "props": {
+        "x": 300,
+        "y": 7,
+        "width": 177,
+        "height": 92,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#5D8931FF"
+          }
+        ]
+      }
+    },
+    "n114": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a114",
+      "name": "Shape 114",
+      "props": {
+        "x": 823,
+        "y": 532,
+        "width": 77,
+        "height": 116,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#0A8263FF"
+          }
+        ]
+      }
+    },
+    "n115": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a115",
+      "name": "Shape 115",
+      "props": {
+        "x": 419,
+        "y": 260,
+        "width": 103,
+        "height": 159,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#B41BB5FF"
+          }
+        ]
+      }
+    },
+    "n116": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a116",
+      "name": "Shape 116",
+      "props": {
+        "x": 733,
+        "y": 955,
+        "width": 58,
+        "height": 76,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#55BA50FF"
+          }
+        ]
+      }
+    },
+    "n117": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a117",
+      "name": "Shape 117",
+      "props": {
+        "x": 941,
+        "y": 979,
+        "width": 122,
+        "height": 21,
+        "rotation": -30,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#0BF4BBFF"
+          }
+        ]
+      }
+    },
+    "n118": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a118",
+      "name": "Shape 118",
+      "props": {
+        "x": 82,
+        "y": 398,
+        "width": 79,
+        "height": 32,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9FE5D4FF"
+          }
+        ]
+      }
+    },
+    "n119": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a119",
+      "name": "Paragraph 119",
+      "props": {
+        "x": 245,
+        "y": 85,
+        "width": 360,
+        "height": 420,
+        "text": "حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. ",
+        "direction": "rtl",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n120": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a120",
+      "name": "Shape 120",
+      "props": {
+        "x": 737,
+        "y": 830,
+        "width": 82,
+        "height": 103,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#215EF9FF"
+          }
+        ]
+      }
+    },
+    "n121": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a121",
+      "name": "Shape 121",
+      "props": {
+        "x": 324,
+        "y": 636,
+        "width": 190,
+        "height": 167,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#3A5B0EFF"
+          }
+        ]
+      }
+    },
+    "n122": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a122",
+      "name": "Shape 122",
+      "props": {
+        "x": 154,
+        "y": 879,
+        "width": 143,
+        "height": 144,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1E75D1FF"
+          }
+        ]
+      }
+    },
+    "n123": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a123",
+      "name": "Shape 123",
+      "props": {
+        "x": 318,
+        "y": 887,
+        "width": 63,
+        "height": 151,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#5CEE7FFF"
+          }
+        ]
+      }
+    },
+    "n124": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a124",
+      "name": "Shape 124",
+      "props": {
+        "x": 520,
+        "y": 451,
+        "width": 61,
+        "height": 170,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#902001FF"
+          }
+        ]
+      }
+    },
+    "n125": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a125",
+      "name": "Shape 125",
+      "props": {
+        "x": 179,
+        "y": 383,
+        "width": 120,
+        "height": 181,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FD67A8FF"
+          }
+        ]
+      }
+    },
+    "n126": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a126",
+      "name": "Shape 126",
+      "props": {
+        "x": 113,
+        "y": 809,
+        "width": 57,
+        "height": 182,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E7480CFF"
+          }
+        ]
+      }
+    },
+    "n127": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a127",
+      "name": "Shape 127",
+      "props": {
+        "x": 488,
+        "y": 741,
+        "width": 195,
+        "height": 53,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E7CAA7FF"
+          }
+        ]
+      }
+    },
+    "n128": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a128",
+      "name": "Shape 128",
+      "props": {
+        "x": 543,
+        "y": 772,
+        "width": 72,
+        "height": 50,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#206A3BFF"
+          }
+        ]
+      }
+    },
+    "n129": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a129",
+      "name": "Paragraph 129",
+      "props": {
+        "x": 592,
+        "y": 335,
+        "width": 360,
+        "height": 420,
+        "text": "Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n130": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a130",
+      "name": "Shape 130",
+      "props": {
+        "x": 579,
+        "y": 101,
+        "width": 101,
+        "height": 22,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#40144EFF"
+          }
+        ]
+      }
+    },
+    "n131": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a131",
+      "name": "Shape 131",
+      "props": {
+        "x": 518,
+        "y": 468,
+        "width": 90,
+        "height": 111,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#CD220FFF"
+          }
+        ]
+      }
+    },
+    "n132": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a132",
+      "name": "Shape 132",
+      "props": {
+        "x": 75,
+        "y": 250,
+        "width": 39,
+        "height": 31,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FC1E50FF"
+          }
+        ]
+      }
+    },
+    "n133": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a133",
+      "name": "Shape 133",
+      "props": {
+        "x": 459,
+        "y": 186,
+        "width": 66,
+        "height": 145,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#B60AD8FF"
+          }
+        ]
+      }
+    },
+    "n134": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a134",
+      "name": "Shape 134",
+      "props": {
+        "x": 469,
+        "y": 54,
+        "width": 129,
+        "height": 195,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#20DD85FF"
+          }
+        ]
+      }
+    },
+    "n135": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a135",
+      "name": "Shape 135",
+      "props": {
+        "x": 597,
+        "y": 795,
+        "width": 24,
+        "height": 152,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#D3AF90FF"
+          }
+        ]
+      }
+    },
+    "n136": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a136",
+      "name": "Shape 136",
+      "props": {
+        "x": 818,
+        "y": 826,
+        "width": 87,
+        "height": 28,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#92A38FFF"
+          }
+        ]
+      }
+    },
+    "n137": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a137",
+      "name": "Shape 137",
+      "props": {
+        "x": 527,
+        "y": 579,
+        "width": 105,
+        "height": 99,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#650FD4FF"
+          }
+        ]
+      }
+    },
+    "n138": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a138",
+      "name": "Shape 138",
+      "props": {
+        "x": 760,
+        "y": 946,
+        "width": 72,
+        "height": 43,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#AF56A5FF"
+          }
+        ]
+      }
+    },
+    "n139": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a139",
+      "name": "Paragraph 139",
+      "props": {
+        "x": 628,
+        "y": 385,
+        "width": 360,
+        "height": 420,
+        "text": "हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n140": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a140",
+      "name": "Shape 140",
+      "props": {
+        "x": 303,
+        "y": 91,
+        "width": 95,
+        "height": 173,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#F16AF3FF"
+          }
+        ]
+      }
+    },
+    "n141": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a141",
+      "name": "Shape 141",
+      "props": {
+        "x": 300,
+        "y": 178,
+        "width": 182,
+        "height": 175,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#BCE820FF"
+          }
+        ]
+      }
+    },
+    "n142": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a142",
+      "name": "Shape 142",
+      "props": {
+        "x": 644,
+        "y": 233,
+        "width": 178,
+        "height": 176,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#64DB2FFF"
+          }
+        ]
+      }
+    },
+    "n143": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a143",
+      "name": "Shape 143",
+      "props": {
+        "x": 61,
+        "y": 999,
+        "width": 134,
+        "height": 90,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#A767B8FF"
+          }
+        ]
+      }
+    },
+    "n144": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a144",
+      "name": "Shape 144",
+      "props": {
+        "x": 573,
+        "y": 482,
+        "width": 35,
+        "height": 24,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#EBEEC7FF"
+          }
+        ]
+      }
+    },
+    "n145": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a145",
+      "name": "Shape 145",
+      "props": {
+        "x": 85,
+        "y": 37,
+        "width": 60,
+        "height": 58,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#8A22C3FF"
+          }
+        ]
+      }
+    },
+    "n146": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a146",
+      "name": "Shape 146",
+      "props": {
+        "x": 1000,
+        "y": 431,
+        "width": 119,
+        "height": 70,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#06E8DCFF"
+          }
+        ]
+      }
+    },
+    "n147": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a147",
+      "name": "Shape 147",
+      "props": {
+        "x": 973,
+        "y": 650,
+        "width": 154,
+        "height": 71,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#4D498BFF"
+          }
+        ]
+      }
+    },
+    "n148": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a148",
+      "name": "Shape 148",
+      "props": {
+        "x": 20,
+        "y": 545,
+        "width": 144,
+        "height": 44,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#308BC1FF"
+          }
+        ]
+      }
+    },
+    "n149": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a149",
+      "name": "Paragraph 149",
+      "props": {
+        "x": 330,
+        "y": 446,
+        "width": 360,
+        "height": 420,
+        "text": "حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. ",
+        "direction": "rtl",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n150": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a150",
+      "name": "Shape 150",
+      "props": {
+        "x": 622,
+        "y": 936,
+        "width": 174,
+        "height": 177,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#90162EFF"
+          }
+        ]
+      }
+    },
+    "n151": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a151",
+      "name": "Shape 151",
+      "props": {
+        "x": 573,
+        "y": 743,
+        "width": 123,
+        "height": 71,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C3DD56FF"
+          }
+        ]
+      }
+    },
+    "n152": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a152",
+      "name": "Shape 152",
+      "props": {
+        "x": 676,
+        "y": 702,
+        "width": 86,
+        "height": 116,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#6C89A9FF"
+          }
+        ]
+      }
+    },
+    "n153": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a153",
+      "name": "Shape 153",
+      "props": {
+        "x": 478,
+        "y": 266,
+        "width": 123,
+        "height": 21,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#43E97EFF"
+          }
+        ]
+      }
+    },
+    "n154": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a154",
+      "name": "Shape 154",
+      "props": {
+        "x": 15,
+        "y": 374,
+        "width": 116,
+        "height": 44,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#383AFAFF"
+          }
+        ]
+      }
+    },
+    "n155": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a155",
+      "name": "Shape 155",
+      "props": {
+        "x": 32,
+        "y": 766,
+        "width": 96,
+        "height": 129,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#B391ECFF"
+          }
+        ]
+      }
+    },
+    "n156": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a156",
+      "name": "Shape 156",
+      "props": {
+        "x": 240,
+        "y": 33,
+        "width": 40,
+        "height": 176,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#B4D404FF"
+          }
+        ]
+      }
+    },
+    "n157": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a157",
+      "name": "Shape 157",
+      "props": {
+        "x": 734,
+        "y": 467,
+        "width": 128,
+        "height": 84,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E8D867FF"
+          }
+        ]
+      }
+    },
+    "n158": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a158",
+      "name": "Shape 158",
+      "props": {
+        "x": 653,
+        "y": 152,
+        "width": 126,
+        "height": 163,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#72288DFF"
+          }
+        ]
+      }
+    },
+    "n159": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a159",
+      "name": "Paragraph 159",
+      "props": {
+        "x": 630,
+        "y": 349,
+        "width": 360,
+        "height": 420,
+        "text": "Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n160": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a160",
+      "name": "Shape 160",
+      "props": {
+        "x": 771,
+        "y": 331,
+        "width": 147,
+        "height": 133,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1EA832FF"
+          }
+        ]
+      }
+    },
+    "n161": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a161",
+      "name": "Shape 161",
+      "props": {
+        "x": 499,
+        "y": 336,
+        "width": 79,
+        "height": 47,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E97F05FF"
+          }
+        ]
+      }
+    },
+    "n162": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a162",
+      "name": "Shape 162",
+      "props": {
+        "x": 229,
+        "y": 479,
+        "width": 29,
+        "height": 54,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#177213FF"
+          }
+        ]
+      }
+    },
+    "n163": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a163",
+      "name": "Shape 163",
+      "props": {
+        "x": 876,
+        "y": 534,
+        "width": 78,
+        "height": 182,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#300B96FF"
+          }
+        ]
+      }
+    },
+    "n164": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a164",
+      "name": "Shape 164",
+      "props": {
+        "x": 288,
+        "y": 224,
+        "width": 84,
+        "height": 117,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#26A476FF"
+          }
+        ]
+      }
+    },
+    "n165": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a165",
+      "name": "Shape 165",
+      "props": {
+        "x": 478,
+        "y": 409,
+        "width": 161,
+        "height": 76,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#A8B274FF"
+          }
+        ]
+      }
+    },
+    "n166": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a166",
+      "name": "Shape 166",
+      "props": {
+        "x": 661,
+        "y": 980,
+        "width": 71,
+        "height": 145,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#8F17A3FF"
+          }
+        ]
+      }
+    },
+    "n167": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a167",
+      "name": "Shape 167",
+      "props": {
+        "x": 807,
+        "y": 362,
+        "width": 107,
+        "height": 130,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#4CF7C6FF"
+          }
+        ]
+      }
+    },
+    "n168": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a168",
+      "name": "Shape 168",
+      "props": {
+        "x": 613,
+        "y": 992,
+        "width": 130,
+        "height": 46,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#F6455BFF"
+          }
+        ]
+      }
+    },
+    "n169": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a169",
+      "name": "Paragraph 169",
+      "props": {
+        "x": 101,
+        "y": 493,
+        "width": 360,
+        "height": 420,
+        "text": "हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n170": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a170",
+      "name": "Shape 170",
+      "props": {
+        "x": 619,
+        "y": 59,
+        "width": 148,
+        "height": 90,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#2C7EABFF"
+          }
+        ]
+      }
+    },
+    "n171": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a171",
+      "name": "Shape 171",
+      "props": {
+        "x": 478,
+        "y": 695,
+        "width": 148,
+        "height": 178,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#3BB95CFF"
+          }
+        ]
+      }
+    },
+    "n172": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a172",
+      "name": "Shape 172",
+      "props": {
+        "x": 378,
+        "y": 45,
+        "width": 122,
+        "height": 145,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#0C36C3FF"
+          }
+        ]
+      }
+    },
+    "n173": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a173",
+      "name": "Shape 173",
+      "props": {
+        "x": 446,
+        "y": 527,
+        "width": 98,
+        "height": 169,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E1DE5BFF"
+          }
+        ]
+      }
+    },
+    "n174": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a174",
+      "name": "Shape 174",
+      "props": {
+        "x": 861,
+        "y": 41,
+        "width": 129,
+        "height": 172,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#6E8E39FF"
+          }
+        ]
+      }
+    },
+    "n175": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a175",
+      "name": "Shape 175",
+      "props": {
+        "x": 219,
+        "y": 110,
+        "width": 72,
+        "height": 168,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#19E479FF"
+          }
+        ]
+      }
+    },
+    "n176": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a176",
+      "name": "Shape 176",
+      "props": {
+        "x": 248,
+        "y": 488,
+        "width": 86,
+        "height": 147,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#0515F6FF"
+          }
+        ]
+      }
+    },
+    "n177": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a177",
+      "name": "Shape 177",
+      "props": {
+        "x": 782,
+        "y": 31,
+        "width": 152,
+        "height": 60,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#5BC4E8FF"
+          }
+        ]
+      }
+    },
+    "n178": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a178",
+      "name": "Shape 178",
+      "props": {
+        "x": 333,
+        "y": 134,
+        "width": 115,
+        "height": 32,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#AB17C3FF"
+          }
+        ]
+      }
+    },
+    "n179": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a179",
+      "name": "Paragraph 179",
+      "props": {
+        "x": 223,
+        "y": 115,
+        "width": 360,
+        "height": 420,
+        "text": "حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. ",
+        "direction": "rtl",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n180": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a180",
+      "name": "Shape 180",
+      "props": {
+        "x": 682,
+        "y": 981,
+        "width": 184,
+        "height": 22,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#F34EF1FF"
+          }
+        ]
+      }
+    },
+    "n181": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a181",
+      "name": "Shape 181",
+      "props": {
+        "x": 254,
+        "y": 324,
+        "width": 139,
+        "height": 144,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#DFC991FF"
+          }
+        ]
+      }
+    },
+    "n182": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a182",
+      "name": "Shape 182",
+      "props": {
+        "x": 584,
+        "y": 739,
+        "width": 164,
+        "height": 85,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#AC3897FF"
+          }
+        ]
+      }
+    },
+    "n183": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a183",
+      "name": "Shape 183",
+      "props": {
+        "x": 289,
+        "y": 139,
+        "width": 146,
+        "height": 152,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#A5987FFF"
+          }
+        ]
+      }
+    },
+    "n184": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a184",
+      "name": "Shape 184",
+      "props": {
+        "x": 577,
+        "y": 281,
+        "width": 83,
+        "height": 75,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#7DEF14FF"
+          }
+        ]
+      }
+    },
+    "n185": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a185",
+      "name": "Shape 185",
+      "props": {
+        "x": 761,
+        "y": 388,
+        "width": 165,
+        "height": 124,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#0D2DB8FF"
+          }
+        ]
+      }
+    },
+    "n186": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a186",
+      "name": "Shape 186",
+      "props": {
+        "x": 577,
+        "y": 224,
+        "width": 55,
+        "height": 177,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#AE1C32FF"
+          }
+        ]
+      }
+    },
+    "n187": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a187",
+      "name": "Shape 187",
+      "props": {
+        "x": 216,
+        "y": 854,
+        "width": 110,
+        "height": 77,
+        "rotation": -30,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#27D30AFF"
+          }
+        ]
+      }
+    },
+    "n188": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a188",
+      "name": "Shape 188",
+      "props": {
+        "x": 709,
+        "y": 732,
+        "width": 108,
+        "height": 112,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FDD32BFF"
+          }
+        ]
+      }
+    },
+    "n189": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a189",
+      "name": "Paragraph 189",
+      "props": {
+        "x": 124,
+        "y": 19,
+        "width": 360,
+        "height": 420,
+        "text": "Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n190": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a190",
+      "name": "Shape 190",
+      "props": {
+        "x": 440,
+        "y": 136,
+        "width": 48,
+        "height": 72,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#B4EC46FF"
+          }
+        ]
+      }
+    },
+    "n191": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a191",
+      "name": "Shape 191",
+      "props": {
+        "x": 621,
+        "y": 969,
+        "width": 29,
+        "height": 73,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#CEED46FF"
+          }
+        ]
+      }
+    },
+    "n192": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a192",
+      "name": "Shape 192",
+      "props": {
+        "x": 957,
+        "y": 474,
+        "width": 87,
+        "height": 108,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#78292CFF"
+          }
+        ]
+      }
+    },
+    "n193": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a193",
+      "name": "Shape 193",
+      "props": {
+        "x": 74,
+        "y": 218,
+        "width": 142,
+        "height": 65,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C9CB7EFF"
+          }
+        ]
+      }
+    },
+    "n194": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a194",
+      "name": "Shape 194",
+      "props": {
+        "x": 229,
+        "y": 668,
+        "width": 144,
+        "height": 95,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#D52CFBFF"
+          }
+        ]
+      }
+    },
+    "n195": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a195",
+      "name": "Shape 195",
+      "props": {
+        "x": 243,
+        "y": 217,
+        "width": 36,
+        "height": 114,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FE11C4FF"
+          }
+        ]
+      }
+    },
+    "n196": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a196",
+      "name": "Shape 196",
+      "props": {
+        "x": 794,
+        "y": 290,
+        "width": 52,
+        "height": 162,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#922DC0FF"
+          }
+        ]
+      }
+    },
+    "n197": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a197",
+      "name": "Shape 197",
+      "props": {
+        "x": 744,
+        "y": 266,
+        "width": 101,
+        "height": 70,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9A817CFF"
+          }
+        ]
+      }
+    },
+    "n198": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a198",
+      "name": "Shape 198",
+      "props": {
+        "x": 576,
+        "y": 36,
+        "width": 163,
+        "height": 150,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#B7864EFF"
+          }
+        ]
+      }
+    },
+    "n199": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a199",
+      "name": "Paragraph 199",
+      "props": {
+        "x": 238,
+        "y": 771,
+        "width": 360,
+        "height": 420,
+        "text": "हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n200": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a200",
+      "name": "Shape 200",
+      "props": {
+        "x": 370,
+        "y": 822,
+        "width": 124,
+        "height": 178,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#5120BBFF"
+          }
+        ]
+      }
+    },
+    "n201": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a201",
+      "name": "Shape 201",
+      "props": {
+        "x": 877,
+        "y": 644,
+        "width": 195,
+        "height": 82,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#B72D71FF"
+          }
+        ]
+      }
+    },
+    "n202": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a202",
+      "name": "Shape 202",
+      "props": {
+        "x": 654,
+        "y": 535,
+        "width": 165,
+        "height": 194,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#2B639CFF"
+          }
+        ]
+      }
+    },
+    "n203": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a203",
+      "name": "Shape 203",
+      "props": {
+        "x": 705,
+        "y": 760,
+        "width": 176,
+        "height": 155,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E3AD91FF"
+          }
+        ]
+      }
+    },
+    "n204": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a204",
+      "name": "Shape 204",
+      "props": {
+        "x": 742,
+        "y": 735,
+        "width": 155,
+        "height": 170,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#F878B9FF"
+          }
+        ]
+      }
+    },
+    "n205": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a205",
+      "name": "Shape 205",
+      "props": {
+        "x": 782,
+        "y": 232,
+        "width": 90,
+        "height": 92,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#D8B0ABFF"
+          }
+        ]
+      }
+    },
+    "n206": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a206",
+      "name": "Shape 206",
+      "props": {
+        "x": 59,
+        "y": 892,
+        "width": 193,
+        "height": 140,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#DD4D3FFF"
+          }
+        ]
+      }
+    },
+    "n207": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a207",
+      "name": "Shape 207",
+      "props": {
+        "x": 733,
+        "y": 78,
+        "width": 41,
+        "height": 74,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#6C7D87FF"
+          }
+        ]
+      }
+    },
+    "n208": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a208",
+      "name": "Shape 208",
+      "props": {
+        "x": 95,
+        "y": 205,
+        "width": 87,
+        "height": 88,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#AF20FBFF"
+          }
+        ]
+      }
+    },
+    "n209": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a209",
+      "name": "Paragraph 209",
+      "props": {
+        "x": 233,
+        "y": 82,
+        "width": 360,
+        "height": 420,
+        "text": "حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. ",
+        "direction": "rtl",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n210": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a210",
+      "name": "Shape 210",
+      "props": {
+        "x": 843,
+        "y": 439,
+        "width": 165,
+        "height": 81,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#D570B4FF"
+          }
+        ]
+      }
+    },
+    "n211": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a211",
+      "name": "Shape 211",
+      "props": {
+        "x": 809,
+        "y": 609,
+        "width": 137,
+        "height": 85,
+        "rotation": -30,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#455ECFFF"
+          }
+        ]
+      }
+    },
+    "n212": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a212",
+      "name": "Shape 212",
+      "props": {
+        "x": 872,
+        "y": 164,
+        "width": 178,
+        "height": 77,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#EB2BA8FF"
+          }
+        ]
+      }
+    },
+    "n213": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a213",
+      "name": "Shape 213",
+      "props": {
+        "x": 226,
+        "y": 99,
+        "width": 168,
+        "height": 28,
+        "rotation": -30,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C66AE9FF"
+          }
+        ]
+      }
+    },
+    "n214": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a214",
+      "name": "Shape 214",
+      "props": {
+        "x": 867,
+        "y": 901,
+        "width": 51,
+        "height": 144,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#404028FF"
+          }
+        ]
+      }
+    },
+    "n215": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a215",
+      "name": "Shape 215",
+      "props": {
+        "x": 73,
+        "y": 278,
+        "width": 122,
+        "height": 139,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#6187DEFF"
+          }
+        ]
+      }
+    },
+    "n216": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a216",
+      "name": "Shape 216",
+      "props": {
+        "x": 729,
+        "y": 647,
+        "width": 58,
+        "height": 166,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C6BD3FFF"
+          }
+        ]
+      }
+    },
+    "n217": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a217",
+      "name": "Shape 217",
+      "props": {
+        "x": 887,
+        "y": 93,
+        "width": 128,
+        "height": 165,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#AAEA4FFF"
+          }
+        ]
+      }
+    },
+    "n218": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a218",
+      "name": "Shape 218",
+      "props": {
+        "x": 888,
+        "y": 133,
+        "width": 24,
+        "height": 98,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#3DF189FF"
+          }
+        ]
+      }
+    },
+    "n219": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a219",
+      "name": "Paragraph 219",
+      "props": {
+        "x": 696,
+        "y": 696,
+        "width": 360,
+        "height": 420,
+        "text": "Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n220": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a220",
+      "name": "Shape 220",
+      "props": {
+        "x": 176,
+        "y": 634,
+        "width": 177,
+        "height": 60,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1624D6FF"
+          }
+        ]
+      }
+    },
+    "n221": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a221",
+      "name": "Shape 221",
+      "props": {
+        "x": 954,
+        "y": 866,
+        "width": 113,
+        "height": 107,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#707E06FF"
+          }
+        ]
+      }
+    },
+    "n222": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a222",
+      "name": "Shape 222",
+      "props": {
+        "x": 931,
+        "y": 44,
+        "width": 62,
+        "height": 174,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#3ABF1CFF"
+          }
+        ]
+      }
+    },
+    "n223": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a223",
+      "name": "Shape 223",
+      "props": {
+        "x": 10,
+        "y": 317,
+        "width": 90,
+        "height": 51,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9B94E4FF"
+          }
+        ]
+      }
+    },
+    "n224": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a224",
+      "name": "Shape 224",
+      "props": {
+        "x": 640,
+        "y": 378,
+        "width": 71,
+        "height": 98,
+        "rotation": -30,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#8CF1F1FF"
+          }
+        ]
+      }
+    },
+    "n225": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a225",
+      "name": "Shape 225",
+      "props": {
+        "x": 709,
+        "y": 600,
+        "width": 142,
+        "height": 158,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C5620AFF"
+          }
+        ]
+      }
+    },
+    "n226": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a226",
+      "name": "Shape 226",
+      "props": {
+        "x": 21,
+        "y": 958,
+        "width": 165,
+        "height": 126,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#550038FF"
+          }
+        ]
+      }
+    },
+    "n227": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a227",
+      "name": "Shape 227",
+      "props": {
+        "x": 1000,
+        "y": 141,
+        "width": 29,
+        "height": 121,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#6A2F08FF"
+          }
+        ]
+      }
+    },
+    "n228": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a228",
+      "name": "Shape 228",
+      "props": {
+        "x": 402,
+        "y": 728,
+        "width": 143,
+        "height": 98,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9C0214FF"
+          }
+        ]
+      }
+    },
+    "n229": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a229",
+      "name": "Paragraph 229",
+      "props": {
+        "x": 251,
+        "y": 456,
+        "width": 360,
+        "height": 420,
+        "text": "हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n230": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a230",
+      "name": "Shape 230",
+      "props": {
+        "x": 401,
+        "y": 731,
+        "width": 84,
+        "height": 45,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#618ED7FF"
+          }
+        ]
+      }
+    },
+    "n231": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a231",
+      "name": "Shape 231",
+      "props": {
+        "x": 480,
+        "y": 796,
+        "width": 72,
+        "height": 56,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#F7F933FF"
+          }
+        ]
+      }
+    },
+    "n232": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a232",
+      "name": "Shape 232",
+      "props": {
+        "x": 612,
+        "y": 428,
+        "width": 177,
+        "height": 94,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#0C2E2DFF"
+          }
+        ]
+      }
+    },
+    "n233": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a233",
+      "name": "Shape 233",
+      "props": {
+        "x": 831,
+        "y": 96,
+        "width": 159,
+        "height": 90,
+        "rotation": -30,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#A362FCFF"
+          }
+        ]
+      }
+    },
+    "n234": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a234",
+      "name": "Shape 234",
+      "props": {
+        "x": 712,
+        "y": 44,
+        "width": 83,
+        "height": 34,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#F8FF72FF"
+          }
+        ]
+      }
+    },
+    "n235": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a235",
+      "name": "Shape 235",
+      "props": {
+        "x": 254,
+        "y": 593,
+        "width": 95,
+        "height": 62,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E180F5FF"
+          }
+        ]
+      }
+    },
+    "n236": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a236",
+      "name": "Shape 236",
+      "props": {
+        "x": 884,
+        "y": 316,
+        "width": 192,
+        "height": 34,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#53B701FF"
+          }
+        ]
+      }
+    },
+    "n237": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a237",
+      "name": "Shape 237",
+      "props": {
+        "x": 21,
+        "y": 119,
+        "width": 145,
+        "height": 121,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#0475F3FF"
+          }
+        ]
+      }
+    },
+    "n238": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a238",
+      "name": "Shape 238",
+      "props": {
+        "x": 909,
+        "y": 290,
+        "width": 161,
+        "height": 163,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#16352FFF"
+          }
+        ]
+      }
+    },
+    "n239": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a239",
+      "name": "Paragraph 239",
+      "props": {
+        "x": 240,
+        "y": 221,
+        "width": 360,
+        "height": 420,
+        "text": "حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. ",
+        "direction": "rtl",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n240": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a240",
+      "name": "Shape 240",
+      "props": {
+        "x": 228,
+        "y": 566,
+        "width": 197,
+        "height": 167,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#746F80FF"
+          }
+        ]
+      }
+    },
+    "n241": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a241",
+      "name": "Shape 241",
+      "props": {
+        "x": 929,
+        "y": 852,
+        "width": 27,
+        "height": 28,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#2C8528FF"
+          }
+        ]
+      }
+    },
+    "n242": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a242",
+      "name": "Shape 242",
+      "props": {
+        "x": 552,
+        "y": 506,
+        "width": 27,
+        "height": 136,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#866CBFFF"
+          }
+        ]
+      }
+    },
+    "n243": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a243",
+      "name": "Shape 243",
+      "props": {
+        "x": 645,
+        "y": 590,
+        "width": 172,
+        "height": 192,
+        "rotation": 15,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#99245FFF"
+          }
+        ]
+      }
+    },
+    "n244": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a244",
+      "name": "Shape 244",
+      "props": {
+        "x": 671,
+        "y": 355,
+        "width": 142,
+        "height": 83,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1D72DDFF"
+          }
+        ]
+      }
+    },
+    "n245": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a245",
+      "name": "Shape 245",
+      "props": {
+        "x": 981,
+        "y": 506,
+        "width": 23,
+        "height": 20,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#401BD1FF"
+          }
+        ]
+      }
+    },
+    "n246": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a246",
+      "name": "Shape 246",
+      "props": {
+        "x": 19,
+        "y": 651,
+        "width": 98,
+        "height": 23,
+        "rotation": -30,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C0EF6AFF"
+          }
+        ]
+      }
+    },
+    "n247": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a247",
+      "name": "Shape 247",
+      "props": {
+        "x": 35,
+        "y": 996,
+        "width": 181,
+        "height": 44,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#68021BFF"
+          }
+        ]
+      }
+    },
+    "n248": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a248",
+      "name": "Shape 248",
+      "props": {
+        "x": 73,
+        "y": 84,
+        "width": 87,
+        "height": 151,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E9F12DFF"
+          }
+        ]
+      }
+    },
+    "n249": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a249",
+      "name": "Paragraph 249",
+      "props": {
+        "x": 114,
+        "y": 397,
+        "width": 360,
+        "height": 420,
+        "text": "Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n250": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a250",
+      "name": "Shape 250",
+      "props": {
+        "x": 990,
+        "y": 461,
+        "width": 82,
+        "height": 23,
+        "rotation": -30,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#5F490FFF"
+          }
+        ]
+      }
+    },
+    "n251": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a251",
+      "name": "Shape 251",
+      "props": {
+        "x": 294,
+        "y": 16,
+        "width": 94,
+        "height": 189,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C22ED4FF"
+          }
+        ]
+      }
+    },
+    "n252": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a252",
+      "name": "Shape 252",
+      "props": {
+        "x": 451,
+        "y": 741,
+        "width": 86,
+        "height": 164,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#EC5597FF"
+          }
+        ]
+      }
+    },
+    "n253": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a253",
+      "name": "Shape 253",
+      "props": {
+        "x": 542,
+        "y": 387,
+        "width": 55,
+        "height": 180,
+        "rotation": -30,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#D1CB92FF"
+          }
+        ]
+      }
+    },
+    "n254": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a254",
+      "name": "Shape 254",
+      "props": {
+        "x": 234,
+        "y": 644,
+        "width": 100,
+        "height": 159,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#DC125DFF"
+          }
+        ]
+      }
+    },
+    "n255": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a255",
+      "name": "Shape 255",
+      "props": {
+        "x": 8,
+        "y": 207,
+        "width": 99,
+        "height": 55,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#7975E8FF"
+          }
+        ]
+      }
+    },
+    "n256": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a256",
+      "name": "Shape 256",
+      "props": {
+        "x": 350,
+        "y": 806,
+        "width": 124,
+        "height": 92,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#4428ACFF"
+          }
+        ]
+      }
+    },
+    "n257": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a257",
+      "name": "Shape 257",
+      "props": {
+        "x": 419,
+        "y": 820,
+        "width": 154,
+        "height": 40,
+        "rotation": -30,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#112D2CFF"
+          }
+        ]
+      }
+    },
+    "n258": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a258",
+      "name": "Shape 258",
+      "props": {
+        "x": 366,
+        "y": 706,
+        "width": 200,
+        "height": 20,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#BEB01EFF"
+          }
+        ]
+      }
+    },
+    "n259": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a259",
+      "name": "Paragraph 259",
+      "props": {
+        "x": 24,
+        "y": 271,
+        "width": 360,
+        "height": 420,
+        "text": "हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n260": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a260",
+      "name": "Shape 260",
+      "props": {
+        "x": 432,
+        "y": 872,
+        "width": 82,
+        "height": 85,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#AA2E1EFF"
+          }
+        ]
+      }
+    },
+    "n261": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a261",
+      "name": "Shape 261",
+      "props": {
+        "x": 333,
+        "y": 755,
+        "width": 182,
+        "height": 197,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#3804A6FF"
+          }
+        ]
+      }
+    },
+    "n262": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a262",
+      "name": "Shape 262",
+      "props": {
+        "x": 975,
+        "y": 231,
+        "width": 182,
+        "height": 33,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#48DA61FF"
+          }
+        ]
+      }
+    },
+    "n263": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a263",
+      "name": "Shape 263",
+      "props": {
+        "x": 654,
+        "y": 804,
+        "width": 32,
+        "height": 33,
+        "rotation": 45,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#83700CFF"
+          }
+        ]
+      }
+    },
+    "n264": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a264",
+      "name": "Shape 264",
+      "props": {
+        "x": 846,
+        "y": 147,
+        "width": 31,
+        "height": 189,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#CDAAA7FF"
+          }
+        ]
+      }
+    },
+    "n265": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a265",
+      "name": "Shape 265",
+      "props": {
+        "x": 194,
+        "y": 53,
+        "width": 160,
+        "height": 53,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C8C98EFF"
+          }
+        ]
+      }
+    },
+    "n266": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a266",
+      "name": "Shape 266",
+      "props": {
+        "x": 114,
+        "y": 660,
+        "width": 135,
+        "height": 188,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#92C579FF"
+          }
+        ]
+      }
+    },
+    "n267": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a267",
+      "name": "Shape 267",
+      "props": {
+        "x": 187,
+        "y": 998,
+        "width": 92,
+        "height": 22,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#207FC3FF"
+          }
+        ]
+      }
+    },
+    "n268": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a268",
+      "name": "Shape 268",
+      "props": {
+        "x": 76,
+        "y": 200,
+        "width": 81,
+        "height": 155,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#6B2593FF"
+          }
+        ]
+      }
+    },
+    "n269": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a269",
+      "name": "Paragraph 269",
+      "props": {
+        "x": 556,
+        "y": 335,
+        "width": 360,
+        "height": 420,
+        "text": "حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. ",
+        "direction": "rtl",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n270": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a270",
+      "name": "Shape 270",
+      "props": {
+        "x": 119,
+        "y": 233,
+        "width": 64,
+        "height": 79,
+        "rotation": 45,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#839EB9FF"
+          }
+        ]
+      }
+    },
+    "n271": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a271",
+      "name": "Shape 271",
+      "props": {
+        "x": 756,
+        "y": 635,
+        "width": 116,
+        "height": 40,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9DE003FF"
+          }
+        ]
+      }
+    },
+    "n272": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a272",
+      "name": "Shape 272",
+      "props": {
+        "x": 876,
+        "y": 405,
+        "width": 122,
+        "height": 168,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#F812C4FF"
+          }
+        ]
+      }
+    },
+    "n273": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a273",
+      "name": "Shape 273",
+      "props": {
+        "x": 774,
+        "y": 601,
+        "width": 74,
+        "height": 195,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#8E97DBFF"
+          }
+        ]
+      }
+    },
+    "n274": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a274",
+      "name": "Shape 274",
+      "props": {
+        "x": 681,
+        "y": 405,
+        "width": 149,
+        "height": 120,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9B9CA6FF"
+          }
+        ]
+      }
+    },
+    "n275": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a275",
+      "name": "Shape 275",
+      "props": {
+        "x": 305,
+        "y": 461,
+        "width": 184,
+        "height": 122,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#6B250BFF"
+          }
+        ]
+      }
+    },
+    "n276": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a276",
+      "name": "Shape 276",
+      "props": {
+        "x": 857,
+        "y": 973,
+        "width": 96,
+        "height": 57,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E3C72FF"
+          }
+        ]
+      }
+    },
+    "n277": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a277",
+      "name": "Shape 277",
+      "props": {
+        "x": 151,
+        "y": 640,
+        "width": 181,
+        "height": 38,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#4CACA0FF"
+          }
+        ]
+      }
+    },
+    "n278": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a278",
+      "name": "Shape 278",
+      "props": {
+        "x": 311,
+        "y": 320,
+        "width": 94,
+        "height": 192,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9A7B56FF"
+          }
+        ]
+      }
+    },
+    "n279": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a279",
+      "name": "Paragraph 279",
+      "props": {
+        "x": 132,
+        "y": 835,
+        "width": 360,
+        "height": 420,
+        "text": "Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. Bold colours and clean type make every format feel like the same campaign. ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n280": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a280",
+      "name": "Shape 280",
+      "props": {
+        "x": 478,
+        "y": 674,
+        "width": 144,
+        "height": 41,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#D682A7FF"
+          }
+        ]
+      }
+    },
+    "n281": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a281",
+      "name": "Shape 281",
+      "props": {
+        "x": 5,
+        "y": 719,
+        "width": 34,
+        "height": 122,
+        "rotation": -30,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#19B394FF"
+          }
+        ]
+      }
+    },
+    "n282": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a282",
+      "name": "Shape 282",
+      "props": {
+        "x": 400,
+        "y": 190,
+        "width": 147,
+        "height": 155,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#B0AD3CFF"
+          }
+        ]
+      }
+    },
+    "n283": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a283",
+      "name": "Shape 283",
+      "props": {
+        "x": 37,
+        "y": 192,
+        "width": 27,
+        "height": 173,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#698E63FF"
+          }
+        ]
+      }
+    },
+    "n284": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a284",
+      "name": "Shape 284",
+      "props": {
+        "x": 808,
+        "y": 939,
+        "width": 82,
+        "height": 114,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#EFDE5AFF"
+          }
+        ]
+      }
+    },
+    "n285": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a285",
+      "name": "Shape 285",
+      "props": {
+        "x": 533,
+        "y": 191,
+        "width": 90,
+        "height": 144,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#4D3FF1FF"
+          }
+        ]
+      }
+    },
+    "n286": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a286",
+      "name": "Shape 286",
+      "props": {
+        "x": 881,
+        "y": 559,
+        "width": 87,
+        "height": 82,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9D21DEFF"
+          }
+        ]
+      }
+    },
+    "n287": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a287",
+      "name": "Shape 287",
+      "props": {
+        "x": 170,
+        "y": 263,
+        "width": 56,
+        "height": 103,
+        "rotation": -30,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#018945FF"
+          }
+        ]
+      }
+    },
+    "n288": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a288",
+      "name": "Shape 288",
+      "props": {
+        "x": 186,
+        "y": 721,
+        "width": 30,
+        "height": 78,
+        "rotation": 15,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C46C9DFF"
+          }
+        ]
+      }
+    },
+    "n289": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a289",
+      "name": "Paragraph 289",
+      "props": {
+        "x": 542,
+        "y": 34,
+        "width": 360,
+        "height": 420,
+        "text": "हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। हर आकार में एक जैसा अभियान, साफ़ अक्षर और गहरे रंग। ",
+        "direction": "auto",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    },
+    "n290": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a290",
+      "name": "Shape 290",
+      "props": {
+        "x": 392,
+        "y": 271,
+        "width": 61,
+        "height": 198,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#76082CFF"
+          }
+        ]
+      }
+    },
+    "n291": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a291",
+      "name": "Shape 291",
+      "props": {
+        "x": 884,
+        "y": 336,
+        "width": 54,
+        "height": 141,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#89E585FF"
+          }
+        ]
+      }
+    },
+    "n292": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a292",
+      "name": "Shape 292",
+      "props": {
+        "x": 875,
+        "y": 987,
+        "width": 191,
+        "height": 27,
+        "rotation": 0,
+        "opacity": 0.8,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FEB00EFF"
+          }
+        ]
+      }
+    },
+    "n293": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a293",
+      "name": "Shape 293",
+      "props": {
+        "x": 946,
+        "y": 777,
+        "width": 97,
+        "height": 34,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#471F69FF"
+          }
+        ]
+      }
+    },
+    "n294": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a294",
+      "name": "Shape 294",
+      "props": {
+        "x": 225,
+        "y": 190,
+        "width": 164,
+        "height": 116,
+        "rotation": 45,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E3541DFF"
+          }
+        ]
+      }
+    },
+    "n295": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a295",
+      "name": "Shape 295",
+      "props": {
+        "x": 796,
+        "y": 360,
+        "width": 91,
+        "height": 38,
+        "rotation": 15,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#D4D93CFF"
+          }
+        ]
+      }
+    },
+    "n296": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a296",
+      "name": "Shape 296",
+      "props": {
+        "x": 254,
+        "y": 154,
+        "width": 71,
+        "height": 23,
+        "rotation": 0,
+        "opacity": 0.5,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#49B3B9FF"
+          }
+        ]
+      }
+    },
+    "n297": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a297",
+      "name": "Shape 297",
+      "props": {
+        "x": 872,
+        "y": 89,
+        "width": 23,
+        "height": 199,
+        "rotation": -30,
+        "opacity": 1,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#C80C3DFF"
+          }
+        ]
+      }
+    },
+    "n298": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a298",
+      "name": "Shape 298",
+      "props": {
+        "x": 138,
+        "y": 567,
+        "width": 140,
+        "height": 124,
+        "rotation": 0,
+        "opacity": 1,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#3128D8FF"
+          }
+        ]
+      }
+    },
+    "n299": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a299",
+      "name": "Paragraph 299",
+      "props": {
+        "x": 251,
+        "y": 413,
+        "width": 360,
+        "height": 420,
+        "text": "حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. حملة واحدة في كل المقاسات بألوان جريئة وخط واضح. ",
+        "direction": "rtl",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 18,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.4
+        }
+      }
+    }
+  },
+  "overrides": {}
+}

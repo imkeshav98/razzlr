@@ -6,7 +6,7 @@ Read `GLOSSARY.md` before naming anything, and the ADRs in `docs/adr/` before ch
 
 ## Layout
 
-pnpm + Turborepo monorepo. `apps/` deploy (web, api, sync, worker); `packages/` are shared code and only ever depend downward: schema → doc → renderer → editor. `python/` is one uv workspace for model-adjacent work (phase 2). See ADR-0001.
+pnpm + Turborepo monorepo. `apps/` deploy (web, api, sync, worker); `packages/` are shared code and only ever depend downward: schema → doc → renderer → editor. `tests/` holds cross-app suites (Playwright). `python/` is one uv workspace for model-adjacent work (phase 2). See ADR-0001.
 
 ## Rules
 

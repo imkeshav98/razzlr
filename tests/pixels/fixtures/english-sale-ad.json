@@ -1,0 +1,214 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "designId": "english-sale-ad",
+    "name": "English sale ad",
+    "kind": "single",
+    "primaryFormatId": "sq"
+  },
+  "formats": {
+    "sq": {
+      "name": "Square 1:1",
+      "width": 1080,
+      "height": 1080,
+      "order": "a0"
+    }
+  },
+  "pages": {
+    "p1": {
+      "name": "Page 1",
+      "order": "a0",
+      "fills": [
+        {
+          "type": "solid",
+          "color": "#FFF4E6FF"
+        }
+      ]
+    }
+  },
+  "nodes": {
+    "photo": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a0",
+      "name": "Product photo",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 640,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "image",
+            "assetId": "sneaker",
+            "fit": "crop",
+            "crop": {
+              "x": 120,
+              "y": 80,
+              "width": 1600,
+              "height": 948
+            }
+          }
+        ]
+      },
+      "role": "product"
+    },
+    "band": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a1",
+      "name": "Coral band",
+      "props": {
+        "x": 0,
+        "y": 600,
+        "width": 1080,
+        "height": 140,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "linear",
+            "from": {
+              "x": 0,
+              "y": 0.5
+            },
+            "to": {
+              "x": 1,
+              "y": 0.5
+            },
+            "stops": [
+              {
+                "offset": 0,
+                "color": "#FF5A36FF"
+              },
+              {
+                "offset": 1,
+                "color": "#FFB443FF"
+              }
+            ]
+          }
+        ]
+      },
+      "role": "decoration"
+    },
+    "headline": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a2",
+      "name": "Headline",
+      "props": {
+        "x": 60,
+        "y": 620,
+        "width": 960,
+        "height": 100,
+        "text": "Summer sale",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 84,
+          "color": "#FFFFFFFF",
+          "fontWeight": 800,
+          "letterSpacing": -1.5
+        }
+      },
+      "role": "headline"
+    },
+    "body": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a3",
+      "name": "Body",
+      "props": {
+        "x": 60,
+        "y": 780,
+        "width": 960,
+        "height": 120,
+        "text": "Our lightest runner yet. Free returns on every order.",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 36,
+          "color": "#3A2E2AFF",
+          "fontWeight": 400,
+          "lineHeight": 1.3
+        },
+        "runs": [
+          {
+            "start": 4,
+            "end": 21,
+            "style": {
+              "fontWeight": 700
+            }
+          }
+        ]
+      },
+      "role": "body"
+    },
+    "price-frame": {
+      "type": "frame",
+      "parentId": "p1",
+      "index": "a4",
+      "name": "Price block",
+      "role": "price",
+      "props": {
+        "x": 40,
+        "y": 920,
+        "width": 640,
+        "height": 120,
+        "clip": true,
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FFFFFFFF"
+          }
+        ]
+      }
+    },
+    "price-group": {
+      "type": "group",
+      "parentId": "price-frame",
+      "index": "a0",
+      "name": "Price and was-price",
+      "props": {
+        "x": 60,
+        "y": 930,
+        "width": 600,
+        "height": 90
+      }
+    },
+    "price": {
+      "type": "text",
+      "parentId": "price-group",
+      "index": "a0",
+      "name": "Price",
+      "props": {
+        "x": 60,
+        "y": 930,
+        "width": 600,
+        "height": 90,
+        "text": "$89  $129",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 64,
+          "color": "#FF5A36FF",
+          "fontWeight": 800
+        },
+        "runs": [
+          {
+            "start": 5,
+            "end": 9,
+            "style": {
+              "fontSize": 40,
+              "fontWeight": 400,
+              "color": "#8A7F7AFF"
+            }
+          }
+        ]
+      },
+      "role": "price"
+    }
+  },
+  "overrides": {}
+}
