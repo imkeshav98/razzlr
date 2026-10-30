@@ -18,7 +18,7 @@
     "p1": {
       "name": "Page 1",
       "order": "a0",
-      "background": [
+      "fills": [
         {
           "type": "solid",
           "color": "#FFF4E6FF"
@@ -146,10 +146,42 @@
       },
       "role": "body"
     },
-    "price": {
-      "type": "text",
+    "price-frame": {
+      "type": "frame",
       "parentId": "p1",
       "index": "a4",
+      "name": "Price block",
+      "role": "price",
+      "props": {
+        "x": 40,
+        "y": 920,
+        "width": 640,
+        "height": 120,
+        "clip": true,
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FFFFFFFF"
+          }
+        ]
+      }
+    },
+    "price-group": {
+      "type": "group",
+      "parentId": "price-frame",
+      "index": "a0",
+      "name": "Price and was-price",
+      "props": {
+        "x": 60,
+        "y": 930,
+        "width": 600,
+        "height": 90
+      }
+    },
+    "price": {
+      "type": "text",
+      "parentId": "price-group",
+      "index": "a0",
       "name": "Price",
       "props": {
         "x": 60,

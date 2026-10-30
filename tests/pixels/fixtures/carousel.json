@@ -24,7 +24,7 @@
     "p1": {
       "name": "Card 1",
       "order": "a0",
-      "background": [
+      "fills": [
         {
           "type": "solid",
           "color": "#ECEFF1FF"
@@ -34,7 +34,7 @@
     "p2": {
       "name": "Card 2",
       "order": "a1",
-      "background": [
+      "fills": [
         {
           "type": "solid",
           "color": "#ECEFF1FF"
@@ -44,7 +44,7 @@
     "p3": {
       "name": "Card 3",
       "order": "a2",
-      "background": [
+      "fills": [
         {
           "type": "solid",
           "color": "#ECEFF1FF"
@@ -265,8 +265,7 @@
         "y": 960
       },
       "p2-title": {
-        "y": 1030,
-        "visible": true
+        "y": 1030
       },
       "p3-photo": {
         "height": 900

@@ -4,8 +4,8 @@ import { Paint } from './paint.ts'
 import { BlendMode, Color } from './primitives.ts'
 
 /**
- * Properties every layer has. Per-format properties (box, rotation, visible) can be
- * overridden per format; shared ones only change everywhere at once (proposal 2).
+ * Properties every layer has. Any property can be overridden per format (#1); the
+ * per-format ones below are also the ones adapt computes for a format that has no value yet.
  */
 const commonProps = {
   x: z.number(),
@@ -61,6 +61,7 @@ export const TextStyle = z.object({
   lineHeight: z.number().positive().optional(),
 })
 
+/** Run offsets count UTF-16 code units, as JavaScript strings and Y.Text do. */
 export const TextRun = z.object({
   start: z.number().int().min(0),
   end: z.number().int().min(0),
@@ -79,12 +80,12 @@ export const TextProps = z.object({
 }).superRefine((t, ctx) => {
   for (const [i, run] of t.runs.entries()) {
     if (run.end > t.text.length) {
-      ctx.addIssue({ code: 'custom', path: ['runs', i, 'end'], message: `run ends at ${run.end} but the text has ${t.text.length} characters` })
+      ctx.addIssue({ code: 'custom', path: ['runs', i, 'end'], message: `run ends at ${run.end} but the text is ${t.text.length} UTF-16 units long` })
     }
   }
 })
 
-/** The layer types in the spike: four of the seven in proposal 2. */
+/** The layer types in the spike: four of the seven in ADR-0006 (#1 leaves boolean, instance and lottie for later). */
 export const LAYER_PROPS = {
   frame: FrameProps,
   group: GroupProps,

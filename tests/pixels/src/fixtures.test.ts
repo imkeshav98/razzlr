@@ -1,11 +1,13 @@
 import { parseDesign } from '@razzlr/schema'
 import { describe, expect, it } from 'vitest'
-import { loadFixtures } from './fixtures.ts'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { FIXTURES_DIR, loadFixtures } from './fixtures.ts'
 
 const fixtures = loadFixtures()
 
 describe('pixel fixtures', () => {
-  it('are the six designs proposal 3 asks for', () => {
+  it('are the six designs the spike spec (#1) asks for', () => {
     expect(fixtures.map((f) => f.name)).toEqual([
       'arabic-ad', 'carousel', 'english-sale-ad', 'hindi-ad', 'shapes-and-effects', 'stress',
     ])
@@ -30,5 +32,24 @@ describe('pixel fixtures', () => {
     const result = parseDesign(stress?.json)
     if (!result.success) throw new Error(result.errors.join('\n'))
     expect(Object.keys(result.design.nodes)).toHaveLength(300)
+  })
+
+  it('the English sale ad nests its price in a group inside a clipping frame', () => {
+    const ad = parseDesign(fixtures.find((f) => f.name === 'english-sale-ad')?.json)
+    if (!ad.success) throw new Error(ad.errors.join('\n'))
+    expect(ad.design.nodes['price-frame']?.type).toBe('frame')
+    expect(ad.design.nodes['price-group']).toMatchObject({ type: 'group', parentId: 'price-frame' })
+    expect(ad.design.nodes.price?.parentId).toBe('price-group')
+  })
+
+  it('an invalid fixture fails with readable errors', () => {
+    const json = JSON.parse(readFileSync(join(FIXTURES_DIR, 'invalid', 'broken-parent-and-colour.json'), 'utf8'))
+    expect(parseDesign(json)).toEqual({
+      success: false,
+      errors: [
+        'nodes.box.props.fills.0.color: colours are #RRGGBBAA',
+        'nodes.box.parentId: parent "missing-page" is neither a page nor a layer',
+      ],
+    })
   })
 })

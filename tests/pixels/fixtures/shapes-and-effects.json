@@ -18,7 +18,7 @@
     "p1": {
       "name": "Page 1",
       "order": "a0",
-      "background": [
+      "fills": [
         {
           "type": "solid",
           "color": "#FAFAFAFF"

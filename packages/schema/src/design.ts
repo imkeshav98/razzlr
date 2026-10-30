@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { LAYER_PROPS, PER_FORMAT_PROPS } from './layers.ts'
+import { LAYER_PROPS, type LayerType } from './layers.ts'
 import { Paint } from './paint.ts'
 import { FormatId, FractionalIndex, NodeId, PageId } from './primitives.ts'
 
@@ -12,11 +12,11 @@ const nodeBase = {
   ]).optional(),
 }
 
+const layerOf = <T extends LayerType>(type: T) =>
+  z.object({ type: z.literal(type), ...nodeBase, props: LAYER_PROPS[type] })
+
 export const Layer = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('frame'), ...nodeBase, props: LAYER_PROPS.frame }),
-  z.object({ type: z.literal('group'), ...nodeBase, props: LAYER_PROPS.group }),
-  z.object({ type: z.literal('graphic'), ...nodeBase, props: LAYER_PROPS.graphic }),
-  z.object({ type: z.literal('text'), ...nodeBase, props: LAYER_PROPS.text }),
+  layerOf('frame'), layerOf('group'), layerOf('graphic'), layerOf('text'),
 ])
 export type Layer = z.infer<typeof Layer>
 
@@ -30,7 +30,8 @@ export const Format = z.object({
 export const Page = z.object({
   name: z.string(),
   order: FractionalIndex,
-  background: Paint.array().default([]),
+  /** Paints behind every layer on the page. */
+  fills: Paint.array().default([]),
 })
 
 export const DesignMeta = z.object({
@@ -42,10 +43,12 @@ export const DesignMeta = z.object({
 })
 
 /** Spike scopes: only `format:<id>`. Variant and page scopes arrive with variants and masters. */
-const FormatScope = z.string().regex(/^format:[\w-]+$/, 'the spike only supports format:<id> scopes')
+const FORMAT_SCOPE = /^format:([\w-]+)$/
+const formatIdOf = (scope: string) => scope.match(FORMAT_SCOPE)?.[1]
+const Scope = z.string().refine((s) => formatIdOf(s) !== undefined, 'the spike only supports format:<id> scopes')
 
-/** overrides[scope][nodeId][propertyPath] = value */
-const Overrides = z.record(FormatScope, z.record(NodeId, z.record(z.string(), z.unknown())))
+/** overrides[scope][nodeId][propertyPath] = value. Any property can be overridden per format. */
+const Overrides = z.record(Scope, z.record(NodeId, z.record(z.string(), z.unknown())))
 
 const DesignShape = z.object({
   meta: DesignMeta,
@@ -54,62 +57,78 @@ const DesignShape = z.object({
   nodes: z.record(NodeId, Layer),
   overrides: Overrides.default({}),
 })
+type DesignShape = z.infer<typeof DesignShape>
 
-export const Design = DesignShape.superRefine((d, ctx) => {
-  if (!d.formats[d.meta.primaryFormatId]) {
-    ctx.addIssue({ code: 'custom', path: ['meta', 'primaryFormatId'], message: `no format "${d.meta.primaryFormatId}"` })
-  }
-  if (Object.keys(d.pages).length === 0) ctx.addIssue({ code: 'custom', path: ['pages'], message: 'a design needs a page' })
+/** A layer's props as one format sees them: its own props with that format's overrides on top. */
+function propsInScope(node: Layer, overrides: Record<string, unknown>) {
+  const schema = LAYER_PROPS[node.type]
+  const known = Object.fromEntries(Object.entries(overrides).filter(([path]) => path in schema.shape))
+  return schema.safeParse({ ...node.props, ...known })
+}
 
-  for (const id of Object.keys(d.nodes)) {
-    if (d.pages[id]) ctx.addIssue({ code: 'custom', path: ['nodes', id], message: `"${id}" is both a page and a layer` })
-  }
+function checkDesign(d: DesignShape, ctx: z.RefinementCtx) {
+  const fail = (path: PropertyKey[], message: string) => ctx.addIssue({ code: 'custom', path, message })
+
+  if (!d.formats[d.meta.primaryFormatId]) fail(['meta', 'primaryFormatId'], `no format "${d.meta.primaryFormatId}"`)
+  if (Object.keys(d.pages).length === 0) fail(['pages'], 'a design needs a page')
+
   for (const [id, node] of Object.entries(d.nodes)) {
+    if (d.pages[id]) fail(['nodes', id], `"${id}" is both a page and a layer`)
     const parent = d.nodes[node.parentId]
     if (!d.pages[node.parentId] && !parent) {
-      ctx.addIssue({ code: 'custom', path: ['nodes', id, 'parentId'], message: `parent "${node.parentId}" is neither a page nor a layer` })
+      fail(['nodes', id, 'parentId'], `parent "${node.parentId}" is neither a page nor a layer`)
     } else if (parent && parent.type !== 'frame' && parent.type !== 'group') {
-      ctx.addIssue({ code: 'custom', path: ['nodes', id, 'parentId'], message: `parent "${node.parentId}" is a ${parent.type}, which can't hold layers` })
+      fail(['nodes', id, 'parentId'], `parent "${node.parentId}" is a ${parent.type}, which can't hold layers`)
     }
-    // Walk up to a page; meeting a layer twice means a cycle.
-    const seen = new Set<string>([id])
-    for (let up = d.nodes[node.parentId]; up; up = d.nodes[up.parentId]) {
-      if (seen.has(up.parentId)) {
-        ctx.addIssue({ code: 'custom', path: ['nodes', id, 'parentId'], message: `"${id}" is inside itself` })
+    // Walk up towards the page. Reaching this layer again means it is inside itself; reaching
+    // another repeat means a cycle above it, which is reported for the layers in that cycle.
+    const seen = new Set<string>()
+    for (let up = node.parentId; d.nodes[up] && !seen.has(up); up = d.nodes[up]?.parentId ?? '') {
+      if (up === id) {
+        fail(['nodes', id, 'parentId'], `"${id}" is inside itself`)
         break
       }
-      seen.add(up.parentId)
+      seen.add(up)
     }
   }
 
   for (const [scope, byNode] of Object.entries(d.overrides)) {
-    const formatId = scope.slice('format:'.length)
-    if (!d.formats[formatId]) ctx.addIssue({ code: 'custom', path: ['overrides', scope], message: `no format "${formatId}"` })
+    const formatId = formatIdOf(scope) ?? ''
+    if (!d.formats[formatId]) fail(['overrides', scope], `no format "${formatId}"`)
     for (const [nodeId, props] of Object.entries(byNode)) {
       const node = d.nodes[nodeId]
       if (!node) {
-        ctx.addIssue({ code: 'custom', path: ['overrides', scope, nodeId], message: `no layer "${nodeId}"` })
+        fail(['overrides', scope, nodeId], `no layer "${nodeId}"`)
         continue
       }
-      const shape: Record<string, z.ZodType> = LAYER_PROPS[node.type].shape
-      for (const [path, value] of Object.entries(props)) {
-        const propSchema = shape[path]
-        if (!propSchema) {
-          ctx.addIssue({ code: 'custom', path: ['overrides', scope, nodeId, path], message: `a ${node.type} has no property "${path}"` })
-          continue
-        }
-        const parsed = propSchema.safeParse(value)
-        if (!parsed.success) {
-          ctx.addIssue({ code: 'custom', path: ['overrides', scope, nodeId, path], message: parsed.error.issues[0]?.message ?? 'invalid value' })
-        }
+      for (const path of Object.keys(props)) {
+        if (!(path in LAYER_PROPS[node.type].shape)) fail(['overrides', scope, nodeId, path], `a ${node.type} has no property "${path}"`)
+      }
+      const merged = propsInScope(node, props)
+      for (const issue of merged.success ? [] : merged.error.issues) {
+        fail(['overrides', scope, nodeId, ...issue.path], issue.message)
       }
     }
   }
-})
+}
+
+/** Gives override values the same defaults as base values, so a renderer never sees a half-filled paint or effect. */
+function withOverrideDefaults(d: DesignShape): DesignShape {
+  const overrides = Object.fromEntries(Object.entries(d.overrides).map(([scope, byNode]) => [scope, Object.fromEntries(
+    Object.entries(byNode).map(([nodeId, props]) => {
+      const node = d.nodes[nodeId]
+      const merged = node && propsInScope(node, props)
+      if (!merged?.success) return [nodeId, props]
+      const parsed = merged.data as Record<string, unknown>
+      return [nodeId, Object.fromEntries(Object.keys(props).map((path) => [path, parsed[path]]))]
+    }),
+  )]))
+  return { ...d, overrides }
+}
+
+export const Design = DesignShape.superRefine(checkDesign).transform(withOverrideDefaults)
 export type Design = z.infer<typeof Design>
 export type DesignInput = z.input<typeof Design>
-
-export { PER_FORMAT_PROPS }
 
 export type ParseResult = { success: true; design: Design } | { success: false; errors: string[] }
 
