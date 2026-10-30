@@ -18,6 +18,10 @@ Image fills name assets (`sneaker`, `card-1` … `card-3`, `card-1-tall`): stand
 
 `../reference/<fixture>/<page>.<format>.png` is what the Node CPU render must match, pixel for pixel. A failing check writes `<page>.<format>.actual.png` and a `.diff.png` (differing pixels in magenta) to `../output/<fixture>/`. After an intended change, rewrite them with `UPDATE_REFERENCES=1 pnpm --filter @razzlr/pixels test`, then look at every changed image before committing.
 
+## Screen drift
+
+The editor screen draws on WebGL and exports on the CPU, so they can differ slightly at anti-aliased edges and in blur (ADR-0005). The Playwright parity suite measures this drift for every page in every format and fails when it passes the limit in `../reference/webgl-drift.json`. A limit is set when a baseline is recorded: a quarter more pixels than measured plus 0.05 percentage points, and 16 levels more in any channel. After an intended change, record new baselines with `UPDATE_DRIFT_BASELINES=1 pnpm --filter @razzlr/pixels e2e`, then check the stage by eye before committing. A new fixture needs a baseline too.
+
 `invalid/` holds designs that must fail validation, each checked for its exact errors.
 
 ## Text checks
