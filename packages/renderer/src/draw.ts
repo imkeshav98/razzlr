@@ -23,7 +23,7 @@ export interface Resources {
 function laidOut(ck: CanvasKit, props: TextLayer['props'], resources: Resources) {
   if (resources.paragraphs) return { ...resources.paragraphs.layout(ck, props, resources), done: () => {} }
   const laid = layoutText(ck, props, resources)
-  return { ...laid, done: () => laid.paragraph.delete() }
+  return { ...laid, done: () => laid.delete() }
 }
 
 type Box = { x: number; y: number; width: number; height: number }
@@ -295,14 +295,19 @@ function childrenBounds(ck: CanvasKit, layer: SceneLayer, resources: Resources, 
  */
 function textBounds(ck: CanvasKit, layer: TextLayer, resources: Resources): Box {
   const { props } = layer
-  const { paragraph, dy, done } = laidOut(ck, props, resources)
+  const { blocks, dy, scale, done } = laidOut(ck, props, resources)
   let box: Box = props
-  for (const line of paragraph.getLineMetrics()) {
-    box = union(box, { x: props.x + line.left, y: props.y + dy + line.baseline - line.ascent, width: line.width, height: line.ascent + line.descent })
+  for (const b of blocks) {
+    for (const line of b.paragraph.getLineMetrics()) {
+      box = union(box, { x: props.x + b.x + line.left, y: props.y + dy + b.y + line.baseline - line.ascent, width: line.width, height: line.ascent + line.descent })
+    }
+    if (b.marker) box = union(box, { x: props.x + b.markerX, y: props.y + dy + b.y + b.markerY, width: b.marker.getMaxIntrinsicWidth(), height: b.marker.getHeight() })
   }
   done()
-  const largest = Math.max(props.style.fontSize, ...props.runs.map((r) => r.style.fontSize ?? 0))
-  return outset(box, largest / 2)
+  // Outlines reach half their width past the glyphs.
+  const outline = Math.max(props.style.outline?.width ?? 0, ...props.runs.map((r) => r.style.outline?.width ?? 0)) * scale
+  const largest = Math.max(props.style.fontSize, ...props.runs.map((r) => r.style.fontSize ?? 0)) * Math.max(1, scale)
+  return outset(box, largest / 2 + outline / 2)
 }
 
 /** Grows a layer's drawn bounds by how far its shadows and blur reach. */
@@ -594,8 +599,14 @@ function imageShader(ck: CanvasKit, image: Image, fill: Extract<Paint, { type: '
 }
 
 function drawText(ck: CanvasKit, canvas: Canvas, layer: TextLayer, resources: Resources) {
-  const { paragraph, dy, done } = laidOut(ck, layer.props, resources)
-  canvas.drawParagraph(paragraph, layer.props.x, layer.props.y + dy)
+  const { blocks, dy, done } = laidOut(ck, layer.props, resources)
+  const x = layer.props.x
+  const y = layer.props.y + dy
+  for (const b of blocks) {
+    canvas.drawParagraph(b.paragraph, x + b.x, y + b.y)
+    if (b.outline) canvas.drawParagraph(b.outline, x + b.x, y + b.y)
+    if (b.marker) canvas.drawParagraph(b.marker, x + b.markerX, y + b.y + b.markerY)
+  }
   done()
 }
 

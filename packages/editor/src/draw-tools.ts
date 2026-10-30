@@ -75,3 +75,20 @@ export function clickedBox(tool: ShapeTool, at: Point): Drawn {
   if (tool === 'line' || tool === 'arrow') return { x: round(at.x - CLICK_SIZE / 2), y: round(at.y), width: CLICK_SIZE, height: 0, rotation: 0 }
   return { x: round(at.x - CLICK_SIZE / 2), y: round(at.y - CLICK_SIZE / 2), width: CLICK_SIZE, height: CLICK_SIZE, rotation: 0 }
 }
+
+/** New text is near-black Noto Sans until a style is picked: the family every script falls back to. */
+const NEW_TEXT_STYLE = { fontFamily: 'Noto Sans', fontSize: 48, fontWeight: 400, color: INK }
+
+/**
+ * A new, empty text layer for the text tool (#47): at the point clicked, growing as it is typed,
+ * or in the box dragged, wrapping inside it and keeping its size.
+ */
+export function newText(x: number, y: number, box: { x: number; y: number; width: number; height: number } | null) {
+  return {
+    type: 'text' as const,
+    name: 'Text',
+    props: box
+      ? { ...box, text: '', boxMode: 'fixed', style: NEW_TEXT_STYLE }
+      : { x, y, width: 0, height: 0, text: '', boxMode: 'autoWidth', style: NEW_TEXT_STYLE },
+  }
+}

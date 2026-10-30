@@ -135,6 +135,20 @@ describe('commands', () => {
     expect(() => tab.run('text.edit', { id: 'headline', op: { kind: 'delete', at: 3, length: 9 } })).toThrow(/runs past the end/)
   })
 
+  it('text.fit sizes a text box in each format, base from the primary, one undo step', () => {
+    const doc = freshDoc()
+    const tab = openSession(doc)
+    tab.run('text.fit', { id: 'headline', sizes: { sq: { width: 300, height: 90 }, banner: { width: 120, height: 40 } } })
+    const d = readDesign(doc)
+    expect(d.nodes.headline?.props).toMatchObject({ width: 300, height: 90 })
+    expect(d.overrides['format:banner']?.headline).toMatchObject({ width: 120, height: 40 })
+    expect(d.overrides['format:sq']?.headline).toBeUndefined()
+    tab.undo()
+    expect(readDesign(doc).nodes.headline?.props).not.toMatchObject({ width: 300, height: 90 })
+    expect(() => tab.run('text.fit', { id: 'box', sizes: {} })).toThrow(/"box" is a graphic, not a text layer/)
+    expect(() => tab.run('text.fit', { id: 'headline', sizes: { story: { width: 1, height: 1 } } })).toThrow(/no format "story"/)
+  })
+
   it('page.add and format.add extend the design', () => {
     const doc = freshDoc()
     const tab = openSession(doc)

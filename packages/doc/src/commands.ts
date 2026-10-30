@@ -597,6 +597,29 @@ export const textEdit = defineCommand({
   },
 })
 
+/**
+ * Sets the box of text that grows to the size it is drawn at (#47), measured by the caller in each
+ * format: its width and height for auto width, its height for auto height. The editor runs it as
+ * text is typed, in the same undo step, so the box is always where the words are.
+ */
+export const textFit = defineCommand({
+  name: 'text.fit',
+  input: z.object({ id: NodeId, sizes: z.record(z.string(), z.object({ width: z.number().min(0), height: z.number().min(0) })) }),
+  check: ({ design }, { id, sizes }) => {
+    const node = design.nodes[id]
+    if (!node) return `no layer "${id}"`
+    if (node.type !== 'text') return `"${id}" is a ${node.type}, not a text layer`
+    return Object.keys(sizes).map((f) => (design.formats[f] ? undefined : `no format "${f}"`)).find(Boolean)
+  },
+  apply: ({ r, design }, { id, sizes }) => {
+    const place = new Placement(design)
+    const primary = sizes[design.meta.primaryFormatId]
+    if (primary) place.set('base', id, primary)
+    for (const [formatId, size] of Object.entries(sizes)) place.set(`format:${formatId}`, id, size)
+    place.write(r)
+  },
+})
+
 const lastOrder = (entries: { order: string }[]) => entries.map((e) => e.order).sort().at(-1) ?? null
 
 export const pageAdd = defineCommand({
@@ -779,6 +802,7 @@ export const COMMANDS = {
   'node.reshape': nodeReshape,
   'node.autoLayout': nodeAutoLayout,
   'text.edit': textEdit,
+  'text.fit': textFit,
   'page.add': pageAdd,
   'page.update': pageUpdate,
   'page.duplicate': pageDuplicate,

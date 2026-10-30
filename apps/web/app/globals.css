@@ -435,3 +435,9 @@ body {
   animation: blink 1s steps(1) infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
+/* The selected range inside text being typed into (#47). */
+.stage-overlay .text-selection {
+  position: absolute;
+  background: color-mix(in oklab, var(--accent) 28%, transparent);
+  pointer-events: none;
+}

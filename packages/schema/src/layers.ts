@@ -138,6 +138,12 @@ const textStyleFields = {
   letterSpacing: z.number(),
   /** A multiple of the font size; omitted means the font's own line height. */
   lineHeight: z.number().positive(),
+  underline: z.boolean(),
+  strikethrough: z.boolean(),
+  /** Drawn in another case, as CSS text-transform does; the text itself is kept as typed (#47). */
+  textCase: z.enum(['none', 'upper', 'lower', 'title']),
+  /** A line along the glyphs' edges, centred on them, drawn over the fill (#47). Width 0 is none. */
+  outline: z.object({ width: z.number().min(0), color: Color }),
 }
 
 /** A text layer's base character style. */
@@ -147,6 +153,10 @@ export const TextStyle = z.object({
   fontStyle: textStyleFields.fontStyle.default('normal'),
   letterSpacing: textStyleFields.letterSpacing.default(0),
   lineHeight: textStyleFields.lineHeight.optional(),
+  underline: textStyleFields.underline.optional(),
+  strikethrough: textStyleFields.strikethrough.optional(),
+  textCase: textStyleFields.textCase.optional(),
+  outline: textStyleFields.outline.optional(),
 })
 
 /** A run's style: only the keys it changes, with no defaults, so the rest come from the base style. */
@@ -168,6 +178,19 @@ export const TextProps = z.object({
   direction: z.enum(['auto', 'ltr', 'rtl']).default('auto'),
   verticalAlign: z.enum(['top', 'middle', 'bottom']).default('top'),
   boxMode: z.enum(['autoWidth', 'autoHeight', 'fixed']).default('autoHeight'),
+  /** Every paragraph that has text gets a bullet or its number, in a gutter its lines wrap clear of (#47). */
+  list: z.enum(['bullet', 'number']).optional(),
+  /** Space between paragraphs, in pixels at the base font size. */
+  paragraphSpacing: z.number().min(0).optional(),
+  /** Lines shown at most; text past them is cut and the last line ends in an ellipsis. */
+  maxLines: z.number().int().positive().optional(),
+  /**
+   * The base font size is the largest, a quarter point apart, from `min` to `max` at which the
+   * text fits its box: no word broken and, in a fixed box, no line below it. Every size in the
+   * text scales with it. Text that can't fit is drawn at `min`.
+   */
+  shrinkToFit: z.object({ min: z.number().positive(), max: z.number().positive() })
+    .refine((f) => f.min <= f.max, 'the smallest size must not be more than the largest').optional(),
 }).superRefine((t, ctx) => {
   for (const [i, run] of t.runs.entries()) {
     if (run.end > t.text.length) {
