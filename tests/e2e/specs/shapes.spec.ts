@@ -95,12 +95,16 @@ test('every shape draws with real input: the dock, its menu, its keys, and Shift
   const before = new Set(Object.keys((await read(page)).nodes))
   await click(page, 160, 1000)
   const clicked = Object.keys((await read(page)).nodes).find((id) => !before.has(id)) as string
+  expect(await selection(page)).toEqual([clicked])
+  expect(await toolOf(page)).toBe('select')
+  await pressed(page, 'select')
   expect(box(await read(page), clicked)).toEqual({ x: 110, y: 950, width: 100, height: 100, rotation: 0 })
 
   // The stage shows them all, the export draws them, and each drawing is one undo step.
   await page.keyboard.press('Escape')
   await page.evaluate(() => window.razzlr?.drawn())
-  writeOutput('shapes-1-drawn.png', await page.screenshot())
+  await pressed(page, 'select')
+  writeOutput('shapes-1-drawn.png', await page.screenshot({ animations: 'disabled' }))
   const all = await exportHashOf(page)
   await page.evaluate(() => window.razzlr?.session.undo())
   expect((await read(page)).nodes[clicked]).toBeUndefined()
@@ -128,7 +132,7 @@ test('two shapes combine into a live boolean that follows a shape dragged inside
   expect(box(d, cut)).toEqual({ x: 100, y: 820, width: 220, height: 160, rotation: 0 })
   const subtracted = await exportHashOf(page)
   expect(subtracted).not.toBe(shapes)
-  writeOutput('shapes-2-subtract.png', await page.screenshot())
+  writeOutput('shapes-2-subtract.png', await page.screenshot({ animations: 'disabled' }))
 
   // Undo takes it back in one step; the shortcut makes a union instead.
   await page.evaluate(() => window.razzlr?.session.undo())
@@ -156,7 +160,7 @@ test('two shapes combine into a live boolean that follows a shape dragged inside
   expect(d.nodes[front.id]?.parentId).toBe(union)
   expect(box(d, union)).toEqual({ x: 100, y: 820, width: 320, height: 160, rotation: 0 })
   expect(await exportHashOf(page)).not.toBe(united)
-  writeOutput('shapes-3-edited.png', await page.screenshot())
+  writeOutput('shapes-3-edited.png', await page.screenshot({ animations: 'disabled' }))
 
   // A text does not combine: with the boolean and the headline selected, Union leaves both alone.
   await page.keyboard.press('Escape')
