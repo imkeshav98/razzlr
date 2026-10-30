@@ -1,0 +1,12 @@
+{
+  "meta": { "schemaVersion": 1, "designId": "broken", "name": "Broken", "kind": "single", "primaryFormatId": "sq" },
+  "formats": { "sq": { "name": "Square 1:1", "width": 1080, "height": 1080, "order": "a0" } },
+  "pages": { "p1": { "name": "Page 1", "order": "a0", "fills": [] } },
+  "nodes": {
+    "box": {
+      "type": "graphic", "parentId": "missing-page", "index": "a0", "name": "Box",
+      "props": { "x": 0, "y": 0, "width": 10, "height": 10, "shape": { "kind": "rect" }, "fills": [{ "type": "solid", "color": "red" }] }
+    }
+  },
+  "overrides": {}
+}
