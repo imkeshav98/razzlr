@@ -106,5 +106,14 @@
       "percent": 31.298,
       "maxDelta": 79
     }
+  },
+  "text-and-group-bounds p1.sq": {
+    "differing": 275436,
+    "percent": 23.614,
+    "maxDelta": 35,
+    "limit": {
+      "percent": 29.568,
+      "maxDelta": 51
+    }
   }
 }

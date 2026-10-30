@@ -8,7 +8,7 @@ import { loadFixtures } from './fixtures.ts'
 import { comparePixels, decodePng, encodePng, fixtureResources, OUTPUT_DIR, REFERENCE_DIR } from './pixels.ts'
 
 /** Fixtures with committed reference images. Carousel and stress have parity checks only. */
-const CHECKED = ['arabic-ad', 'english-sale-ad', 'hindi-ad', 'layer-bounds', 'shapes-and-effects']
+const CHECKED = ['arabic-ad', 'english-sale-ad', 'hindi-ad', 'layer-bounds', 'shapes-and-effects', 'text-and-group-bounds']
 /** Set to rewrite the reference images from the current renderer, after checking the output by eye. */
 const UPDATE = process.env.UPDATE_REFERENCES === '1'
 if (UPDATE && process.env.CI) throw new Error('UPDATE_REFERENCES rewrites the references, so CI must never set it')
@@ -25,7 +25,7 @@ const cases = loadFixtures().filter((f) => CHECKED.includes(f.name)).flatMap(({ 
 
 describe('Node CPU render', () => {
   it('covers every page and format of the checked fixtures', () => {
-    expect(cases.map((c) => `${c.name}/${c.pageId}.${c.formatId}`)).toEqual(['arabic-ad/p1.sq', 'english-sale-ad/p1.sq', 'hindi-ad/p1.sq', 'layer-bounds/p1.sq', 'shapes-and-effects/p1.sq'])
+    expect(cases.map((c) => `${c.name}/${c.pageId}.${c.formatId}`)).toEqual(['arabic-ad/p1.sq', 'english-sale-ad/p1.sq', 'hindi-ad/p1.sq', 'layer-bounds/p1.sq', 'shapes-and-effects/p1.sq', 'text-and-group-bounds/p1.sq'])
   })
 
   it.each(cases)('$name $pageId in $formatId matches its reference image', ({ name, json, pageId, formatId }) => {

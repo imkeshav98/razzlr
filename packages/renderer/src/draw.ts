@@ -47,8 +47,8 @@ function drawLayer(ck: CanvasKit, canvas: Canvas, layer: SceneLayer, resources: 
     // An offscreen layer only as big as what the layer draws, effects included; a page-sized one
     // for every translucent layer made the 300-layer stress fixture take 15 s (#18).
     // One pixel more for anti-aliased edges.
-    const reach = withEffects(drawnBounds(ck, layer), props.effects)
-    const bounds = reach && ck.XYWHRect(reach.x - 1, reach.y - 1, reach.width + 2, reach.height + 2)
+    const reach = withEffects(drawnBounds(ck, layer, resources), props.effects)
+    const bounds = ck.XYWHRect(reach.x - 1, reach.y - 1, reach.width + 2, reach.height + 2)
     const layerPaint = new ck.Paint()
     layerPaint.setAlphaf(props.opacity)
     layerPaint.setBlendMode(blendMode(ck, props.blendMode))
@@ -135,11 +135,8 @@ function rotated(box: Box, about: Box, degrees: number): Box {
   return { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) }
 }
 
-/**
- * What a layer's content can touch, in its own unrotated coordinates; null when that isn't known
- * yet (text, groups, frames holding them), which draws into an unbounded layer as before.
- */
-function drawnBounds(ck: CanvasKit, layer: SceneLayer): Box | null {
+/** What a layer's content can touch, in its own unrotated coordinates. */
+function drawnBounds(ck: CanvasKit, layer: SceneLayer, resources: Resources): Box {
   switch (layer.type) {
     case 'graphic': {
       const path = shapePath(ck, layer)
@@ -148,25 +145,45 @@ function drawnBounds(ck: CanvasKit, layer: SceneLayer): Box | null {
       const reach = Math.max(0, ...layer.props.strokes.map((s) => (s.align === 'inside' ? 0 : s.align === 'center' ? s.width / 2 : s.width) * MITER_LIMIT))
       return outset({ x: left, y: top, width: right - left, height: bottom - top }, reach)
     }
-    case 'frame': {
-      if (layer.props.clip) return layer.props
-      let box: Box = layer.props
-      for (const child of layer.children) {
-        const inner = withEffects(drawnBounds(ck, child), child.props.effects)
-        if (!inner) return null
-        box = union(box, rotated(inner, child.props, child.props.rotation))
-      }
-      return box
-    }
     case 'text':
+      return textBounds(ck, layer, resources)
+    case 'frame':
+      if (layer.props.clip) return layer.props
+      return childrenBounds(ck, layer, resources, layer.props)
     case 'group':
-      return null
+      return childrenBounds(ck, layer, resources, { x: layer.props.x, y: layer.props.y, width: 0, height: 0 })
   }
 }
 
+/** A container's own box grown by everything its children draw, each turned as it is drawn. */
+function childrenBounds(ck: CanvasKit, layer: SceneLayer, resources: Resources, own: Box): Box {
+  let box = own
+  for (const child of layer.children) {
+    box = union(box, rotated(withEffects(drawnBounds(ck, child, resources), child.props.effects), child.props, child.props.rotation))
+  }
+  return box
+}
+
+/**
+ * Where a text layer's lines sit, from the same paragraph drawing lays out, which can be outside
+ * its box: a fixed box overflows, an auto width box grows. Glyphs can reach past their line's
+ * ascent, descent and advance (marks, swashes, wide letters), so each side gets half the largest
+ * font size more.
+ */
+function textBounds(ck: CanvasKit, layer: TextLayer, resources: Resources): Box {
+  const { props } = layer
+  const { paragraph, dy } = layoutText(ck, props, resources)
+  let box: Box = props
+  for (const line of paragraph.getLineMetrics()) {
+    box = union(box, { x: props.x + line.left, y: props.y + dy + line.baseline - line.ascent, width: line.width, height: line.ascent + line.descent })
+  }
+  paragraph.delete()
+  const largest = Math.max(props.style.fontSize, ...props.runs.map((r) => r.style.fontSize ?? 0))
+  return outset(box, largest / 2)
+}
+
 /** Grows a layer's drawn bounds by how far its shadows and blur reach. */
-function withEffects(box: Box | null, effects: readonly Effect[]): Box | null {
-  if (!box) return null
+function withEffects(box: Box, effects: readonly Effect[]): Box {
   let reach = box
   for (const effect of effects) {
     if (effect.type === 'dropShadow') {
