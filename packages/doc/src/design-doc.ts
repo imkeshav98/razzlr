@@ -10,7 +10,8 @@ import { repair } from './repair.ts'
  *   pages      Y.Map<PageId, Y.Map<key, value>>
  *   nodes      Y.Map<NodeId, Y.Map>   type, parentId, index, name, role?, props: Y.Map<path, value>
  *                                     a text layer's `text` prop is a Y.Text whose formatting holds its runs
- *   overrides  Y.Map<Scope, Y.Map<NodeId, Y.Map<path, value>>>
+ *   overrides  Y.Map<"scope|nodeId|path", value>   flat, so two tabs overriding in a new scope never
+ *                                                race to create the same nested map
  *
  * Deleted layers keep their Y.Map with `deleted: true`. Removing the map would make undo restore
  * it without the edits another tab made to it in the meantime, leaving required keys unset.
@@ -25,8 +26,15 @@ export const root = (doc: DesignDoc) => ({
   formats: doc.getMap<Y.Map<unknown>>('formats'),
   pages: doc.getMap<Y.Map<unknown>>('pages'),
   nodes: doc.getMap<Y.Map<unknown>>('nodes'),
-  overrides: doc.getMap<Y.Map<Y.Map<unknown>>>('overrides'),
+  overrides: doc.getMap<unknown>('overrides'),
 })
+
+const SEP = '|'
+export const overrideKey = (scope: string, nodeId: string, path: string) => [scope, nodeId, path].join(SEP)
+const splitOverrideKey = (key: string) => {
+  const [scope = '', nodeId = '', ...path] = key.split(SEP)
+  return { scope, nodeId, path: path.join(SEP) }
+}
 
 export const toYMap = (json: Json) => {
   const map = new Y.Map<unknown>()
@@ -76,9 +84,9 @@ export function loadDesign(design: Design, doc: DesignDoc = new Y.Doc()): Design
     for (const [id, p] of Object.entries(design.pages)) r.pages.set(id, toYMap(p))
     for (const [id, n] of Object.entries(design.nodes)) r.nodes.set(id, toYNode(n))
     for (const [scope, byNode] of Object.entries(design.overrides)) {
-      const yscope = new Y.Map<Y.Map<unknown>>()
-      for (const [nodeId, props] of Object.entries(byNode)) yscope.set(nodeId, toYMap(props))
-      r.overrides.set(scope, yscope)
+      for (const [nodeId, props] of Object.entries(byNode)) {
+        for (const [path, value] of Object.entries(props)) r.overrides.set(overrideKey(scope, nodeId, path), value)
+      }
     }
   })
   return doc
@@ -90,7 +98,9 @@ function nodeToJson(ynode: Y.Map<unknown>): Json {
     if (k !== 'props' && k !== DELETED) json[k] = v
   }
   const props: Json = {}
-  for (const [path, value] of (ynode.get('props') as Y.Map<unknown>).entries()) {
+  const yprops = ynode.get('props')
+  if (!(yprops instanceof Y.Map)) return json
+  for (const [path, value] of yprops.entries()) {
     if (value instanceof Y.Text) Object.assign(props, fromYText(value))
     else props[path] = value
   }
@@ -107,8 +117,17 @@ export function snapshot(doc: DesignDoc) {
     formats: mapOf(r.formats, (f) => f.toJSON()),
     pages: mapOf(r.pages, (p) => p.toJSON()),
     nodes: Object.fromEntries([...r.nodes.entries()].filter(([, n]) => n.get(DELETED) !== true).map(([id, n]) => [id, nodeToJson(n)])),
-    overrides: mapOf(r.overrides, (byNode) => mapOf(byNode, (props) => props.toJSON())),
+    overrides: nestOverrides(r.overrides),
   }
+}
+
+function nestOverrides(flat: Y.Map<unknown>) {
+  const nested: Record<string, Record<string, Json>> = {}
+  for (const [key, value] of flat.entries()) {
+    const { scope, nodeId, path } = splitOverrideKey(key)
+    ;((nested[scope] ??= {})[nodeId] ??= {})[path] = value
+  }
+  return nested
 }
 
 /**

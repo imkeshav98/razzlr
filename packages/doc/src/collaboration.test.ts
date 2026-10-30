@@ -47,15 +47,35 @@ describe('two tabs', () => {
       tab[second].run('node.update', { ids: ['box'], patch: { x: 2 } })
       tabs.sync()
 
+      const bValue = first === 'b' ? 1 : 2
+      const bWon = readDesign(tabs.a).nodes.box?.props.x === bValue
+
       tab.a.undo()
       tabs.sync()
 
-      // Tab b's value if it won the merge, otherwise the value before tab a's edit.
-      const bValue = first === 'b' ? 1 : 2
-      const x = readDesign(tabs.a).nodes.box?.props.x
-      expect([100, bValue]).toContain(x)
-      expect(readDesign(tabs.b).nodes.box?.props.x).toBe(x)
+      // If b's edit won, a's undo must leave it alone; if a's won, undo goes back to the value before.
+      const expected = bWon ? bValue : 100
+      expect(readDesign(tabs.a).nodes.box?.props.x).toBe(expected)
+      expect(readDesign(tabs.b).nodes.box?.props.x).toBe(expected)
+
+      tab.a.redo()
+      tabs.sync()
+      expect(readDesign(tabs.a).nodes.box?.props.x).toBeTypeOf('number')
+      tab.a.undo()
+      tabs.sync()
+      expect(readDesign(tabs.a).nodes.box?.props.x).toBeTypeOf('number')
+      expect(readDesign(tabs.b)).toEqual(readDesign(tabs.a))
     }
+  })
+
+  it('two tabs overriding the same layer in a new format at once keep both changes', () => {
+    const { a, b, tabA, tabB, sync } = twoTabs()
+    tabA.run('format.add', { id: 'story', name: 'Story', width: 1080, height: 1920 })
+    sync()
+    tabA.run('node.update', { ids: ['box'], scope: 'format:story', patch: { x: 1 } })
+    tabB.run('node.update', { ids: ['box'], scope: 'format:story', patch: { y: 2 } })
+    sync()
+    for (const doc of [a, b]) expect(readDesign(doc).overrides['format:story']?.box).toEqual({ x: 1, y: 2 })
   })
 
   it('concurrent moves that would put two groups inside each other are repaired the same way in both tabs', () => {
@@ -110,7 +130,9 @@ function randomCommand(tab: Session, doc: DesignDoc, random: () => number) {
     } else if (roll < 0.5) {
       tab.run('node.update', { ids: [pick(ids)], scope: random() < 0.5 ? 'base' : 'format:banner', patch: { x: Math.round(random() * 1000) } })
     } else if (roll < 0.65) {
-      tab.run('node.move', { id: pick(ids), parentId: pick(containers) })
+      const parentId = pick(containers)
+      const under = ids.filter((id) => design.nodes[id]?.parentId === parentId)
+      tab.run('node.move', { id: pick(ids), parentId, ...(under.length && random() < 0.5 ? { before: pick(under) } : {}) })
     } else if (roll < 0.75) {
       tab.run('node.delete', { ids: [pick(ids)] })
     } else if (roll < 0.9 && design.nodes.headline?.type === 'text') {
@@ -118,8 +140,15 @@ function randomCommand(tab: Session, doc: DesignDoc, random: () => number) {
       tab.run('text.edit', random() < 0.6 || length < 2
         ? { id: 'headline', op: { kind: 'insert', at: Math.floor(random() * (length + 1)), text: pick(['a', 'ब', 'ع', '!']) } }
         : { id: 'headline', op: { kind: 'delete', at: Math.floor(random() * (length - 1)), length: 1 } })
-    } else if (tab.canUndo()) {
+    } else if (roll < 0.93) {
+      if (random() < 0.5) tab.run('page.add', { name: 'P' })
+      else tab.run('format.add', { name: 'F', width: 100 + Math.floor(random() * 900), height: 100 })
+    } else if (roll < 0.96 && design.nodes.headline?.type === 'text' && design.nodes.headline.props.text.length > 1) {
+      tab.run('text.edit', { id: 'headline', op: { kind: 'style', at: 0, length: 1, style: { fontWeight: pick([400, 700]) } } })
+    } else if (random() < 0.5) {
       tab.undo()
+    } else {
+      tab.redo()
     }
   } catch (e) {
     if (!(e instanceof Error) || e.name !== 'CommandError') throw e

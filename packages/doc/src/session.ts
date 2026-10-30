@@ -6,6 +6,7 @@ import { readDesign, root, type DesignDoc } from './design-doc.ts'
 
 type InputOf<N extends CommandName> = z.input<(typeof COMMANDS)[N]['input']>
 type ResultOf<N extends CommandName> = ReturnType<(typeof COMMANDS)[N]['apply']>
+type Replaced = { map: Y.Map<unknown>; key: string; oldValue: unknown }
 
 /**
  * One tab's handle on a design. Every change goes through `run`; one command is one undo step,
@@ -17,25 +18,39 @@ export function openSession(doc: DesignDoc) {
   const roots = [r.meta, r.formats, r.pages, r.nodes, r.overrides]
   const undoManager = new Y.UndoManager(roots, { trackedOrigins: new Set([origin]), captureTimeout: 0 })
 
-  // Yjs gap: when this tab's set of a key won over another tab's concurrent set, undoing it deletes
-  // the key rather than restoring the value before it (both tabs overwrote that one). So each command
-  // remembers the values it replaced, and undo puts back any that went missing, in an untracked
-  // transaction so it never lands on either undo stack.
-  type Replaced = { map: Y.Map<unknown>; key: string; oldValue: unknown }
-  let replaced: Replaced[] = []
+  // Yjs gap: when a set of a key won over another tab's concurrent set, undoing it deletes the key
+  // instead of restoring the value before it (both tabs overwrote that one). So every step on the
+  // undo and redo stacks remembers the values its transaction replaced, and undo or redo puts back
+  // any that went missing. This is the one write outside a command (ADR-0004): it only restores a
+  // value this tab saw, in an untracked transaction that never lands on either stack.
+  let pending: Replaced[] = []
   const collect = (events: Y.YEvent<Y.AbstractType<unknown>>[], tr: Y.Transaction) => {
-    if (tr.origin !== origin) return
+    if (tr.origin !== origin && tr.origin !== undoManager) return
     for (const event of events) {
       if (!(event.target instanceof Y.Map)) continue
       for (const [key, change] of event.changes.keys) {
         if (change.action !== 'add' && change.oldValue !== undefined && !(change.oldValue instanceof Y.AbstractType)) {
-          replaced.push({ map: event.target, key, oldValue: change.oldValue })
+          pending.push({ map: event.target, key, oldValue: change.oldValue })
         }
       }
     }
   }
   for (const type of roots) type.observeDeep(collect)
-  const repairOrigin = { repairAfterUndo: true }
+  const onStackItemAdded = ({ stackItem }: { stackItem: { meta: Map<string, unknown> } }) => {
+    stackItem.meta.set('replaced', pending)
+    pending = []
+  }
+  undoManager.on('stack-item-added', onStackItemAdded)
+
+  const repairOrigin = { restoreAfterUndo: true }
+  const stepThen = (stack: { meta: Map<string, unknown> }[], step: () => void) => {
+    const restore = (stack.at(-1)?.meta.get('replaced') ?? []) as Replaced[]
+    pending = []
+    step()
+    // `_item` is the map's place in the doc; a map removed by this step has nothing to restore into.
+    const missing = restore.filter(({ map, key }) => !map.has(key) && !map._item?.deleted)
+    if (missing.length > 0) doc.transact(() => missing.forEach(({ map, key, oldValue }) => map.set(key, oldValue)), repairOrigin)
+  }
 
   function run<N extends CommandName>(name: N, input: InputOf<N>): ResultOf<N> {
     const command = COMMANDS[name]
@@ -47,27 +62,22 @@ export function openSession(doc: DesignDoc) {
     const reason = command.check?.(ctx, parsed.data as never)
     if (reason) throw new CommandError(name, reason)
     let result: unknown
-    replaced = []
+    pending = []
     doc.transact(() => {
       result = command.apply(ctx, parsed.data as never)
     }, origin)
-    undoManager.undoStack.at(-1)?.meta.set('replaced', replaced)
     undoManager.stopCapturing()
     return result as ResultOf<N>
   }
 
   return {
     run,
-    undo: () => {
-      const restore = (undoManager.undoStack.at(-1)?.meta.get('replaced') ?? []) as Replaced[]
-      undoManager.undo()
-      const missing = restore.filter(({ map, key }) => !map.has(key) && !map._item?.deleted)
-      if (missing.length > 0) doc.transact(() => missing.forEach(({ map, key, oldValue }) => map.set(key, oldValue)), repairOrigin)
-    },
-    redo: () => void undoManager.redo(),
+    undo: () => stepThen(undoManager.undoStack, () => undoManager.undo()),
+    redo: () => stepThen(undoManager.redoStack, () => undoManager.redo()),
     canUndo: () => undoManager.canUndo(),
     destroy: () => {
       for (const type of roots) type.unobserveDeep(collect)
+      undoManager.off('stack-item-added', onStackItemAdded)
       undoManager.destroy()
     },
   }

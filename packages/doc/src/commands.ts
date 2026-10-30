@@ -1,10 +1,10 @@
-import { Format, FormatId, Layer, LAYER_PROPS, NodeId, Page, PageId, parseDesign, RunStyle, type Design } from '@razzlr/schema'
+import { Format, FormatId, Layer, LAYER_PROPS, NodeId, Page, PageId, parseDesign, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
 import { generateKeyBetween } from 'fractional-indexing'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
-import { defineCommand } from './command.ts'
+import { defineCommand, type CommandContext } from './command.ts'
 import * as Y from 'yjs'
-import { DELETED, toYMap, toYNode } from './design-doc.ts'
+import { DELETED, overrideKey, toYMap, toYNode } from './design-doc.ts'
 
 /** The layers directly under a page or layer, back to front. Ties in index break by id, the same on every device. */
 export function childrenOf(design: Design, parentId: string) {
@@ -13,7 +13,28 @@ export function childrenOf(design: Design, parentId: string) {
     .sort(([a, x], [b, y]) => (x.index < y.index ? -1 : x.index > y.index ? 1 : a < b ? -1 : 1))
 }
 
-const topIndex = (design: Design, parentId: string) => generateKeyBetween(childrenOf(design, parentId).at(-1)?.[1].index ?? null, null)
+/**
+ * A fractional index between two neighbours that never throws. Neighbours can tie (two tabs
+ * inserting at once) or use keys the library rejects (hand-written fixtures such as `a000`);
+ * then it falls back to the nearest key it can make, and id order settles any remaining tie.
+ */
+export function indexBetween(before: string | null, after: string | null): string {
+  const attempts: [string | null, string | null][] = [[before, after], [before, null], [null, after], [null, null]]
+  for (const [a, b] of attempts) {
+    try {
+      return generateKeyBetween(a, b)
+    } catch {
+      // try the next, looser pair
+    }
+  }
+  return 'a0'
+}
+
+const topIndex = (design: Design, parentId: string) => indexBetween(childrenOf(design, parentId).at(-1)?.[1].index ?? null, null)
+
+/** Ids of deleted layers stay taken: their tombstones still hold the data an undo brings back. */
+const idProblem = ({ r }: CommandContext, id: string | undefined) =>
+  id && (r.nodes.has(id) || r.pages.has(id) || r.formats.has(id)) ? `id "${id}" is taken` : undefined
 
 const parentProblem = (design: Design, parentId: string) => {
   const parent = design.nodes[parentId]
@@ -32,8 +53,10 @@ const LayerInput = z.object({
 export const nodeCreate = defineCommand({
   name: 'node.create',
   input: z.object({ id: NodeId.optional(), parentId: z.union([PageId, NodeId]), layer: LayerInput }),
-  check: ({ design }, { id, parentId, layer }) => {
-    if (id && (design.nodes[id] || design.pages[id])) return `id "${id}" is taken`
+  check: (ctx, { id, parentId, layer }) => {
+    const { design } = ctx
+    const taken = idProblem(ctx, id)
+    if (taken) return taken
     const problem = parentProblem(design, parentId)
     if (problem) return problem
     const parsed = Layer.safeParse({ ...layer, parentId, index: 'a0' })
@@ -50,7 +73,7 @@ export const nodeCreate = defineCommand({
 const shortErrors = (errors: string[]) => errors.map((e) => e.replace(/^nodes\.([\w-]+)\.props\./, '$1.').replace(/^overrides\.[^.]+\.([\w-]+)\./, '$1.')).join('; ')
 
 /** Base scope, or `format:<id>` to change one format only. */
-const Scope = z.union([z.literal('base'), z.string().regex(/^format:[\w-]+$/)]).default('base')
+const Scope = z.union([z.literal('base'), FormatScope]).default('base')
 
 export const nodeUpdate = defineCommand({
   name: 'node.update',
@@ -61,7 +84,7 @@ export const nodeUpdate = defineCommand({
       const node = candidate.nodes[id]
       if (!node) return `no layer "${id}"`
       for (const path of Object.keys(patch)) {
-        if (!(path in LAYER_PROPS[node.type].shape)) return `a ${node.type} has no property "${path}"`
+        if (!Object.hasOwn(LAYER_PROPS[node.type].shape, path)) return `a ${node.type} has no property "${path}"`
         if (scope === 'base' && node.type === 'text' && (path === 'text' || path === 'runs')) return 'change text with text.edit'
       }
       if (scope === 'base') Object.assign(node.props, patch)
@@ -80,11 +103,7 @@ export const nodeUpdate = defineCommand({
         for (const [path, value] of Object.entries(patch)) props.set(path, value)
         continue
       }
-      let byNode = r.overrides.get(scope)
-      if (!byNode) r.overrides.set(scope, (byNode = new Y.Map()))
-      let props = byNode.get(id)
-      if (!props) byNode.set(id, (props = new Y.Map()))
-      for (const [path, value] of Object.entries(patch)) props.set(path, value)
+      for (const [path, value] of Object.entries(patch)) r.overrides.set(overrideKey(scope, id, path), value)
     }
   },
 })
@@ -102,13 +121,14 @@ export const nodeMove = defineCommand({
     const problem = parentProblem(design, parentId)
     if (problem) return problem
     if (isInside(design, parentId, id)) return `can't move "${id}" inside itself`
+    if (before === id) return `can't place "${id}" before itself`
     if (before && design.nodes[before]?.parentId !== parentId) return `"${before}" is not under "${parentId}"`
     return undefined
   },
   apply: ({ r, design }, { id, parentId, before }) => {
     const siblings = childrenOf(design, parentId).filter(([sibling]) => sibling !== id)
     const at = before ? siblings.findIndex(([sibling]) => sibling === before) : siblings.length
-    const index = generateKeyBetween(siblings[at - 1]?.[1].index ?? null, siblings[at]?.[1].index ?? null)
+    const index = indexBetween(siblings[at - 1]?.[1].index ?? null, siblings[at]?.[1].index ?? null)
     const node = r.nodes.get(id)
     node?.set('parentId', parentId)
     node?.set('index', index)
@@ -158,9 +178,9 @@ const lastOrder = (entries: { order: string }[]) => entries.map((e) => e.order).
 export const pageAdd = defineCommand({
   name: 'page.add',
   input: z.object({ id: PageId.optional(), name: z.string() }),
-  check: ({ design }, { id }) => (id && (design.pages[id] || design.nodes[id]) ? `id "${id}" is taken` : undefined),
+  check: (ctx, { id }) => idProblem(ctx, id),
   apply: ({ r, design }, { id = nanoid(), name }) => {
-    r.pages.set(id, toYMap(Page.parse({ name, order: generateKeyBetween(lastOrder(Object.values(design.pages)), null) })))
+    r.pages.set(id, toYMap(Page.parse({ name, order: indexBetween(lastOrder(Object.values(design.pages)), null) })))
     return id
   },
 })
@@ -168,9 +188,9 @@ export const pageAdd = defineCommand({
 export const formatAdd = defineCommand({
   name: 'format.add',
   input: z.object({ id: FormatId.optional(), name: z.string(), width: Format.shape.width, height: Format.shape.height }),
-  check: ({ design }, { id }) => (id && design.formats[id] ? `id "${id}" is taken` : undefined),
+  check: (ctx, { id }) => idProblem(ctx, id),
   apply: ({ r, design }, { id = nanoid(), ...format }) => {
-    r.formats.set(id, toYMap({ ...format, order: generateKeyBetween(lastOrder(Object.values(design.formats)), null) }))
+    r.formats.set(id, toYMap({ ...format, order: indexBetween(lastOrder(Object.values(design.formats)), null) }))
     return id
   },
 })

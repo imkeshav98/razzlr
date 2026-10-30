@@ -129,4 +129,34 @@ describe('commands', () => {
     expect(design.formats[format]).toMatchObject({ name: 'Story', width: 1080, height: 1920 })
     expect(() => tab.run('format.add', { name: 'Bad', width: 0, height: 10 })).toThrow(/format.add: width/)
   })
+
+  it('node.create refuses the id of a deleted layer, so undoing that delete still works', () => {
+    const doc = freshDoc()
+    const tab = openSession(doc)
+    tab.run('node.delete', { ids: ['box'] })
+    expect(() => tab.run('node.create', { id: 'box', parentId: 'p1', layer: badge })).toThrow(/id "box" is taken/)
+    tab.undo()
+    expect(readDesign(doc).nodes.box?.name).toBe('Box')
+  })
+
+  it('node.move refuses to place a layer before itself', () => {
+    const tab = openSession(freshDoc())
+    expect(() => tab.run('node.move', { id: 'box', parentId: 'p1', before: 'box' })).toThrow(/node.move: can't place "box" before itself/)
+  })
+
+  it('node.move and node.create work among siblings with tied or non-canonical indexes', () => {
+    const result = parseDesign(testDesign())
+    if (!result.success) throw new Error(result.errors.join('\n'))
+    const design = result.design
+    // Two tabs creating at once can tie; hand-written fixtures use keys like a000 that fractional-indexing rejects.
+    Object.assign(design.nodes.box ?? {}, { index: 'a000' })
+    Object.assign(design.nodes.headline ?? {}, { index: 'a000' })
+    const doc = loadDesign(design)
+    const tab = openSession(doc)
+
+    const id = tab.run('node.create', { parentId: 'p1', layer: badge })
+    tab.run('node.move', { id, parentId: 'p1', before: 'headline' })
+
+    expect(childrenOf(readDesign(doc), 'p1').map(([n]) => n).at(-1)).not.toBe(id)
+  })
 })
