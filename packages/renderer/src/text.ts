@@ -1,4 +1,4 @@
-import type { CanvasKit, Paragraph, TextStyle as CkTextStyle } from 'canvaskit-wasm'
+import type { CanvasKit, FontCollection, Paragraph, TextStyle as CkTextStyle } from 'canvaskit-wasm'
 import { color } from './color.ts'
 import type { Resources } from './draw.ts'
 import type { SceneLayer } from './scene.ts'
@@ -41,6 +41,50 @@ export function layoutText(ck: CanvasKit, props: TextProps, resources: Pick<Reso
   const dy = { top: 0, middle: free / 2, bottom: free }[props.verticalAlign]
   return { paragraph, dy }
 }
+
+/** What a text layer's layout depends on: everything but where it is placed and how it is painted over. */
+const layoutKey = (props: TextProps, fallbackFamilies: string[]) => JSON.stringify([
+  props.text, props.runs, props.style, props.width, props.height, props.boxMode, props.align, props.verticalAlign, props.direction, fallbackFamilies,
+])
+
+/**
+ * Laid-out paragraphs kept by what shapes them, for a screen that redraws often: a redraw lays
+ * out only the text that changed. The cache owns its paragraphs; `delete` frees them all.
+ */
+export function paragraphCache(limit = 4000) {
+  // Insertion order is use order: a hit moves to the end, and the front is evicted first.
+  const entries = new Map<string, { paragraph: Paragraph; dy: number }>()
+  let fonts: FontCollection | null = null
+  const clear = () => {
+    for (const { paragraph } of entries.values()) paragraph.delete()
+    entries.clear()
+  }
+  return {
+    layout(ck: CanvasKit, props: TextProps, resources: Pick<Resources, 'fonts' | 'fallbackFamilies'>) {
+      if (resources.fonts !== fonts) {
+        clear()
+        fonts = resources.fonts
+      }
+      const key = layoutKey(props, resources.fallbackFamilies)
+      const hit = entries.get(key)
+      if (hit) {
+        entries.delete(key)
+        entries.set(key, hit)
+        return hit
+      }
+      const laid = layoutText(ck, props, resources)
+      entries.set(key, laid)
+      for (const [oldest, { paragraph }] of entries) {
+        if (entries.size <= limit) break
+        entries.delete(oldest)
+        paragraph.delete()
+      }
+      return laid
+    },
+    delete: clear,
+  }
+}
+export type ParagraphCache = ReturnType<typeof paragraphCache>
 
 function textStyle(ck: CanvasKit, style: TextProps['style'], resources: Pick<Resources, 'fallbackFamilies'>): CkTextStyle {
   return new ck.TextStyle({

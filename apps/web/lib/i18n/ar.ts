@@ -37,6 +37,13 @@ export const ar: Messages = {
     toolPen: 'قلم',
     toolImage: 'صورة',
     toolHand: 'تحريك',
+    zoom: 'التكبير',
+    zoomIn: 'تكبير',
+    zoomOut: 'تصغير',
+    zoomFit: 'ملاءمة الكل',
+    zoomFitKey: 'Shift+1',
+    zoomInKey: 'Ctrl+=',
+    zoomOutKey: 'Ctrl+-',
     statusText: {
       'Starting': 'جارٍ البدء',
       'Loading renderer': 'تحميل المُصيِّر',

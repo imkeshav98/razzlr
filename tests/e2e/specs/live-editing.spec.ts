@@ -3,7 +3,7 @@
 // `docker compose up -d --wait` from the repo root. The tests in this file run one at a time,
 // which the restart test relies on: it restarts the server under no other test.
 import { expect, test, type Page } from '@playwright/test'
-import { designOf, exportHashOf, openTabs, restartSyncServer, screenPoint, storedAfter, settle, writeOutput } from '../support/editor.ts'
+import { designOf, exportHashOf, openTabs, placed, restartSyncServer, screenPoint, storedAfter, settle, writeOutput } from '../support/editor.ts'
 
 test.describe.configure({ timeout: 120_000 })
 
@@ -155,7 +155,8 @@ test('a real mouse drag and real typing in one tab show up in the other, and und
   writeOutput('real-input-1-dragging.png', await a.screenshot())
   await a.mouse.up()
   await settle(tabs)
-  const dragged = JSON.parse(await designOf(b)).nodes.box.props
+  // A drag moves the layer in the format it was dragged in: that format's override.
+  const dragged = placed(JSON.parse(await designOf(b)), 'box', 'sq') as { x: number; y: number }
   expect(Math.abs(dragged.x - 280)).toBeLessThanOrEqual(1)
   expect(Math.abs(dragged.y - 180)).toBeLessThanOrEqual(1)
   writeOutput('real-input-2-dragged-tab-b.png', await b.screenshot())
@@ -192,8 +193,9 @@ test('a real mouse drag and real typing in one tab show up in the other, and und
   const undo = async (expected: { arabic: string; headline: string; x: number }) => {
     await a.keyboard.press('Control+z')
     await settle(tabs)
-    const nodes = JSON.parse(await designOf(b)).nodes
-    expect({ arabic: nodes.arabic.props.text, headline: nodes.headline.props.text, x: Math.round(nodes.box.props.x) }).toEqual(expected)
+    const design = JSON.parse(await designOf(b))
+    const { nodes } = design
+    expect({ arabic: nodes.arabic.props.text, headline: nodes.headline.props.text, x: Math.round(placed(design, 'box', 'sq').x as number) }).toEqual(expected)
   }
   // Tab B's 'Hot ' stays through all of them.
   await undo({ arabic: 'تخفيضات الصيف', headline: 'Hot Summer sale now!', x: 280 })

@@ -19,7 +19,7 @@ import { ThemeSwitch } from '../theme-switch.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
 
 type Panel = 'layers' | 'assets' | 'ai' | 'brand'
-type Tool = 'select' | 'frame' | 'shape' | 'text' | 'pen' | 'image' | 'hand'
+export type Tool = 'select' | 'frame' | 'shape' | 'text' | 'pen' | 'image' | 'hand'
 
 const PANELS: { id: Panel; icon: Icon }[] = [
   { id: 'layers', icon: StackIcon },
@@ -39,11 +39,12 @@ const TOOLS: { id: Tool; icon: Icon; key: string }[] = [
 
 const CHROME = { duration: 0.18, ease: [0.2, 0.8, 0.2, 1] as const }
 
-export function EditorShell({ clientId, clientName, designName, status, children }: {
+export function EditorShell({ clientId, clientName, designName, status, onToolChange, children }: {
   clientId: string
   clientName: string
   designName: string
   status: string
+  onToolChange?: (tool: Tool) => void
   children: ReactNode
 }) {
   const t = useMessages()
@@ -154,7 +155,10 @@ export function EditorShell({ clientId, clientName, designName, status, children
                         type="button"
                         aria-label={label}
                         aria-pressed={on}
-                        onClick={() => setTool(id)}
+                        onClick={() => {
+                          setTool(id)
+                          onToolChange?.(id)
+                        }}
                         className={cn(
                           'grid size-9 cursor-pointer place-items-center rounded-row transition-colors duration-[var(--chrome-fast)]',
                           on ? 'bg-accent-solid text-on-accent' : 'text-muted hover:bg-hover hover:text-text',

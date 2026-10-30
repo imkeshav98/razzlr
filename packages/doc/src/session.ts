@@ -7,7 +7,8 @@ import { designView } from './design-view.ts'
 
 type InputOf<N extends CommandName> = z.input<(typeof COMMANDS)[N]['input']>
 type ResultOf<N extends CommandName> = ReturnType<(typeof COMMANDS)[N]['apply']>
-type Replaced = { map: Y.Map<unknown>; key: string; oldValue: unknown }
+/** A key a step changed and its value before; `restore` is false when there was no plain value to put back. */
+type Replaced = { map: Y.Map<unknown>; key: string; oldValue: unknown; restore: boolean }
 
 /**
  * One tab's handle on a design. Every change goes through `run`; one command is one undo step,
@@ -31,9 +32,10 @@ export function openSession(doc: DesignDoc) {
     for (const event of events) {
       if (!(event.target instanceof Y.Map)) continue
       for (const [key, change] of event.changes.keys) {
-        if (change.action !== 'add' && change.oldValue !== undefined && !(change.oldValue instanceof Y.AbstractType)) {
-          pending.push({ map: event.target, key, oldValue: change.oldValue })
-        }
+        // A key the step added is recorded too, so a gesture that adds a key and then changes it
+        // doesn't put its own in-between value back after undo deletes the key.
+        const restore = change.action !== 'add' && change.oldValue !== undefined && !(change.oldValue instanceof Y.AbstractType)
+        pending.push({ map: event.target, key, oldValue: change.oldValue, restore })
       }
     }
   }
@@ -59,7 +61,7 @@ export function openSession(doc: DesignDoc) {
     pending = []
     step()
     // `_item` is the map's place in the doc; a map removed by this step has nothing to restore into.
-    const missing = restore.filter(({ map, key }) => !map.has(key) && !map._item?.deleted)
+    const missing = restore.filter(({ map, key, restore }) => restore && !map.has(key) && !map._item?.deleted)
     if (missing.length > 0) doc.transact(() => missing.forEach(({ map, key, oldValue }) => map.set(key, oldValue)), repairOrigin)
   }
 

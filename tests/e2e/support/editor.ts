@@ -58,11 +58,19 @@ export async function settle(tabs: Page[]) {
   }, { timeout: 30_000 }).toBe(true)
 }
 
-/** A point on the page, in design pixels, as screen coordinates over the scaled canvas. */
-export async function screenPoint(page: Page, x: number, y: number) {
-  const box = await page.getByTestId('stage').boundingBox()
-  if (!box) throw new Error('no stage')
-  return { x: box.x + (x / 1080) * box.width, y: box.y + (y / 1080) * box.height }
+/**
+ * A design pixel of one frame as a point on screen, as the tab's camera shows it now: the first
+ * page in the primary format by default.
+ */
+export async function screenPoint(page: Page, x: number, y: number, frame?: { pageId: string; formatId: string }) {
+  const point = await page.evaluate(({ x, y, frame }) => window.razzlr?.screenPoint(x, y, frame?.pageId, frame?.formatId), { x, y, frame })
+  if (!point) throw new Error('no editor')
+  return point
+}
+
+/** A layer's props as one format shows them: the base with that format's overrides on top. */
+export function placed(design: { nodes: Record<string, { props: Record<string, unknown> }>; overrides?: Record<string, Record<string, Record<string, unknown>>> }, id: string, formatId: string) {
+  return { ...design.nodes[id]?.props, ...design.overrides?.[`format:${formatId}`]?.[id] }
 }
 
 export function writeOutput(name: string, content: string | Buffer) {
