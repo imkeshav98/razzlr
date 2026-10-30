@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { startEditor, type Editor } from '@razzlr/editor'
 import { fetchSyncToken } from './actions.ts'
 import { EditorShell } from '../../../../../components/editor/shell.tsx'
+import { FocusChip, FormatsPanel, RemovedToast } from '../../../../../components/editor/formats-panel.tsx'
 import { ZoomControl } from '../../../../../components/editor/zoom-control.tsx'
 
 declare global {
@@ -37,6 +38,8 @@ export function EditorStage({ designId, designName, clientId, clientName, format
   const [status, setStatus] = useState('Starting')
   const [zoom, setZoom] = useState<number | null>(null)
   const [editor, setEditor] = useState<Editor | null>(null)
+  const [removed, setRemoved] = useState<string | null>(null)
+  const dismissRemoved = useCallback(() => setRemoved(null), [])
 
   // Lets this page open again without a connection (#37): the worker keeps the page and what it
   // loaded, and the design itself is in IndexedDB.
@@ -83,12 +86,18 @@ export function EditorStage({ designId, designName, clientId, clientName, format
       designName={designName}
       status={status}
       onToolChange={(tool) => editor?.setTool(tool === 'hand' ? 'hand' : 'select')}
+      inspector={editor ? <FormatsPanel editor={editor} onRemoved={setRemoved} /> : undefined}
     >
       {/* The design is a picture, so it never mirrors: the stage stays left to right in Arabic too. */}
       <div dir="ltr" className="absolute inset-0">
         <canvas ref={canvas} className="block size-full touch-none" data-testid="stage" />
         <div ref={overlay} className="stage-overlay pointer-events-none absolute inset-0 overflow-hidden" aria-hidden />
-        <div data-slot="mini-bar" className="pointer-events-none absolute inset-x-0 top-4 flex justify-center" />
+        <div data-slot="mini-bar" className="pointer-events-none absolute inset-x-0 top-4 flex justify-center">
+          {editor && <FocusChip editor={editor} />}
+        </div>
+        <div className="pointer-events-none absolute start-4 bottom-4 z-10">
+          {editor && removed && <RemovedToast key={removed} editor={editor} name={removed} onDone={dismissRemoved} />}
+        </div>
       </div>
       <ZoomControl
         zoom={editor ? zoom : null}

@@ -69,6 +69,8 @@ interface FrameCache { deps: unknown[]; scene: Scene; picture: SkPicture | null 
 
 const sameDeps = (a: unknown[], b: unknown[]) => a.length === b.length && a.every((x, i) => x === b[i])
 const ZOOM_STEP = 2
+/** Room around the frames when the focus view fits them, past the chip over the stage. */
+const FOCUS_PADDING = 104
 /** How long the connection can be gone before the save state reads Offline. */
 const OFFLINE_AFTER_MS = 1500
 
@@ -218,7 +220,9 @@ function live(
   window.addEventListener('online', () => void provider.connect(), on)
 
   let design: Design = session.design()
-  let grid = frameGrid(design)
+  /** The one format the focus view shows, or null for every format. */
+  let focused: string | null = null
+  let grid = frameGrid(design, focused)
   let camera: Camera = { x: 0, y: 0, zoom: 1 }
   let tool: Tool = 'select'
   let selected: Picked | null = null
@@ -385,7 +389,8 @@ function live(
   function draw() {
     const started = performance.now()
     design = session.design()
-    grid = frameGrid(design)
+    if (focused && !design.formats[focused]) focused = null
+    grid = frameGrid(design, focused)
     if (selected && !pickedLayer(selected)) selected = null
     if (editing && !pickedLayer(editing)) stopEditing()
     if (!surface) return
@@ -507,7 +512,8 @@ function live(
 
   const centre = (): Point => ({ x: viewport.width / 2, y: viewport.height / 2 })
   function fitAll() {
-    setCamera(fit(grid.bounds, viewport))
+    // The focus view's chip sits over the stage's top edge: leave it room above the frame's label.
+    setCamera(fit(grid.bounds, viewport, focused ? FOCUS_PADDING : undefined))
   }
   function fitFrame(frame: Frame | undefined) {
     if (frame) setCamera(fit(frame, viewport))
@@ -737,7 +743,17 @@ function live(
     selected: () => selected?.id ?? null,
     /** The frame the selection is in, as `<pageId>/<formatId>`. */
     selectedFrame: () => selected?.frame ?? null,
-    frames: () => frameGrid(session.design()).frames,
+    frames: () => frameGrid(session.design(), focused).frames,
+    /** The format the focus view shows alone, or null when every format shows. */
+    focused: () => focused,
+    /** Shows one format alone, fitted, or every format again with null. */
+    focus(formatId: string | null) {
+      focused = formatId && design.formats[formatId] ? formatId : null
+      grid = frameGrid(design, focused)
+      if (selected && !frameOf(selected.frame)) selected = null
+      if (editing && !frameOf(editing.frame)) stopEditing()
+      fitAll()
+    },
     camera: () => camera,
     viewport: () => viewport,
     setCamera,

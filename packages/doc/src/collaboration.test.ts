@@ -125,7 +125,8 @@ describe('two tabs', () => {
     tabA.run('node.update', { ids: ['box'], scope: 'format:story', patch: { x: 1 } })
     tabB.run('node.update', { ids: ['box'], scope: 'format:story', patch: { y: 2 } })
     sync()
-    for (const doc of [a, b]) expect(readDesign(doc).overrides['format:story']?.box).toEqual({ x: 1, y: 2 })
+    // The new format was seeded with the box's whole scaled layout; both tabs' changes land on it.
+    for (const doc of [a, b]) expect(readDesign(doc).overrides['format:story']?.box).toEqual({ x: 1, y: 2, width: 200, height: 100 })
   })
 
   it('concurrent moves that would put two groups inside each other are repaired the same way in both tabs', () => {

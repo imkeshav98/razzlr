@@ -73,12 +73,14 @@ function useShownStatus(status: string) {
   return shown
 }
 
-export function EditorShell({ clientId, clientName, designName, status, onToolChange, children }: {
+export function EditorShell({ clientId, clientName, designName, status, onToolChange, inspector, children }: {
   clientId: string
   clientName: string
   designName: string
   status: string
   onToolChange?: (tool: Tool) => void
+  /** The inspector's contents once the design is open; an empty state until then. */
+  inspector?: ReactNode
   children: ReactNode
 }) {
   const t = useMessages()
@@ -220,7 +222,7 @@ export function EditorShell({ clientId, clientName, designName, status, onToolCh
                 <SlidersHorizontalIcon size={16} aria-hidden className="text-subtle" />
                 <h2 className="text-[13px] font-semibold">{t.editor.inspector}</h2>
               </div>
-              <div className="grid flex-1 place-items-center p-6 text-center text-[13px] text-subtle">{t.editor.inspectorEmpty}</div>
+              {inspector ?? <div className="grid flex-1 place-items-center p-6 text-center text-[13px] text-subtle">{t.editor.inspectorEmpty}</div>}
             </aside>
           </div>
         </div>

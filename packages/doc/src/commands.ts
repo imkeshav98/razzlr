@@ -1,11 +1,11 @@
-import { Format, FormatId, formatIdOf, Layer, LAYER_PROPS, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
+import { Format, FormatId, formatIdOf, formatSizeProblem, Layer, LAYER_PROPS, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
 import { generateKeyBetween } from 'fractional-indexing'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { childrenOf } from './children.ts'
 import { defineCommand, type CommandContext } from './command.ts'
 import * as Y from 'yjs'
-import { DELETED, overrideKey, toYMap, toYNode } from './design-doc.ts'
+import { DELETED, overrideKey, splitOverrideKey, toYMap, toYNode } from './design-doc.ts'
 
 export { childrenOf }
 
@@ -209,13 +209,88 @@ export const pageAdd = defineCommand({
   },
 })
 
+const byOrder = (design: Design) =>
+  Object.entries(design.formats).sort(([a, x], [b, y]) => (x.order < y.order ? -1 : x.order > y.order ? 1 : a < b ? -1 : 1))
+
+/**
+ * Adds a format. Its layout starts as the primary format's, scaled to fit and centred, written
+ * as the new format's overrides; constraints and AI adapt come later (phase 3).
+ */
 export const formatAdd = defineCommand({
   name: 'format.add',
   input: z.object({ id: FormatId.optional(), name: z.string(), width: Format.shape.width, height: Format.shape.height }),
-  check: (ctx, { id }) => idProblem(ctx, id),
+  check: (ctx, { id, width, height }) => idProblem(ctx, id) ?? formatSizeProblem(width, height),
   apply: ({ r, design }, { id = nanoid(), ...format }) => {
     r.formats.set(id, toYMap({ ...format, order: indexBetween(lastOrder(Object.values(design.formats)), null) }))
+    const primaryId = design.meta.primaryFormatId
+    const primary = design.formats[primaryId]
+    if (!primary) return id
+    const scale = Math.min(format.width / primary.width, format.height / primary.height)
+    const dx = (format.width - primary.width * scale) / 2
+    const dy = (format.height - primary.height * scale) / 2
+    const round = (n: number) => Math.round(n * 100) / 100
+    const from = design.overrides[`format:${primaryId}`] ?? {}
+    for (const [nodeId, node] of Object.entries(design.nodes)) {
+      const props = { ...node.props, ...from[nodeId] } as Record<string, unknown> & { x: number; y: number; width: number; height: number }
+      const scaled: Record<string, unknown> = {
+        x: round(props.x * scale + dx), y: round(props.y * scale + dy), width: round(props.width * scale), height: round(props.height * scale),
+      }
+      // What the primary format turns or hides, this one does too.
+      for (const path of ['rotation', 'visible']) if (from[nodeId]?.[path] !== undefined) scaled[path] = from[nodeId][path]
+      for (const [path, value] of Object.entries(scaled)) r.overrides.set(overrideKey(`format:${id}`, nodeId, path), value)
+    }
     return id
+  },
+})
+
+/** Renames, resizes or moves a format; `before` puts it ahead of another format, null at the end. */
+export const formatUpdate = defineCommand({
+  name: 'format.update',
+  input: z.object({
+    id: FormatId, name: z.string().optional(), width: Format.shape.width.optional(), height: Format.shape.height.optional(),
+    before: FormatId.nullable().optional(),
+  }),
+  check: ({ design }, { id, width, height, before }) => {
+    const format = design.formats[id]
+    if (!format) return `no format "${id}"`
+    if (before && (before === id || !design.formats[before])) return `no other format "${before}" to go before`
+    return width === undefined && height === undefined ? undefined : formatSizeProblem(width ?? format.width, height ?? format.height)
+  },
+  apply: ({ r, design }, { id, before, ...change }) => {
+    const yformat = r.formats.get(id)
+    if (!yformat) return
+    for (const [key, value] of Object.entries(change)) if (value !== undefined) yformat.set(key, value)
+    if (before === undefined) return
+    const others = byOrder(design).filter(([other]) => other !== id)
+    const at = before === null ? others.length : others.findIndex(([other]) => other === before)
+    yformat.set('order', indexBetween(others[at - 1]?.[1].order ?? null, others[at]?.[1].order ?? null))
+  },
+})
+
+/** Removes a format and every override it holds. The primary format and the last one stay. */
+export const formatRemove = defineCommand({
+  name: 'format.remove',
+  input: z.object({ id: FormatId }),
+  check: ({ design }, { id }) => {
+    if (!design.formats[id]) return `no format "${id}"`
+    if (Object.keys(design.formats).length === 1) return 'a design keeps at least one format'
+    if (design.meta.primaryFormatId === id) return 'make another format primary first'
+    return undefined
+  },
+  apply: ({ r }, { id }) => {
+    r.formats.delete(id)
+    const scope = `format:${id}`
+    for (const key of [...r.overrides.keys()]) if (splitOverrideKey(key).scope === scope) r.overrides.delete(key)
+  },
+})
+
+/** Makes a format the primary one: new formats start from its layout. */
+export const formatSetPrimary = defineCommand({
+  name: 'format.setPrimary',
+  input: z.object({ id: FormatId }),
+  check: ({ design }, { id }) => (design.formats[id] ? undefined : `no format "${id}"`),
+  apply: ({ r }, { id }) => {
+    r.meta.set('primaryFormatId', id)
   },
 })
 
@@ -228,5 +303,8 @@ export const COMMANDS = {
   'text.edit': textEdit,
   'page.add': pageAdd,
   'format.add': formatAdd,
+  'format.update': formatUpdate,
+  'format.remove': formatRemove,
+  'format.setPrimary': formatSetPrimary,
 } as const
 export type CommandName = keyof typeof COMMANDS
