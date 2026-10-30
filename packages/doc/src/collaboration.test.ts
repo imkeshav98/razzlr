@@ -257,8 +257,14 @@ function randomCommand(tab: Session, doc: DesignDoc, random: () => number) {
     } else if (roll < 0.985) {
       const which = random()
       if (which < 0.4) tab.run('node.reorder', { ids: [pick(ids), pick(ids)], to: pick(['forward', 'backward', 'front', 'back'] as const) })
-      else if (which < 0.7) tab.run('node.duplicate', { ids: [pick(ids)] })
-      else tab.run('node.lock', { ids: [pick(ids)], lock: { move: random() < 0.5 } })
+      else if (which < 0.55) tab.run('node.duplicate', { ids: [pick(ids)] })
+      else if (which < 0.7) tab.run('node.lock', { ids: [pick(ids)], lock: { move: random() < 0.5 } })
+      else if (which < 0.8) {
+        const first = pick(ids)
+        const siblings = ids.filter((id) => design.nodes[id]?.parentId === design.nodes[first]?.parentId)
+        tab.run('node.group', { ids: [first, pick(siblings)] })
+      } else if (which < 0.9) tab.run('node.ungroup', { ids: [pick(ids)] })
+      else tab.run('node.hug', { ids: [pick(ids)] })
     } else if (random() < 0.5) {
       tab.undo()
     } else {

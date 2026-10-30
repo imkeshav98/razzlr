@@ -10,6 +10,7 @@
   "devDependencies": {
     "@playwright/test": "1.63.0",
     "@razzlr/config": "workspace:*",
+    "@razzlr/doc": "workspace:*",
     "@razzlr/editor": "workspace:*",
     "@razzlr/fonts": "workspace:*",
     "@razzlr/renderer": "workspace:*",

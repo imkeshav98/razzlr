@@ -1,0 +1,61 @@
+{
+  "meta": { "schemaVersion": 1, "designId": "groups-and-frames", "name": "Groups and frames", "kind": "single", "primaryFormatId": "sq" },
+  "formats": { "sq": { "name": "Square 1:1", "width": 1080, "height": 1080, "order": "a0" } },
+  "pages": { "p1": { "name": "Page 1", "order": "a0", "fills": [{ "type": "solid", "color": "#F4F1FBFF" }] } },
+  "nodes": {
+    "clipper": {
+      "type": "frame", "parentId": "p1", "index": "a0", "name": "Turned clipping frame",
+      "props": {
+        "x": 80, "y": 120, "width": 460, "height": 360, "rotation": 12, "clip": true,
+        "fills": [{ "type": "solid", "color": "#FFFFFFFF" }]
+      }
+    },
+    "sun": {
+      "type": "graphic", "parentId": "clipper", "index": "a0", "name": "Circle spilling out",
+      "props": { "x": 360, "y": 40, "width": 300, "height": 300, "shape": { "kind": "ellipse" }, "fills": [{ "type": "solid", "color": "#FFB020FF" }] }
+    },
+    "tilted": {
+      "type": "group", "parentId": "clipper", "index": "a1", "name": "Turned group inside",
+      "props": { "x": 40, "y": 300, "width": 420, "height": 240, "rotation": -20 }
+    },
+    "bar": {
+      "type": "graphic", "parentId": "tilted", "index": "a0", "name": "Bar running out",
+      "props": { "x": 40, "y": 360, "width": 420, "height": 90, "shape": { "kind": "rect", "cornerRadius": 45 }, "fills": [{ "type": "solid", "color": "#FF2E7EFF" }] }
+    },
+    "inner": {
+      "type": "frame", "parentId": "tilted", "index": "a1", "name": "Nested clipping frame",
+      "props": {
+        "x": 120, "y": 300, "width": 160, "height": 240, "clip": true,
+        "fills": [{ "type": "solid", "color": "#2B1B4DFF" }]
+      }
+    },
+    "dot": {
+      "type": "graphic", "parentId": "inner", "index": "a0", "name": "Ellipse cut by the nested frame",
+      "props": { "x": 60, "y": 380, "width": 200, "height": 200, "shape": { "kind": "ellipse" }, "fills": [{ "type": "solid", "color": "#7C5CFFFF" }] }
+    },
+    "open": {
+      "type": "frame", "parentId": "p1", "index": "a1", "name": "Frame that does not clip",
+      "props": {
+        "x": 620, "y": 140, "width": 340, "height": 260, "rotation": -10, "clip": false,
+        "fills": [{ "type": "solid", "color": "#DFF6EFFF" }]
+      }
+    },
+    "spill": {
+      "type": "graphic", "parentId": "open", "index": "a0", "name": "Square past its frame",
+      "props": { "x": 840, "y": 300, "width": 200, "height": 200, "rotation": 30, "shape": { "kind": "rect", "cornerRadius": 24 }, "fills": [{ "type": "solid", "color": "#00A889FF" }] }
+    },
+    "faded": {
+      "type": "group", "parentId": "p1", "index": "a2", "name": "Translucent group of overlapping shapes",
+      "props": { "x": 560, "y": 640, "width": 420, "height": 320, "opacity": 0.6 }
+    },
+    "left": {
+      "type": "graphic", "parentId": "faded", "index": "a0", "name": "Left",
+      "props": { "x": 560, "y": 640, "width": 260, "height": 260, "shape": { "kind": "ellipse" }, "fills": [{ "type": "solid", "color": "#FF5A36FF" }] }
+    },
+    "right": {
+      "type": "graphic", "parentId": "faded", "index": "a1", "name": "Right",
+      "props": { "x": 720, "y": 700, "width": 260, "height": 260, "shape": { "kind": "rect", "cornerRadius": 32 }, "fills": [{ "type": "solid", "color": "#3366FFFF" }] }
+    }
+  },
+  "overrides": {}
+}

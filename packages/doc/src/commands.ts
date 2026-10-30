@@ -6,6 +6,8 @@ import { childrenOf } from './children.ts'
 import { defineCommand, type CommandContext } from './command.ts'
 import * as Y from 'yjs'
 import { DELETED, overrideKey, splitOverrideKey, toYMap, toYNode } from './design-doc.ts'
+import { boundsOf, centreOf, normalAngle, round, turn } from './geometry.ts'
+import { Placement } from './placement.ts'
 
 export { childrenOf }
 
@@ -302,6 +304,152 @@ export const nodeDuplicate = defineCommand({
   },
 })
 
+const depthOf = (design: Design, id: string) => {
+  let depth = 0
+  for (let up = design.nodes[id]?.parentId; up && design.nodes[up]; up = design.nodes[up]?.parentId) depth++
+  return depth
+}
+
+/**
+ * Wraps layers that share a parent in a new group where the topmost of them was, without moving
+ * anything on screen. The group's box hugs them in each format. Returns the group's id.
+ */
+export const nodeGroup = defineCommand({
+  name: 'node.group',
+  input: z.object({ ids: NodeId.array().min(1), id: NodeId.optional(), name: z.string().default('Group') }),
+  check: (ctx, { ids, id }) => {
+    const { design } = ctx
+    const missing = ids.map((layer) => (design.nodes[layer] ? undefined : `no layer "${layer}"`)).find(Boolean)
+    if (missing) return missing
+    if (new Set(ids.map((layer) => design.nodes[layer]?.parentId)).size > 1) return 'layers to group must share a parent'
+    return idProblem(ctx, id)
+  },
+  apply: ({ r, design }, { ids, id = nanoid(), name }) => {
+    const parentId = design.nodes[ids[0] as string]?.parentId as string
+    const inside = childrenOf(design, parentId).filter(([child]) => ids.includes(child))
+    const top = inside.at(-1)?.[1] as LayerT
+    const place = new Placement(design)
+    const boxIn = (scope: Parameters<Placement['get']>[0]) => boundsOf(inside.map(([child]) => place.get(scope, child)))
+    const base = boxIn('base')
+    const box = { x: round(base.x), y: round(base.y), width: round(base.width), height: round(base.height) }
+    r.nodes.set(id, toYNode(Layer.parse({ type: 'group', name, parentId, index: top.index, props: box })))
+    for (const scope of place.scopes) {
+      if (scope === 'base') continue
+      const b = boxIn(scope)
+      for (const [path, value] of Object.entries({ x: b.x, y: b.y, width: b.width, height: b.height })) {
+        if (Math.abs(round(value) - box[path as keyof typeof box]) >= 0.005) r.overrides.set(overrideKey(scope, id, path), round(value))
+      }
+    }
+    // Their indexes already order them; they only change parent.
+    for (const [child] of inside) r.nodes.get(child)?.set('parentId', id)
+    return id
+  },
+})
+
+/**
+ * Takes the layers out of groups and removes the groups, without moving anything on screen: a
+ * turned group's turn goes into each layer it held, and a group hidden in a format hides them
+ * there. The layers take the group's place among its siblings. Returns their ids, in order.
+ */
+export const nodeUngroup = defineCommand({
+  name: 'node.ungroup',
+  input: z.object({ ids: NodeId.array().min(1) }),
+  check: ({ design }, { ids }) => {
+    for (const id of ids) {
+      const node = design.nodes[id]
+      if (!node) return `no layer "${id}"`
+      if (node.type !== 'group') return `"${id}" is a ${node.type}, not a group`
+      const locked = lockProblem(id, node, 'delete')
+      if (locked) return locked
+    }
+    return undefined
+  },
+  apply: ({ r, design }, { ids }) => {
+    const freed: string[] = []
+    const groups = ids.filter((id) => !ids.some((other) => other !== id && isInside(design, id, other)))
+    const place = new Placement(design)
+    for (const id of groups) {
+      const kids = childrenOf(design, id).map(([child]) => child)
+      for (const scope of place.scopes) {
+        const group = place.get(scope, id)
+        for (const kid of kids) {
+          const was = place.get(scope, kid)
+          if (group.rotation !== 0) {
+            const c = centreOf(was)
+            const to = turn(c, centreOf(group), group.rotation)
+            const dx = to.x - c.x
+            const dy = to.y - c.y
+            place.set(scope, kid, { x: was.x + dx, y: was.y + dy, rotation: normalAngle(was.rotation + group.rotation) })
+            for (const inner of descendants(design, kid)) {
+              const at = place.get(scope, inner)
+              place.set(scope, inner, { x: at.x + dx, y: at.y + dy })
+            }
+          }
+          if (!group.visible) place.set(scope, kid, { visible: false })
+        }
+      }
+    }
+    place.write(r)
+    for (const id of groups) {
+      const group = design.nodes[id] as LayerT
+      const siblings = childrenOf(design, group.parentId)
+      const next = siblings[siblings.findIndex(([sibling]) => sibling === id) + 1]?.[1].index ?? null
+      let at = group.index
+      for (const [kid] of childrenOf(design, id)) {
+        at = indexBetween(at, next)
+        r.nodes.get(kid)?.set('parentId', group.parentId)
+        r.nodes.get(kid)?.set('index', at)
+        freed.push(kid)
+      }
+      r.nodes.get(id)?.set(DELETED, true)
+    }
+    return freed
+  },
+})
+
+/**
+ * Fits groups to what they hold, in every format: each named group, and every group the named
+ * layers are in, innermost first. A turned group's layers shift with its new centre so nothing
+ * moves on screen. The editor runs it after a change to layers inside a group, in the same step.
+ */
+export const nodeHug = defineCommand({
+  name: 'node.hug',
+  input: z.object({ ids: NodeId.array().min(1) }),
+  check: ({ design }, { ids }) => ids.map((id) => (design.nodes[id] ? undefined : `no layer "${id}"`)).find(Boolean),
+  apply: ({ r, design }, { ids }) => {
+    const groups = new Set<string>()
+    for (const id of ids) {
+      for (let up: string | undefined = id; up && design.nodes[up]; up = design.nodes[up]?.parentId) {
+        if (design.nodes[up]?.type === 'group') groups.add(up)
+      }
+    }
+    const place = new Placement(design)
+    for (const id of [...groups].sort((a, b) => depthOf(design, b) - depthOf(design, a))) {
+      const kids = childrenOf(design, id).map(([child]) => child)
+      if (kids.length === 0) continue
+      for (const scope of place.scopes) {
+        const group = place.get(scope, id)
+        const fit = boundsOf(kids.map((kid) => place.get(scope, kid)))
+        // Turned about its new centre instead of the old one, the group would draw its layers
+        // elsewhere; moving them and the box by d keeps every one where it was.
+        const v = { x: centreOf(group).x - centreOf(fit).x, y: centreOf(group).y - centreOf(fit).y }
+        const turned = turn(v, { x: 0, y: 0 }, group.rotation)
+        const d = { x: v.x - turned.x, y: v.y - turned.y }
+        const next = { x: fit.x + d.x, y: fit.y + d.y, width: fit.width, height: fit.height }
+        // Within what rounding to hundredths leaves, it already fits: fitting again changes nothing.
+        if ((['x', 'y', 'width', 'height'] as const).every((k) => Math.abs(next[k] - group[k]) < 0.02)) continue
+        place.set(scope, id, next)
+        if (Math.hypot(d.x, d.y) < 0.005) continue
+        for (const inner of descendants(design, id)) {
+          const at = place.get(scope, inner)
+          place.set(scope, inner, { x: at.x + d.x, y: at.y + d.y })
+        }
+      }
+    }
+    place.write(r)
+  },
+})
+
 const TextOp = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('insert'), at: z.number().int().min(0), text: z.string().min(1) }),
   z.object({ kind: z.literal('delete'), at: z.number().int().min(0), length: z.number().int().positive() }),
@@ -505,6 +653,9 @@ export const COMMANDS = {
   'node.lock': nodeLock,
   'node.reorder': nodeReorder,
   'node.duplicate': nodeDuplicate,
+  'node.group': nodeGroup,
+  'node.ungroup': nodeUngroup,
+  'node.hug': nodeHug,
   'text.edit': textEdit,
   'page.add': pageAdd,
   'page.update': pageUpdate,

@@ -71,6 +71,15 @@
       "maxDelta": 17
     }
   },
+  "groups-and-frames p1.sq": {
+    "differing": 5333,
+    "percent": 0.457,
+    "maxDelta": 70,
+    "limit": {
+      "percent": 0.622,
+      "maxDelta": 86
+    }
+  },
   "hindi-ad p1.sq": {
     "differing": 1091,
     "percent": 0.094,

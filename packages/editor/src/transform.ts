@@ -1,41 +1,13 @@
 // The geometry of moving, resizing and rotating layers (#40), kept free of the editor so it can be
 // tested on its own. Boxes are in one page's design pixels; a box's rotation turns it about its
 // centre, as the renderer draws it.
-import type { Point } from './hit-test.ts'
+import { centreOf, turn, type Box, type Point } from '@razzlr/doc'
 
-export interface Box { x: number; y: number; width: number; height: number; rotation: number }
+export { boundsOf, centreOf, cornersOf, normalAngle, round, turn, type Box } from '@razzlr/doc'
 export type Handle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 export const HANDLES: readonly Handle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']
 
 const rad = (deg: number) => (deg * Math.PI) / 180
-export const centreOf = (b: Box): Point => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 })
-
-/** Turns a point about a centre. */
-export function turn(p: Point, about: Point, deg: number): Point {
-  if (deg === 0) return p
-  const a = rad(deg)
-  const dx = p.x - about.x
-  const dy = p.y - about.y
-  return { x: about.x + dx * Math.cos(a) - dy * Math.sin(a), y: about.y + dx * Math.sin(a) + dy * Math.cos(a) }
-}
-
-/** A box's four corners on the page, as drawn: nw, ne, se, sw. */
-export function cornersOf(b: Box): Point[] {
-  const c = centreOf(b)
-  return [
-    { x: b.x, y: b.y }, { x: b.x + b.width, y: b.y }, { x: b.x + b.width, y: b.y + b.height }, { x: b.x, y: b.y + b.height },
-  ].map((p) => turn(p, c, b.rotation))
-}
-
-/** The unturned box around boxes as they are drawn. */
-export function boundsOf(boxes: Box[]): Box {
-  const points = boxes.flatMap(cornersOf)
-  const xs = points.map((p) => p.x)
-  const ys = points.map((p) => p.y)
-  const x = Math.min(...xs)
-  const y = Math.min(...ys)
-  return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y, rotation: 0 }
-}
 
 /** Where a handle sits on a box, as a fraction of its width and height. */
 export function handleAt(h: Handle): Point {
@@ -135,12 +107,6 @@ export function scaleWithin(box: Box, from: Box, to: Box): Box {
   return { x: centre.x - width / 2, y: centre.y - height / 2, width, height, rotation: box.rotation }
 }
 
-/** An angle in degrees as the schema keeps it, in (-180, 180]. */
-export function normalAngle(deg: number) {
-  const a = ((deg % 360) + 360) % 360
-  return a > 180 ? a - 360 : a
-}
-
 /** Shift while rotating: the angle snaps to steps of 15°. */
 export const ANGLE_STEP = 15
 export const snapAngle = (deg: number) => Math.round(deg / ANGLE_STEP) * ANGLE_STEP
@@ -148,5 +114,3 @@ export const snapAngle = (deg: number) => Math.round(deg / ANGLE_STEP) * ANGLE_S
 /** The angle of a point about a centre, in degrees. */
 export const angleOf = (p: Point, about: Point) => (Math.atan2(p.y - about.y, p.x - about.x) * 180) / Math.PI
 
-/** Rounds what goes into the document: whole pixels for a move, hundredths for the rest. */
-export const round = (n: number, places = 2) => Math.round(n * 10 ** places) / 10 ** places

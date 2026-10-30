@@ -207,6 +207,7 @@ body {
 /* Selection (#40): the box with its handles, each selected layer's outline, hover and marquee. */
 .stage-overlay .selection,
 .stage-overlay .selection-member,
+.stage-overlay .entered,
 .stage-overlay .hover {
   position: absolute;
   transform-origin: center;
@@ -221,6 +222,11 @@ body {
 .stage-overlay .hover {
   outline: 1.5px solid var(--accent);
   opacity: 0.6;
+}
+/* The group or frame double-clicked into, while working inside it. */
+.stage-overlay .entered {
+  outline: 1px dashed var(--accent);
+  opacity: 0.8;
 }
 .stage-overlay .handle {
   position: absolute;

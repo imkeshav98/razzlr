@@ -2,11 +2,11 @@
 // marquee; move, resize and rotate with handles (shift and alt too), on a turned layer as well;
 // arrow nudges, duplicate, z-order, delete, lock and hide from the shortcut table. Every drag,
 // resize and rotate undoes in one step.
-import { pressFor, type ShortcutAction } from '@razzlr/editor/shortcuts'
 import type { DesignInput } from '@razzlr/schema'
-import { expect, test, type Page } from '@playwright/test'
-import { designOf, openTabs, placed, screenPoint, writeOutput } from '../support/editor.ts'
-import { liveDesign, seed } from '../support/seed.ts'
+import { expect, test, type Browser } from '@playwright/test'
+import { screenPoint, writeOutput } from '../support/editor.ts'
+import { liveDesign } from '../support/seed.ts'
+import { click, drag, dragScreen, handle, openStage, order, press, props, read, selection, zoomOf } from '../support/stage.ts'
 
 // Each check opens the editor (up to 30 s for the renderer on a slow runner) and then drags for a while.
 test.describe.configure({ timeout: 120_000 })
@@ -35,66 +35,7 @@ const design = (): DesignInput => {
   }
 }
 
-interface Design {
-  nodes: Record<string, { parentId: string; index: string; lock?: Record<string, boolean>; props: Record<string, unknown> }>
-  overrides: Record<string, Record<string, Record<string, unknown>>>
-}
-const read = async (page: Page) => JSON.parse(await designOf(page)) as Design
-const props = async (page: Page, id: string) => placed(await read(page), id, 'sq') as { x: number; y: number; width: number; height: number; rotation?: number; visible?: boolean }
-const selection = (page: Page) => page.evaluate(() => window.razzlr?.selection() ?? [])
-/** Presses an action's shortcut and waits for the redraw, so the handles stand where the box now is. */
-const press = async (page: Page, action: ShortcutAction) => {
-  await page.keyboard.press(pressFor(action))
-  await page.evaluate(() => window.razzlr?.drawn())
-}
-const order = async (page: Page) => Object.entries((await read(page)).nodes)
-  .filter(([, n]) => n.parentId === 'p1').sort(([a, x], [b, y]) => (x.index < y.index ? -1 : x.index > y.index ? 1 : a < b ? -1 : 1)).map(([id]) => id)
-
-async function open(browser: Parameters<typeof openTabs>[0]) {
-  const { tabs, errors } = await openTabs(browser, 1, await seed(design()))
-  const page = tabs[0] as Page
-  await page.setViewportSize({ width: 1440, height: 1000 })
-  // Design pixels in steps of 5 land on whole screen pixels, so drags measure exactly.
-  await page.evaluate(() => window.razzlr?.setCamera({ x: 100, y: 60, zoom: 0.8 }))
-  await page.evaluate(() => window.razzlr?.drawn())
-  return { page, errors }
-}
-
-/**
- * Drags with the mouse between two design pixels of the square, in a few steps like a hand would.
- * Modifier keys go down once the drag has started, as a designer presses Shift mid-drag; with
- * `before` they are held from the press, as for a Shift marquee that adds to the selection.
- */
-async function drag(page: Page, from: { x: number; y: number }, to: { x: number; y: number }, modifiers: ('Shift' | 'Alt')[] = [], before = false) {
-  const a = await screenPoint(page, from.x, from.y)
-  const b = await screenPoint(page, to.x, to.y)
-  await dragScreen(page, a, b, modifiers, before)
-}
-async function dragScreen(page: Page, a: { x: number; y: number }, b: { x: number; y: number }, modifiers: ('Shift' | 'Alt')[] = [], before = false) {
-  await page.mouse.move(a.x, a.y)
-  if (before) for (const key of modifiers) await page.keyboard.down(key)
-  await page.mouse.down()
-  await page.mouse.move((a.x + b.x) / 2, (a.y + b.y) / 2)
-  if (!before) for (const key of modifiers) await page.keyboard.down(key)
-  await page.mouse.move(b.x, b.y, { steps: 6 })
-  await page.mouse.up()
-  for (const key of modifiers) await page.keyboard.up(key)
-  await page.evaluate(() => window.razzlr?.drawn())
-}
-async function click(page: Page, x: number, y: number, modifiers: 'Shift'[] = []) {
-  const at = await screenPoint(page, x, y)
-  for (const key of modifiers) await page.keyboard.down(key)
-  await page.mouse.click(at.x, at.y)
-  for (const key of modifiers) await page.keyboard.up(key)
-  await page.evaluate(() => window.razzlr?.drawn())
-}
-/** Where a handle of the selection box is on screen now. */
-async function handle(page: Page, which: string) {
-  const box = await page.locator(`.selection .handle[data-handle="${which}"]`).boundingBox()
-  if (!box) throw new Error(`no ${which} handle`)
-  return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
-}
-const zoomOf = (page: Page) => page.evaluate(() => window.razzlr?.camera().zoom ?? 1)
+const open = (browser: Browser) => openStage(browser, design())
 
 test('click, shift-click and marquee select; locked and hidden layers are not picked', async ({ browser }) => {
   test.setTimeout(90_000)
