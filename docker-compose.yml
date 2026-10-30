@@ -1,0 +1,36 @@
+# Local and CI services for live editing (#8): Postgres and the sync server.
+# Start with `docker compose up -d --wait`; the sync server runs from this checkout's installed packages.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: razzlr
+      POSTGRES_PASSWORD: razzlr-local
+      POSTGRES_DB: razzlr
+    ports:
+      - "127.0.0.1:55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U razzlr -d razzlr"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  sync:
+    image: node:22.22.0-slim
+    working_dir: /repo
+    command: ["node", "apps/sync/src/main.ts"]
+    environment:
+      DATABASE_URL: postgres://razzlr:razzlr-local@postgres:5432/razzlr
+      SYNC_PORT: "1234"
+    volumes:
+      - ./:/repo:ro
+    ports:
+      - "127.0.0.1:1234:1234"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:1234').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 2s
+      timeout: 3s
+      retries: 30

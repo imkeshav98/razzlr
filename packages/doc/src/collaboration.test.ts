@@ -1,7 +1,7 @@
 import { parseDesign } from '@razzlr/schema'
 import { describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
-import { loadDesign, openSession, readDesign, type DesignDoc, type Session } from './index.ts'
+import { anchorOffset, loadDesign, openSession, readDesign, textAnchor, type DesignDoc, type Session } from './index.ts'
 import { testDesign } from './test-design.ts'
 
 /** Two tabs on one design, each with its own doc, exchanging updates like the sync server would. */
@@ -66,6 +66,45 @@ describe('two tabs', () => {
       expect(readDesign(tabs.a).nodes.box?.props.x).toBeTypeOf('number')
       expect(readDesign(tabs.b)).toEqual(readDesign(tabs.a))
     }
+  })
+
+  it('a drag is one undo step, and undoing it leaves the other tab’s edits made during it', () => {
+    const { a, b, tabA, tabB, sync } = twoTabs()
+
+    tabA.gesture(() => {
+      for (let i = 1; i <= 30; i++) {
+        tabA.run('node.update', { ids: ['box'], patch: { x: 100 + i * 10 } })
+        if (i % 10 === 0) {
+          sync()
+          tabB.run('node.update', { ids: ['box'], patch: { y: 100 + i } })
+          sync()
+        }
+      }
+    })
+    tabA.run('node.update', { ids: ['box'], patch: { width: 50 } })
+    sync()
+
+    tabA.undo()
+    sync()
+    expect(readDesign(a).nodes.box?.props).toMatchObject({ x: 400, width: 200 })
+    tabA.undo()
+    sync()
+    expect(tabA.canUndo()).toBe(false)
+    for (const doc of [a, b]) expect(readDesign(doc).nodes.box?.props).toMatchObject({ x: 100, y: 130, width: 200 })
+  })
+
+  it('undoing a gesture that won over another tab’s edit restores the value from before the gesture', () => {
+    const { a, b, tabA, tabB, sync } = twoTabs()
+    tabB.run('node.update', { ids: ['box'], patch: { x: 7 } })
+    tabA.gesture(() => {
+      tabA.run('node.update', { ids: ['box'], patch: { x: 300 } })
+      tabA.run('node.update', { ids: ['box'], patch: { x: 310 } })
+    })
+    sync()
+    // Both tabs set x at once; whichever won, undoing A must not leave x unset.
+    tabA.undo()
+    sync()
+    for (const doc of [a, b]) expect(readDesign(doc).nodes.box?.props.x).toBeTypeOf('number')
   })
 
   it('two tabs overriding the same layer in a new format at once keep both changes', () => {
@@ -154,3 +193,24 @@ function randomCommand(tab: Session, doc: DesignDoc, random: () => number) {
     if (!(e instanceof Error) || e.name !== 'CommandError') throw e
   }
 }
+
+describe('a text anchor', () => {
+  it("keeps a caret on the same character while the other tab edits the text around it", () => {
+    const { a, tabB, sync } = twoTabs()
+    const anchor = textAnchor(a, 'headline', 6)
+    tabB.run('text.edit', { id: 'headline', op: { kind: 'insert', at: 0, text: 'Big ' } })
+    sync()
+    expect(anchorOffset(a, anchor)).toBe(10)
+    tabB.run('text.edit', { id: 'headline', op: { kind: 'delete', at: 0, length: 8 } })
+    sync()
+    expect(anchorOffset(a, anchor)).toBe(2)
+  })
+
+  it('is null for a layer that is gone or not text', () => {
+    const { a, tabA } = twoTabs()
+    expect(() => textAnchor(a, 'box', 0)).toThrow('"box" is not a text layer')
+    const anchor = textAnchor(a, 'headline', 3)
+    tabA.run('node.delete', { ids: ['headline'] })
+    expect(anchorOffset(a, anchor)).toBeNull()
+  })
+})

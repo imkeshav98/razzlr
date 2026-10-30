@@ -1,0 +1,29 @@
+{
+  "name": "@razzlr/editor",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hocuspocus/provider": "4.8.0",
+    "@razzlr/doc": "workspace:*",
+    "@razzlr/fonts": "workspace:*",
+    "@razzlr/renderer": "workspace:*",
+    "@razzlr/schema": "workspace:*",
+    "canvaskit-wasm": "0.42.0",
+    "yjs": "^13.6.27"
+  },
+  "devDependencies": {
+    "@razzlr/config": "workspace:*",
+    "@types/node": "^22.20.0",
+    "eslint": "^9.39.0",
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

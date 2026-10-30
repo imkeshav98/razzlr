@@ -1,0 +1,22 @@
+{
+  "name": "@razzlr/sync",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@hocuspocus/extension-database": "4.8.0",
+    "@hocuspocus/server": "4.8.0",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@razzlr/config": "workspace:*",
+    "@types/node": "^22.20.0",
+    "@types/pg": "^8.15.0",
+    "eslint": "^9.39.0",
+    "typescript": "~5.9.3"
+  }
+}

@@ -26,7 +26,11 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm --filter @razzlr/e2e exec playwright install --with-deps chromium
+      # Postgres and the sync server for the live editing checks (#8), from this checkout.
+      - run: docker compose up -d --wait
       - run: pnpm e2e
+      - if: failure()
+        run: docker compose logs sync
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
@@ -40,6 +44,13 @@ jobs:
           path: tests/pixels/output
           if-no-files-found: ignore
           retention-days: 7
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-editing
+          path: tests/e2e/output
+          if-no-files-found: ignore
+          retention-days: 30
       - if: always()
         uses: actions/upload-artifact@v4
         with:

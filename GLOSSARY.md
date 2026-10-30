@@ -98,8 +98,12 @@ Picking a property's value for one layer, page, format and variant by walking th
 ## Editing
 
 **Command**:
-A named, zod-validated change to a design that runs in one Yjs transaction and is one undo step. The only way anything writes to a design.
+A named, zod-validated change to a design that runs in one Yjs transaction and is one undo step, unless it runs inside a gesture. The only way anything writes to a design.
 _Avoid_: Action, mutation, operation
+
+**Gesture**:
+One continuous act of the person editing, such as a drag or typing into a text until they leave it. Every command run during a gesture is undone and redone together, as one undo step; other tabs still see each command as it runs.
+_Avoid_: Batch, transaction (a gesture spans many)
 
 **Version**:
 A snapshot of a design, either named on purpose or taken automatically before AI actions and every 30 minutes.

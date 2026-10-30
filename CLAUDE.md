@@ -11,7 +11,7 @@ pnpm + Turborepo monorepo. `apps/` deploy (web, api, sync, worker); `packages/` 
 ## Rules
 
 - Every document type and job contract is defined once in `packages/schema` (zod). Generated files are never edited by hand.
-- Nothing writes to the Yjs document except a **command** in `packages/doc`. One command is one undo step.
+- Nothing writes to the Yjs document except a **command** in `packages/doc`. One command is one undo step, or one gesture (a drag, a typing session) is, for the commands it runs (ADR-0004).
 - Exports are drawn on the CPU surface only. Never add an export path that reads pixels from WebGL.
 - Fonts and images are loaded from bytes we control, never from the system or the browser's decoder.
 - Never put server addresses or secrets in the repo.

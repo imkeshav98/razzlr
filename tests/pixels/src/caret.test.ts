@@ -1,6 +1,6 @@
-import { FALLBACK_FAMILY } from '@razzlr/fonts'
+import { FALLBACK_FAMILIES } from '@razzlr/fonts'
 import { loadFontFiles } from '@razzlr/fonts/node'
-import { caretAt, layoutText, makeResources, selectionBoxes } from '@razzlr/renderer'
+import { caretAt, caretPosition, layoutText, makeResources, selectionBoxes } from '@razzlr/renderer'
 import { loadCanvasKit } from '@razzlr/renderer/node'
 import { TextProps } from '@razzlr/schema'
 import type { Paragraph } from 'canvaskit-wasm'
@@ -8,7 +8,7 @@ import { afterAll, describe, expect, it } from 'vitest'
 import { MIXED, SAMPLES, type TextSample } from './text-samples.ts'
 
 const ck = await loadCanvasKit()
-const resources = makeResources(ck, { fonts: loadFontFiles(), fallbackFamilies: [FALLBACK_FAMILY], images: {} })
+const resources = makeResources(ck, { fonts: loadFontFiles(), fallbackFamilies: [...FALLBACK_FAMILIES], images: {} })
 afterAll(() => resources.delete())
 
 /** Arabic letters and marks run right to left; Latin and digits, Arabic-Indic ones included, left to right. */
@@ -78,6 +78,18 @@ describe.each([...SAMPLES, MIXED])('caret and selection in $label', (sample) => 
       const y = lineTop + line.height * share
       expect(caretAt(ck, paragraph, sample.text, leading, y)).toBe(g.start)
       expect(caretAt(ck, paragraph, sample.text, trailing, y)).toBe(g.end)
+    }
+  })
+
+  it('the caret is drawn where a click puts it', () => {
+    for (const g of cases) {
+      for (const offset of [g.start, g.end]) {
+        const at = caretPosition(ck, paragraph, sample.text, offset)
+        const clicked = caretAt(ck, paragraph, sample.text, at.x, at.y + at.height / 2)
+        // Where a left-to-right run meets right-to-left text, two offsets share one place on screen,
+        // so the click may pick the other one; it must still draw the caret in the same place.
+        expect(caretPosition(ck, paragraph, sample.text, clicked).x).toBeCloseTo(at.x, 3)
+      }
     }
   })
 
