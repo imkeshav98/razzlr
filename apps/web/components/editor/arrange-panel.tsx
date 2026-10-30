@@ -1,10 +1,12 @@
 'use client'
 
-// Align and distribute the selection from the inspector (#42): the same actions as their
-// shortcuts, which the tooltips show. Several layers line up with each other; one layer lines up
-// with the format, or the group or frame it is in.
+// Align, distribute and combine the selection from the inspector (#42, #44): the same actions as
+// their shortcuts, which the tooltips show. Several layers line up with each other; one layer
+// lines up with the format, or the group or frame it is in. Two or more shapes combine into a
+// live boolean.
 import {
-  AlignBottomIcon, AlignCenterHorizontalIcon, AlignCenterVerticalIcon, AlignLeftIcon, AlignRightIcon, AlignTopIcon, ColumnsIcon, RowsIcon, type Icon,
+  AlignBottomIcon, AlignCenterHorizontalIcon, AlignCenterVerticalIcon, AlignLeftIcon, AlignRightIcon, AlignTopIcon, ColumnsIcon, ExcludeSquareIcon,
+  IntersectSquareIcon, RowsIcon, SubtractSquareIcon, UniteSquareIcon, type Icon,
 } from '@phosphor-icons/react'
 import { SHORTCUTS, type Editor, type ShortcutAction } from '@razzlr/editor'
 import { useEffect, useState } from 'react'
@@ -13,7 +15,7 @@ import { format } from '../../lib/i18n/index.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { ICON_BUTTON } from './formats-panel.tsx'
 
-type Action = Extract<ShortcutAction, `align${string}` | `distribute${string}`>
+type Action = Extract<ShortcutAction, `align${string}` | `distribute${string}` | `boolean${string}`>
 const ALIGN: { action: Action; icon: Icon }[] = [
   { action: 'alignLeft', icon: AlignLeftIcon },
   { action: 'alignCentre', icon: AlignCenterHorizontalIcon },
@@ -25,6 +27,13 @@ const ALIGN: { action: Action; icon: Icon }[] = [
 const DISTRIBUTE: { action: Action; icon: Icon }[] = [
   { action: 'distributeHorizontal', icon: ColumnsIcon },
   { action: 'distributeVertical', icon: RowsIcon },
+]
+
+const COMBINE: { action: Action; icon: Icon }[] = [
+  { action: 'booleanUnion', icon: UniteSquareIcon },
+  { action: 'booleanSubtract', icon: SubtractSquareIcon },
+  { action: 'booleanIntersect', icon: IntersectSquareIcon },
+  { action: 'booleanExclude', icon: ExcludeSquareIcon },
 ]
 
 /** A shortcut as the tooltip shows it: Ctrl for Mod, or ⌘ and ⌥ on a Mac. */
@@ -80,6 +89,11 @@ export function ArrangePanel({ editor }: { editor: Editor }) {
         <span aria-hidden className="h-5 w-px bg-line" />
         <div role="group" aria-label={t.editor.arrange.distribute} className="flex gap-0.5">
           {DISTRIBUTE.map((d) => button(d, selected.length < 3))}
+        </div>
+      </div>
+      <div dir="ltr" className="flex items-center gap-1 px-3 pb-3">
+        <div role="group" aria-label={t.editor.arrange.combine} className="flex gap-0.5">
+          {COMBINE.map((c) => button(c, selected.length < 2))}
         </div>
       </div>
     </section>

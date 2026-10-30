@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { LAYER_PROPS, type LayerType } from './layers.ts'
+import { canHold, LAYER_PROPS, type LayerType } from './layers.ts'
 import { migrateDesign, SCHEMA_VERSION } from './migrate.ts'
 import { Paint } from './paint.ts'
 import { FormatId, FractionalIndex, NodeId, PageId } from './primitives.ts'
@@ -34,7 +34,7 @@ const layerOf = <T extends LayerType>(type: T) =>
   z.object({ type: z.literal(type), ...nodeBase, props: LAYER_PROPS[type] })
 
 export const Layer = z.discriminatedUnion('type', [
-  layerOf('frame'), layerOf('group'), layerOf('graphic'), layerOf('text'),
+  layerOf('frame'), layerOf('group'), layerOf('graphic'), layerOf('text'), layerOf('boolean'),
 ])
 export type Layer = z.infer<typeof Layer>
 
@@ -177,8 +177,10 @@ function checkStructure(d: Pick<DesignShape, 'meta' | 'formats' | 'pages' | 'nod
     const parent = d.nodes[node.parentId]
     if (!d.pages[node.parentId] && !parent) {
       fail(['nodes', id, 'parentId'], `parent "${node.parentId}" is neither a page nor a layer`)
-    } else if (parent && parent.type !== 'frame' && parent.type !== 'group') {
-      fail(['nodes', id, 'parentId'], `parent "${node.parentId}" is a ${parent.type}, which can't hold layers`)
+    } else if (parent && !canHold(parent.type, node.type)) {
+      fail(['nodes', id, 'parentId'], parent.type === 'boolean'
+        ? `parent "${node.parentId}" is a boolean, which holds only shapes and booleans`
+        : `parent "${node.parentId}" is a ${parent.type}, which can't hold layers`)
     }
     // Walk up towards the page. Reaching this layer again means it is inside itself; reaching
     // another repeat means a cycle above it, which is reported for the layers in that cycle.

@@ -7,7 +7,7 @@ import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
 import {
   caretAt, caretPosition, drawPage, layerPictures, layoutText, paragraphCache, render, renderDesign, resourceCache, sceneMemo, type ResourceCache, type Resources, type Scene, type SceneLayer,
 } from '@razzlr/renderer'
-import { imageAssetIds, LOCK_FLAGS, type Design } from '@razzlr/schema'
+import { canHold, imageAssetIds, isContainer, LOCK_FLAGS, type Design } from '@razzlr/schema'
 import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from 'canvaskit-wasm'
 import canvasKitModule from 'canvaskit-wasm/full'
 import { IndexeddbPersistence } from 'y-indexeddb'
@@ -16,6 +16,7 @@ import { fit, toScreen, toWorld, visibleRect, zoomAt, type Camera, type Viewport
 import { frameAt, frameGrid, intersects, type Frame, type Rect } from './grid.ts'
 import { hitTest, type Point } from './hit-test.ts'
 import { align, distribute, type Alignment, type Distribution, type Offset } from './arrange.ts'
+import { clickedBox, drawnBox, isShapeTool, newShape, type ShapeTool } from './draw-tools.ts'
 import { rulerParts } from './rulers.ts'
 import { NUDGE, NUDGE_FAR, shortcutFor, type ShortcutAction } from './shortcuts.ts'
 import { SNAP_DISTANCE, snapMove, snapResize, snapTargets, type Gap, type Guide, type Targets } from './snap.ts'
@@ -55,8 +56,11 @@ interface Picked { id: string; frame: string }
 interface Selection { ids: string[]; frame: string }
 /** The caret is anchored in the text, so edits arriving from other tabs carry it along. */
 interface Editing extends Picked { caret: TextAnchor; endGesture: () => void }
-/** What the select tool does with a drag on empty canvas and the hand tool with any drag. */
-export type Tool = 'select' | 'hand'
+/** What a drag on the stage does: select and move, pan with the hand, or draw a shape (#44). */
+export type Tool = 'select' | 'hand' | ShapeTool
+
+/** How far, in screen pixels, a press can wander and still draw a shape as a click does. */
+const CLICK_SLOP = 3
 
 /** Where the design's edits are, once it is open. */
 export type SaveState = 'Saved' | 'Saving' | 'Offline'
@@ -242,6 +246,14 @@ function live(
   let rulers = true
   /** Told when the selection changes, so panels can follow it. */
   const selectionListeners = new Set<(ids: string[]) => void>()
+  /** Told when the tool changes, by a key or after drawing a shape, so the tool dock follows. */
+  const toolListeners = new Set<(tool: Tool) => void>()
+  function setTool(next: Tool) {
+    if (next === tool) return
+    tool = next
+    showCursor()
+    for (const listener of toolListeners) listener(tool)
+  }
   let lastSelection = ''
   /** The layer under the pointer, outlined while nothing is being dragged. */
   let hovered: Picked | null = null
@@ -772,6 +784,7 @@ function live(
     | { kind: 'resize'; frame: Frame; around: Box[]; handle: Handle; outer: Box; grab: Point; roots: string[]; boxes: Map<string, Box>; targets: Targets | null; end: () => void }
     | { kind: 'rotate'; frame: Frame; around: Box[]; outer: Box; from: number; roots: string[]; boxes: Map<string, Box>; end: () => void }
     | { kind: 'marquee'; from: Point; to: Point; base: string[]; baseFrame: string | null }
+    | { kind: 'draw'; tool: ShapeTool; frame: Frame; around: Box[]; from: Point; id: string; moved: boolean; roots: string[]; end: () => void }
   let gesture: Gesture | null = null
   /** A click on one of several selected layers selects it alone, unless the pointer moves first. */
   let clickedAlone: string | null = null
@@ -979,7 +992,7 @@ function live(
   const ROTATE_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M6 15a7 7 0 1 1 3 4.7" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/><path d="M6 15a7 7 0 1 1 3 4.7" fill="none" stroke="black" stroke-width="1.75" stroke-linecap="round"/><path d="M3 12l3 3.5 3.5-3" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12l3 3.5 3.5-3" fill="none" stroke="black" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>')}") 12 12, crosshair`
   let hoverCursor = ''
   const showCursor = () => {
-    canvas.style.cursor = pan ? 'grabbing' : panning() ? 'grab' : hoverCursor
+    canvas.style.cursor = pan ? 'grabbing' : panning() ? 'grab' : isShapeTool(tool) ? 'crosshair' : hoverCursor
   }
   function cursorFor(screen: Point) {
     if (gesture?.kind === 'resize' || gesture?.kind === 'rotate') return
@@ -1002,6 +1015,10 @@ function live(
     if (e.button !== 0) return
     const screen = screenOf(e)
     const at = pointIn(e)
+    if (isShapeTool(tool)) {
+      if (at) startDrawing(e, tool, at)
+      return
+    }
     const deepest = at && hitTest(cached(at.frame).scene.layers, at.p, pickable)
     if (at && editing && deepest?.id === editing.id && editing.frame === at.frame.key) {
       editing.caret = textAnchor(doc, editing.id, caretFromPoint(at.p))
@@ -1100,6 +1117,10 @@ function live(
     }
     clickedAlone = null
     const p = localTo({ x: world.x - gesture.frame.x, y: world.y - gesture.frame.y }, gesture.around)
+    if (gesture.kind === 'draw') {
+      drawTo(gesture, p, e.shiftKey, e.altKey)
+      return
+    }
     // Holding Ctrl (⌘ on a Mac) turns snapping off for as long as it is held.
     const snap = !(e.ctrlKey || e.metaKey)
     if (gesture.kind === 'move') moveTo(gesture, p, e.shiftKey, snap)
@@ -1107,8 +1128,54 @@ function live(
     else rotateTo(gesture, p, e.shiftKey)
   }, on)
 
+  /**
+   * Starts drawing a shape where the pointer went down (#44): inside the group, frame or boolean
+   * double-clicked into if the press is in it, otherwise on the page. The new layer and every
+   * change the drag makes to it are one undo step.
+   */
+  function startDrawing(e: PointerEvent, shape: ShapeTool, at: { frame: Frame; p: Point }) {
+    stopEditing()
+    const now = session.design()
+    const inside = entered ? now.nodes[entered] : undefined
+    const parentId = entered && inside && canHold(inside.type, 'graphic') ? entered : at.frame.pageId
+    const around = containersOf(at.frame, parentId, now)
+    const from = localTo(at.p, around)
+    const end = session.beginGesture()
+    let id = ''
+    if (!runQuietly(() => { id = session.run('node.create', { parentId, layer: newShape(shape) }) })) {
+      end()
+      return
+    }
+    canvas.setPointerCapture(e.pointerId)
+    gesture = { kind: 'draw', tool: shape, frame: at.frame, around, from, id, moved: false, roots: [id], end }
+    runQuietly(() => session.run('node.update', { ids: [id], patch: drawnBox(shape, from, from, false, false) }))
+  }
+
+  /** Grows the shape being drawn to the pointer; a few screen pixels count as a click still. */
+  function drawTo(g: Extract<Gesture, { kind: 'draw' }>, p: Point, shift: boolean, alt: boolean) {
+    if (!g.moved && Math.hypot(p.x - g.from.x, p.y - g.from.y) * camera.zoom < CLICK_SLOP) return
+    g.moved = true
+    runQuietly(() => session.run('node.update', { ids: [g.id], patch: drawnBox(g.tool, g.from, p, shift, alt) }))
+  }
+
+  /** A click draws the shape at its usual size; either way the new shape is selected and the select tool comes back. */
+  function finishDrawing(g: Extract<Gesture, { kind: 'draw' }>) {
+    if (!g.moved) runQuietly(() => session.run('node.update', { ids: [g.id], patch: clickedBox(g.tool, g.from) }))
+    hug([g.id])
+    g.end()
+    select([g.id], g.frame.key)
+    setTool('select')
+  }
+
   const endDrag = () => {
     snapped = null
+    if (gesture?.kind === 'draw') {
+      finishDrawing(gesture)
+      gesture = null
+      showCursor()
+      drawOverlay()
+      return
+    }
     if (gesture && gesture.kind !== 'marquee') {
       hug(gesture.roots)
       gesture.end()
@@ -1135,8 +1202,8 @@ function live(
     if (!at || !hit) return
     const picked = target(hit.id, at.frame.key)
     const container = design.nodes[picked]
-    if (picked !== hit.id && (container?.type === 'group' || container?.type === 'frame')) {
-      // Into the group or frame: what is directly inside it under the pointer gets picked.
+    if (picked !== hit.id && container && isContainer(container.type)) {
+      // Into the group, frame or boolean: what is directly inside it under the pointer gets picked.
       stopEditing()
       entered = picked
       selection = null
@@ -1177,6 +1244,14 @@ function live(
     const now = session.design()
     const live = ids.filter((id) => now.nodes[id])
     if (live.length > 0) runQuietly(() => session.run('node.hug', { ids: live }))
+  }
+
+  /** Combines the selected shapes into a live boolean (#44) and selects it. One undo step. */
+  function combine(op: 'union' | 'subtract' | 'intersect' | 'exclude') {
+    const frame = selection && frameOf(selection.frame)
+    if (!frame) return
+    let id = ''
+    if (runQuietly(() => { id = session.run('node.boolean', { ids: roots(), op }) })) select([id], frame.key)
   }
 
   /**
@@ -1252,6 +1327,12 @@ function live(
         rulers = !rulers
         drawOverlay()
       },
+      toolSelect: () => setTool('select'),
+      toolHand: () => setTool('hand'),
+      toolRect: () => setTool('rect'),
+      toolEllipse: () => setTool('ellipse'),
+      toolLine: () => setTool('line'),
+      toolArrow: () => setTool('arrow'),
     }
     const viewAction = view[action]
     if (viewAction) {
@@ -1305,8 +1386,17 @@ function live(
         break
       case 'distributeVertical': distributeAlong('vertical')
         break
+      case 'booleanUnion': combine('union')
+        break
+      case 'booleanSubtract': combine('subtract')
+        break
+      case 'booleanIntersect': combine('intersect')
+        break
+      case 'booleanExclude': combine('exclude')
+        break
       case 'ungroup': {
-        const groups = ids.filter((id) => nodes[id]?.type === 'group')
+        // Booleans come apart the same way, their shapes showing their own paints again.
+        const groups = ids.filter((id) => nodes[id]?.type === 'group' || nodes[id]?.type === 'boolean')
         if (groups.length === 0) return false
         let freed: string[] = []
         if (runQuietly(() => { freed = session.run('node.ungroup', { ids: groups }) })) {
@@ -1493,9 +1583,12 @@ function live(
       const bottom = Math.max(...row.map((f) => f.y + f.height))
       setCamera(fit({ x: first.x, y: first.y, width: right - first.x, height: bottom - first.y }, viewport, focused ? FOCUS_PADDING : undefined))
     },
-    setTool(next: Tool) {
-      tool = next
-      showCursor()
+    setTool,
+    tool: () => tool,
+    /** Calls back with the tool whenever it changes, by a key or after drawing a shape. */
+    onTool(listener: (tool: Tool) => void) {
+      toolListeners.add(listener)
+      return () => toolListeners.delete(listener)
     },
     /** Where a design pixel of one frame is on screen now, in client coordinates; the first page and the primary format by default. */
     screenPoint(x: number, y: number, pageId?: string, formatId?: string): Point {
@@ -1529,6 +1622,7 @@ function live(
       cancelAnimationFrame(pending)
       drawListeners.clear()
       selectionListeners.clear()
+      toolListeners.clear()
       doc.off('update', redraw)
       for (const entry of frames.values()) entry.picture?.delete()
       frames.clear()

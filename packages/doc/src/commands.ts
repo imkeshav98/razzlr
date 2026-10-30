@@ -1,4 +1,4 @@
-import { Format, FormatId, formatIdOf, formatSizeProblem, Layer, LAYER_PROPS, LayerLock, LOCK_FLAGS, type Layer as LayerT, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
+import { BooleanOp, canHold, Format, FormatId, formatIdOf, formatSizeProblem, Layer, LAYER_PROPS, LayerLock, LOCK_FLAGS, type Layer as LayerT, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
 import { generateKeyBetween } from 'fractional-indexing'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
@@ -34,10 +34,14 @@ const topIndex = (design: Design, parentId: string) => indexBetween(childrenOf(d
 const idProblem = ({ r }: CommandContext, id: string | undefined) =>
   id && (r.nodes.has(id) || r.pages.has(id) || r.formats.has(id)) ? `id "${id}" is taken` : undefined
 
-const parentProblem = (design: Design, parentId: string) => {
+const parentProblem = (design: Design, parentId: string, type: string) => {
   const parent = design.nodes[parentId]
   if (!design.pages[parentId] && !parent) return `parent "${parentId}" is neither a page nor a layer`
-  if (parent && parent.type !== 'frame' && parent.type !== 'group') return `parent "${parentId}" is a ${parent.type}, which can't hold layers`
+  if (parent && !canHold(parent.type, type)) {
+    return parent.type === 'boolean'
+      ? `parent "${parentId}" is a boolean, which holds only shapes and booleans`
+      : `parent "${parentId}" is a ${parent.type}, which can't hold layers`
+  }
   return undefined
 }
 
@@ -67,7 +71,7 @@ export const nodeCreate = defineCommand({
     const { design } = ctx
     const taken = idProblem(ctx, id)
     if (taken) return taken
-    const problem = parentProblem(design, parentId)
+    const problem = parentProblem(design, parentId, layer.type)
     if (problem) return problem
     const parsed = Layer.safeParse({ ...layer, parentId, index: 'a0' })
     if (!parsed.success) return parsed.error.issues.map((i) => `layer.${i.path.join('.')}: ${i.message}`).join('; ')
@@ -151,8 +155,9 @@ export const nodeMove = defineCommand({
   name: 'node.move',
   input: z.object({ id: NodeId, parentId: z.union([PageId, NodeId]), before: NodeId.optional() }),
   check: ({ design }, { id, parentId, before }) => {
-    if (!design.nodes[id]) return `no layer "${id}"`
-    const problem = parentProblem(design, parentId)
+    const node = design.nodes[id]
+    if (!node) return `no layer "${id}"`
+    const problem = parentProblem(design, parentId, node.type)
     if (problem) return problem
     if (isInside(design, parentId, id)) return `can't move "${id}" inside itself`
     if (before === id) return `can't place "${id}" before itself`
@@ -310,6 +315,41 @@ const depthOf = (design: Design, id: string) => {
   return depth
 }
 
+/** What wrapping layers in a new group or boolean checks: they exist, share a parent, and the parent can hold the wrapper. */
+function wrapProblem(ctx: CommandContext, ids: string[], id: string | undefined, type: 'group' | 'boolean') {
+  const { design } = ctx
+  const missing = ids.map((layer) => (design.nodes[layer] ? undefined : `no layer "${layer}"`)).find(Boolean)
+  if (missing) return missing
+  if (new Set(ids.map((layer) => design.nodes[layer]?.parentId)).size > 1) return `layers to ${type === 'group' ? 'group' : 'combine'} must share a parent`
+  const parentId = design.nodes[ids[0] as string]?.parentId as string
+  return parentProblem(design, parentId, type) ?? idProblem(ctx, id)
+}
+
+/**
+ * Puts layers that share a parent inside a new layer of `type` where the topmost of them was,
+ * without moving anything on screen: its box hugs them in each format.
+ */
+function wrap({ r, design }: CommandContext, ids: string[], id: string, layer: { type: 'group' | 'boolean'; name: string; props?: Record<string, unknown> }) {
+  const parentId = design.nodes[ids[0] as string]?.parentId as string
+  const inside = childrenOf(design, parentId).filter(([child]) => ids.includes(child))
+  const top = inside.at(-1)?.[1] as LayerT
+  const place = new Placement(design)
+  const boxIn = (scope: Parameters<Placement['get']>[0]) => boundsOf(inside.map(([child]) => place.get(scope, child)))
+  const base = boxIn('base')
+  const box = { x: round(base.x), y: round(base.y), width: round(base.width), height: round(base.height) }
+  r.nodes.set(id, toYNode(Layer.parse({ type: layer.type, name: layer.name, parentId, index: top.index, props: { ...layer.props, ...box } })))
+  for (const scope of place.scopes) {
+    if (scope === 'base') continue
+    const b = boxIn(scope)
+    for (const [path, value] of Object.entries({ x: b.x, y: b.y, width: b.width, height: b.height })) {
+      if (Math.abs(round(value) - box[path as keyof typeof box]) >= 0.005) r.overrides.set(overrideKey(scope, id, path), round(value))
+    }
+  }
+  // Their indexes already order them; they only change parent.
+  for (const [child] of inside) r.nodes.get(child)?.set('parentId', id)
+  return id
+}
+
 /**
  * Wraps layers that share a parent in a new group where the topmost of them was, without moving
  * anything on screen. The group's box hugs them in each format. Returns the group's id.
@@ -317,39 +357,38 @@ const depthOf = (design: Design, id: string) => {
 export const nodeGroup = defineCommand({
   name: 'node.group',
   input: z.object({ ids: NodeId.array().min(1), id: NodeId.optional(), name: z.string().default('Group') }),
+  check: (ctx, { ids, id }) => wrapProblem(ctx, ids, id, 'group'),
+  apply: (ctx, { ids, id = nanoid(), name }) => wrap(ctx, ids, id, { type: 'group', name }),
+})
+
+/**
+ * Combines shapes that share a parent into a live boolean (#44) where the topmost of them was,
+ * without moving them. It paints with the bottom shape's fills and strokes, the shape the others
+ * add to or cut from. Returns the boolean's id.
+ */
+export const nodeBoolean = defineCommand({
+  name: 'node.boolean',
+  input: z.object({ ids: NodeId.array().min(2), op: BooleanOp, id: NodeId.optional(), name: z.string().optional() }),
   check: (ctx, { ids, id }) => {
-    const { design } = ctx
-    const missing = ids.map((layer) => (design.nodes[layer] ? undefined : `no layer "${layer}"`)).find(Boolean)
-    if (missing) return missing
-    if (new Set(ids.map((layer) => design.nodes[layer]?.parentId)).size > 1) return 'layers to group must share a parent'
-    return idProblem(ctx, id)
-  },
-  apply: ({ r, design }, { ids, id = nanoid(), name }) => {
-    const parentId = design.nodes[ids[0] as string]?.parentId as string
-    const inside = childrenOf(design, parentId).filter(([child]) => ids.includes(child))
-    const top = inside.at(-1)?.[1] as LayerT
-    const place = new Placement(design)
-    const boxIn = (scope: Parameters<Placement['get']>[0]) => boundsOf(inside.map(([child]) => place.get(scope, child)))
-    const base = boxIn('base')
-    const box = { x: round(base.x), y: round(base.y), width: round(base.width), height: round(base.height) }
-    r.nodes.set(id, toYNode(Layer.parse({ type: 'group', name, parentId, index: top.index, props: box })))
-    for (const scope of place.scopes) {
-      if (scope === 'base') continue
-      const b = boxIn(scope)
-      for (const [path, value] of Object.entries({ x: b.x, y: b.y, width: b.width, height: b.height })) {
-        if (Math.abs(round(value) - box[path as keyof typeof box]) >= 0.005) r.overrides.set(overrideKey(scope, id, path), round(value))
-      }
+    for (const layer of ids) {
+      const type = ctx.design.nodes[layer]?.type
+      if (type && type !== 'graphic' && type !== 'boolean') return `"${layer}" is a ${type}; only shapes and booleans combine`
     }
-    // Their indexes already order them; they only change parent.
-    for (const [child] of inside) r.nodes.get(child)?.set('parentId', id)
-    return id
+    return wrapProblem(ctx, ids, id, 'boolean')
+  },
+  apply: (ctx, { ids, op, id = nanoid(), name }) => {
+    const parentId = ctx.design.nodes[ids[0] as string]?.parentId as string
+    const bottom = childrenOf(ctx.design, parentId).find(([child]) => ids.includes(child))?.[1]
+    const paint = bottom && (bottom.type === 'graphic' || bottom.type === 'boolean') ? { fills: bottom.props.fills, strokes: bottom.props.strokes } : {}
+    const names = { union: 'Union', subtract: 'Subtract', intersect: 'Intersect', exclude: 'Exclude' } as const
+    return wrap(ctx, ids, id, { type: 'boolean', name: name ?? names[op], props: { op, ...paint } })
   },
 })
 
 /**
- * Takes the layers out of groups and removes the groups, without moving anything on screen: a
- * turned group's turn goes into each layer it held, and a group hidden in a format hides them
- * there. The layers take the group's place among its siblings. Returns their ids, in order.
+ * Takes the layers out of groups or booleans and removes them, without moving anything on
+ * screen: a turned group's turn goes into each layer it held, and a group hidden in a format
+ * hides them there. Shapes out of a boolean show their own paints again. The layers take the group's place among its siblings. Returns their ids, in order.
  */
 export const nodeUngroup = defineCommand({
   name: 'node.ungroup',
@@ -358,7 +397,7 @@ export const nodeUngroup = defineCommand({
     for (const id of ids) {
       const node = design.nodes[id]
       if (!node) return `no layer "${id}"`
-      if (node.type !== 'group') return `"${id}" is a ${node.type}, not a group`
+      if (node.type !== 'group' && node.type !== 'boolean') return `"${id}" is a ${node.type}, not a group or boolean`
       const locked = lockProblem(id, node, 'delete')
       if (locked) return locked
     }
@@ -408,8 +447,8 @@ export const nodeUngroup = defineCommand({
 })
 
 /**
- * Fits groups to what they hold, in every format: each named group, and every group the named
- * layers are in, innermost first. A turned group's layers shift with its new centre so nothing
+ * Fits groups and booleans to what they hold, in every format: each named one, and every one the
+ * named layers are in, innermost first. A turned group's layers shift with its new centre so nothing
  * moves on screen. The editor runs it after a change to layers inside a group, in the same step.
  */
 export const nodeHug = defineCommand({
@@ -420,7 +459,8 @@ export const nodeHug = defineCommand({
     const groups = new Set<string>()
     for (const id of ids) {
       for (let up: string | undefined = id; up && design.nodes[up]; up = design.nodes[up]?.parentId) {
-        if (design.nodes[up]?.type === 'group') groups.add(up)
+        const type = design.nodes[up]?.type
+        if (type === 'group' || type === 'boolean') groups.add(up)
       }
     }
     const place = new Placement(design)
@@ -654,6 +694,7 @@ export const COMMANDS = {
   'node.reorder': nodeReorder,
   'node.duplicate': nodeDuplicate,
   'node.group': nodeGroup,
+  'node.boolean': nodeBoolean,
   'node.ungroup': nodeUngroup,
   'node.hug': nodeHug,
   'text.edit': textEdit,

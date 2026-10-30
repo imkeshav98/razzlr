@@ -52,6 +52,14 @@ _Avoid_: Element, object, block, item
 A layer made of a shape plus fills, strokes and effects. Photos and video are fills on a graphic, not layers of their own.
 _Avoid_: Image layer, shape layer, rectangle layer
 
+**Shape**:
+The outline a graphic draws: a rectangle (with a radius per corner), ellipse, polygon, star, line or a free path. A line's ends can be arrows, triangles or circles.
+_Avoid_: Primitive, vector (a path is one kind of shape)
+
+**Boolean**:
+A layer that combines the shapes inside it, live, by union, subtract, intersect or exclude, and paints the result with its own fills and strokes. It holds only graphics and booleans; editing one of them changes the result.
+_Avoid_: Compound path, merged shape (it is never flattened)
+
 **Fill**:
 One paint on a layer: solid, gradient (linear, radial or angular), image or video. A crop is the fill's transform.
 _Avoid_: Background, colour (when a paint is meant)

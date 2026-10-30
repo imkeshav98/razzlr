@@ -29,6 +29,8 @@ function laidOut(ck: CanvasKit, props: TextLayer['props'], resources: Resources)
 type Box = { x: number; y: number; width: number; height: number }
 type TextLayer = Extract<SceneLayer, { type: 'text' }>
 type GraphicLayer = Extract<SceneLayer, { type: 'graphic' }>
+type BooleanLayer = Extract<SceneLayer, { type: 'boolean' }>
+type Stroke = GraphicLayer['props']['strokes'][number]
 
 /** A clip wider than any page, so clipping to it changes nothing. */
 const EVERYWHERE = Float32Array.of(-1e6, -1e6, 1e6, 1e6)
@@ -141,13 +143,25 @@ function blurBehind(ck: CanvasKit, canvas: Canvas, layer: SceneLayer, radius: nu
 
 /** The outline a background blur fills: a shape's own path, otherwise the layer's box. */
 function outlineOf(ck: CanvasKit, layer: SceneLayer): Path {
-  return layer.type === 'graphic' ? shapePath(ck, layer) : rectPath(ck, layer.props)
+  if (layer.type === 'graphic') return shapePath(ck, layer)
+  if (layer.type === 'boolean') return booleanPath(ck, layer)
+  return rectPath(ck, layer.props)
 }
 
 function drawContent(ck: CanvasKit, canvas: Canvas, layer: SceneLayer, resources: Resources) {
   switch (layer.type) {
-    case 'graphic':
-      return drawGraphic(ck, canvas, layer, resources)
+    case 'graphic': {
+      const path = shapePath(ck, layer)
+      drawShape(ck, canvas, path, layer.props, resources, layer.props.shape.kind === 'line' ? layer.props.shape : null)
+      path.delete()
+      return
+    }
+    case 'boolean': {
+      const path = booleanPath(ck, layer)
+      drawShape(ck, canvas, path, layer.props, resources, null)
+      path.delete()
+      return
+    }
     case 'text':
       return drawText(ck, canvas, layer, resources)
     case 'frame': {
@@ -234,14 +248,13 @@ function rotated(box: Box, about: Box, degrees: number): Box {
 /** What a layer's content can touch, in its own unrotated coordinates. */
 function drawnBounds(ck: CanvasKit, layer: SceneLayer, resources: Resources): Box {
   switch (layer.type) {
-    case 'graphic': {
-      const path = shapePath(ck, layer)
+    case 'graphic':
+    case 'boolean': {
+      const path = layer.type === 'graphic' ? shapePath(ck, layer) : booleanPath(ck, layer)
       const [left = 0, top = 0, right = 0, bottom = 0] = path.computeTightBounds()
       path.delete()
-      // A mitred corner reaches up to the miter limit × half the width past the outline; a square cap √2 × half.
-      const reach = Math.max(0, ...layer.props.strokes.map((s) =>
-        (s.align === 'inside' ? 0 : s.align === 'center' ? s.width / 2 : s.width) * (s.join === 'miter' ? Math.max(s.miterLimit, Math.SQRT2) : Math.SQRT2)))
-      return outset({ x: left, y: top, width: right - left, height: bottom - top }, reach)
+      const line = layer.type === 'graphic' && layer.props.shape.kind === 'line'
+      return outset({ x: left, y: top, width: right - left, height: bottom - top }, strokeReach(layer.props.strokes, line))
     }
     case 'text':
       return textBounds(ck, layer, resources)
@@ -251,6 +264,18 @@ function drawnBounds(ck: CanvasKit, layer: SceneLayer, resources: Resources): Bo
     case 'group':
       return childrenBounds(ck, layer, resources, { x: layer.props.x, y: layer.props.y, width: 0, height: 0 })
   }
+}
+
+/**
+ * How far strokes reach past the outline: a mitred corner up to the miter limit × half the
+ * width, a square cap √2 × half; a line's ends reach END_SIZE widths.
+ */
+function strokeReach(strokes: readonly Stroke[], line: boolean) {
+  return Math.max(0, ...strokes.map((s) => {
+    if (line) return s.width * END_SIZE
+    const half = s.align === 'inside' ? 0 : s.align === 'center' ? s.width / 2 : s.width
+    return half * (s.join === 'miter' ? Math.max(s.miterLimit, Math.SQRT2) : Math.SQRT2)
+  }))
 }
 
 /** A container's own box grown by everything its children draw, each turned as it is drawn. */
@@ -305,11 +330,22 @@ function shapePath(ck: CanvasKit, layer: GraphicLayer): Path {
   const { x, y, width, height, shape } = layer.props
   switch (shape.kind) {
     case 'rect': {
+      if (shape.corners) {
+        // Skia scales radii down together when two corners would overlap, as CSS does.
+        const [a, b, c, d] = shape.corners
+        return new ck.PathBuilder().addRRect(Float32Array.of(x, y, x + width, y + height, a, a, b, b, c, c, d, d)).detachAndDelete()
+      }
       const r = Math.min(shape.cornerRadius, width / 2, height / 2)
       return new ck.PathBuilder().addRRect(ck.RRectXY(ck.XYWHRect(x, y, width, height), r, r)).detachAndDelete()
     }
     case 'ellipse':
       return new ck.PathBuilder().addOval(ck.XYWHRect(x, y, width, height)).detachAndDelete()
+    case 'polygon':
+      return roundedPolygon(ck, around(layer.props, shape.sides, () => 1), shape.cornerRadius)
+    case 'star':
+      return roundedPolygon(ck, around(layer.props, shape.points * 2, (i) => (i % 2 === 0 ? 1 : shape.innerRadius)), shape.cornerRadius)
+    case 'line':
+      return new ck.PathBuilder().moveTo(x, y + height / 2).lineTo(x + width, y + height / 2).detachAndDelete()
     case 'path': {
       // Path data is drawn at its own size, placed at x and y. Scaling it with width and height
       // arrives with adapt, which is the first thing to resize a path per format.
@@ -325,10 +361,88 @@ function shapePath(ck: CanvasKit, layer: GraphicLayer): Path {
   }
 }
 
-function drawGraphic(ck: CanvasKit, canvas: Canvas, layer: GraphicLayer, resources: Resources) {
-  const { props } = layer
-  const path = shapePath(ck, layer)
-  for (const fill of props.fills) fillPath(ck, canvas, path, fill, props, resources)
+/**
+ * `count` corners evenly round a circle, the first at the top, each at `scale(i)` of the way out
+ * from the centre (a regular polygon, or a star's outer and inner corners), then stretched so
+ * they fill the box: a triangle's base sits on the box's bottom edge, as in other design tools.
+ */
+function around(box: Box, count: number, scale: (i: number) => number): [number, number][] {
+  const unit = Array.from({ length: count }, (_, i) => {
+    const a = -Math.PI / 2 + (2 * Math.PI * i) / count
+    return [scale(i) * Math.cos(a), scale(i) * Math.sin(a)] as const
+  })
+  const xs = unit.map(([x]) => x)
+  const ys = unit.map(([, y]) => y)
+  const left = Math.min(...xs)
+  const top = Math.min(...ys)
+  const sx = box.width / (Math.max(...xs) - left || 1)
+  const sy = box.height / (Math.max(...ys) - top || 1)
+  return unit.map(([x, y]) => [box.x + (x - left) * sx, box.y + (y - top) * sy])
+}
+
+/**
+ * A closed outline through `points` with each corner rounded by `radius`, as far as the corner
+ * allows: an arc never runs past half of either edge it meets.
+ */
+function roundedPolygon(ck: CanvasKit, points: [number, number][], radius: number): Path {
+  const builder = new ck.PathBuilder()
+  const at = (i: number) => points[(i + points.length) % points.length] as [number, number]
+  if (radius <= 0) return builder.addPolygon(points.flat(), true).detachAndDelete()
+  const [lx, ly] = at(-1)
+  const [fx, fy] = at(0)
+  builder.moveTo((lx + fx) / 2, (ly + fy) / 2)
+  for (let i = 0; i < points.length; i++) {
+    const [px, py] = at(i - 1)
+    const [vx, vy] = at(i)
+    const [nx, ny] = at(i + 1)
+    const a = Math.hypot(px - vx, py - vy)
+    const b = Math.hypot(nx - vx, ny - vy)
+    const angle = Math.acos(Math.max(-1, Math.min(1, ((px - vx) * (nx - vx) + (py - vy) * (ny - vy)) / (a * b || 1))))
+    const r = Math.min(radius, (Math.min(a, b) / 2) * Math.tan(angle / 2))
+    builder.arcToTangent(vx, vy, (vx + nx) / 2, (vy + ny) / 2, r)
+  }
+  builder.close()
+  return builder.detachAndDelete()
+}
+
+/**
+ * A boolean's outline: its shapes' outlines, each turned as it is drawn, combined in order. Lines
+ * enclose nothing, so they add nothing.
+ */
+function booleanPath(ck: CanvasKit, layer: BooleanLayer): Path {
+  const op = { union: ck.PathOp.Union, subtract: ck.PathOp.Difference, intersect: ck.PathOp.Intersect, exclude: ck.PathOp.XOR }[layer.props.op]
+  let result: Path | null = null
+  for (const child of layer.children) {
+    if (child.type === 'graphic' && child.props.shape.kind === 'line') continue
+    if (child.type !== 'graphic' && child.type !== 'boolean') continue
+    const own = child.type === 'graphic' ? shapePath(ck, child) : booleanPath(ck, child)
+    const { x, y, width, height, rotation } = child.props
+    const builder = new ck.PathBuilder(own)
+    own.delete()
+    const outline = builder.transform(ck.Matrix.rotated((rotation * Math.PI) / 180, x + width / 2, y + height / 2)).detachAndDelete()
+    if (!result) {
+      result = outline
+      continue
+    }
+    // Path.makeCombined is typed but not bound in this build; the factory is.
+    const combined: Path | null = ck.Path.MakeFromOp(result, outline, op)
+    outline.delete()
+    if (combined) {
+      result.delete()
+      result = combined
+    }
+  }
+  return result ?? new ck.PathBuilder().detachAndDelete()
+}
+
+/** How long a line's end is, in widths of the stroke it ends. */
+const END_SIZE = 3
+
+type LineShape = Extract<GraphicLayer['props']['shape'], { kind: 'line' }>
+
+/** Fills and strokes an outline; a line's strokes are always centred, and draw its ends. */
+function drawShape(ck: CanvasKit, canvas: Canvas, path: Path, props: GraphicLayer['props'] | BooleanLayer['props'], resources: Resources, line: LineShape | null) {
+  if (!line) for (const fill of props.fills) fillPath(ck, canvas, path, fill, props, resources)
   for (const stroke of props.strokes) {
     const paint = paintFor(ck, stroke.paint, props, resources)
     if (!paint) continue
@@ -343,6 +457,13 @@ function drawGraphic(ck: CanvasKit, canvas: Canvas, layer: GraphicLayer, resourc
       dash.delete()
     }
     canvas.save()
+    if (line) {
+      paint.setStrokeWidth(stroke.width)
+      drawLine(ck, canvas, props, line, stroke, paint)
+      canvas.restore()
+      paint.delete()
+      continue
+    }
     if (stroke.align === 'center') {
       paint.setStrokeWidth(stroke.width)
     } else {
@@ -354,7 +475,41 @@ function drawGraphic(ck: CanvasKit, canvas: Canvas, layer: GraphicLayer, resourc
     canvas.restore()
     paint.delete()
   }
-  path.delete()
+}
+
+/**
+ * A line with one stroke, and its ends: an arrow is two strokes back from the tip, a triangle
+ * and a circle are filled, END_SIZE widths long. The line stops short under a triangle, so its
+ * point stays sharp.
+ */
+function drawLine(ck: CanvasKit, canvas: Canvas, box: Box, line: LineShape, stroke: Stroke, paint: CkPaint) {
+  const w = stroke.width
+  const size = w * END_SIZE
+  const y = box.y + box.height / 2
+  const from = box.x + (line.start === 'triangle' ? size / 2 : 0)
+  const to = box.x + box.width - (line.end === 'triangle' ? size / 2 : 0)
+  if (to > from) canvas.drawLine(from, y, to, y, paint)
+  // Ends are solid, whatever the dashes.
+  paint.setPathEffect(null)
+  for (const [end, tip, back] of [[line.start, box.x, 1], [line.end, box.x + box.width, -1]] as const) {
+    if (end === 'none') continue
+    const base = tip + back * size
+    if (end === 'arrow') {
+      const shaft = new ck.PathBuilder().moveTo(base, y - size / 2).lineTo(tip, y).lineTo(base, y + size / 2).detachAndDelete()
+      canvas.drawPath(shaft, paint)
+      shaft.delete()
+      continue
+    }
+    const fill = paint.copy()
+    fill.setStyle(ck.PaintStyle.Fill)
+    if (end === 'circle') canvas.drawCircle(tip, y, size / 2, fill)
+    else {
+      const head = new ck.PathBuilder().addPolygon([tip, y, base, y - size / 2, base, y + size / 2], true).detachAndDelete()
+      canvas.drawPath(head, fill)
+      head.delete()
+    }
+    fill.delete()
+  }
 }
 
 function fillPath(ck: CanvasKit, canvas: Canvas, path: Path, fill: Paint, box: Box, resources: Resources) {

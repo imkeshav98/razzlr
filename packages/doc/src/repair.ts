@@ -1,3 +1,5 @@
+import { canHold } from '@razzlr/schema'
+
 type Json = Record<string, unknown>
 type NodeJson = { parentId: string } & Json
 type Snapshot = {
@@ -25,7 +27,6 @@ export function repair<S extends Snapshot>(snapshot: S): { snapshot: S; repairs:
   const repairs: string[] = []
   const firstPage = Object.entries(s.pages).sort(([a, x], [b, y]) => byCodeUnits(orderOf(x), orderOf(y)) || byCodeUnits(a, b))[0]?.[0]
   if (!firstPage) return { snapshot: s, repairs }
-  const containers = new Set(['frame', 'group'])
 
   // 1. Drop layers that can't be read at all, before anyone looks for parents among them.
   const nodes = new Map<string, NodeJson>()
@@ -47,7 +48,7 @@ export function repair<S extends Snapshot>(snapshot: S): { snapshot: S; repairs:
       nodes.set(id, { ...node, index: 'a0' })
     }
     const parent = nodes.get(node.parentId)
-    if (!s.pages[node.parentId] && (!parent || !containers.has(String(parent.type)))) {
+    if (!s.pages[node.parentId] && (!parent || !canHold(String(parent.type), String(node.type)))) {
       repairs.push(`"${id}" lost its parent "${String(node.parentId)}"; moved to page "${firstPage}"`)
       nodes.set(id, { ...(nodes.get(id) as NodeJson), parentId: firstPage })
     }

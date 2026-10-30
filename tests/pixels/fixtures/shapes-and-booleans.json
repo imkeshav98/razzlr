@@ -1,0 +1,1052 @@
+{
+  "meta": {
+    "schemaVersion": 2,
+    "designId": "shapes-and-booleans",
+    "name": "Shapes and booleans",
+    "kind": "single",
+    "primaryFormatId": "sq"
+  },
+  "formats": {
+    "sq": {
+      "name": "Square 1:1",
+      "width": 1080,
+      "height": 1080,
+      "order": "a0"
+    }
+  },
+  "pages": {
+    "p1": {
+      "name": "Page 1",
+      "order": "a0",
+      "fills": [
+        {
+          "type": "solid",
+          "color": "#FAFAFAFF"
+        }
+      ]
+    }
+  },
+  "nodes": {
+    "corners": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a0",
+      "name": "Rect with its own corners",
+      "props": {
+        "x": 40,
+        "y": 40,
+        "width": 200,
+        "height": 160,
+        "shape": {
+          "kind": "rect",
+          "corners": [
+            0,
+            24,
+            60,
+            8
+          ]
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FF7043FF"
+          }
+        ]
+      }
+    },
+    "pill": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a1",
+      "name": "Corners larger than fit",
+      "props": {
+        "x": 270,
+        "y": 60,
+        "width": 200,
+        "height": 120,
+        "shape": {
+          "kind": "rect",
+          "corners": [
+            100,
+            100,
+            10,
+            100
+          ]
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#26A69AFF"
+          }
+        ],
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#004D40FF"
+            },
+            "width": 6
+          }
+        ]
+      }
+    },
+    "triangle": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a2",
+      "name": "Triangle",
+      "props": {
+        "x": 500,
+        "y": 40,
+        "width": 160,
+        "height": 160,
+        "shape": {
+          "kind": "polygon",
+          "sides": 3
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#5C6BC0FF"
+          }
+        ]
+      }
+    },
+    "hexagon": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a3",
+      "name": "Rounded hexagon",
+      "props": {
+        "x": 690,
+        "y": 40,
+        "width": 180,
+        "height": 160,
+        "shape": {
+          "kind": "polygon",
+          "sides": 6,
+          "cornerRadius": 24
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FFCA28FF"
+          }
+        ],
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#E65100FF"
+            },
+            "width": 6,
+            "align": "inside"
+          }
+        ]
+      }
+    },
+    "pentagon": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a4",
+      "name": "Turned pentagon",
+      "props": {
+        "x": 900,
+        "y": 50,
+        "width": 140,
+        "height": 140,
+        "rotation": 20,
+        "shape": {
+          "kind": "polygon"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#AB47BCFF"
+          }
+        ]
+      }
+    },
+    "star": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a5",
+      "name": "Five-point star",
+      "props": {
+        "x": 40,
+        "y": 260,
+        "width": 180,
+        "height": 180,
+        "shape": {
+          "kind": "star"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FFD600FF"
+          }
+        ],
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#F57F17FF"
+            },
+            "width": 4,
+            "join": "round"
+          }
+        ]
+      }
+    },
+    "burst": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a6",
+      "name": "Rounded burst",
+      "props": {
+        "x": 260,
+        "y": 260,
+        "width": 200,
+        "height": 180,
+        "shape": {
+          "kind": "star",
+          "points": 12,
+          "innerRadius": 0.75,
+          "cornerRadius": 6
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#EF5350FF"
+          }
+        ]
+      }
+    },
+    "sparkle": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a7",
+      "name": "Four-point sparkle",
+      "props": {
+        "x": 500,
+        "y": 260,
+        "width": 140,
+        "height": 180,
+        "shape": {
+          "kind": "star",
+          "points": 4,
+          "innerRadius": 0.25
+        },
+        "fills": [
+          {
+            "type": "linear",
+            "from": {
+              "x": 0,
+              "y": 0
+            },
+            "to": {
+              "x": 1,
+              "y": 1
+            },
+            "stops": [
+              {
+                "offset": 0,
+                "color": "#00B0FFFF"
+              },
+              {
+                "offset": 1,
+                "color": "#7C4DFFFF"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "badge": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a8",
+      "name": "Dashed star outline",
+      "props": {
+        "x": 680,
+        "y": 260,
+        "width": 180,
+        "height": 180,
+        "shape": {
+          "kind": "star",
+          "points": 7,
+          "innerRadius": 0.55,
+          "cornerRadius": 10
+        },
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#37474FFF"
+            },
+            "width": 5,
+            "dashes": [
+              14,
+              8
+            ],
+            "cap": "round"
+          }
+        ]
+      }
+    },
+    "hept": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a9",
+      "name": "Many-sided polygon",
+      "props": {
+        "x": 890,
+        "y": 270,
+        "width": 160,
+        "height": 160,
+        "shape": {
+          "kind": "polygon",
+          "sides": 9,
+          "cornerRadius": 8
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#8D6E63FF"
+          }
+        ]
+      }
+    },
+    "plain": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "aA",
+      "name": "Line",
+      "props": {
+        "x": 40,
+        "y": 500,
+        "width": 220,
+        "height": 0,
+        "shape": {
+          "kind": "line"
+        },
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#263238FF"
+            },
+            "width": 4
+          }
+        ]
+      }
+    },
+    "arrow": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "aB",
+      "name": "Arrow",
+      "props": {
+        "x": 40,
+        "y": 550,
+        "width": 220,
+        "height": 0,
+        "shape": {
+          "kind": "line",
+          "end": "arrow"
+        },
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#1E88E5FF"
+            },
+            "width": 5,
+            "cap": "round",
+            "join": "round"
+          }
+        ]
+      }
+    },
+    "both": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "aC",
+      "name": "Triangles at both ends",
+      "props": {
+        "x": 40,
+        "y": 610,
+        "width": 220,
+        "height": 0,
+        "shape": {
+          "kind": "line",
+          "start": "triangle",
+          "end": "triangle"
+        },
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#D81B60FF"
+            },
+            "width": 6
+          }
+        ]
+      }
+    },
+    "dots": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "aD",
+      "name": "Circle to arrow, dashed",
+      "props": {
+        "x": 300,
+        "y": 520,
+        "width": 260,
+        "height": 0,
+        "rotation": -20,
+        "shape": {
+          "kind": "line",
+          "start": "circle",
+          "end": "arrow"
+        },
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#43A047FF"
+            },
+            "width": 6,
+            "dashes": [
+              16,
+              10
+            ]
+          }
+        ]
+      }
+    },
+    "thick": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "aE",
+      "name": "Thick round line in a tall box",
+      "props": {
+        "x": 620,
+        "y": 480,
+        "width": 180,
+        "height": 120,
+        "rotation": 35,
+        "shape": {
+          "kind": "line",
+          "end": "circle"
+        },
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#6D4C41FF"
+            },
+            "width": 14,
+            "cap": "round"
+          }
+        ]
+      }
+    },
+    "thin": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "aF",
+      "name": "Thin line with a triangle",
+      "props": {
+        "x": 840,
+        "y": 560,
+        "width": 200,
+        "height": 0,
+        "rotation": 180,
+        "shape": {
+          "kind": "line",
+          "end": "triangle"
+        },
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#000000FF"
+            },
+            "width": 2
+          }
+        ]
+      }
+    },
+    "union": {
+      "type": "boolean",
+      "parentId": "p1",
+      "index": "aG",
+      "name": "Union",
+      "props": {
+        "x": 40,
+        "y": 680,
+        "width": 220,
+        "height": 180,
+        "op": "union",
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#3949ABFF"
+          }
+        ]
+      }
+    },
+    "unionA": {
+      "type": "graphic",
+      "parentId": "union",
+      "index": "a0",
+      "name": "Operand unionA",
+      "props": {
+        "x": 40,
+        "y": 680,
+        "width": 150,
+        "height": 150,
+        "rotation": 0,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 16
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "unionB": {
+      "type": "graphic",
+      "parentId": "union",
+      "index": "a1",
+      "name": "Operand unionB",
+      "props": {
+        "x": 110,
+        "y": 710,
+        "width": 150,
+        "height": 150,
+        "rotation": 0,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "subtract": {
+      "type": "boolean",
+      "parentId": "p1",
+      "index": "aH",
+      "name": "Subtract",
+      "props": {
+        "x": 300,
+        "y": 680,
+        "width": 220,
+        "height": 180,
+        "op": "subtract",
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E53935FF"
+          }
+        ],
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#212121FF"
+            },
+            "width": 4,
+            "join": "round"
+          }
+        ]
+      }
+    },
+    "subtractA": {
+      "type": "graphic",
+      "parentId": "subtract",
+      "index": "a0",
+      "name": "Operand subtractA",
+      "props": {
+        "x": 300,
+        "y": 680,
+        "width": 150,
+        "height": 150,
+        "rotation": 0,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 16
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "subtractB": {
+      "type": "graphic",
+      "parentId": "subtract",
+      "index": "a1",
+      "name": "Operand subtractB",
+      "props": {
+        "x": 370,
+        "y": 710,
+        "width": 150,
+        "height": 150,
+        "rotation": 0,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "intersect": {
+      "type": "boolean",
+      "parentId": "p1",
+      "index": "aI",
+      "name": "Intersect",
+      "props": {
+        "x": 560,
+        "y": 680,
+        "width": 220,
+        "height": 180,
+        "op": "intersect",
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#00897BFF"
+          }
+        ]
+      }
+    },
+    "intersectA": {
+      "type": "graphic",
+      "parentId": "intersect",
+      "index": "a0",
+      "name": "Operand intersectA",
+      "props": {
+        "x": 560,
+        "y": 680,
+        "width": 150,
+        "height": 150,
+        "rotation": 0,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 16
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "intersectB": {
+      "type": "graphic",
+      "parentId": "intersect",
+      "index": "a1",
+      "name": "Operand intersectB",
+      "props": {
+        "x": 630,
+        "y": 710,
+        "width": 150,
+        "height": 150,
+        "rotation": 0,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "exclude": {
+      "type": "boolean",
+      "parentId": "p1",
+      "index": "aJ",
+      "name": "Exclude",
+      "props": {
+        "x": 820,
+        "y": 680,
+        "width": 220,
+        "height": 180,
+        "op": "exclude",
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FB8C00FF"
+          }
+        ]
+      }
+    },
+    "excludeA": {
+      "type": "graphic",
+      "parentId": "exclude",
+      "index": "a0",
+      "name": "Operand excludeA",
+      "props": {
+        "x": 820,
+        "y": 680,
+        "width": 150,
+        "height": 150,
+        "rotation": 0,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 16
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "excludeB": {
+      "type": "graphic",
+      "parentId": "exclude",
+      "index": "a1",
+      "name": "Operand excludeB",
+      "props": {
+        "x": 890,
+        "y": 710,
+        "width": 150,
+        "height": 150,
+        "rotation": 0,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "turned": {
+      "type": "boolean",
+      "parentId": "p1",
+      "index": "aK",
+      "name": "Turned subtract with a turned cutter",
+      "props": {
+        "x": 80,
+        "y": 890,
+        "width": 240,
+        "height": 160,
+        "rotation": -10,
+        "op": "subtract",
+        "fills": [
+          {
+            "type": "linear",
+            "from": {
+              "x": 0,
+              "y": 0
+            },
+            "to": {
+              "x": 1,
+              "y": 0
+            },
+            "stops": [
+              {
+                "offset": 0,
+                "color": "#8E24AAFF"
+              },
+              {
+                "offset": 1,
+                "color": "#F06292FF"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "turnedA": {
+      "type": "graphic",
+      "parentId": "turned",
+      "index": "a0",
+      "name": "Operand turnedA",
+      "props": {
+        "x": 80,
+        "y": 890,
+        "width": 240,
+        "height": 160,
+        "rotation": 0,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 20
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "turnedB": {
+      "type": "graphic",
+      "parentId": "turned",
+      "index": "a1",
+      "name": "Operand turnedB",
+      "props": {
+        "x": 170,
+        "y": 920,
+        "width": 100,
+        "height": 100,
+        "rotation": 15,
+        "shape": {
+          "kind": "star",
+          "points": 5
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "turnedC": {
+      "type": "graphic",
+      "parentId": "turned",
+      "index": "a2",
+      "name": "Operand turnedC",
+      "props": {
+        "x": 90,
+        "y": 1040,
+        "width": 200,
+        "height": 0,
+        "rotation": 0,
+        "shape": {
+          "kind": "line",
+          "end": "arrow"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "nested": {
+      "type": "boolean",
+      "parentId": "p1",
+      "index": "aL",
+      "name": "Exclude of a union and a star",
+      "props": {
+        "x": 420,
+        "y": 880,
+        "width": 200,
+        "height": 180,
+        "op": "exclude",
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#00ACC1FF"
+          }
+        ],
+        "effects": [
+          {
+            "type": "dropShadow",
+            "x": 6,
+            "y": 8,
+            "blur": 12,
+            "color": "#00000066"
+          }
+        ]
+      }
+    },
+    "inner": {
+      "type": "boolean",
+      "parentId": "nested",
+      "index": "a0",
+      "name": "Union inside",
+      "props": {
+        "x": 420,
+        "y": 880,
+        "width": 200,
+        "height": 180,
+        "op": "union"
+      }
+    },
+    "innerA": {
+      "type": "graphic",
+      "parentId": "inner",
+      "index": "a0",
+      "name": "Operand innerA",
+      "props": {
+        "x": 420,
+        "y": 880,
+        "width": 120,
+        "height": 120,
+        "rotation": 0,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "innerB": {
+      "type": "graphic",
+      "parentId": "inner",
+      "index": "a1",
+      "name": "Operand innerB",
+      "props": {
+        "x": 500,
+        "y": 940,
+        "width": 120,
+        "height": 120,
+        "rotation": 0,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "nestedC": {
+      "type": "graphic",
+      "parentId": "nested",
+      "index": "a1",
+      "name": "Operand nestedC",
+      "props": {
+        "x": 460,
+        "y": 900,
+        "width": 120,
+        "height": 120,
+        "rotation": 0,
+        "shape": {
+          "kind": "star",
+          "points": 6,
+          "innerRadius": 0.5
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "hidden": {
+      "type": "boolean",
+      "parentId": "p1",
+      "index": "aM",
+      "name": "Union with a hidden operand",
+      "props": {
+        "x": 700,
+        "y": 900,
+        "width": 300,
+        "height": 140,
+        "op": "union",
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#7CB342FF"
+          }
+        ],
+        "opacity": 0.8
+      }
+    },
+    "hiddenA": {
+      "type": "graphic",
+      "parentId": "hidden",
+      "index": "a0",
+      "name": "Operand hiddenA",
+      "props": {
+        "x": 700,
+        "y": 900,
+        "width": 140,
+        "height": 140,
+        "rotation": 0,
+        "shape": {
+          "kind": "polygon",
+          "sides": 3
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    },
+    "hiddenB": {
+      "type": "graphic",
+      "parentId": "hidden",
+      "index": "a1",
+      "name": "Operand hiddenB",
+      "props": {
+        "x": 780,
+        "y": 900,
+        "width": 140,
+        "height": 140,
+        "rotation": 0,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ],
+        "visible": false
+      }
+    },
+    "hiddenC": {
+      "type": "graphic",
+      "parentId": "hidden",
+      "index": "a2",
+      "name": "Operand hiddenC",
+      "props": {
+        "x": 880,
+        "y": 940,
+        "width": 120,
+        "height": 100,
+        "rotation": 0,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#9E9E9EFF"
+          }
+        ]
+      }
+    }
+  },
+  "overrides": {}
+}

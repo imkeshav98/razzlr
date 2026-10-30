@@ -4,7 +4,7 @@ import { hitTest } from './hit-test.ts'
 
 const props = { x: 0, y: 0, width: 100, height: 100, rotation: 0, opacity: 1, blendMode: 'normal', effects: [], visible: true, locked: false }
 const box = (id: string, x: number, y: number, width: number, height: number, rotation = 0) =>
-  ({ id, type: 'graphic', props: { ...props, x, y, width, height, rotation }, children: [] }) as unknown as SceneLayer
+  ({ id, type: 'graphic', props: { ...props, x, y, width, height, rotation, shape: { kind: 'rect' }, strokes: [] }, children: [] }) as unknown as SceneLayer
 const frame = (id: string, clip: boolean, children: SceneLayer[]) =>
   ({ id, type: 'frame', props: { ...props, width: 200, height: 200, clip }, children }) as unknown as SceneLayer
 
@@ -37,5 +37,18 @@ describe('hitTest', () => {
     const unlocked = (layer: { id: string }) => layer.id !== 'f'
     expect(hitTest([under, locked], { x: 160, y: 160 }, unlocked)?.id).toBe('under')
     expect(hitTest([under, locked], { x: 160, y: 160 })?.id).toBe('child')
+  })
+
+  it('picks a line near it, however thin its box, and a boolean by the shapes inside it (#44)', () => {
+    const line = { id: 'line', type: 'graphic', props: { ...props, x: 0, y: 50, width: 200, height: 0, shape: { kind: 'line' }, strokes: [{ width: 6 }] }, children: [] } as unknown as SceneLayer
+    // Half the stroke, 3, and 4 more either side.
+    expect(hitTest([line], { x: 100, y: 57 })?.id).toBe('line')
+    expect(hitTest([line], { x: 100, y: 43 })?.id).toBe('line')
+    expect(hitTest([line], { x: 100, y: 58 })).toBeNull()
+    expect(hitTest([line], { x: 201, y: 50 })).toBeNull()
+    const combined = { id: 'b', type: 'boolean', props: { ...props, width: 300, height: 100 }, children: [box('a', 0, 0, 100, 100), box('c', 200, 0, 100, 100)] } as unknown as SceneLayer
+    expect(hitTest([combined], { x: 250, y: 50 })?.id).toBe('c')
+    // Between its shapes, nothing: a boolean has no box of its own to click.
+    expect(hitTest([combined], { x: 150, y: 50 })).toBeNull()
   })
 })

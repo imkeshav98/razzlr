@@ -40,6 +40,16 @@ export const SHORTCUTS = [
   { action: 'zoomIn', keys: ['Mod+Equal', 'Mod+Shift+Equal', 'Mod+NumpadAdd'] },
   { action: 'zoomOut', keys: ['Mod+Minus', 'Mod+NumpadSubtract'] },
   { action: 'toggleRulers', keys: ['Shift+R'] },
+  { action: 'toolSelect', keys: ['V'] },
+  { action: 'toolHand', keys: ['H'] },
+  { action: 'toolRect', keys: ['R'] },
+  { action: 'toolEllipse', keys: ['O'] },
+  { action: 'toolLine', keys: ['L'] },
+  { action: 'toolArrow', keys: ['Shift+L'] },
+  { action: 'booleanUnion', keys: ['Mod+Alt+U'] },
+  { action: 'booleanSubtract', keys: ['Mod+Alt+S'] },
+  { action: 'booleanIntersect', keys: ['Mod+Alt+I'] },
+  { action: 'booleanExclude', keys: ['Mod+Alt+X'] },
 ] as const satisfies readonly { action: string; keys: readonly string[] }[]
 
 export type ShortcutAction = (typeof SHORTCUTS)[number]['action']
