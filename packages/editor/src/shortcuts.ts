@@ -47,6 +47,7 @@ export const SHORTCUTS = [
   { action: 'toolLine', keys: ['L'] },
   { action: 'toolArrow', keys: ['Shift+L'] },
   { action: 'toolPen', keys: ['P'] },
+  { action: 'toolText', keys: ['T'] },
   { action: 'editPoints', keys: ['Enter'] },
   { action: 'autoLayout', keys: ['Shift+A'] },
   { action: 'booleanUnion', keys: ['Mod+Alt+U'] },

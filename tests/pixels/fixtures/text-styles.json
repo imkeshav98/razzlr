@@ -1,0 +1,839 @@
+{
+  "meta": {
+    "schemaVersion": 2,
+    "designId": "text-styles",
+    "name": "Text styles",
+    "kind": "single",
+    "primaryFormatId": "pt"
+  },
+  "formats": {
+    "pt": {
+      "name": "Portrait",
+      "width": 1080,
+      "height": 1060,
+      "order": "a0"
+    }
+  },
+  "pages": {
+    "p1": {
+      "name": "Page 1",
+      "order": "a0",
+      "fills": [
+        {
+          "type": "solid",
+          "color": "#FFFFFFFF"
+        }
+      ]
+    }
+  },
+  "nodes": {
+    "outline-en": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a001",
+      "name": "outline en",
+      "props": {
+        "x": 30,
+        "y": 30,
+        "width": 320,
+        "height": 60,
+        "text": "Bold outline",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 48,
+          "color": "#FF2E7EFF",
+          "fontWeight": 700,
+          "outline": {
+            "width": 3,
+            "color": "#1F2329FF"
+          }
+        },
+        "runs": [
+          {
+            "start": 5,
+            "end": 12,
+            "style": {
+              "color": "#00000000",
+              "outline": {
+                "width": 2,
+                "color": "#3D6BFFFF"
+              }
+            }
+          }
+        ],
+        "boxMode": "autoHeight"
+      }
+    },
+    "deco-en": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a002",
+      "name": "deco en",
+      "props": {
+        "x": 30,
+        "y": 130,
+        "width": 320,
+        "height": 60,
+        "text": "Was 999 now 499",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 32,
+          "color": "#1F2329FF"
+        },
+        "runs": [
+          {
+            "start": 4,
+            "end": 7,
+            "style": {
+              "strikethrough": true,
+              "color": "#8A9099FF"
+            }
+          },
+          {
+            "start": 12,
+            "end": 15,
+            "style": {
+              "underline": true,
+              "fontWeight": 700,
+              "color": "#FF2E7EFF"
+            }
+          }
+        ],
+        "boxMode": "autoHeight"
+      }
+    },
+    "case-en": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a003",
+      "name": "case en",
+      "props": {
+        "x": 30,
+        "y": 210,
+        "width": 320,
+        "height": 60,
+        "text": "summer sale starts today",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 32,
+          "color": "#1F2329FF",
+          "textCase": "title"
+        },
+        "runs": [
+          {
+            "start": 0,
+            "end": 11,
+            "style": {
+              "textCase": "upper",
+              "fontWeight": 700
+            }
+          }
+        ],
+        "boxMode": "autoHeight"
+      }
+    },
+    "bullets-en": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a004",
+      "name": "bullets en",
+      "props": {
+        "x": 30,
+        "y": 330,
+        "width": 320,
+        "height": 60,
+        "text": "Free delivery\nTwo-year warranty\nEasy returns",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 28,
+          "color": "#1F2329FF"
+        },
+        "runs": [],
+        "boxMode": "autoHeight",
+        "list": "bullet",
+        "paragraphSpacing": 10
+      }
+    },
+    "numbers-en": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a005",
+      "name": "numbers en",
+      "props": {
+        "x": 30,
+        "y": 510,
+        "width": 320,
+        "height": 60,
+        "text": "Order online before noon for delivery today\nPick up in store",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 26,
+          "color": "#1F2329FF"
+        },
+        "runs": [
+          {
+            "start": 0,
+            "end": 5,
+            "style": {
+              "fontWeight": 700
+            }
+          }
+        ],
+        "boxMode": "autoHeight",
+        "list": "number",
+        "paragraphSpacing": 6
+      }
+    },
+    "maxlines-en": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a006",
+      "name": "maxlines en",
+      "props": {
+        "x": 30,
+        "y": 740,
+        "width": 320,
+        "height": 60,
+        "text": "Every bean we sell is roasted in the harbour the same morning it ships to you",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 28,
+          "color": "#1F2329FF"
+        },
+        "runs": [],
+        "boxMode": "autoHeight",
+        "maxLines": 2
+      }
+    },
+    "shrinkbox-en": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a007",
+      "name": "shrink box en",
+      "props": {
+        "x": 30,
+        "y": 880,
+        "width": 320,
+        "height": 70,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 8
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FFF1C2FF"
+          }
+        ]
+      }
+    },
+    "shrink-en": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a008",
+      "name": "shrink en",
+      "props": {
+        "x": 30,
+        "y": 880,
+        "width": 320,
+        "height": 70,
+        "text": "Fresh roast every single morning",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 32,
+          "color": "#1F2329FF",
+          "fontWeight": 700
+        },
+        "runs": [],
+        "boxMode": "fixed",
+        "verticalAlign": "middle",
+        "align": "center",
+        "shrinkToFit": {
+          "min": 12,
+          "max": 72
+        }
+      }
+    },
+    "shrinkbox2-en": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a009",
+      "name": "shrink box small en",
+      "props": {
+        "x": 30,
+        "y": 980,
+        "width": 320,
+        "height": 40,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 8
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E6ECFFFF"
+          }
+        ]
+      }
+    },
+    "shrink2-en": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a010",
+      "name": "shrink small en",
+      "props": {
+        "x": 38,
+        "y": 980,
+        "width": 304,
+        "height": 40,
+        "text": "Every bean we sell is roasted in the harbour the same morning it ships to you",
+        "boxMode": "fixed",
+        "verticalAlign": "middle",
+        "maxLines": 1,
+        "shrinkToFit": {
+          "min": 18,
+          "max": 40
+        },
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 24,
+          "color": "#1F2329FF"
+        },
+        "runs": []
+      }
+    },
+    "outline-hi": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a011",
+      "name": "outline hi",
+      "props": {
+        "x": 380,
+        "y": 30,
+        "width": 320,
+        "height": 60,
+        "text": "मोटी रूपरेखा",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 48,
+          "color": "#FF2E7EFF",
+          "fontWeight": 700,
+          "outline": {
+            "width": 3,
+            "color": "#1F2329FF"
+          }
+        },
+        "runs": [
+          {
+            "start": 5,
+            "end": 12,
+            "style": {
+              "color": "#00000000",
+              "outline": {
+                "width": 2,
+                "color": "#3D6BFFFF"
+              }
+            }
+          }
+        ],
+        "boxMode": "autoHeight"
+      }
+    },
+    "deco-hi": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a012",
+      "name": "deco hi",
+      "props": {
+        "x": 380,
+        "y": 130,
+        "width": 320,
+        "height": 60,
+        "text": "पहले ₹999 अब ₹499",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 32,
+          "color": "#1F2329FF"
+        },
+        "runs": [
+          {
+            "start": 5,
+            "end": 9,
+            "style": {
+              "strikethrough": true,
+              "color": "#8A9099FF"
+            }
+          },
+          {
+            "start": 13,
+            "end": 17,
+            "style": {
+              "underline": true,
+              "fontWeight": 700,
+              "color": "#FF2E7EFF"
+            }
+          }
+        ],
+        "boxMode": "autoHeight"
+      }
+    },
+    "case-hi": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a013",
+      "name": "case hi",
+      "props": {
+        "x": 380,
+        "y": 210,
+        "width": 320,
+        "height": 60,
+        "text": "नया razzlr ऑफ़र आज",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 32,
+          "color": "#1F2329FF",
+          "textCase": "upper"
+        },
+        "runs": [],
+        "boxMode": "autoHeight"
+      }
+    },
+    "bullets-hi": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a014",
+      "name": "bullets hi",
+      "props": {
+        "x": 380,
+        "y": 330,
+        "width": 320,
+        "height": 60,
+        "text": "मुफ़्त डिलीवरी\nदो साल की वारंटी\nआसान वापसी",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 28,
+          "color": "#1F2329FF"
+        },
+        "runs": [],
+        "boxMode": "autoHeight",
+        "list": "bullet",
+        "paragraphSpacing": 10
+      }
+    },
+    "numbers-hi": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a015",
+      "name": "numbers hi",
+      "props": {
+        "x": 380,
+        "y": 510,
+        "width": 320,
+        "height": 60,
+        "text": "आज डिलीवरी के लिए दोपहर से पहले ऑनलाइन ऑर्डर करें\nदुकान से लें",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 26,
+          "color": "#1F2329FF"
+        },
+        "runs": [
+          {
+            "start": 0,
+            "end": 2,
+            "style": {
+              "fontWeight": 700
+            }
+          }
+        ],
+        "boxMode": "autoHeight",
+        "list": "number",
+        "paragraphSpacing": 6
+      }
+    },
+    "maxlines-hi": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a016",
+      "name": "maxlines hi",
+      "props": {
+        "x": 380,
+        "y": 740,
+        "width": 320,
+        "height": 60,
+        "text": "हमारी हर फली उसी सुबह भूनी जाती है जिस सुबह वह आपके पास भेजी जाती है",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 28,
+          "color": "#1F2329FF"
+        },
+        "runs": [],
+        "boxMode": "autoHeight",
+        "maxLines": 2
+      }
+    },
+    "shrinkbox-hi": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a017",
+      "name": "shrink box hi",
+      "props": {
+        "x": 380,
+        "y": 880,
+        "width": 320,
+        "height": 70,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 8
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FFF1C2FF"
+          }
+        ]
+      }
+    },
+    "shrink-hi": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a018",
+      "name": "shrink hi",
+      "props": {
+        "x": 380,
+        "y": 880,
+        "width": 320,
+        "height": 70,
+        "text": "हर सुबह ताज़ा भुनी कॉफ़ी",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 32,
+          "color": "#1F2329FF",
+          "fontWeight": 700
+        },
+        "runs": [],
+        "boxMode": "fixed",
+        "verticalAlign": "middle",
+        "align": "center",
+        "shrinkToFit": {
+          "min": 12,
+          "max": 72
+        }
+      }
+    },
+    "shrinkbox2-hi": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a019",
+      "name": "shrink box small hi",
+      "props": {
+        "x": 380,
+        "y": 980,
+        "width": 320,
+        "height": 40,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 8
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E6ECFFFF"
+          }
+        ]
+      }
+    },
+    "shrink2-hi": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a020",
+      "name": "shrink small hi",
+      "props": {
+        "x": 388,
+        "y": 980,
+        "width": 304,
+        "height": 40,
+        "text": "हमारी हर फली उसी सुबह भूनी जाती है जिस सुबह वह आपके पास भेजी जाती है",
+        "boxMode": "fixed",
+        "verticalAlign": "middle",
+        "maxLines": 1,
+        "shrinkToFit": {
+          "min": 18,
+          "max": 40
+        },
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 24,
+          "color": "#1F2329FF"
+        },
+        "runs": []
+      }
+    },
+    "outline-ar": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a021",
+      "name": "outline ar",
+      "props": {
+        "x": 730,
+        "y": 30,
+        "width": 320,
+        "height": 60,
+        "text": "خط عريض",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 48,
+          "color": "#FF2E7EFF",
+          "fontWeight": 700,
+          "outline": {
+            "width": 3,
+            "color": "#1F2329FF"
+          }
+        },
+        "runs": [
+          {
+            "start": 3,
+            "end": 7,
+            "style": {
+              "color": "#00000000",
+              "outline": {
+                "width": 2,
+                "color": "#3D6BFFFF"
+              }
+            }
+          }
+        ],
+        "boxMode": "autoHeight"
+      }
+    },
+    "deco-ar": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a022",
+      "name": "deco ar",
+      "props": {
+        "x": 730,
+        "y": 130,
+        "width": 320,
+        "height": 60,
+        "text": "كان ٩٩٩ الآن ٤٩٩",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 32,
+          "color": "#1F2329FF"
+        },
+        "runs": [
+          {
+            "start": 4,
+            "end": 7,
+            "style": {
+              "strikethrough": true,
+              "color": "#8A9099FF"
+            }
+          },
+          {
+            "start": 13,
+            "end": 16,
+            "style": {
+              "underline": true,
+              "fontWeight": 700,
+              "color": "#FF2E7EFF"
+            }
+          }
+        ],
+        "boxMode": "autoHeight"
+      }
+    },
+    "case-ar": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a023",
+      "name": "case ar",
+      "props": {
+        "x": 730,
+        "y": 210,
+        "width": 320,
+        "height": 60,
+        "text": "عرض razzlr اليوم",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 32,
+          "color": "#1F2329FF",
+          "textCase": "upper"
+        },
+        "runs": [],
+        "boxMode": "autoHeight"
+      }
+    },
+    "bullets-ar": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a024",
+      "name": "bullets ar",
+      "props": {
+        "x": 730,
+        "y": 330,
+        "width": 320,
+        "height": 60,
+        "text": "توصيل مجاني\nضمان لمدة عامين\nإرجاع سهل",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 28,
+          "color": "#1F2329FF"
+        },
+        "runs": [],
+        "boxMode": "autoHeight",
+        "list": "bullet",
+        "paragraphSpacing": 10
+      }
+    },
+    "numbers-ar": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a025",
+      "name": "numbers ar",
+      "props": {
+        "x": 730,
+        "y": 510,
+        "width": 320,
+        "height": 60,
+        "text": "اطلب عبر الإنترنت قبل الظهر للتوصيل اليوم\nاستلم من المتجر",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 26,
+          "color": "#1F2329FF"
+        },
+        "runs": [
+          {
+            "start": 0,
+            "end": 4,
+            "style": {
+              "fontWeight": 700
+            }
+          }
+        ],
+        "boxMode": "autoHeight",
+        "list": "number",
+        "paragraphSpacing": 6
+      }
+    },
+    "maxlines-ar": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a026",
+      "name": "maxlines ar",
+      "props": {
+        "x": 730,
+        "y": 740,
+        "width": 320,
+        "height": 60,
+        "text": "كل حبة نبيعها تحمص في الميناء في نفس الصباح الذي تشحن فيه إليك",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 28,
+          "color": "#1F2329FF"
+        },
+        "runs": [],
+        "boxMode": "autoHeight",
+        "maxLines": 2
+      }
+    },
+    "shrinkbox-ar": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a027",
+      "name": "shrink box ar",
+      "props": {
+        "x": 730,
+        "y": 880,
+        "width": 320,
+        "height": 70,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 8
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FFF1C2FF"
+          }
+        ]
+      }
+    },
+    "shrink-ar": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a028",
+      "name": "shrink ar",
+      "props": {
+        "x": 730,
+        "y": 880,
+        "width": 320,
+        "height": 70,
+        "text": "تحميص طازج كل صباح",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 32,
+          "color": "#1F2329FF",
+          "fontWeight": 700
+        },
+        "runs": [],
+        "boxMode": "fixed",
+        "verticalAlign": "middle",
+        "align": "center",
+        "shrinkToFit": {
+          "min": 12,
+          "max": 72
+        }
+      }
+    },
+    "shrinkbox2-ar": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a029",
+      "name": "shrink box small ar",
+      "props": {
+        "x": 730,
+        "y": 980,
+        "width": 320,
+        "height": 40,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 8
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#E6ECFFFF"
+          }
+        ]
+      }
+    },
+    "shrink2-ar": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a030",
+      "name": "shrink small ar",
+      "props": {
+        "x": 738,
+        "y": 980,
+        "width": 304,
+        "height": 40,
+        "text": "كل حبة نبيعها تحمص في الميناء في نفس الصباح الذي تشحن فيه إليك",
+        "boxMode": "fixed",
+        "verticalAlign": "middle",
+        "maxLines": 1,
+        "shrinkToFit": {
+          "min": 18,
+          "max": 40
+        },
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 24,
+          "color": "#1F2329FF"
+        },
+        "runs": []
+      }
+    }
+  },
+  "overrides": {}
+}
