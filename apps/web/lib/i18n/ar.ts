@@ -49,7 +49,14 @@ export const ar: Messages = {
       'Loading renderer': 'تحميل المُصيِّر',
       'Loading fonts': 'تحميل الخطوط',
       'Connecting': 'جارٍ الاتصال',
-      'Live': 'مباشر',
+      'Saved': 'تم الحفظ',
+      'Saving': 'جارٍ الحفظ',
+      'Offline': 'غير متصل',
+    },
+    statusHint: {
+      'Saved': 'كل التعديلات على الخادم',
+      'Saving': 'جارٍ إرسال آخر تعديلاتك',
+      'Offline': 'محفوظ على هذا الجهاز',
     },
   },
   theme: {

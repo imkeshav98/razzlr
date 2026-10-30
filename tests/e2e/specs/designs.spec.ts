@@ -17,7 +17,7 @@ test('a design made from the client list opens in the editor and is there after 
   await page.getByRole('button', { name: 'New design' }).click()
   await expect(page).toHaveURL(/\/clients\/dev-client-coffee\/designs\/[\w-]+$/)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(name)
-  await expect(page.getByTestId('status')).toHaveText('Live', { timeout: 30_000 })
+  await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
   const design = await page.evaluate(() => window.razzlr?.design())
   expect(design?.meta.name).toBe(name)
   expect(Object.keys(design?.pages ?? {})).toHaveLength(1)
@@ -25,7 +25,7 @@ test('a design made from the client list opens in the editor and is there after 
 
   const url = page.url()
   await page.reload()
-  await expect(page.getByTestId('status')).toHaveText('Live', { timeout: 30_000 })
+  await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(name)
   expect(page.url()).toBe(url)
 

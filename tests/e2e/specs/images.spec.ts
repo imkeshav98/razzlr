@@ -59,7 +59,7 @@ test('an uploaded image exports with the same pixels in the browser and in Node'
   const designId = await seed(content)
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto(editorPath(designId))
-  await expect(page.getByTestId('status')).toHaveText('Live', { timeout: 30_000 })
+  await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
   writeOutput('images-editor.png', await page.screenshot())
   const browserHash = await exportHashOf(page)
 

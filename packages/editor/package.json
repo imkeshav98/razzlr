@@ -17,6 +17,7 @@
     "@razzlr/renderer": "workspace:*",
     "@razzlr/schema": "workspace:*",
     "canvaskit-wasm": "0.42.0",
+    "y-indexeddb": "9.0.12",
     "yjs": "^13.6.27"
   },
   "devDependencies": {

@@ -19,7 +19,7 @@ const contrast = (a: string, b: string) => {
   return ((hi ?? 0) + 0.05) / ((lo ?? 0) + 0.05)
 }
 
-const TEXT = ['text', 'text-muted', 'text-subtle', 'accent-text', 'danger', 'success']
+const TEXT = ['text', 'text-muted', 'text-subtle', 'accent-text', 'danger', 'success', 'warning']
 const SURFACES = ['bg', 'surface', 'raised', 'hover']
 
 describe.each([['dark', "[data-theme='dark']"], ['light', "[data-theme='light']"]])('%s theme', (_, selector) => {

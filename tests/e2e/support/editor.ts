@@ -20,7 +20,7 @@ export async function openTabs(browser: Browser, count: number, existing?: strin
     const page = await context.newPage()
     page.on('pageerror', (error) => errors.push(`tab ${i + 1}: ${error.message}`))
     await page.goto(editorPath(designId))
-    await expect(page.getByTestId('status')).toHaveText('Live', { timeout: 30_000 })
+    await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
     tabs.push(page)
   }
   return { designId, tabs, errors }

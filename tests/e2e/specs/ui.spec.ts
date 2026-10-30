@@ -25,7 +25,7 @@ test('dark and light change only the tokens', async ({ page }) => {
     await page.waitForTimeout(400)
     await shoot(page, `${theme}-designs`)
     await page.goto(editorPath(designId))
-    await expect(page.getByTestId('status')).toHaveText('Live', { timeout: 30_000 })
+    await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
     await page.getByRole('button', { name: 'AI' }).click()
     await expect(page.getByTestId('flyout')).toBeVisible()
     await page.waitForTimeout(300)
@@ -62,7 +62,7 @@ test('in Arabic the chrome mirrors and reads right to left, the design does not'
   await shoot(page, 'arabic-designs')
 
   await page.goto(editorPath(designId))
-  await expect(page.getByTestId('status')).toHaveAttribute('data-status', 'Live', { timeout: 30_000 })
+  await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
   await expect(page.getByTestId('status')).toHaveText('مباشر')
   const rail = await page.getByRole('button', { name: 'الطبقات' }).boundingBox()
   const stage = await page.getByTestId('stage').boundingBox()
@@ -82,7 +82,7 @@ test('reduced motion turns chrome animation off', async ({ browser }) => {
     const context = await browser.newContext({ reducedMotion, viewport: { width: 1440, height: 900 } })
     const page = await context.newPage()
     await page.goto(editorPath(designId))
-    await expect(page.getByTestId('status')).toHaveText('Live', { timeout: 30_000 })
+    await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
     // The flyout's opacity on every frame for half a second from the click: a fade passes through
     // values between 0 and 1, appearing outright doesn't. Every frame rather than one sample at a
     // fixed delay, which a slow CI runner can land before the first frame or after the fade.
