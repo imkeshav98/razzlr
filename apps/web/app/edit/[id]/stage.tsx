@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { startEditor, type Editor } from '../../../lib/editor/editor.ts'
+import { startEditor, type Editor } from '@razzlr/editor'
 import styles from './stage.module.css'
 
 declare global {
@@ -16,16 +16,18 @@ export function EditorStage({ designId, formatId, syncUrl }: { designId: string;
   useEffect(() => {
     if (!canvas.current || !overlay.current) return
     let editor: Editor | undefined
-    let cancelled = false
-    startEditor({ canvas: canvas.current, overlay: overlay.current, designId, syncUrl, ...(formatId ? { formatId } : {}), onStatus: setStatus })
+    const unmounted = new AbortController()
+    startEditor({ canvas: canvas.current, overlay: overlay.current, designId, syncUrl, ...(formatId ? { formatId } : {}), onStatus: setStatus, signal: unmounted.signal })
       .then((started) => {
-        if (cancelled) return started.destroy()
+        if (unmounted.signal.aborted) return started.destroy()
         editor = started
         window.razzlr = started
       })
-      .catch((error: unknown) => setStatus(`Error: ${error instanceof Error ? error.message : String(error)}`))
+      .catch((error: unknown) => {
+        if (!unmounted.signal.aborted) setStatus(`Error: ${error instanceof Error ? error.message : String(error)}`)
+      })
     return () => {
-      cancelled = true
+      unmounted.abort()
       editor?.destroy()
       delete window.razzlr
     }

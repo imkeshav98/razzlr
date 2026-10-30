@@ -2,9 +2,6 @@
   "name": "@razzlr/web",
   "private": true,
   "type": "module",
-  "exports": {
-    "./editor": "./lib/editor/editor.ts"
-  },
   "scripts": {
     "predev": "node scripts/copy-vendor.ts",
     "dev": "next dev",
@@ -15,16 +12,12 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@hocuspocus/provider": "4.8.0",
-    "@razzlr/doc": "workspace:*",
+    "@razzlr/editor": "workspace:*",
     "@razzlr/fonts": "workspace:*",
-    "@razzlr/renderer": "workspace:*",
-    "@razzlr/schema": "workspace:*",
     "canvaskit-wasm": "0.42.0",
     "next": "^16.4.3",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "yjs": "^13.6.27"
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@razzlr/config": "workspace:*",

@@ -45,21 +45,12 @@ importers:
 
   apps/web:
     dependencies:
-      '@hocuspocus/provider':
-        specifier: 4.8.0
-        version: 4.8.0(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
-      '@razzlr/doc':
+      '@razzlr/editor':
         specifier: workspace:*
-        version: link:../../packages/doc
+        version: link:../../packages/editor
       '@razzlr/fonts':
         specifier: workspace:*
         version: link:../../packages/fonts
-      '@razzlr/renderer':
-        specifier: workspace:*
-        version: link:../../packages/renderer
-      '@razzlr/schema':
-        specifier: workspace:*
-        version: link:../../packages/schema
       canvaskit-wasm:
         specifier: 0.42.0
         version: 0.42.0
@@ -72,9 +63,6 @@ importers:
       react-dom:
         specifier: ^19.1.0
         version: 19.3.1(react@19.3.1)
-      yjs:
-        specifier: ^13.6.27
-        version: 13.6.33
     devDependencies:
       '@razzlr/config':
         specifier: workspace:*
@@ -137,6 +125,46 @@ importers:
       zod:
         specifier: ^4.6.0
         version: 4.6.7
+    devDependencies:
+      '@razzlr/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.5
+      eslint:
+        specifier: ^9.39.0
+        version: 9.39.5
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.7
+        version: 3.2.7(@types/node@22.20.5)
+
+  packages/editor:
+    dependencies:
+      '@hocuspocus/provider':
+        specifier: 4.8.0
+        version: 4.8.0(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
+      '@razzlr/doc':
+        specifier: workspace:*
+        version: link:../doc
+      '@razzlr/fonts':
+        specifier: workspace:*
+        version: link:../fonts
+      '@razzlr/renderer':
+        specifier: workspace:*
+        version: link:../renderer
+      '@razzlr/schema':
+        specifier: workspace:*
+        version: link:../schema
+      canvaskit-wasm:
+        specifier: 0.42.0
+        version: 0.42.0
+      yjs:
+        specifier: ^13.6.27
+        version: 13.6.33
     devDependencies:
       '@razzlr/config':
         specifier: workspace:*
@@ -236,6 +264,9 @@ importers:
       '@razzlr/doc':
         specifier: workspace:*
         version: link:../../packages/doc
+      '@razzlr/editor':
+        specifier: workspace:*
+        version: link:../../packages/editor
       '@razzlr/schema':
         specifier: workspace:*
         version: link:../../packages/schema

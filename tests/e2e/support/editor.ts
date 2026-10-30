@@ -75,3 +75,11 @@ export function restartSyncServer() {
   execFileSync('docker', ['compose', 'restart', 'sync'], { cwd: root, stdio: 'pipe' })
   execFileSync('docker', ['compose', 'up', '-d', '--wait', 'sync'], { cwd: root, stdio: 'pipe' })
 }
+
+/** Whether Postgres has stored the design since `since`; the table is apps/sync's `designs`. */
+export function storedAfter(designId: string, since: Date) {
+  const root = join(import.meta.dirname, '..', '..', '..')
+  const sql = `select count(*) from designs where id = '${designId.replace(/'/g, "''")}' and updated_at > '${since.toISOString()}'`
+  const out = execFileSync('docker', ['compose', 'exec', '-T', 'postgres', 'psql', '-U', 'razzlr', '-d', 'razzlr', '-tAc', sql], { cwd: root, encoding: 'utf8' })
+  return out.trim() === '1'
+}

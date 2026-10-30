@@ -1,7 +1,7 @@
 // The bare editor of the phase 0 spike (#8): a stage, click to select, drag to move and typing
 // into text. It has no framework in it; the page only hands it a canvas and an overlay.
 import { HocuspocusProvider } from '@hocuspocus/provider'
-import { openSession, readDesign, type Session } from '@razzlr/doc'
+import { anchorOffset, CommandError, openSession, readDesign, textAnchor, type Session, type TextAnchor } from '@razzlr/doc'
 import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
 import {
   caretAt, caretPosition, drawScene, layoutText, makeResources, render, renderDesign, type Scene, type SceneLayer,
@@ -23,9 +23,26 @@ export interface EditorOptions {
   syncUrl: string
   formatId?: string
   onStatus?: (status: string) => void
+  /** Aborting it while the editor is still connecting stops it, freeing what it made. */
+  signal?: AbortSignal
 }
 
-interface Editing { id: string; caret: number; endGesture: () => void }
+/** The caret is anchored in the text, so edits arriving from other tabs carry it along. */
+interface Editing { id: string; caret: TextAnchor; endGesture: () => void }
+
+/**
+ * Runs a command that edits from other tabs may have made impossible, such as typing into a layer
+ * just deleted elsewhere: it is refused whole and nothing happens. Returns whether it ran.
+ */
+function runQuietly(run: () => unknown) {
+  try {
+    run()
+    return true
+  } catch (error) {
+    if (error instanceof CommandError) return false
+    throw error
+  }
+}
 
 const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
 
@@ -36,22 +53,40 @@ async function bytes(url: string) {
 }
 
 export async function startEditor(options: EditorOptions) {
-  const { canvas, overlay, designId, syncUrl } = options
+  const { designId, syncUrl } = options
   const status = options.onStatus ?? (() => {})
   status('Loading renderer')
   const ck: CanvasKit = await CanvasKitInit({ locateFile: (file: string) => `/vendor/${file}` })
   const fontBytes = await Promise.all(FONT_FACES.map(async (f) => ({ family: f.family, bytes: await bytes(`/vendor/fonts/${f.file}`) })))
   const resourceBytes = { fonts: fontBytes, fallbackFamilies: [...FALLBACK_FAMILIES], images: {} }
   const resources = makeResources(ck, resourceBytes)
-
   status('Connecting')
   const doc = new Y.Doc()
   const provider = new HocuspocusProvider({ url: syncUrl, name: designId, document: doc })
-  await new Promise<void>((resolve) => {
-    if (provider.synced) resolve()
-    else provider.on('synced', () => resolve())
-  })
-  const session: Session = openSession(doc)
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const stop = () => reject(new Error('stopped while connecting'))
+      if (options.signal?.aborted) stop()
+      options.signal?.addEventListener('abort', stop)
+      if (provider.synced) resolve()
+      else provider.on('synced', () => resolve())
+    })
+    return live(ck, resources, resourceBytes, doc, provider, options)
+  } catch (error) {
+    provider.destroy()
+    doc.destroy()
+    resources.delete()
+    throw error
+  }
+}
+
+/** The editor once the design has arrived: everything it makes is freed by `destroy`. */
+function live(
+  ck: CanvasKit, resources: ReturnType<typeof makeResources>, resourceBytes: Parameters<typeof renderDesign>[4],
+  doc: Y.Doc, provider: HocuspocusProvider, options: EditorOptions,
+) {
+  const { canvas, overlay, designId } = options
+  const status = options.onStatus ?? (() => {})
 
   const first = readDesign(doc)
   const firstPage = Object.entries(first.pages).sort(([, a], [, b]) => (a.order < b.order ? -1 : 1))[0]?.[0]
@@ -67,6 +102,10 @@ export async function startEditor(options: EditorOptions) {
   const maybeSurface = ck.MakeWebGLCanvasSurface(canvas)
   if (!maybeSurface) throw new Error('this browser has no WebGL')
   const surface: Surface = maybeSurface
+  const session: Session = openSession(doc)
+  // Removes every listener the editor adds, on destroy.
+  const listening = new AbortController()
+  const on = { signal: listening.signal }
 
   let selected: string | null = null
   let editing: Editing | null = null
@@ -107,8 +146,9 @@ export async function startEditor(options: EditorOptions) {
       overlay.append(box)
     }
     const text = editingParagraph()
-    if (text && editing) {
-      const at = caretPosition(ck, text.paragraph, text.layer.props.text, editing.caret)
+    const offset = editing && anchorOffset(doc, editing.caret)
+    if (text && offset !== null && offset !== undefined) {
+      const at = caretPosition(ck, text.paragraph, text.layer.props.text, offset)
       text.paragraph.delete()
       const caret = document.createElement('div')
       caret.className = 'caret'
@@ -140,6 +180,9 @@ export async function startEditor(options: EditorOptions) {
     })
   }
   doc.on('update', redraw)
+  // The canvas is shown scaled to fit, so the overlay's scale changes when the page is resized.
+  const resized = new ResizeObserver(() => drawOverlay())
+  resized.observe(canvas)
 
   // Pointer: canvas pixels are design pixels; the canvas is shown scaled to fit.
   const toPage = (e: PointerEvent | MouseEvent): Point => {
@@ -166,7 +209,7 @@ export async function startEditor(options: EditorOptions) {
     const p = toPage(e)
     const hit = hitTest(scene.layers, p)
     if (editing && hit?.id === editing.id) {
-      editing.caret = caretFromPoint(p)
+      editing.caret = textAnchor(doc, editing.id, caretFromPoint(p))
       drawOverlay()
       return
     }
@@ -176,30 +219,32 @@ export async function startEditor(options: EditorOptions) {
     if (!hit) return
     canvas.setPointerCapture(e.pointerId)
     drag = { id: hit.id, from: p, x: hit.props.x, y: hit.props.y, end: session.beginGesture() }
-  })
+  }, on)
   canvas.addEventListener('pointermove', (e) => {
     if (!drag) return
     const p = toPage(e)
+    const { id } = drag
     const x = Math.round(drag.x + p.x - drag.from.x)
     const y = Math.round(drag.y + p.y - drag.from.y)
-    session.run('node.update', { ids: [drag.id], patch: { x, y } })
-  })
+    // Another tab may delete the layer mid-drag; the drag then just stops moving anything.
+    runQuietly(() => session.run('node.update', { ids: [id], patch: { x, y } }))
+  }, on)
   const endDrag = () => {
     drag?.end()
     drag = null
   }
-  canvas.addEventListener('pointerup', endDrag)
-  canvas.addEventListener('pointercancel', endDrag)
+  canvas.addEventListener('pointerup', endDrag, on)
+  canvas.addEventListener('pointercancel', endDrag, on)
   canvas.addEventListener('dblclick', (e) => {
     const p = toPage(e)
     const hit = hitTest(scene.layers, p)
     if (hit?.type !== 'text') return
     stopEditing()
     selected = hit.id
-    editing = { id: hit.id, caret: 0, endGesture: session.beginGesture() }
-    editing.caret = caretFromPoint(p)
+    editing = { id: hit.id, caret: textAnchor(doc, hit.id, 0), endGesture: session.beginGesture() }
+    editing.caret = textAnchor(doc, hit.id, caretFromPoint(p))
     drawOverlay()
-  })
+  }, on)
 
   const graphemeEdges = (text: string) => [0, ...[...graphemes.segment(text)].map((g) => g.index + g.segment.length)]
 
@@ -220,34 +265,39 @@ export async function startEditor(options: EditorOptions) {
       }
       return
     }
-    const layer = find(scene.layers, editing.id)
-    if (layer?.type !== 'text') return
-    const text = layer.props.text
+    // The document, not the last drawn scene: keys can come faster than redraws.
+    const node = readDesign(doc).nodes[editing.id]
+    if (node?.type !== 'text') return
+    const text = node.props.text
     const edges = graphemeEdges(text)
-    const caret = editing.caret
+    const caret = Math.min(anchorOffset(doc, editing.caret) ?? 0, text.length)
+    const { id } = editing
+    const moveTo = (offset: number) => {
+      if (editing) editing.caret = textAnchor(doc, id, offset)
+    }
     if (e.key === 'Escape') {
       stopEditing()
       drawOverlay()
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       // Logical order: right-to-left text moves the other way on screen, as most editors do.
-      editing.caret = e.key === 'ArrowRight' ? (edges.find((x) => x > caret) ?? caret) : (edges.findLast((x) => x < caret) ?? caret)
+      moveTo(e.key === 'ArrowRight' ? (edges.find((x) => x > caret) ?? caret) : (edges.findLast((x) => x < caret) ?? caret))
       drawOverlay()
     } else if (e.key === 'Backspace' && caret > 0) {
       const from = edges.findLast((x) => x < caret) ?? 0
-      session.run('text.edit', { id: editing.id, op: { kind: 'delete', at: from, length: caret - from } })
-      editing.caret = from
+      runQuietly(() => session.run('text.edit', { id, op: { kind: 'delete', at: from, length: caret - from } }))
     } else if (e.key === 'Delete' && caret < text.length) {
       const to = edges.find((x) => x > caret) ?? text.length
-      session.run('text.edit', { id: editing.id, op: { kind: 'delete', at: caret, length: to - caret } })
+      runQuietly(() => session.run('text.edit', { id, op: { kind: 'delete', at: caret, length: to - caret } }))
     } else if (e.key.length > 0 && [...e.key].length === 1 && !mod) {
-      session.run('text.edit', { id: editing.id, op: { kind: 'insert', at: caret, text: e.key } })
-      editing.caret = caret + e.key.length
+      // The anchor sits after the character before the caret, so inserting at the caret leaves it
+      // before the new text; it is moved past it.
+      if (runQuietly(() => session.run('text.edit', { id, op: { kind: 'insert', at: caret, text: e.key } }))) moveTo(caret + e.key.length)
     } else {
       return
     }
     e.preventDefault()
   }
-  window.addEventListener('keydown', onKey)
+  window.addEventListener('keydown', onKey, on)
 
   draw()
   status('Live')
@@ -266,10 +316,14 @@ export async function startEditor(options: EditorOptions) {
     exportPixels: () => renderDesign(ck, readDesign(doc), pageId, formatId, resourceBytes).pixels,
     synced: () => provider.synced && provider.unsyncedChanges === 0,
     destroy() {
-      window.removeEventListener('keydown', onKey)
+      listening.abort()
+      resized.disconnect()
+      cancelAnimationFrame(frame)
+      drawListeners.clear()
       doc.off('update', redraw)
       session.destroy()
       provider.destroy()
+      doc.destroy()
       resources.delete()
       surface.dispose()
     },

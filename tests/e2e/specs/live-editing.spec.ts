@@ -3,11 +3,11 @@
 // `docker compose up -d --wait` from the repo root. The tests in this file run one at a time,
 // which the restart test relies on: it restarts the server under no other test.
 import { expect, test, type Page } from '@playwright/test'
-import { designOf, exportHashOf, openTabs, restartSyncServer, screenPoint, settle, writeOutput } from '../support/editor.ts'
+import { designOf, exportHashOf, openTabs, restartSyncServer, screenPoint, storedAfter, settle, writeOutput } from '../support/editor.ts'
 
 test.describe.configure({ timeout: 120_000 })
 
-/** Runs `count` random commands in a tab, with short pauses so the two tabs' edits interleave on the wire. */
+/** Runs `count` random commands in a tab, yielding after each so the two tabs' edits interleave on the wire. */
 const randomEdits = (page: Page, seed: number, count: number) =>
   page.evaluate(async ({ seed, count }) => {
     const editor = window.razzlr
@@ -23,6 +23,12 @@ const randomEdits = (page: Page, seed: number, count: number) =>
     const pick = <T,>(xs: T[]) => xs[Math.floor(random() * xs.length)] as T
     const ran: Record<string, number> = {}
     let refused = 0
+    // Updates from the other tab that arrive while this tab is still making its own edits.
+    let arrived = 0
+    const countArrival = (_update: Uint8Array, _origin: unknown, _doc: unknown, transaction: { local: boolean }) => {
+      if (!transaction.local) arrived++
+    }
+    editor.doc.on('update', countArrival)
     for (let i = 0; i < count; i++) {
       const design = editor.design()
       const ids = Object.keys(design.nodes)
@@ -58,9 +64,11 @@ const randomEdits = (page: Page, seed: number, count: number) =>
         if (!(error instanceof Error) || error.name !== 'CommandError') throw error
         refused++
       }
-      if (random() < 0.3) await new Promise((resolve) => setTimeout(resolve, random() * 8))
+      // Yield after every edit so the other tab's updates arrive between this tab's commands.
+      await new Promise((resolve) => setTimeout(resolve, random() * 4))
     }
-    return { ran, refused }
+    editor.doc.off('update', countArrival)
+    return { ran, refused, arrived }
   }, { seed, count })
 
 test('two tabs make 200 random edits each and end with the same document and the same pixels', async ({ browser }) => {
@@ -69,11 +77,21 @@ test('two tabs make 200 random edits each and end with the same document and the
   const [ranA, ranB] = await Promise.all([randomEdits(a, 2026, 200), randomEdits(b, 31337, 200)])
   test.info().annotations.push({ type: 'tab A', description: JSON.stringify(ranA) }, { type: 'tab B', description: JSON.stringify(ranB) })
 
+  // Both tabs saw the other's edits while still editing, so the edits really interleaved.
+  expect(ranA.arrived).toBeGreaterThan(20)
+  expect(ranB.arrived).toBeGreaterThan(20)
+
   await settle(tabs)
   const [designA, designB] = await Promise.all([designOf(a), designOf(b)])
   expect(designA).toBe(designB)
+  // The export render of each tab's document, and what each tab's WebGL stage shows after its last redraw.
   const [hashA, hashB] = await Promise.all([exportHashOf(a), exportHashOf(b)])
   expect(hashA).toBe(hashB)
+  for (const tab of tabs) await tab.keyboard.press('Escape')
+  await expect.poll(async () => {
+    const [stageA, stageB] = await Promise.all([a.getByTestId('stage').screenshot(), b.getByTestId('stage').screenshot()])
+    return stageA.equals(stageB)
+  }, { timeout: 10_000 }).toBe(true)
 
   writeOutput('two-tabs-a.png', await a.getByTestId('stage').screenshot())
   writeOutput('two-tabs-b.png', await b.getByTestId('stage').screenshot())
@@ -106,6 +124,19 @@ test("each tab's undo leaves the other tab's edits intact", async ({ browser }) 
     expect(design.nodes.dot.props.x).toBe(300)
     expect(design.nodes.headline.props.text).toBe('Summer sale')
   }
+
+  // The same property from both tabs: A's undo must not take back B's later value.
+  await a.evaluate(() => window.razzlr?.session.run('node.update', { ids: ['box'], patch: { y: 400 } }))
+  await settle(tabs)
+  await b.evaluate(() => window.razzlr?.session.run('node.update', { ids: ['box'], patch: { y: 600 } }))
+  await settle(tabs)
+  await a.evaluate(() => window.razzlr?.session.undo())
+  await settle(tabs)
+  for (const tab of tabs) expect(JSON.parse(await designOf(tab)).nodes.box.props.y).toBe(600)
+  // B's undo puts back the value B replaced, which was A's.
+  await b.evaluate(() => window.razzlr?.session.undo())
+  await settle(tabs)
+  for (const tab of tabs) expect(JSON.parse(await designOf(tab)).nodes.box.props.y).toBe(400)
   expect(errors).toEqual([])
 })
 
@@ -139,6 +170,13 @@ test('a real mouse drag and real typing in one tab show up in the other, and und
   await a.keyboard.press('Backspace')
   await settle(tabs)
   expect(JSON.parse(await designOf(b)).nodes.headline.props.text).toBe('Summer sale now')
+
+  // Tab B types ahead of tab A's caret; A's caret moves along, so A's next key lands where it was.
+  await b.evaluate(() => window.razzlr?.session.run('text.edit', { id: 'headline', op: { kind: 'insert', at: 0, text: 'Hot ' } }))
+  await settle(tabs)
+  await a.keyboard.type('!')
+  await settle(tabs)
+  expect(JSON.parse(await designOf(b)).nodes.headline.props.text).toBe('Hot Summer sale now!')
   writeOutput('real-input-3-typed-tab-a.png', await a.screenshot())
   writeOutput('real-input-4-typed-tab-b.png', await b.screenshot())
 
@@ -157,9 +195,10 @@ test('a real mouse drag and real typing in one tab show up in the other, and und
     const nodes = JSON.parse(await designOf(b)).nodes
     expect({ arabic: nodes.arabic.props.text, headline: nodes.headline.props.text, x: Math.round(nodes.box.props.x) }).toEqual(expected)
   }
-  await undo({ arabic: 'تخفيضات الصيف', headline: 'Summer sale now', x: 280 })
-  await undo({ arabic: 'تخفيضات الصيف', headline: 'Summer sale', x: 280 })
-  await undo({ arabic: 'تخفيضات الصيف', headline: 'Summer sale', x: 80 })
+  // Tab B's 'Hot ' stays through all of them.
+  await undo({ arabic: 'تخفيضات الصيف', headline: 'Hot Summer sale now!', x: 280 })
+  await undo({ arabic: 'تخفيضات الصيف', headline: 'Hot Summer sale', x: 280 })
+  await undo({ arabic: 'تخفيضات الصيف', headline: 'Hot Summer sale', x: 80 })
   writeOutput('real-input-5-undone-tab-b.png', await b.screenshot())
   expect(errors).toEqual([])
 })
@@ -199,13 +238,15 @@ test('latency from a command in tab A to the redraw in tab B', async ({ browser 
 test('a design survives the sync server restarting, from Postgres', async ({ browser }) => {
   const { designId, tabs, errors } = await openTabs(browser, 1)
   const [a] = tabs as [Page]
+  const startedAt = new Date()
   await a.evaluate(() => {
     window.razzlr?.session.run('node.update', { ids: ['dot'], patch: { x: 420, y: 640 } })
     window.razzlr?.session.run('text.edit', { id: 'headline', op: { kind: 'insert', at: 11, text: ' today' } })
   })
   await settle(tabs)
   const before = await designOf(a)
-  // Closing the last tab makes the server store the design at once, without waiting for the debounce.
+  // Wait until Postgres holds the edits, so the restart can't race the server's store.
+  await expect.poll(() => storedAfter(designId, startedAt), { timeout: 15_000 }).toBe(true)
   await a.context().close()
   restartSyncServer()
 

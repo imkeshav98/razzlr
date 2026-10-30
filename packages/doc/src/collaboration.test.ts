@@ -1,7 +1,7 @@
 import { parseDesign } from '@razzlr/schema'
 import { describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
-import { loadDesign, openSession, readDesign, type DesignDoc, type Session } from './index.ts'
+import { anchorOffset, loadDesign, openSession, readDesign, textAnchor, type DesignDoc, type Session } from './index.ts'
 import { testDesign } from './test-design.ts'
 
 /** Two tabs on one design, each with its own doc, exchanging updates like the sync server would. */
@@ -193,3 +193,24 @@ function randomCommand(tab: Session, doc: DesignDoc, random: () => number) {
     if (!(e instanceof Error) || e.name !== 'CommandError') throw e
   }
 }
+
+describe('a text anchor', () => {
+  it("keeps a caret on the same character while the other tab edits the text around it", () => {
+    const { a, tabB, sync } = twoTabs()
+    const anchor = textAnchor(a, 'headline', 6)
+    tabB.run('text.edit', { id: 'headline', op: { kind: 'insert', at: 0, text: 'Big ' } })
+    sync()
+    expect(anchorOffset(a, anchor)).toBe(10)
+    tabB.run('text.edit', { id: 'headline', op: { kind: 'delete', at: 0, length: 8 } })
+    sync()
+    expect(anchorOffset(a, anchor)).toBe(2)
+  })
+
+  it('is null for a layer that is gone or not text', () => {
+    const { a, tabA } = twoTabs()
+    expect(() => textAnchor(a, 'box', 0)).toThrow('"box" is not a text layer')
+    const anchor = textAnchor(a, 'headline', 3)
+    tabA.run('node.delete', { ids: ['headline'] })
+    expect(anchorOffset(a, anchor)).toBeNull()
+  })
+})

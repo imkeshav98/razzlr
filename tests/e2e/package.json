@@ -12,6 +12,7 @@
     "@playwright/test": "1.63.0",
     "@razzlr/config": "workspace:*",
     "@razzlr/doc": "workspace:*",
+    "@razzlr/editor": "workspace:*",
     "@razzlr/schema": "workspace:*",
     "@razzlr/web": "workspace:*",
     "@types/node": "^22.20.0",

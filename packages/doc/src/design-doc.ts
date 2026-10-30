@@ -141,3 +141,25 @@ export function readDesign(doc: DesignDoc, onRepair?: (repairs: string[]) => voi
   if (!result.success) throw new Error(`design document is invalid:\n${result.errors.join('\n')}`)
   return result.design
 }
+
+/** A place in a text layer's text that follows edits from any tab, such as the caret while typing. */
+export interface TextAnchor { id: string; position: Y.RelativePosition }
+
+const liveText = (doc: DesignDoc, id: string) => {
+  const node = root(doc).nodes.get(id)
+  if (!node || node.get(DELETED) || node.get('type') !== 'text') return null
+  return (node.get('props') as Y.Map<unknown>).get('text') as Y.Text
+}
+
+/** Anchors a UTF-16 offset in a text layer. Reading only: an anchor never writes to the document. */
+export function textAnchor(doc: DesignDoc, id: string, offset: number): TextAnchor {
+  const ytext = liveText(doc, id)
+  if (!ytext) throw new Error(`"${id}" is not a text layer`)
+  return { id, position: Y.createRelativePositionFromTypeIndex(ytext, offset) }
+}
+
+/** Where an anchor is now, after whatever edits arrived; null once its layer is deleted. */
+export function anchorOffset(doc: DesignDoc, anchor: TextAnchor): number | null {
+  if (!liveText(doc, anchor.id)) return null
+  return Y.createAbsolutePositionFromRelativePosition(anchor.position, doc)?.index ?? null
+}
