@@ -14,6 +14,10 @@ describe('shortcuts', () => {
     expect(shortcutFor(key('!', 'Digit1', { shift: true }))).toBe('zoomToFit')
     expect(shortcutFor(key('ArrowLeft', 'ArrowLeft', { shift: true }))).toBe('nudgeLeftFar')
     expect(shortcutFor(key('Z', 'KeyZ', { ctrl: true, shift: true }))).toBe('redo')
+    // With Alt a Mac types another character; the key's place still names it.
+    expect(shortcutFor(key('å', 'KeyA', { alt: true }))).toBe('alignLeft')
+    expect(shortcutFor(key('H', 'KeyH', { alt: true, shift: true }))).toBe('distributeHorizontal')
+    expect(shortcutFor(key('R', 'KeyR', { shift: true }))).toBe('toggleRulers')
   })
 
   it('give each key one action', () => {

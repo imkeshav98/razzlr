@@ -115,11 +115,14 @@ const hashOf = (page: Page, formatId: string) => page.evaluate(async (formatId) 
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
 }, formatId)
 
-async function drag(page: Page, from: { x: number; y: number }, to: { x: number; y: number }) {
+/** Drags with the real mouse; `keys` are held from the press to the release (Control turns snapping off). */
+async function drag(page: Page, from: { x: number; y: number }, to: { x: number; y: number }, keys: string[] = []) {
   await page.mouse.move(from.x, from.y)
   await page.mouse.down()
+  for (const key of keys) await page.keyboard.down(key)
   for (let i = 1; i <= 15; i++) await page.mouse.move(from.x + ((to.x - from.x) * i) / 15, from.y + ((to.y - from.y) * i) / 15)
   await page.mouse.up()
+  for (const key of keys) await page.keyboard.up(key)
 }
 
 test('a drag in the second format moves the layer there only; undo and override.reset put it back', async ({ page }) => {
@@ -128,9 +131,10 @@ test('a drag in the second format moves the layer there only; undo and override.
   const before = await page.getByTestId('stage').screenshot()
   writeOutput('canvas-0-fit-all.png', await page.screenshot())
 
-  // Drag the box in Story from its centre by 100 × 50 design pixels, with the real mouse.
+  // Drag the box in Story from its centre by 100 × 50 design pixels, with the real mouse and
+  // Control held, so it lands where the pointer puts it rather than snapping.
   const story = { pageId: 'p1', formatId: 'story' }
-  await drag(page, await screenPoint(page, 200, 180, story), await screenPoint(page, 300, 230, story))
+  await drag(page, await screenPoint(page, 200, 180, story), await screenPoint(page, 300, 230, story), ['Control'])
   await expect(page.locator('.selection[data-layer="p1-box"][data-frame="p1/story"]')).toBeVisible()
   await settle([page])
   const zoom = await page.evaluate(() => window.razzlr?.camera().zoom ?? 1)
