@@ -26,10 +26,13 @@ const byOrder = <T extends { order: string }>(entries: [string, T][]) =>
 
 export const frameKey = (pageId: string, formatId: string) => `${pageId}/${formatId}`
 
-/** Every frame of the design, row by row, and the box around them all. */
-export function frameGrid(design: Design): { frames: Frame[]; bounds: Rect } {
+/**
+ * Every frame of the design, row by row, and the box around them all. With `only`, the focus
+ * view (#38): that one format's column alone.
+ */
+export function frameGrid(design: Design, only?: string | null): { frames: Frame[]; bounds: Rect } {
   const pages = byOrder(Object.entries(design.pages))
-  const formats = byOrder(Object.entries(design.formats))
+  const formats = byOrder(Object.entries(design.formats)).filter(([id]) => !only || !design.formats[only] || id === only)
   const rowHeight = Math.max(0, ...formats.map(([, f]) => f.height))
   const columns: number[] = []
   let x = 0

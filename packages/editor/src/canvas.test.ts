@@ -28,6 +28,12 @@ describe('frame grid', () => {
     expect(frameAt(frames, { x: 1080 + COLUMN_GAP + 5, y: 1920 + ROW_GAP + 5 })?.key).toBe('two/story')
     expect(frameAt(frames, { x: 1080 + 5, y: 5 })).toBeUndefined()
   })
+
+  it('shows one format alone in the focus view, and every format for one it does not have', () => {
+    expect(frameGrid(design, 'story').frames.map((f) => f.key)).toEqual(['one/story', 'two/story'])
+    expect(frameGrid(design, 'story').frames[0]).toMatchObject({ x: 0, y: 0 })
+    expect(frameGrid(design, 'gone').frames).toHaveLength(6)
+  })
 })
 
 describe('camera', () => {
