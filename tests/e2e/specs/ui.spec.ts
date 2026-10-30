@@ -83,16 +83,30 @@ test('reduced motion turns chrome animation off', async ({ browser }) => {
     const page = await context.newPage()
     await page.goto(editorPath(designId))
     await expect(page.getByTestId('status')).toHaveText('Live', { timeout: 30_000 })
+    // The flyout's opacity on every frame for half a second from the click: a fade passes through
+    // values between 0 and 1, appearing outright doesn't. Every frame rather than one sample at a
+    // fixed delay, which a slow CI runner can land before the first frame or after the fade.
+    const opacities = page.evaluate(() => new Promise<number[]>((resolve) => {
+      const seen: number[] = []
+      const start = performance.now()
+      const tick = () => {
+        const flyout = document.querySelector('[data-testid=flyout]')
+        if (flyout) seen.push(Number(getComputedStyle(flyout).opacity))
+        if (performance.now() - start < 500) requestAnimationFrame(tick)
+        else resolve(seen)
+      }
+      requestAnimationFrame(tick)
+    }))
     await page.getByRole('button', { name: 'Layers' }).click()
-    // Sample the flyout's opacity 40 ms after opening: mid-animation unless motion is reduced.
-    await page.waitForTimeout(40)
-    const opacity = Number(await page.getByTestId('flyout').evaluate((el) => getComputedStyle(el).opacity))
+    const seen = await opacities
+    expect(seen.at(-1)).toBe(1)
+    const fading = seen.filter((o) => o > 0 && o < 1)
     const tooltipTransition = await page.locator('.rise, [role=toolbar] button').first().evaluate((el) => getComputedStyle(el).transitionDuration)
     if (reducedMotion === 'reduce') {
-      expect(opacity).toBe(1)
+      expect(fading).toEqual([])
       expect(Number.parseFloat(tooltipTransition)).toBeLessThan(0.001)
     } else {
-      expect(opacity).toBeLessThan(1)
+      expect(fading.length).toBeGreaterThan(0)
     }
     await context.close()
   }
