@@ -1,6 +1,6 @@
 # Pixel fixtures
 
-The six spike designs from the spike spec (#1), as JSON the schema validates (`pnpm --filter @razzlr/pixels test`).
+The spike designs from the spike spec (#1), as JSON the schema validates (`pnpm --filter @razzlr/pixels test`).
 
 | Fixture | What it stresses |
 |---|---|
@@ -9,6 +9,7 @@ The six spike designs from the spike spec (#1), as JSON the schema validates (`p
 | arabic-ad | right to left, joining forms, a Latin brand name and numbers inside Arabic, end alignment |
 | shapes-and-effects | ellipses, a path with a hole, a radial gradient, drop shadow, layer blur, opacity, blend modes |
 | carousel | three pages in two formats; the portrait format overrides layout, one image and one text |
+| layer-bounds | the offscreen layer bounds (#18): a thick translucent mitred stroke, a translucent outside stroke, a translucent path larger than its box, a turned frame with a shadowed child, a turned blurred ellipse |
 | stress | 300 layers and long wrapped paragraphs in all three scripts |
 
 Image fills name assets (`sneaker`, `card-1` … `card-3`, `card-1-tall`): stand-in photos in `../assets/`, drawn by `scripts/make-assets.ts`.

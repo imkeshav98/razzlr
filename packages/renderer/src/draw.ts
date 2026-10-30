@@ -44,17 +44,23 @@ function drawLayer(ck: CanvasKit, canvas: Canvas, layer: SceneLayer, resources: 
   if (!needsLayer) {
     content()
   } else {
+    // An offscreen layer only as big as what the layer draws, effects included; a page-sized one
+    // for every translucent layer made the 300-layer stress fixture take 15 s (#18).
+    // One pixel more for anti-aliased edges.
+    const reach = withEffects(drawnBounds(ck, layer), props.effects)
+    const bounds = reach && ck.XYWHRect(reach.x - 1, reach.y - 1, reach.width + 2, reach.height + 2)
     const layerPaint = new ck.Paint()
     layerPaint.setAlphaf(props.opacity)
     layerPaint.setBlendMode(blendMode(ck, props.blendMode))
-    canvas.saveLayer(layerPaint)
+    canvas.saveLayer(layerPaint, bounds)
     layerPaint.delete()
     for (const effect of props.effects) {
-      if (effect.type === 'dropShadow') withFilter(ck, canvas, dropShadow(ck, effect), content)
+      if (effect.type === 'dropShadow') withFilter(ck, canvas, dropShadow(ck, effect), bounds, content)
     }
-    const blur = props.effects.find((e) => e.type === 'layerBlur')
-    if (blur && blur.radius > 0) {
-      withFilter(ck, canvas, ck.ImageFilter.MakeBlur(sigma(blur.radius), sigma(blur.radius), ck.TileMode.Decal, null), content)
+    // The first blur that blurs; a zero-radius one before it no longer hides it.
+    const blur = props.effects.find((e): e is Extract<Effect, { type: 'layerBlur' }> => e.type === 'layerBlur' && e.radius > 0)
+    if (blur) {
+      withFilter(ck, canvas, ck.ImageFilter.MakeBlur(sigma(blur.radius), sigma(blur.radius), ck.TileMode.Decal, null), bounds, content)
     } else {
       content()
     }
@@ -86,10 +92,10 @@ function drawContent(ck: CanvasKit, canvas: Canvas, layer: SceneLayer, resources
   }
 }
 
-function withFilter(ck: CanvasKit, canvas: Canvas, filter: ImageFilter, draw: () => void) {
+function withFilter(ck: CanvasKit, canvas: Canvas, filter: ImageFilter, bounds: Float32Array | null, draw: () => void) {
   const paint = new ck.Paint()
   paint.setImageFilter(filter)
-  canvas.saveLayer(paint)
+  canvas.saveLayer(paint, bounds)
   draw()
   canvas.restore()
   paint.delete()
@@ -102,6 +108,75 @@ function dropShadow(ck: CanvasKit, effect: Extract<Effect, { type: 'dropShadow' 
   const shadow = ck.ImageFilter.MakeDropShadowOnly(effect.x, effect.y, sigma(effect.blur), sigma(effect.blur), color(ck, effect.color), spread)
   spread?.delete()
   return shadow
+}
+
+/** Skia's default miter limit: a mitred corner reaches up to 4 × half the stroke width past the outline. */
+const MITER_LIMIT = 4
+/** A Gaussian blur's visible reach, in sigmas. */
+const BLUR_REACH = 3
+
+const union = (a: Box, b: Box): Box => {
+  const x = Math.min(a.x, b.x)
+  const y = Math.min(a.y, b.y)
+  return { x, y, width: Math.max(a.x + a.width, b.x + b.width) - x, height: Math.max(a.y + a.height, b.y + b.height) - y }
+}
+const outset = (box: Box, by: number): Box => ({ x: box.x - by, y: box.y - by, width: box.width + 2 * by, height: box.height + 2 * by })
+
+/** The box after turning it about its own centre, as the axis-aligned box around the result. */
+function rotated(box: Box, about: Box, degrees: number): Box {
+  if (degrees === 0) return box
+  const a = (degrees * Math.PI) / 180
+  const cx = about.x + about.width / 2
+  const cy = about.y + about.height / 2
+  const corners = [[box.x, box.y], [box.x + box.width, box.y], [box.x, box.y + box.height], [box.x + box.width, box.y + box.height]]
+    .map(([px = 0, py = 0]) => [cx + (px - cx) * Math.cos(a) - (py - cy) * Math.sin(a), cy + (px - cx) * Math.sin(a) + (py - cy) * Math.cos(a)])
+  const xs = corners.map(([x = 0]) => x)
+  const ys = corners.map(([, y = 0]) => y)
+  return { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) }
+}
+
+/**
+ * What a layer's content can touch, in its own unrotated coordinates; null when that isn't known
+ * yet (text, groups, frames holding them), which draws into an unbounded layer as before.
+ */
+function drawnBounds(ck: CanvasKit, layer: SceneLayer): Box | null {
+  switch (layer.type) {
+    case 'graphic': {
+      const path = shapePath(ck, layer)
+      const [left = 0, top = 0, right = 0, bottom = 0] = path.computeTightBounds()
+      path.delete()
+      const reach = Math.max(0, ...layer.props.strokes.map((s) => (s.align === 'inside' ? 0 : s.align === 'center' ? s.width / 2 : s.width) * MITER_LIMIT))
+      return outset({ x: left, y: top, width: right - left, height: bottom - top }, reach)
+    }
+    case 'frame': {
+      if (layer.props.clip) return layer.props
+      let box: Box = layer.props
+      for (const child of layer.children) {
+        const inner = withEffects(drawnBounds(ck, child), child.props.effects)
+        if (!inner) return null
+        box = union(box, rotated(inner, child.props, child.props.rotation))
+      }
+      return box
+    }
+    case 'text':
+    case 'group':
+      return null
+  }
+}
+
+/** Grows a layer's drawn bounds by how far its shadows and blur reach. */
+function withEffects(box: Box | null, effects: readonly Effect[]): Box | null {
+  if (!box) return null
+  let reach = box
+  for (const effect of effects) {
+    if (effect.type === 'dropShadow') {
+      const shadow = outset(box, BLUR_REACH * sigma(effect.blur) + Math.max(0, effect.spread))
+      reach = union(reach, { ...shadow, x: shadow.x + effect.x, y: shadow.y + effect.y })
+    } else if (effect.type === 'layerBlur') {
+      reach = outset(reach, BLUR_REACH * sigma(effect.radius))
+    }
+  }
+  return reach
 }
 
 const rectPath = (ck: CanvasKit, box: Box) => new ck.PathBuilder().addRect(ck.XYWHRect(box.x, box.y, box.width, box.height)).detachAndDelete()
