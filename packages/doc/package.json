@@ -1,0 +1,25 @@
+{
+  "name": "@razzlr/doc",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@razzlr/schema": "workspace:*",
+    "fractional-indexing": "^3.2.0",
+    "nanoid": "^5.1.0",
+    "yjs": "^13.6.27",
+    "zod": "^4.6.0"
+  },
+  "devDependencies": {
+    "@razzlr/config": "workspace:*",
+    "@types/node": "^22.20.0",
+    "eslint": "^9.39.0",
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

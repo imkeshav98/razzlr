@@ -44,8 +44,9 @@ export const DesignMeta = z.object({
 
 /** Spike scopes: only `format:<id>`. Variant and page scopes arrive with variants and masters. */
 const FORMAT_SCOPE = /^format:([\w-]+)$/
-const formatIdOf = (scope: string) => scope.match(FORMAT_SCOPE)?.[1]
-const Scope = z.string().refine((s) => formatIdOf(s) !== undefined, 'the spike only supports format:<id> scopes')
+/** The format a `format:<id>` scope names, or undefined for any other string. */
+export const formatIdOf = (scope: string) => scope.match(FORMAT_SCOPE)?.[1]
+export const Scope = z.string().refine((s) => formatIdOf(s) !== undefined, 'the spike only supports format:<id> scopes')
 
 /** overrides[scope][nodeId][propertyPath] = value. Any property can be overridden per format. */
 const Overrides = z.record(Scope, z.record(NodeId, z.record(z.string(), z.unknown())))
@@ -62,7 +63,7 @@ type DesignShape = z.infer<typeof DesignShape>
 /** A layer's props as one format sees them: its own props with that format's overrides on top. */
 function propsInScope(node: Layer, overrides: Record<string, unknown>) {
   const schema = LAYER_PROPS[node.type]
-  const known = Object.fromEntries(Object.entries(overrides).filter(([path]) => path in schema.shape))
+  const known = Object.fromEntries(Object.entries(overrides).filter(([path]) => Object.hasOwn(schema.shape, path)))
   return schema.safeParse({ ...node.props, ...known })
 }
 
@@ -102,7 +103,7 @@ function checkDesign(d: DesignShape, ctx: z.RefinementCtx) {
         continue
       }
       for (const path of Object.keys(props)) {
-        if (!(path in LAYER_PROPS[node.type].shape)) fail(['overrides', scope, nodeId, path], `a ${node.type} has no property "${path}"`)
+        if (!Object.hasOwn(LAYER_PROPS[node.type].shape, path)) fail(['overrides', scope, nodeId, path], `a ${node.type} has no property "${path}"`)
       }
       const merged = propsInScope(node, props)
       for (const issue of merged.success ? [] : merged.error.issues) {

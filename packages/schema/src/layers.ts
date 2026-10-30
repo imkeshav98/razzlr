@@ -49,23 +49,34 @@ export const FrameProps = z.object({
 
 export const GroupProps = z.object(commonProps)
 
-/** Character styles. A run with no value for a key inherits the text layer's base style. */
-export const TextStyle = z.object({
+const textStyleFields = {
   fontFamily: z.string().min(1),
-  fontWeight: z.number().int().min(100).max(900).default(400),
-  fontStyle: z.enum(['normal', 'italic']).default('normal'),
+  fontWeight: z.number().int().min(100).max(900),
+  fontStyle: z.enum(['normal', 'italic']),
   fontSize: z.number().positive(),
   color: Color,
-  letterSpacing: z.number().default(0),
+  letterSpacing: z.number(),
   /** A multiple of the font size; omitted means the font's own line height. */
-  lineHeight: z.number().positive().optional(),
+  lineHeight: z.number().positive(),
+}
+
+/** A text layer's base character style. */
+export const TextStyle = z.object({
+  ...textStyleFields,
+  fontWeight: textStyleFields.fontWeight.default(400),
+  fontStyle: textStyleFields.fontStyle.default('normal'),
+  letterSpacing: textStyleFields.letterSpacing.default(0),
+  lineHeight: textStyleFields.lineHeight.optional(),
 })
+
+/** A run's style: only the keys it changes, with no defaults, so the rest come from the base style. */
+export const RunStyle = z.object(textStyleFields).partial()
 
 /** Run offsets count UTF-16 code units, as JavaScript strings and Y.Text do. */
 export const TextRun = z.object({
   start: z.number().int().min(0),
   end: z.number().int().min(0),
-  style: TextStyle.partial(),
+  style: RunStyle,
 }).refine((r) => r.end > r.start, 'a run must cover at least one character')
 
 export const TextProps = z.object({
