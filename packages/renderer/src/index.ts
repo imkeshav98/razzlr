@@ -4,4 +4,4 @@ export { makeResources, resourceCache, type ResourceBytes, type ResourceCache } 
 export { render, sceneMemo, type Scene, type SceneLayer, type SceneMemo } from './scene.ts'
 export { drawDesign, renderDesign, type Rendered } from './seam.ts'
 export { applyLayout, sizingOf, type MeasureText } from './layout.ts'
-export { caretAt, caretPosition, layoutText, paragraphCache, selectionBoxes, textMeasure, type ParagraphCache, type SelectionBox } from './text.ts'
+export { caretAt, caretPosition, layoutText, paragraphCache, selectionBoxes, textMeasure, type ParagraphCache, type SelectionBox, type TextBlock, type TextLayout } from './text.ts'

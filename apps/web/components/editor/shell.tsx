@@ -182,7 +182,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                   exit={{ opacity: 0, x: rtl ? 12 : -12 }}
                   transition={chrome}
                   data-testid="flyout"
-                  className="absolute inset-y-2 start-16 z-10 flex w-72 flex-col overflow-hidden rounded-card border border-line bg-raised shadow-panel"
+                  className="absolute inset-y-2 start-16 z-10 flex w-72 flex-col overflow-hidden rounded-card surface-frost border shadow-panel"
                 >
                   <div className="flex h-12 shrink-0 items-center justify-between border-b border-line ps-4 pe-2">
                     <h2 className={cn('font-display text-[15px] font-semibold tracking-tight', panel === 'ai' && 'bg-[image:var(--ai-gradient)] bg-clip-text text-transparent')}>{panelTitle(panel)}</h2>
@@ -197,7 +197,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
 
             <main className="canvas-dots relative min-w-0 flex-1 overflow-hidden">
               {children}
-              <div role="toolbar" aria-label={t.editor.tools} className="absolute inset-x-0 bottom-4 z-10 mx-auto flex w-max items-center gap-0.5 rounded-card border border-line bg-[var(--glass)] p-1 shadow-panel backdrop-blur-xl">
+              <div role="toolbar" aria-label={t.editor.tools} className="absolute inset-x-0 bottom-4 z-10 mx-auto flex w-max items-center gap-0.5 rounded-card surface-frost border p-1 shadow-panel">
                 {TOOLS.map(({ id, icon: ToolIcon, key }) => {
                   if (id === 'shape') {
                     return (

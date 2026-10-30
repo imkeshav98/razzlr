@@ -76,6 +76,18 @@ _Avoid_: Flexbox, stack, auto frame
 How a layer in an auto layout frame takes its width and its height: fixed keeps its own size, hug fits what it holds (a text's words, a frame's children), and fill takes the room the frame has left.
 _Avoid_: Resizing, constraints (those pin a layer to its frame's edges)
 
+**Run**:
+A range of a text layer's characters that changes some of its base style, such as bold, a colour, an outline, underline or case. Typed text takes the run of the character before it.
+_Avoid_: Span, range style
+
+**Paragraph**:
+The text between two line breaks in a text layer. Lists, paragraph spacing and selecting with a triple click work a paragraph at a time.
+_Avoid_: Block (that is the renderer's laid-out paragraph), line (a paragraph wraps onto lines)
+
+**Shrink to fit**:
+A text layer setting that picks the largest font size, between a least and a most, at which the text fits its box; every size in the text scales with it.
+_Avoid_: Auto size, fit text
+
 **Fill**:
 One paint on a layer: solid, gradient (linear, radial or angular), image or video. A crop is the fill's transform.
 _Avoid_: Background, colour (when a paint is meant)

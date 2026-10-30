@@ -5,7 +5,7 @@ import { HocuspocusProvider, WebSocketStatus } from '@hocuspocus/provider'
 import { anchorOffset, childrenOf, CommandError, openSession, readDesign, textAnchor, type Session, type TextAnchor } from '@razzlr/doc'
 import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
 import {
-  caretAt, caretPosition, drawPage, layerPictures, layoutText, paragraphCache, render, renderDesign, resourceCache, sceneMemo, textMeasure, type MeasureText, type ResourceCache, type Resources, type Scene, type SceneLayer,
+  caretAt, caretPosition, drawPage, layerPictures, paragraphCache, selectionBoxes, render, renderDesign, resourceCache, sceneMemo, textMeasure, type MeasureText, type ResourceCache, type Resources, type Scene, type SceneLayer,
 } from '@razzlr/renderer'
 import { canHold, imageAssetIds, isContainer, LOCK_FLAGS, type Design } from '@razzlr/schema'
 import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from 'canvaskit-wasm'
@@ -16,12 +16,13 @@ import { fit, toScreen, toWorld, visibleRect, zoomAt, type Camera, type Viewport
 import { frameAt, frameGrid, intersects, type Frame, type Rect } from './grid.ts'
 import { hitTest, type Point } from './hit-test.ts'
 import { align, distribute, type Alignment, type Distribution, type Offset } from './arrange.ts'
-import { clickedBox, drawnBox, isShapeTool, newShape, type ShapeTool } from './draw-tools.ts'
+import { clickedBox, drawnBox, isShapeTool, newShape, newText, type ShapeTool } from './draw-tools.ts'
 import {
   anchorOf, constrain, deleteAnchors, formatPath, hitPath, isSmooth, moveAnchors, moveControl, offsetPath, parsePath, pathBounds, sameRef, segmentsOf, splitSegment,
   type Anchor, type AnchorRef, type PenPath, type Side,
 } from './path.ts'
 import { rulerParts } from './rulers.ts'
+import { paragraphAt, step, toggled, wordAt, type StyleToggle, type TextRange } from './text-edit.ts'
 import { NUDGE, NUDGE_FAR, shortcutFor, type ShortcutAction } from './shortcuts.ts'
 import { SNAP_DISTANCE, snapMove, snapResize, snapTargets, type Gap, type Guide, type Targets } from './snap.ts'
 import {
@@ -58,10 +59,13 @@ export interface EditorOptions {
 interface Picked { id: string; frame: string }
 /** The selected layers, all in one frame, in the order they were picked. */
 interface Selection { ids: string[]; frame: string }
-/** The caret is anchored in the text, so edits arriving from other tabs carry it along. */
-interface Editing extends Picked { caret: TextAnchor; endGesture: () => void }
-/** What a drag on the stage does: select and move, pan with the hand, draw a shape (#44) or a path (#45). */
-export type Tool = 'select' | 'hand' | 'pen' | ShapeTool
+/**
+ * The caret and the other end of the selected range (#47), anchored in the text so edits arriving
+ * from other tabs carry them along; the same place when nothing is selected.
+ */
+interface Editing extends Picked { caret: TextAnchor; anchor: TextAnchor; endGesture: () => void; created: boolean }
+/** What a drag on the stage does: select and move, pan with the hand, draw a shape (#44), a path (#45) or a text box (#47). */
+export type Tool = 'select' | 'hand' | 'pen' | 'text' | ShapeTool
 
 /** How far, in screen pixels, a press can wander and still draw a shape as a click does. */
 const CLICK_SLOP = 3
@@ -112,7 +116,6 @@ function runQuietly(run: () => unknown) {
   }
 }
 
-const graphemes = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
 
 async function bytes(url: string) {
   const res = await fetch(url)
@@ -359,11 +362,52 @@ function live(
     return frame && layer ? { frame, layer } : null
   }
 
-  /** The editing layer's paragraph, laid out as drawn; the caller deletes it. */
-  function editingParagraph() {
+  /** The editing layer's text, laid out as drawn, from the screen's cache, which owns it. */
+  function editingText() {
     const found = pickedLayer(editing)
     if (found?.layer.type !== 'text') return null
-    return { ...found, layer: found.layer, ...layoutText(ck, found.layer.props, resources) }
+    return { ...found, layer: found.layer, laid: paragraphs.layout(ck, found.layer.props, resources) }
+  }
+  /** The selected range of the text being edited; empty at the caret when nothing is selected. */
+  function textRange(): TextRange | null {
+    if (!editing) return null
+    const caret = anchorOffset(doc, editing.caret)
+    const anchor = anchorOffset(doc, editing.anchor)
+    if (caret === null || caret === undefined) return null
+    const other = anchor ?? caret
+    return { start: Math.min(caret, other), end: Math.max(caret, other) }
+  }
+  /** Puts the caret at an offset; with `extend`, the other end of the range stays where it is. */
+  function caretTo(offset: number, extend = false) {
+    if (!editing) return
+    editing.caret = textAnchor(doc, editing.id, offset)
+    if (!extend) editing.anchor = editing.caret
+  }
+  /**
+   * Keeps the box of text that grows the size of its words in every format (#47), and the groups
+   * around it fitted, in the step the edit is in.
+   */
+  function fitText(id: string) {
+    const now = session.design()
+    const node = now.nodes[id]
+    if (node?.type !== 'text') return
+    const measure = measureText()
+    const sizes: Record<string, { width: number; height: number }> = {}
+    for (const formatId of Object.keys(now.formats)) {
+      const props = { ...node.props, ...now.overrides[`format:${formatId}`]?.[id] } as typeof node.props
+      if (props.boxMode === 'fixed') continue
+      const size = measure(props, props.boxMode === 'autoWidth' ? null : props.width)
+      sizes[formatId] = { width: props.boxMode === 'autoWidth' ? size.width : props.width, height: size.height }
+    }
+    if (Object.keys(sizes).length === 0) return
+    runQuietly(() => session.run('text.fit', { id, sizes }))
+    hug([id])
+  }
+  /** Selects a range, the caret at its end. */
+  function selectText(range: TextRange) {
+    if (!editing) return
+    editing.anchor = textAnchor(doc, editing.id, range.start)
+    editing.caret = textAnchor(doc, editing.id, range.end)
   }
 
   /**
@@ -627,6 +671,14 @@ function live(
     const hoverBox = hoverFrame && hover && drawnBoxOf(hoverFrame, hover.id, design)
     if (hoverFrame && hoverBox) parts.push(outline('hover', hoverFrame, hoverBox))
     parts.push(...(pathEditing ? [] : selectionParts()), ...pathParts())
+    if (gesture?.kind === 'textBox') {
+      // The box the text tool is drawing (#47), drawn as a marquee is.
+      const box = document.createElement('div')
+      box.className = 'marquee'
+      box.dataset.textBox = ''
+      placeBox(box, gesture.frame, { x: Math.min(gesture.from.x, gesture.to.x), y: Math.min(gesture.from.y, gesture.to.y), width: Math.abs(gesture.to.x - gesture.from.x), height: Math.abs(gesture.to.y - gesture.from.y) })
+      parts.push(box)
+    }
     if (gesture?.kind === 'marquee') {
       const marquee = document.createElement('div')
       marquee.className = 'marquee'
@@ -643,18 +695,24 @@ function live(
       const outer = selectionBox()
       if (origin) parts.push(...rulerParts(camera, viewport, origin, outer && outer.frame.key === origin.key ? boundsOf([outer.drawn]) : null))
     }
-    const text = editingParagraph()
+    const text = editingText()
     const offset = editing && anchorOffset(doc, editing.caret)
-    if (text && offset !== null && offset !== undefined) {
-      const at = caretPosition(ck, text.paragraph, text.layer.props.text, offset)
-      text.paragraph.delete()
+    const range = textRange()
+    if (text && range && range.end > range.start) {
+      // The selected range, one box per run of one direction on one line (#47).
+      for (const box of selectionBoxes(ck, text.laid, range.start, range.end)) {
+        const el = document.createElement('div')
+        el.className = 'text-selection'
+        placeBox(el, text.frame, { x: text.layer.props.x + box.x, y: text.layer.props.y + text.laid.dy + box.y, width: box.width, height: box.height })
+        parts.push(el)
+      }
+    } else if (text && offset !== null && offset !== undefined) {
+      const at = caretPosition(ck, text.laid, offset)
       const caret = document.createElement('div')
       caret.className = 'caret'
-      placeBox(caret, text.frame, { x: text.layer.props.x + at.x, y: text.layer.props.y + text.dy + at.y, width: 0, height: at.height })
+      placeBox(caret, text.frame, { x: text.layer.props.x + at.x, y: text.layer.props.y + text.laid.dy + at.y, width: 0, height: at.height })
       caret.style.width = ''
       parts.push(caret)
-    } else {
-      text?.paragraph.delete()
     }
     overlay.replaceChildren(...parts)
     const now = selection ? `${selection.frame}|${selection.ids.join(',')}` : ''
@@ -940,16 +998,24 @@ function live(
   }
 
   function stopEditing() {
-    editing?.endGesture()
+    if (!editing) return
+    // A text box made with the text tool and left empty goes again, in the same undo step.
+    const { id } = editing
+    const node = session.design().nodes[id]
+    if (node?.type === 'text' && node.props.text === '' && editing.created) runQuietly(() => session.run('node.delete', { ids: [id] }))
+    editing.endGesture()
     editing = null
+  }
+  /** Starts typing into a text layer in a frame, in one undo step until typing stops. */
+  function startEditing(id: string, frame: string, offset: number, endGesture = session.beginGesture(), created = false) {
+    const at = textAnchor(doc, id, offset)
+    editing = { id, frame, caret: at, anchor: at, endGesture, created }
   }
 
   function caretFromPoint(p: Point) {
-    const text = editingParagraph()
+    const text = editingText()
     if (!text) return 0
-    const offset = caretAt(ck, text.paragraph, text.layer.props.text, p.x - text.layer.props.x, p.y - text.layer.props.y - text.dy)
-    text.paragraph.delete()
-    return offset
+    return caretAt(ck, text.laid, p.x - text.layer.props.x, p.y - text.layer.props.y - text.laid.dy)
   }
 
   /** What a drag on the stage is doing, from pointer down to up. */
@@ -958,6 +1024,8 @@ function live(
     | { kind: 'resize'; frame: Frame; around: Box[]; handle: Handle; outer: Box; grab: Point; roots: string[]; boxes: Map<string, Box>; targets: Targets | null; end: () => void }
     | { kind: 'rotate'; frame: Frame; around: Box[]; outer: Box; from: number; roots: string[]; boxes: Map<string, Box>; end: () => void }
     | { kind: 'marquee'; from: Point; to: Point; base: string[]; baseFrame: string | null }
+    | { kind: 'textSelect'; frame: Frame; around: Box[] }
+    | { kind: 'textBox'; frame: Frame; around: Box[]; parentId: string; from: Point; to: Point }
     | { kind: 'draw'; tool: ShapeTool; frame: Frame; around: Box[]; from: Point; id: string; moved: boolean; roots: string[]; end: () => void }
     | {
       kind: 'path'; frame: Frame; around: Box[]; layer: Reshaping; path: PenPath; grab: Point; moved: boolean; roots: string[]; end: () => void
@@ -1170,7 +1238,7 @@ function live(
   const ROTATE_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M6 15a7 7 0 1 1 3 4.7" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/><path d="M6 15a7 7 0 1 1 3 4.7" fill="none" stroke="black" stroke-width="1.75" stroke-linecap="round"/><path d="M3 12l3 3.5 3.5-3" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12l3 3.5 3.5-3" fill="none" stroke="black" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>')}") 12 12, crosshair`
   let hoverCursor = ''
   const showCursor = () => {
-    canvas.style.cursor = pan ? 'grabbing' : panning() ? 'grab' : isShapeTool(tool) || tool === 'pen' ? 'crosshair' : hoverCursor
+    canvas.style.cursor = pan ? 'grabbing' : panning() ? 'grab' : isShapeTool(tool) || tool === 'pen' ? 'crosshair' : tool === 'text' ? 'text' : hoverCursor
   }
   function cursorFor(screen: Point) {
     if (gesture?.kind === 'resize' || gesture?.kind === 'rotate') return
@@ -1201,10 +1269,26 @@ function live(
       if (at) penDown(e, at)
       return
     }
+    if (tool === 'text') {
+      if (at) startTextBox(e, at)
+      return
+    }
     if (pathEditing && startPathEdit(e, at)) return
     const deepest = at && hitTest(cached(at.frame).scene.layers, at.p, pickable)
     if (at && editing && deepest?.id === editing.id && editing.frame === at.frame.key) {
-      editing.caret = textAnchor(doc, editing.id, caretFromPoint(at.p))
+      // In the text being edited (#47): a press puts the caret there, Shift extends the range to
+      // it, a drag selects, and a third click selects the paragraph.
+      const offset = caretFromPoint(at.p)
+      const node = session.design().nodes[editing.id]
+      if (e.detail >= 3 && node?.type === 'text') {
+        selectText(paragraphAt(node.props.text, offset))
+      } else {
+        caretTo(offset, e.shiftKey)
+        if (e.detail <= 1) {
+          canvas.setPointerCapture(e.pointerId)
+          gesture = { kind: 'textSelect', frame: at.frame, around: [] }
+        }
+      }
       drawOverlay()
       return
     }
@@ -1304,6 +1388,16 @@ function live(
     }
     clickedAlone = null
     const p = localTo({ x: world.x - gesture.frame.x, y: world.y - gesture.frame.y }, gesture.around)
+    if (gesture.kind === 'textSelect') {
+      caretTo(caretFromPoint(p), true)
+      drawOverlay()
+      return
+    }
+    if (gesture.kind === 'textBox') {
+      gesture.to = p
+      drawOverlay()
+      return
+    }
     if (gesture.kind === 'draw') {
       drawTo(gesture, p, e.shiftKey, e.altKey)
       return
@@ -1340,6 +1434,34 @@ function live(
     canvas.setPointerCapture(e.pointerId)
     gesture = { kind: 'draw', tool: shape, frame: at.frame, around, from, id, moved: false, roots: [id], end }
     runQuietly(() => session.run('node.update', { ids: [id], patch: drawnBox(shape, from, from, false, false) }))
+  }
+
+  /** A press with the text tool (#47): a click makes text that grows as it is typed, a drag a box of that size. */
+  function startTextBox(e: PointerEvent, at: { frame: Frame; p: Point }) {
+    stopEditing()
+    const now = session.design()
+    const inside = entered ? now.nodes[entered] : undefined
+    const parentId = entered && inside && canHold(inside.type, 'text') ? entered : at.frame.pageId
+    const around = containersOf(at.frame, parentId, now)
+    const from = localTo(at.p, around)
+    canvas.setPointerCapture(e.pointerId)
+    gesture = { kind: 'textBox', frame: at.frame, around, parentId, from, to: from }
+  }
+  /** Makes the text layer the text tool drew and starts typing into it, one undo step with the typing. */
+  function finishTextBox(g: Extract<Gesture, { kind: 'textBox' }>) {
+    const dragged = Math.max(Math.abs(g.to.x - g.from.x), Math.abs(g.to.y - g.from.y)) * camera.zoom >= CLICK_SLOP
+    const box = dragged
+      ? { x: Math.min(g.from.x, g.to.x), y: Math.min(g.from.y, g.to.y), width: Math.abs(g.to.x - g.from.x), height: Math.abs(g.to.y - g.from.y) }
+      : null
+    const end = session.beginGesture()
+    let id = ''
+    if (!runQuietly(() => { id = session.run('node.create', { parentId: g.parentId, layer: newText(round(g.from.x), round(g.from.y), box && { width: round(box.width), height: round(box.height), x: round(box.x), y: round(box.y) }) }) })) {
+      end()
+      return
+    }
+    setTool('select')
+    select([id], g.frame.key)
+    startEditing(id, g.frame.key, 0, end, true)
   }
 
   /** Grows the shape being drawn to the pointer; a few screen pixels count as a click still. */
@@ -1543,6 +1665,17 @@ function live(
       drawOverlay()
       return
     }
+    if (gesture?.kind === 'textBox') {
+      finishTextBox(gesture)
+      gesture = null
+      showCursor()
+      drawOverlay()
+      return
+    }
+    if (gesture?.kind === 'textSelect') {
+      gesture = null
+      return
+    }
     if (gesture && gesture.kind !== 'marquee') {
       hug(gesture.roots)
       gesture.end()
@@ -1567,6 +1700,13 @@ function live(
     const at = pointIn(e)
     const hit = at && hitTest(cached(at.frame).scene.layers, at.p, pickable)
     if (!at || !hit) return
+    if (editing && hit.id === editing.id && editing.frame === at.frame.key) {
+      // A double click in the text being edited selects the word there (#47).
+      const node = session.design().nodes[editing.id]
+      if (node?.type === 'text') selectText(wordAt(node.props.text, caretFromPoint(at.p)))
+      drawOverlay()
+      return
+    }
     const picked = target(hit.id, at.frame.key)
     const container = design.nodes[picked]
     if (picked !== hit.id && container && isContainer(container.type)) {
@@ -1588,8 +1728,8 @@ function live(
     if (hit.type !== 'text' || design.nodes[hit.id]?.lock?.content) return
     stopEditing()
     selection = { ids: [hit.id], frame: at.frame.key }
-    editing = { id: hit.id, frame: at.frame.key, caret: textAnchor(doc, hit.id, 0), endGesture: session.beginGesture() }
-    editing.caret = textAnchor(doc, hit.id, caretFromPoint(at.p))
+    startEditing(hit.id, at.frame.key, 0)
+    caretTo(caretFromPoint(at.p))
     drawOverlay()
   }, on)
 
@@ -1609,7 +1749,6 @@ function live(
     setCamera({ ...camera, x: camera.x - dx, y: camera.y - dy })
   }, { ...on, passive: false })
 
-  const graphemeEdges = (text: string) => [0, ...[...graphemes.segment(text)].map((g) => g.index + g.segment.length)]
   /** Keys typed into the page's own fields belong to them. */
   const inField = (target: EventTarget | null) =>
     target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
@@ -1709,6 +1848,7 @@ function live(
       toolLine: () => setTool('line'),
       toolArrow: () => setTool('arrow'),
       toolPen: () => setTool('pen'),
+      toolText: () => setTool('text'),
     }
     // The pen's path ends with Enter or Escape, open as it is (#45).
     if (pen && (action === 'deselect' || action === 'editPoints')) {
@@ -1887,35 +2027,106 @@ function live(
     const node = session.design().nodes[editing.id]
     if (node?.type !== 'text') return
     const text = node.props.text
-    const edges = graphemeEdges(text)
+    const range = textRange() ?? { start: 0, end: 0 }
     const caret = Math.min(anchorOffset(doc, editing.caret) ?? 0, text.length)
+    const selected = range.end > range.start
     const { id } = editing
-    const moveTo = (offset: number) => {
-      if (editing) editing.caret = textAnchor(doc, id, offset)
+    const key = e.key.toLowerCase()
+    /** Replaces the selected range with text, or with nothing; the caret ends after what went in. */
+    const replace = (inserted: string) => {
+      const ok = runQuietly(() => {
+        if (selected) session.run('text.edit', { id, op: { kind: 'delete', at: range.start, length: range.end - range.start } })
+        if (inserted) session.run('text.edit', { id, op: { kind: 'insert', at: range.start, text: inserted } })
+      })
+      // The anchor sits after the character before the caret, so inserting at the caret leaves it
+      // before the new text; it is moved past it.
+      if (ok) caretTo(range.start + inserted.length)
+      return ok
+    }
+    /** The caret's offset on the line above or below, or at the start or end of its line. */
+    const lineMove = (to: 'up' | 'down' | 'home' | 'end') => {
+      const laid = editingText()
+      if (!laid) return caret
+      const at = caretPosition(ck, laid.laid, caret)
+      if (to === 'home' || to === 'end') return caretAt(ck, laid.laid, to === 'home' ? -1e6 : 1e6, at.y + at.height / 2)
+      const y = to === 'up' ? at.y - at.height / 2 : at.y + at.height * 1.5
+      if (y < 0) return 0
+      if (y > laid.laid.height) return text.length
+      return caretAt(ck, laid.laid, at.x, y)
     }
     if (e.key === 'Escape') {
       stopEditing()
-      drawOverlay()
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-      // Logical order: right-to-left text moves the other way on screen, as most editors do.
-      moveTo(e.key === 'ArrowRight' ? (edges.find((x) => x > caret) ?? caret) : (edges.findLast((x) => x < caret) ?? caret))
-      drawOverlay()
-    } else if (e.key === 'Backspace' && caret > 0) {
-      const from = edges.findLast((x) => x < caret) ?? 0
-      runQuietly(() => session.run('text.edit', { id, op: { kind: 'delete', at: from, length: caret - from } }))
-    } else if (e.key === 'Delete' && caret < text.length) {
-      const to = edges.find((x) => x > caret) ?? text.length
-      runQuietly(() => session.run('text.edit', { id, op: { kind: 'delete', at: caret, length: to - caret } }))
+      // Logical order: right-to-left text moves the other way on screen, as most editors do. With
+      // a range and no Shift, the caret goes to its near end.
+      const forward = e.key === 'ArrowRight'
+      if (selected && !e.shiftKey) caretTo(forward ? range.end : range.start)
+      else caretTo(step(text, caret, forward), e.shiftKey)
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Home' || e.key === 'End') {
+      caretTo(lineMove(({ ArrowUp: 'up', ArrowDown: 'down', Home: 'home', End: 'end' } as const)[e.key]), e.shiftKey)
+    } else if (mod && key === 'a') {
+      selectText({ start: 0, end: text.length })
+    } else if (mod && ['b', 'i', 'u'].includes(key) || (mod && e.shiftKey && key === 'x')) {
+      // Style keys (#47) style the selected range, in the base, so every format shows it.
+      const toggle: StyleToggle = key === 'b' ? 'bold' : key === 'i' ? 'italic' : key === 'u' ? 'underline' : 'strikethrough'
+      if (selected) runQuietly(() => session.run('text.edit', { id, op: { kind: 'style', at: range.start, length: range.end - range.start, style: toggled(node.props, range, toggle) } }))
+    } else if (e.key === 'Backspace' && (selected || caret > 0)) {
+      if (selected) replace('')
+      else if (runQuietly(() => session.run('text.edit', { id, op: { kind: 'delete', at: step(text, caret, false), length: caret - step(text, caret, false) } }))) caretTo(step(text, caret, false))
+    } else if (e.key === 'Delete' && (selected || caret < text.length)) {
+      if (selected) replace('')
+      else runQuietly(() => session.run('text.edit', { id, op: { kind: 'delete', at: caret, length: step(text, caret, true) - caret } }))
+    } else if (e.key === 'Enter') {
+      replace('\n')
     } else if (e.key.length > 0 && [...e.key].length === 1 && !mod) {
-      // Text is shared by every format, so typing writes the base. The anchor sits after the
-      // character before the caret, so inserting at the caret leaves it before the new text; it
-      // is moved past it.
-      if (runQuietly(() => session.run('text.edit', { id, op: { kind: 'insert', at: caret, text: e.key } }))) moveTo(caret + e.key.length)
+      // Text is shared by every format, so typing writes the base.
+      replace(e.key)
     } else {
+      // Copy, cut and paste come as their own events; anything else is the page's.
       return
     }
     e.preventDefault()
+    if (session.design().nodes[id] !== node) fitText(id)
+    drawOverlay()
   }
+  /** The text being edited and its selected range, for the clipboard. */
+  function clipboardText() {
+    const node = editing && session.design().nodes[editing.id]
+    const range = textRange()
+    return node?.type === 'text' && range ? { id: node, text: node.props.text, range } : null
+  }
+  // Copy, cut and paste plain text while typing (#47). Pasted line breaks become paragraphs.
+  window.addEventListener('copy', (e) => {
+    const at = clipboardText()
+    if (!at || inField(e.target) || at.range.end === at.range.start) return
+    e.clipboardData?.setData('text/plain', at.text.slice(at.range.start, at.range.end))
+    e.preventDefault()
+  }, on)
+  window.addEventListener('cut', (e) => {
+    const at = clipboardText()
+    if (!at || !editing || inField(e.target) || at.range.end === at.range.start) return
+    e.clipboardData?.setData('text/plain', at.text.slice(at.range.start, at.range.end))
+    e.preventDefault()
+    const { id } = editing
+    if (runQuietly(() => session.run('text.edit', { id, op: { kind: 'delete', at: at.range.start, length: at.range.end - at.range.start } }))) caretTo(at.range.start)
+    fitText(id)
+    drawOverlay()
+  }, on)
+  window.addEventListener('paste', (e) => {
+    const at = clipboardText()
+    if (!at || !editing || inField(e.target)) return
+    const pasted = (e.clipboardData?.getData('text/plain') ?? '').replace(/\r\n?/g, '\n')
+    e.preventDefault()
+    const { id } = editing
+    const { start, end } = at.range
+    const ok = runQuietly(() => {
+      if (end > start) session.run('text.edit', { id, op: { kind: 'delete', at: start, length: end - start } })
+      if (pasted) session.run('text.edit', { id, op: { kind: 'insert', at: start, text: pasted } })
+    })
+    if (ok) caretTo(start + pasted.length)
+    fitText(id)
+    drawOverlay()
+  }, on)
   window.addEventListener('keydown', onKey, on)
   window.addEventListener('keyup', (e) => {
     if (e.code !== 'Space') return

@@ -1,6 +1,6 @@
 import { FALLBACK_FAMILIES } from '@razzlr/fonts'
 import { loadFontFiles } from '@razzlr/fonts/node'
-import { caretAt, caretPosition, layoutText, makeResources, selectionBoxes } from '@razzlr/renderer'
+import { caretAt, caretPosition, layoutText, makeResources, selectionBoxes, type TextLayout } from '@razzlr/renderer'
 import { loadCanvasKit } from '@razzlr/renderer/node'
 import { TextProps } from '@razzlr/schema'
 import type { Paragraph } from 'canvaskit-wasm'
@@ -26,7 +26,13 @@ function laidOut(sample: TextSample, width?: number) {
     x: 0, y: 0, width: width ?? 0, height: 0, boxMode: width ? 'autoHeight' : 'autoWidth', text: sample.text,
     style: { fontFamily: sample.family, fontWeight: sample.weight, fontSize: 48, color: '#000000FF' },
   })
-  return layoutText(ck, props, resources).paragraph
+  return layoutText(ck, props, resources)
+}
+/** The one paragraph of a sample with no line breaks. */
+function only(laid: TextLayout): Paragraph {
+  const [block] = laid.blocks
+  if (!block || laid.blocks.length !== 1) throw new Error('not one paragraph')
+  return block.paragraph
 }
 
 /** Where each glyph is drawn, by the UTF-16 offset of its cluster, from the shaped lines rather than from selection boxes. */
@@ -44,15 +50,16 @@ function glyphOrigins(paragraph: Paragraph, text: string) {
 }
 
 describe.each([...SAMPLES, MIXED])('caret and selection in $label', (sample) => {
-  const paragraph = laidOut(sample)
-  afterAll(() => paragraph.delete())
+  const laid = laidOut(sample)
+  afterAll(() => laid.delete())
+  const paragraph = only(laid)
   const cases = graphemes(sample.text).filter((g) => g.text.trim() !== '')
   const [line] = paragraph.getLineMetrics()
   if (!line) throw new Error('no line')
   const lineTop = line.baseline - line.ascent
 
   it.each(cases)('"$text" has one box in its own direction, around its glyphs', (g) => {
-    const boxes = selectionBoxes(ck, paragraph, g.start, g.end)
+    const boxes = selectionBoxes(ck, laid, g.start, g.end)
     expect(boxes).toHaveLength(1)
     const [box] = boxes
     if (!box) return
@@ -70,25 +77,25 @@ describe.each([...SAMPLES, MIXED])('caret and selection in $label', (sample) => 
   })
 
   it.each(cases)('a click anywhere up the line on "$text" puts the caret on its near edge', (g) => {
-    const [box] = selectionBoxes(ck, paragraph, g.start, g.end)
+    const [box] = selectionBoxes(ck, laid, g.start, g.end)
     if (!box) throw new Error('no box')
     const leading = box.rtl ? box.x + box.width * 0.75 : box.x + box.width * 0.25
     const trailing = box.rtl ? box.x + box.width * 0.25 : box.x + box.width * 0.75
     for (const share of [0.05, 0.3, 0.6, 0.95]) {
       const y = lineTop + line.height * share
-      expect(caretAt(ck, paragraph, sample.text, leading, y)).toBe(g.start)
-      expect(caretAt(ck, paragraph, sample.text, trailing, y)).toBe(g.end)
+      expect(caretAt(ck, laid, leading, y)).toBe(g.start)
+      expect(caretAt(ck, laid, trailing, y)).toBe(g.end)
     }
   })
 
   it('the caret is drawn where a click puts it', () => {
     for (const g of cases) {
       for (const offset of [g.start, g.end]) {
-        const at = caretPosition(ck, paragraph, sample.text, offset)
-        const clicked = caretAt(ck, paragraph, sample.text, at.x, at.y + at.height / 2)
+        const at = caretPosition(ck, laid, offset)
+        const clicked = caretAt(ck, laid, at.x, at.y + at.height / 2)
         // Where a left-to-right run meets right-to-left text, two offsets share one place on screen,
         // so the click may pick the other one; it must still draw the caret in the same place.
-        expect(caretPosition(ck, paragraph, sample.text, clicked).x).toBeCloseTo(at.x, 3)
+        expect(caretPosition(ck, laid, clicked).x).toBeCloseTo(at.x, 3)
       }
     }
   })
@@ -96,7 +103,7 @@ describe.each([...SAMPLES, MIXED])('caret and selection in $label', (sample) => 
   it('every caret position is a grapheme edge', () => {
     const edges = new Set(graphemes(sample.text).flatMap((g) => [g.start, g.end]))
     for (let x = -10; x <= paragraph.getMaxWidth() + 10; x += 2) {
-      expect(edges).toContain(caretAt(ck, paragraph, sample.text, x, lineTop + line.height / 2))
+      expect(edges).toContain(caretAt(ck, laid, x, lineTop + line.height / 2))
     }
   })
 })
@@ -104,8 +111,9 @@ describe.each([...SAMPLES, MIXED])('caret and selection in $label', (sample) => 
 describe('caret on wrapped text', () => {
   const sample = SAMPLES.find((s) => s.label === 'Hindi body')
   if (!sample) throw new Error('no Hindi body')
-  const paragraph = laidOut(sample, 300)
-  afterAll(() => paragraph.delete())
+  const laid = laidOut(sample, 300)
+  afterAll(() => laid.delete())
+  const paragraph = only(laid)
   const lines = paragraph.getLineMetrics()
 
   it('wraps onto several lines', () => {
@@ -117,7 +125,7 @@ describe('caret on wrapped text', () => {
       const top = l.baseline - l.ascent
       for (const x of [-50, l.left + 1, l.left + l.width / 2, l.left + l.width - 1, 1000]) {
         for (const y of [top + 1, top + l.height / 2, top + l.height - 1]) {
-          const offset = caretAt(ck, paragraph, sample.text, x, y)
+          const offset = caretAt(ck, laid, x, y)
           expect(offset).toBeGreaterThanOrEqual(l.startIndex)
           expect(offset).toBeLessThanOrEqual(l.endIndex)
         }
@@ -129,7 +137,7 @@ describe('caret on wrapped text', () => {
     const first = lines[0]
     const last = lines.at(-1)
     if (!first || !last) throw new Error('no lines')
-    expect(caretAt(ck, paragraph, sample.text, 5, -100)).toBe(first.startIndex)
-    expect(caretAt(ck, paragraph, sample.text, 1000, paragraph.getHeight() + 100)).toBeGreaterThanOrEqual(last.startIndex)
+    expect(caretAt(ck, laid, 5, -100)).toBe(first.startIndex)
+    expect(caretAt(ck, laid, 1000, paragraph.getHeight() + 100)).toBeGreaterThanOrEqual(last.startIndex)
   })
 })
