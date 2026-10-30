@@ -1,7 +1,8 @@
 // The API's routes. Every route below /clients needs a session, and reads and writes only that
 // session's org; a client or design of another org is answered as if it didn't exist.
 import type { Db } from '@razzlr/db'
-import { CreateClient, CreateDesign, type ApiError } from '@razzlr/schema'
+import { CreateClient, CreateDesign, type ApiError, type SyncToken } from '@razzlr/schema'
+import { signSyncToken } from '@razzlr/sync-token'
 import { Hono, type MiddlewareHandler } from 'hono'
 import type { z } from 'zod'
 import { createClient, createDesign, findClient, findDesign, InvalidContent, listClients, listDesigns } from './designs.ts'
@@ -11,7 +12,7 @@ type Env = { Variables: { session: Session } }
 
 const error = (message: string): ApiError => ({ error: message })
 
-export function createApp({ db, sessionOf }: { db: Db; sessionOf: SessionOf }) {
+export function createApp({ db, sessionOf, syncSecret }: { db: Db; sessionOf: SessionOf; syncSecret: string }) {
   const app = new Hono<Env>()
 
   app.get('/health', (c) => c.json({ ok: true }))
@@ -70,6 +71,15 @@ export function createApp({ db, sessionOf }: { db: Db; sessionOf: SessionOf }) {
   app.get('/clients/:clientId/designs/:designId', async (c) => {
     const design = await findDesign(db, c.var.session.orgId, c.req.param('clientId'), c.req.param('designId'))
     return design ? c.json(design) : c.json(error('No such design'), 404)
+  })
+
+  // A token for the sync server, only after the same org and client checks as opening the design.
+  app.post('/clients/:clientId/designs/:designId/sync-token', async (c) => {
+    const { orgId, userId } = c.var.session
+    const design = await findDesign(db, orgId, c.req.param('clientId'), c.req.param('designId'))
+    if (!design) return c.json(error('No such design'), 404)
+    const { token, expiresAt } = signSyncToken(syncSecret, { designId: design.id, orgId, userId })
+    return c.json({ token, expiresAt: new Date(expiresAt).toISOString() } satisfies SyncToken)
   })
 
   app.onError((e, c) => {

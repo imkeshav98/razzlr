@@ -21,6 +21,8 @@ export interface EditorOptions {
   overlay: HTMLElement
   designId: string
   syncUrl: string
+  /** A sync token for the design, fetched again whenever the editor (re)connects (#34). */
+  syncToken: () => Promise<string>
   formatId?: string
   onStatus?: (status: string) => void
   /** Aborting it while the editor is still connecting stops it, freeing what it made. */
@@ -64,7 +66,10 @@ export async function startEditor(options: EditorOptions) {
   cache.resources(resourceBytes)
   status('Connecting')
   const doc = new Y.Doc()
-  const provider = new HocuspocusProvider({ url: syncUrl, name: designId, document: doc })
+  const provider = new HocuspocusProvider({
+    url: syncUrl, name: designId, document: doc, token: options.syncToken,
+    onAuthenticationFailed: ({ reason }) => status(`Error: the sync server refused this design (${reason})`),
+  })
   try {
     await new Promise<void>((resolve, reject) => {
       const stop = () => reject(new Error('stopped while connecting'))

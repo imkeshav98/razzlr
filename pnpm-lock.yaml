@@ -29,6 +29,9 @@ importers:
       '@razzlr/schema':
         specifier: workspace:*
         version: link:../../packages/schema
+      '@razzlr/sync-token':
+        specifier: workspace:*
+        version: link:../../packages/sync-token
       drizzle-orm:
         specifier: ^0.45.0
         version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
@@ -69,7 +72,13 @@ importers:
       '@razzlr/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@razzlr/sync-token':
+        specifier: workspace:*
+        version: link:../../packages/sync-token
     devDependencies:
+      '@hocuspocus/provider':
+        specifier: 4.8.0
+        version: 4.8.0(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
       '@razzlr/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -82,6 +91,12 @@ importers:
       typescript:
         specifier: ~5.9.3
         version: 5.9.3
+      vitest:
+        specifier: ^3.2.7
+        version: 3.2.7(@types/node@22.20.5)(tsx@4.23.15)
+      yjs:
+        specifier: ^13.6.27
+        version: 13.6.33
 
   apps/web:
     dependencies:
@@ -310,6 +325,24 @@ importers:
       zod:
         specifier: ^4.6.0
         version: 4.6.7
+    devDependencies:
+      '@razzlr/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.5
+      eslint:
+        specifier: ^9.39.0
+        version: 9.39.5
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.7
+        version: 3.2.7(@types/node@22.20.5)(tsx@4.23.15)
+
+  packages/sync-token:
     devDependencies:
       '@razzlr/config':
         specifier: workspace:*

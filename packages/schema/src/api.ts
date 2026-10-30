@@ -42,3 +42,10 @@ export const ApiError = z.object({
   error: z.string(),
 })
 export type ApiError = z.infer<typeof ApiError>
+
+/** Lets the editor open one design on the sync server until it expires. */
+export const SyncToken = z.object({
+  token: z.string().min(1),
+  expiresAt: z.iso.datetime(),
+})
+export type SyncToken = z.infer<typeof SyncToken>
