@@ -146,6 +146,21 @@ describe('two tabs', () => {
     }
   })
 
+  it('a layer copied into a format another tab removed at once leaves no overrides behind', () => {
+    const { a, b, tabA, tabB, sync } = twoTabs()
+    tabA.run('format.add', { id: 'story', name: 'Story', width: 1080, height: 1920 })
+    sync()
+    tabA.run('format.remove', { id: 'story' })
+    const [copy = ''] = tabB.run('node.duplicate', { ids: ['box'] })
+    sync()
+    for (const [doc, tab] of [[a, tabA], [b, tabB]] as const) {
+      const design = readDesign(doc)
+      expect(design.overrides['format:story']).toBeUndefined()
+      expect(design.nodes[copy]).toBeDefined()
+      expect(tab.design().overrides['format:story']).toBeUndefined()
+    }
+  })
+
   it('concurrent moves that would put two groups inside each other are repaired the same way in both tabs', () => {
     const { a, b, tabA, tabB, sync } = twoTabs()
     const group = { type: 'group', name: 'G', props: { x: 0, y: 0, width: 10, height: 10 } } as const
@@ -239,6 +254,11 @@ function randomCommand(tab: Session, doc: DesignDoc, random: () => number) {
       else tab.run('format.add', { name: 'F', width: 100 + Math.floor(random() * 900), height: 100 })
     } else if (roll < 0.96 && design.nodes.headline?.type === 'text' && design.nodes.headline.props.text.length > 1) {
       tab.run('text.edit', { id: 'headline', op: { kind: 'style', at: 0, length: 1, style: { fontWeight: pick([400, 700]) } } })
+    } else if (roll < 0.985) {
+      const which = random()
+      if (which < 0.4) tab.run('node.reorder', { ids: [pick(ids), pick(ids)], to: pick(['forward', 'backward', 'front', 'back'] as const) })
+      else if (which < 0.7) tab.run('node.duplicate', { ids: [pick(ids)] })
+      else tab.run('node.lock', { ids: [pick(ids)], lock: { move: random() < 0.5 } })
     } else if (random() < 0.5) {
       tab.undo()
     } else {

@@ -306,4 +306,122 @@ describe('commands', () => {
 
     expect(childrenOf(readDesign(doc), 'p1').map(([n]) => n).at(-1)).not.toBe(id)
   })
+
+  describe('z-order', () => {
+    /** Five shapes on p1 above box and headline, as ids bottom to top. */
+    const stacked = () => {
+      const doc = freshDoc()
+      const tab = openSession(doc)
+      for (const id of ['a', 'b', 'c', 'd', 'e']) tab.run('node.create', { id, parentId: 'p1', layer: badge })
+      const order = () => childrenOf(readDesign(doc), 'p1').map(([id]) => id)
+      return { doc, tab, order }
+    }
+
+    it('node.reorder brings layers forward and back one step, keeping a moved block in order', () => {
+      const { tab, order } = stacked()
+      expect(order()).toEqual(['box', 'headline', 'a', 'b', 'c', 'd', 'e'])
+      tab.run('node.reorder', { ids: ['b'], to: 'forward' })
+      expect(order()).toEqual(['box', 'headline', 'a', 'c', 'b', 'd', 'e'])
+      tab.run('node.reorder', { ids: ['a', 'c'], to: 'forward' })
+      expect(order()).toEqual(['box', 'headline', 'b', 'a', 'c', 'd', 'e'])
+      tab.run('node.reorder', { ids: ['d', 'e'], to: 'backward' })
+      expect(order()).toEqual(['box', 'headline', 'b', 'a', 'd', 'e', 'c'])
+      // Already on top: nothing to do, and nothing written.
+      const tabUndo = tab.canUndo()
+      tab.run('node.reorder', { ids: ['c'], to: 'forward' })
+      expect(order()).toEqual(['box', 'headline', 'b', 'a', 'd', 'e', 'c'])
+      expect(tab.canUndo()).toBe(tabUndo)
+    })
+
+    it('node.reorder brings layers to the front or back, and undo puts them back', () => {
+      const { tab, order } = stacked()
+      tab.run('node.reorder', { ids: ['box', 'c'], to: 'front' })
+      expect(order()).toEqual(['headline', 'a', 'b', 'd', 'e', 'box', 'c'])
+      tab.run('node.reorder', { ids: ['e', 'a'], to: 'back' })
+      expect(order()).toEqual(['a', 'e', 'headline', 'b', 'd', 'box', 'c'])
+      tab.undo()
+      expect(order()).toEqual(['headline', 'a', 'b', 'd', 'e', 'box', 'c'])
+      tab.undo()
+      expect(order()).toEqual(['box', 'headline', 'a', 'b', 'c', 'd', 'e'])
+    })
+
+    it('node.reorder works within each parent', () => {
+      const { doc, tab, order } = stacked()
+      tab.run('node.create', { id: 'g', parentId: 'p1', layer: { type: 'group', name: 'G', props: { x: 0, y: 0, width: 10, height: 10 } } })
+      tab.run('node.create', { id: 'in1', parentId: 'g', layer: badge })
+      tab.run('node.create', { id: 'in2', parentId: 'g', layer: badge })
+      tab.run('node.reorder', { ids: ['in1', 'a'], to: 'front' })
+      expect(order()).toEqual(['box', 'headline', 'b', 'c', 'd', 'e', 'g', 'a'])
+      expect(childrenOf(readDesign(doc), 'g').map(([id]) => id)).toEqual(['in2', 'in1'])
+    })
+  })
+
+  it('node.duplicate copies layers right above themselves, with what is inside them and their overrides', () => {
+    const doc = freshDoc()
+    const tab = openSession(doc)
+    tab.run('node.create', { id: 'g', parentId: 'p1', layer: { type: 'group', name: 'G', props: { x: 0, y: 0, width: 10, height: 10 } } })
+    tab.run('node.create', { id: 'dot', parentId: 'g', layer: badge })
+    tab.run('node.update', { ids: ['dot'], scope: 'format:banner', patch: { x: 3 } })
+
+    const [box, group, ...rest] = tab.run('node.duplicate', { ids: ['box', 'g', 'dot'] })
+
+    expect(rest).toEqual([])
+    const design = readDesign(doc)
+    expect(childrenOf(design, 'p1').map(([id]) => id)).toEqual(['box', box, 'headline', 'g', group])
+    expect(design.nodes[box ?? '']?.props).toEqual(design.nodes.box?.props)
+    const [[dot, copied] = []] = childrenOf(design, group ?? '')
+    expect(dot).not.toBe('dot')
+    expect(copied?.name).toBe('Badge')
+    expect(design.overrides['format:banner']?.[dot ?? '']).toEqual({ x: 3 })
+    tab.undo()
+    expect(Object.keys(readDesign(doc).nodes).sort()).toEqual(['box', 'dot', 'g', 'headline'])
+  })
+
+  describe('locks', () => {
+    it('node.lock sets flags one by one, and clearing them all drops the field', () => {
+      const doc = freshDoc()
+      const tab = openSession(doc)
+      tab.run('node.lock', { ids: ['box'], lock: { move: true } })
+      expect(readDesign(doc).nodes.box?.lock).toEqual({ move: true, resize: false, content: false, style: false, delete: false })
+      tab.run('node.lock', { ids: ['box'], lock: { delete: true } })
+      expect(readDesign(doc).nodes.box?.lock).toMatchObject({ move: true, delete: true })
+      tab.run('node.lock', { ids: ['box'], lock: { move: false, delete: false } })
+      expect(readDesign(doc).nodes.box).not.toHaveProperty('lock')
+      tab.undo()
+      expect(readDesign(doc).nodes.box?.lock).toMatchObject({ move: true, delete: true })
+    })
+
+    it('each flag refuses only its own changes, in the base and in every format', () => {
+      const doc = freshDoc()
+      const tab = openSession(doc)
+      const all = { move: true, resize: true, content: true, style: true, delete: true }
+      tab.run('node.lock', { ids: ['box', 'headline'], lock: { move: true } })
+      expect(() => tab.run('node.update', { ids: ['box'], patch: { x: 1 } })).toThrow(/"box" is locked \(move\)/)
+      expect(() => tab.run('node.update', { ids: ['box'], scope: 'format:banner', patch: { y: 1 } })).toThrow(/locked \(move\)/)
+      tab.run('node.update', { ids: ['box'], patch: { width: 50, opacity: 0.5 } })
+      tab.run('node.update', { ids: ['box'], scope: 'format:banner', patch: { visible: false } })
+
+      tab.run('node.lock', { ids: ['box', 'headline'], lock: all })
+      expect(() => tab.run('node.update', { ids: ['box'], patch: { rotation: 15 } })).toThrow(/locked \(resize\)/)
+      expect(() => tab.run('node.update', { ids: ['box'], patch: { opacity: 1 } })).toThrow(/locked \(style\)/)
+      expect(() => tab.run('text.edit', { id: 'headline', op: { kind: 'insert', at: 0, text: 'Big ' } })).toThrow(/locked \(content\)/)
+      expect(() => tab.run('text.edit', { id: 'headline', op: { kind: 'style', at: 0, length: 3, style: { fontWeight: 700 } } })).toThrow(/locked \(style\)/)
+      expect(() => tab.run('node.delete', { ids: ['box'] })).toThrow(/locked \(delete\)/)
+      // Hiding is not locked, z-order and copies aren't either.
+      tab.run('node.update', { ids: ['box'], patch: { visible: false } })
+      tab.run('node.reorder', { ids: ['box'], to: 'front' })
+      tab.run('node.duplicate', { ids: ['box'] })
+      expect(readDesign(doc).nodes.box?.props).toMatchObject({ width: 50, opacity: 0.5, visible: false })
+    })
+
+    it('a group with a delete-locked layer inside can\'t be deleted', () => {
+      const doc = freshDoc()
+      const tab = openSession(doc)
+      tab.run('node.create', { id: 'g', parentId: 'p1', layer: { type: 'group', name: 'G', props: { x: 0, y: 0, width: 10, height: 10 } } })
+      tab.run('node.create', { id: 'dot', parentId: 'g', layer: badge })
+      tab.run('node.lock', { ids: ['dot'], lock: { delete: true } })
+      expect(() => tab.run('node.delete', { ids: ['g'] })).toThrow(/"dot" is locked \(delete\)/)
+      expect(readDesign(doc).nodes.g).toBeDefined()
+    })
+  })
 })

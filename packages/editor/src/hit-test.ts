@@ -22,14 +22,16 @@ const inside = (p: Point, layer: SceneLayer) => {
 /**
  * The topmost layer under a page point, by layer boxes. Clicking inside a group or frame picks
  * the child under the point, so the spike can move single layers; a clipping frame hides what
- * lies outside it.
+ * lies outside it. A layer that isn't `pickable` (locked) is passed over with everything in it,
+ * so the click reaches what lies beneath.
  */
-export function hitTest(layers: SceneLayer[], p: Point): SceneLayer | null {
+export function hitTest(layers: SceneLayer[], p: Point, pickable: (layer: SceneLayer) => boolean = () => true): SceneLayer | null {
   for (const layer of [...layers].reverse()) {
+    if (!pickable(layer)) continue
     const q = unrotate(p, layer)
     if (layer.type === 'frame' || layer.type === 'group') {
       if (layer.type === 'frame' && layer.props.clip && !inside(q, layer)) continue
-      const child = hitTest(layer.children, q)
+      const child = hitTest(layer.children, q, pickable)
       if (child) return child
       if (layer.type === 'frame' && inside(q, layer)) return layer
       continue

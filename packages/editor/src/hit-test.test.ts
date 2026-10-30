@@ -30,4 +30,12 @@ describe('hitTest', () => {
     expect(hitTest([frame('f', true, [child])], { x: 240, y: 240 })).toBeNull()
     expect(hitTest([frame('f', false, [child])], { x: 240, y: 240 })?.id).toBe('child')
   })
+
+  it('passes over a layer that is not pickable, and everything in it, to what lies beneath', () => {
+    const under = box('under', 0, 0, 300, 300)
+    const locked = frame('f', true, [box('child', 150, 150, 100, 100)])
+    const unlocked = (layer: { id: string }) => layer.id !== 'f'
+    expect(hitTest([under, locked], { x: 160, y: 160 }, unlocked)?.id).toBe('under')
+    expect(hitTest([under, locked], { x: 160, y: 160 })?.id).toBe('child')
+  })
 })
