@@ -196,6 +196,9 @@ importers:
 
   tests/pixels:
     devDependencies:
+      '@playwright/test':
+        specifier: 1.63.0
+        version: 1.63.0
       '@razzlr/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -217,6 +220,9 @@ importers:
       canvaskit-wasm:
         specifier: 0.42.0
         version: 0.42.0
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       eslint:
         specifier: ^9.39.0
         version: 9.39.5

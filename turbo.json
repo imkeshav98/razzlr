@@ -24,11 +24,13 @@
       ],
       "outputs": [
         "playwright-report/**",
-        "test-results/**"
+        "test-results/**",
+        "output/**"
       ],
       "passThroughEnv": [
         "PLAYWRIGHT_BROWSERS_PATH",
-        "CI"
+        "CI",
+        "GITHUB_STEP_SUMMARY"
       ]
     }
   }

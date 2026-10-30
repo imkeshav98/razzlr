@@ -5,9 +5,11 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@razzlr/config": "workspace:*",
     "@razzlr/doc": "workspace:*",
     "@razzlr/fonts": "workspace:*",
@@ -15,6 +17,7 @@
     "@razzlr/schema": "workspace:*",
     "@types/node": "^22.20.0",
     "canvaskit-wasm": "0.42.0",
+    "esbuild": "^0.28.2",
     "eslint": "^9.39.0",
     "typescript": "~5.9.3",
     "vitest": "^3.2.7"

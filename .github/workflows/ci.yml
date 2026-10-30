@@ -38,3 +38,10 @@ jobs:
           path: tests/pixels/output
           if-no-files-found: ignore
           retention-days: 7
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webgl-vs-cpu
+          path: tests/pixels/output/webgl-vs-cpu.md
+          if-no-files-found: ignore
+          retention-days: 30
