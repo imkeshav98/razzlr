@@ -10,6 +10,8 @@ export const SHORTCUTS = [
   { action: 'deselect', keys: ['Escape'] },
   { action: 'delete', keys: ['Delete', 'Backspace'] },
   { action: 'duplicate', keys: ['Mod+D'] },
+  { action: 'group', keys: ['Mod+G'] },
+  { action: 'ungroup', keys: ['Mod+Shift+G'] },
   { action: 'bringForward', keys: ['Mod+BracketRight'] },
   { action: 'sendBackward', keys: ['Mod+BracketLeft'] },
   { action: 'bringToFront', keys: ['Mod+Shift+BracketRight'] },

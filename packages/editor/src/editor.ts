@@ -232,6 +232,8 @@ function live(
   let camera: Camera = { x: 0, y: 0, zoom: 1 }
   let tool: Tool = 'select'
   let selection: Selection | null = null
+  /** The group or frame double-clicked into: a click then picks what is directly inside it (#41). */
+  let entered: string | null = null
   /** The layer under the pointer, outlined while nothing is being dragged. */
   let hovered: Picked | null = null
   let editing: Editing | null = null
@@ -323,6 +325,36 @@ function live(
     const p = { ...node.props, ...from.overrides[scope(frame)]?.[id] } as { x: number; y: number; width: number; height: number; rotation?: number }
     return { x: p.x, y: p.y, width: p.width, height: p.height, rotation: p.rotation ?? 0 }
   }
+  /** The groups and frames a layer is inside, outermost first, as boxes in a frame. */
+  function containersOf(frame: Frame, parentId: string | undefined, from: Design = session.design()): Box[] {
+    const boxes: Box[] = []
+    for (let up = parentId; up && from.nodes[up]; up = from.nodes[up]?.parentId) {
+      const box = boxIn(frame, up, from)
+      if (box) boxes.unshift(box)
+    }
+    return boxes
+  }
+  /** A box as drawn inside containers: each one turns it about the container's centre. */
+  function drawnFrom(box: Box, around: Box[]): Box {
+    let c = centreOf(box)
+    let rotation = box.rotation
+    for (const outer of [...around].reverse()) {
+      c = turn(c, centreOf(outer), outer.rotation)
+      rotation += outer.rotation
+    }
+    return { ...box, x: c.x - box.width / 2, y: c.y - box.height / 2, rotation: normalAngle(rotation) }
+  }
+  /** A point on the page as layers inside containers see it, before the containers turn them. */
+  function localTo(p: Point, around: Box[]): Point {
+    let q = p
+    for (const outer of around) q = turn(q, centreOf(outer), -outer.rotation)
+    return q
+  }
+  /** A layer's box as it is drawn in a frame. */
+  function drawnBoxOf(frame: Frame, id: string, from: Design = session.design()) {
+    const box = boxIn(frame, id, from)
+    return box && drawnFrom(box, containersOf(frame, from.nodes[id]?.parentId, from))
+  }
   /** Locked in place layers can't be picked on the stage: a click goes to what lies beneath. */
   const pickable = (layer: SceneLayer) => !design.nodes[layer.id]?.lock?.move
   /** Drops selected layers that are gone, and the selection once none are left or its frame is. */
@@ -330,6 +362,7 @@ function live(
     if (!selection) return
     const ids = selection.ids.filter((id) => design.nodes[id])
     selection = ids.length > 0 && frameOf(selection.frame) ? { ...selection, ids } : null
+    if (entered && !design.nodes[entered]) entered = null
   }
   /** Selected layers that aren't inside another selected layer: the ones a transform moves. */
   function roots(from: Design = session.design()) {
@@ -340,23 +373,37 @@ function live(
     }
     return ids.filter((id) => from.nodes[id] && !inside(id))
   }
-  /** The box the handles go on: a single layer's own, turned with it, or the unturned box around several. */
-  function selectionBox(): { frame: Frame; box: Box } | null {
+  /**
+   * The box the handles go on: a single layer's own, turned with it, or the unturned box around
+   * several. `box` is as the layers inside their containers see it, which gestures work in;
+   * `drawn` is where it is on the page once the containers turn it; `around` are the containers.
+   */
+  function selectionBox(): { frame: Frame; box: Box; drawn: Box; around: Box[] } | null {
     const frame = selection && frameOf(selection.frame)
     if (!frame || !selection) return null
-    const boxes = selection.ids.map((id) => boxIn(frame, id)).filter((b): b is Box => b !== null)
+    const now = session.design()
+    const boxes = selection.ids.map((id) => boxIn(frame, id, now)).filter((b): b is Box => b !== null)
     if (boxes.length === 0) return null
-    return { frame, box: boxes.length === 1 ? boxes[0] as Box : boundsOf(boxes) }
+    const box = boxes.length === 1 ? boxes[0] as Box : boundsOf(boxes)
+    const around = containersOf(frame, now.nodes[selection.ids[0] ?? '']?.parentId, now)
+    return { frame, box, drawn: drawnFrom(box, around), around }
   }
   /**
-   * What a press on a layer picks: a selected layer it is in, so the selection moves whole, or
-   * else the layer on the page that holds it, so a click on a group's child picks the group.
+   * What a press on a layer picks: a selected layer it is in, so the selection moves whole; inside
+   * the group or frame double-clicked into, what is directly in it; or else the layer on the page
+   * that holds it, so a click on a group's child picks the group.
    */
   function target(hitId: string, frame: string) {
     const chain: string[] = []
     for (let up: string | undefined = hitId; up && design.nodes[up]; up = design.nodes[up]?.parentId) chain.push(up)
     const selected = selection?.frame === frame ? chain.find((id) => selection?.ids.includes(id)) : undefined
-    return selected ?? chain.at(-1) ?? hitId
+    const at = entered ? chain.indexOf(entered) : -1
+    return selected ?? (at > 0 ? chain[at - 1] : chain.at(-1)) ?? hitId
+  }
+  /** Whether a layer is inside the entered group or frame, not the container itself. */
+  function insideEntered(id: string) {
+    for (let up = design.nodes[id]?.parentId; up && design.nodes[up]; up = design.nodes[up]?.parentId) if (up === entered) return true
+    return false
   }
   function select(ids: string[], frame: string) {
     selection = ids.length > 0 ? { ids, frame } : null
@@ -418,12 +465,12 @@ function live(
   function selectionParts() {
     const outer = selectionBox()
     if (!outer || !selection) return []
-    const { frame, box } = outer
+    const { frame, drawn: box } = outer
     const parts: HTMLElement[] = []
     const several = selection.ids.length > 1
     if (several) {
       for (const id of selection.ids) {
-        const b = boxIn(frame, id, design)
+        const b = drawnBoxOf(frame, id, design)
         if (!b) continue
         const member = outline('selection-member', frame, b)
         member.dataset.layer = id
@@ -467,9 +514,12 @@ function live(
       const label = frameLabel(frame, drawnFrames)
       if (label) parts.push(label)
     }
+    const enteredFrame = entered && frameOf(selection?.frame)
+    const enteredBox = enteredFrame && entered && drawnBoxOf(enteredFrame, entered, design)
+    if (enteredFrame && enteredBox) parts.push(outline('entered', enteredFrame, enteredBox))
     const hover = !gesture && hovered && !selection?.ids.includes(hovered.id) ? hovered : null
     const hoverFrame = hover && frameOf(hover.frame)
-    const hoverBox = hoverFrame && hover && boxIn(hoverFrame, hover.id, design)
+    const hoverBox = hoverFrame && hover && drawnBoxOf(hoverFrame, hover.id, design)
     if (hoverFrame && hoverBox) parts.push(outline('hover', hoverFrame, hoverBox))
     parts.push(...selectionParts())
     if (gesture?.kind === 'marquee') {
@@ -675,9 +725,9 @@ function live(
 
   /** What a drag on the stage is doing, from pointer down to up. */
   type Gesture =
-    | { kind: 'move'; frame: Frame; from: Point; boxes: Map<string, Box>; end: () => void }
-    | { kind: 'resize'; frame: Frame; handle: Handle; outer: Box; grab: Point; roots: string[]; boxes: Map<string, Box>; end: () => void }
-    | { kind: 'rotate'; frame: Frame; outer: Box; from: number; roots: string[]; boxes: Map<string, Box>; end: () => void }
+    | { kind: 'move'; frame: Frame; around: Box[]; from: Point; roots: string[]; boxes: Map<string, Box>; end: () => void }
+    | { kind: 'resize'; frame: Frame; around: Box[]; handle: Handle; outer: Box; grab: Point; roots: string[]; boxes: Map<string, Box>; end: () => void }
+    | { kind: 'rotate'; frame: Frame; around: Box[]; outer: Box; from: number; roots: string[]; boxes: Map<string, Box>; end: () => void }
     | { kind: 'marquee'; from: Point; to: Point; base: string[]; baseFrame: string | null }
   let gesture: Gesture | null = null
   /** A click on one of several selected layers selects it alone, unless the pointer moves first. */
@@ -809,7 +859,7 @@ function live(
   function handleUnder(screen: Point): { kind: 'resize'; handle: Handle } | { kind: 'rotate'; corner: number } | null {
     const outer = selectionBox()
     if (!outer || editing) return null
-    const { frame, box } = outer
+    const { frame, drawn: box } = outer
     const onScreen = (p: Point) => toScreen(camera, { x: frame.x + p.x, y: frame.y + p.y })
     const c = centreOf(box)
     const dist = (p: Point) => Math.hypot(p.x - screen.x, p.y - screen.y)
@@ -838,7 +888,7 @@ function live(
   function cursorFor(screen: Point) {
     if (gesture?.kind === 'resize' || gesture?.kind === 'rotate') return
     const under = handleUnder(screen)
-    const rotation = selectionBox()?.box.rotation ?? 0
+    const rotation = selectionBox()?.drawn.rotation ?? 0
     hoverCursor = !under ? '' : under.kind === 'rotate' ? ROTATE_CURSOR
       : RESIZE_CURSORS[Math.round(((((HANDLE_ANGLE[under.handle] + rotation) % 180) + 180) % 180) / 45) % 4] ?? ''
     showCursor()
@@ -872,16 +922,20 @@ function live(
       const boxes = startBoxes(outer.frame, ids)
       const end = session.beginGesture()
       const world = toWorld(camera, screen)
-      const grab = { x: world.x - outer.frame.x, y: world.y - outer.frame.y }
-      if (grabbed.kind === 'resize') gesture = { kind: 'resize', frame: outer.frame, handle: grabbed.handle, outer: outer.box, grab, roots: ids, boxes, end }
-      else gesture = { kind: 'rotate', frame: outer.frame, outer: outer.box, from: angleOf(grab, centreOf(outer.box)), roots: ids, boxes, end }
+      const { around } = outer
+      const grab = localTo({ x: world.x - outer.frame.x, y: world.y - outer.frame.y }, around)
+      if (grabbed.kind === 'resize') gesture = { kind: 'resize', frame: outer.frame, around, handle: grabbed.handle, outer: outer.box, grab, roots: ids, boxes, end }
+      else gesture = { kind: 'rotate', frame: outer.frame, around, outer: outer.box, from: angleOf(grab, centreOf(outer.box)), roots: ids, boxes, end }
       drawOverlay()
       return
     }
     const inSelection = (id: string) => selection?.frame === at?.frame.key && selection?.ids.includes(id)
     // Inside the box around several selected layers, a press moves them all, gaps included.
-    const inOuter = at && outer && selection && selection.ids.length > 1 && outer.frame.key === at.frame.key
-      && at.p.x >= outer.box.x && at.p.x <= outer.box.x + outer.box.width && at.p.y >= outer.box.y && at.p.y <= outer.box.y + outer.box.height
+    const inner = at && outer && localTo(at.p, outer.around)
+    const inOuter = inner && outer && selection && selection.ids.length > 1 && outer.frame.key === at.frame.key
+      && inner.x >= outer.box.x && inner.x <= outer.box.x + outer.box.width && inner.y >= outer.box.y && inner.y <= outer.box.y + outer.box.height
+    // A press outside the group or frame double-clicked into leaves it.
+    if (entered && !inOuter && !(deepest && insideEntered(deepest.id))) entered = null
     const hit = at && deepest ? { id: target(deepest.id, at.frame.key) } : null
     if (at && hit) {
       if (e.shiftKey) {
@@ -903,14 +957,17 @@ function live(
       const base = e.shiftKey ? selection?.ids ?? [] : []
       const baseFrame = e.shiftKey ? selection?.frame ?? null : null
       if (!e.shiftKey) selection = null
+      entered = null
       gesture = { kind: 'marquee', from, to: from, base, baseFrame }
       drawOverlay()
       return
     }
     const frame = at && frameOf(selection?.frame)
+    const around = selectionBox()?.around ?? []
     if (!at || !frame) return
     canvas.setPointerCapture(e.pointerId)
-    gesture = { kind: 'move', frame, from: at.p, boxes: startBoxes(frame, roots()), end: session.beginGesture() }
+    const ids = roots()
+    gesture = { kind: 'move', frame, around, from: localTo(at.p, around), roots: ids, boxes: startBoxes(frame, ids), end: session.beginGesture() }
     drawOverlay()
   }, on)
 
@@ -946,14 +1003,17 @@ function live(
       return
     }
     clickedAlone = null
-    const p = { x: world.x - gesture.frame.x, y: world.y - gesture.frame.y }
+    const p = localTo({ x: world.x - gesture.frame.x, y: world.y - gesture.frame.y }, gesture.around)
     if (gesture.kind === 'move') moveTo(gesture, p, e.shiftKey)
     else if (gesture.kind === 'resize') resizeTo(gesture, p, e.shiftKey, e.altKey)
     else rotateTo(gesture, p, e.shiftKey)
   }, on)
 
   const endDrag = () => {
-    if (gesture && gesture.kind !== 'marquee') gesture.end()
+    if (gesture && gesture.kind !== 'marquee') {
+      hug(gesture.roots)
+      gesture.end()
+    }
     if (clickedAlone && selection) select([clickedAlone], selection.frame)
     clickedAlone = null
     gesture = null
@@ -973,7 +1033,18 @@ function live(
     if (panning()) return
     const at = pointIn(e)
     const hit = at && hitTest(cached(at.frame).scene.layers, at.p, pickable)
-    if (!at || hit?.type !== 'text' || design.nodes[hit.id]?.lock?.content) return
+    if (!at || !hit) return
+    const picked = target(hit.id, at.frame.key)
+    const container = design.nodes[picked]
+    if (picked !== hit.id && (container?.type === 'group' || container?.type === 'frame')) {
+      // Into the group or frame: what is directly inside it under the pointer gets picked.
+      stopEditing()
+      entered = picked
+      selection = null
+      select([target(hit.id, at.frame.key)], at.frame.key)
+      return
+    }
+    if (hit.type !== 'text' || design.nodes[hit.id]?.lock?.content) return
     stopEditing()
     selection = { ids: [hit.id], frame: at.frame.key }
     editing = { id: hit.id, frame: at.frame.key, caret: textAnchor(doc, hit.id, 0), endGesture: session.beginGesture() }
@@ -1002,12 +1073,26 @@ function live(
   const inField = (target: EventTarget | null) =>
     target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
 
+  /** Groups fit what they hold again after a change inside them, in the same undo step (#41). */
+  function hug(ids: string[]) {
+    const now = session.design()
+    const live = ids.filter((id) => now.nodes[id])
+    if (live.length > 0) runQuietly(() => session.run('node.hug', { ids: live }))
+  }
+
   /** Moves the selection by whole pixels in its format, one undo step per press. */
   function nudge(dx: number, dy: number) {
     const frame = selection && frameOf(selection.frame)
     if (!frame) return
-    const boxes = startBoxes(frame, roots())
-    session.gesture(() => writeBoxes(frame, boxes, new Map([...boxes].map(([id, b]) => [id, { ...b, x: b.x + dx, y: b.y + dy }]))))
+    const ids = roots()
+    const boxes = startBoxes(frame, ids)
+    // Arrows move along the page as drawn, also inside a turned group.
+    const around = selectionBox()?.around ?? []
+    const step = localTo({ x: dx, y: dy }, around.map((b) => ({ ...b, x: -b.width / 2, y: -b.height / 2 })))
+    session.gesture(() => {
+      writeBoxes(frame, boxes, new Map([...boxes].map(([id, b]) => [id, { ...b, x: round(b.x + step.x), y: round(b.y + step.y) }])))
+      hug(ids)
+    })
   }
 
   /** The top-level layers of the selection's page, or the first page's, that can be picked. */
@@ -1047,11 +1132,36 @@ function live(
     const nodes = session.design().nodes
     const far = action.endsWith('Far') ? NUDGE_FAR : NUDGE
     switch (action) {
-      case 'deselect': select([], frame.key)
+      case 'deselect': {
+        // Out of a group or frame one level at a time: it gets selected, then the page.
+        const up = entered
+        const parent = up ? design.nodes[up]?.parentId : undefined
+        entered = parent && design.nodes[parent] ? parent : null
+        select(up ? [up] : [], frame.key)
         break
-      case 'delete':
-        if (runQuietly(() => session.run('node.delete', { ids }))) select([], frame.key)
+      }
+      case 'delete': {
+        const parents = ids.map((id) => nodes[id]?.parentId ?? '').filter((id) => nodes[id])
+        if (runQuietly(() => session.gesture(() => {
+          session.run('node.delete', { ids })
+          hug(parents)
+        }))) select([], frame.key)
         break
+      }
+      case 'group': {
+        let group = ''
+        if (runQuietly(() => { group = session.run('node.group', { ids }) })) select([group], frame.key)
+        break
+      }
+      case 'ungroup': {
+        const groups = ids.filter((id) => nodes[id]?.type === 'group')
+        if (groups.length === 0) return false
+        let freed: string[] = []
+        if (runQuietly(() => { freed = session.run('node.ungroup', { ids: groups }) })) {
+          select([...ids.filter((id) => !groups.includes(id)), ...freed], frame.key)
+        }
+        break
+      }
       case 'duplicate': {
         let copies: string[] = []
         if (runQuietly(() => { copies = session.run('node.duplicate', { ids }) })) select(copies, frame.key)

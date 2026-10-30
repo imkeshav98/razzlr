@@ -441,6 +441,9 @@ importers:
       '@razzlr/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@razzlr/doc':
+        specifier: workspace:*
+        version: link:../../packages/doc
       '@razzlr/editor':
         specifier: workspace:*
         version: link:../../packages/editor

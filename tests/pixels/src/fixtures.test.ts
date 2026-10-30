@@ -10,7 +10,7 @@ const fixtures = loadFixtures()
 describe('pixel fixtures', () => {
   it('are the spike spec\'s (#1) designs plus the layer bounds ones (#18, #31)', () => {
     expect(fixtures.map((f) => f.name)).toEqual([
-      'arabic-ad', 'carousel', 'english-sale-ad', 'hindi-ad', 'layer-bounds', 'shapes-and-effects', 'stress', 'text-and-group-bounds',
+      'arabic-ad', 'carousel', 'english-sale-ad', 'groups-and-frames', 'hindi-ad', 'layer-bounds', 'shapes-and-effects', 'stress', 'text-and-group-bounds',
     ])
   })
 
