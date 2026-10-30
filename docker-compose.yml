@@ -23,6 +23,8 @@ services:
     environment:
       DATABASE_URL: postgres://razzlr:razzlr-local@postgres:5432/razzlr
       API_PORT: "8787"
+      # A local-only key; deployed servers get their own from the environment.
+      SYNC_TOKEN_SECRET: ${SYNC_TOKEN_SECRET:-local-only-sync-token-secret-0000}
       # Local and CI only: every request is the development user (apps/api/src/session.ts).
       RAZZLR_DEV_SESSION: "on"
     volumes:
@@ -45,6 +47,7 @@ services:
     environment:
       DATABASE_URL: postgres://razzlr:razzlr-local@postgres:5432/razzlr
       SYNC_PORT: "1234"
+      SYNC_TOKEN_SECRET: ${SYNC_TOKEN_SECRET:-local-only-sync-token-secret-0000}
     volumes:
       - ./:/repo:ro
     ports:

@@ -1,6 +1,6 @@
 // The API, called from the web app's server only, with every response read through its contract.
 import 'server-only'
-import { ApiError, ClientSummary, DesignSummary } from '@razzlr/schema'
+import { ApiError, ClientSummary, DesignSummary, SyncToken } from '@razzlr/schema'
 import type { z } from 'zod'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8787'
@@ -44,3 +44,6 @@ export async function findDesign(clientId: string, designId: string) {
     throw e
   }
 }
+
+export const syncToken = (clientId: string, designId: string) =>
+  call(SyncToken, `/clients/${encodeURIComponent(clientId)}/designs/${encodeURIComponent(designId)}/sync-token`, { method: 'POST', body: {} })

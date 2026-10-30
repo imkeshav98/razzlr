@@ -5,17 +5,22 @@
   "scripts": {
     "start": "node src/main.ts",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "vitest run"
   },
   "dependencies": {
     "@hocuspocus/extension-database": "4.8.0",
     "@hocuspocus/server": "4.8.0",
-    "@razzlr/db": "workspace:*"
+    "@razzlr/db": "workspace:*",
+    "@razzlr/sync-token": "workspace:*"
   },
   "devDependencies": {
+    "@hocuspocus/provider": "4.8.0",
     "@razzlr/config": "workspace:*",
     "@types/node": "^22.20.0",
     "eslint": "^9.39.0",
-    "typescript": "~5.9.3"
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.7",
+    "yjs": "^13.6.27"
   }
 }

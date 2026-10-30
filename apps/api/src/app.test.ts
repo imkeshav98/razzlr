@@ -2,7 +2,8 @@
 import { randomUUID } from 'node:crypto'
 import { clients, migrateDatabase, openDatabase, orgs, readDesignState } from '@razzlr/db'
 import { readDesign } from '@razzlr/doc'
-import { ApiError, ClientSummary, DesignSummary } from '@razzlr/schema'
+import { ApiError, ClientSummary, DesignSummary, SyncToken } from '@razzlr/schema'
+import { verifySyncToken } from '@razzlr/sync-token'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
 import { createApp } from './app.ts'
@@ -23,7 +24,8 @@ const sessions: Record<string, Session> = {
   a: { userId: 'user-a', orgId: org.id },
   b: { userId: 'user-b', orgId: other.id },
 }
-const app = createApp({ db, sessionOf: (request) => sessions[request.headers.get('x-test-session') ?? ''] ?? null })
+const syncSecret = 'test-secret-'.padEnd(32, 'x')
+const app = createApp({ db, sessionOf: (request) => sessions[request.headers.get('x-test-session') ?? ''] ?? null, syncSecret })
 
 async function call(as: string | null, method: string, path: string, body?: unknown) {
   const headers: Record<string, string> = { 'content-type': 'application/json' }
@@ -134,5 +136,24 @@ describe('refusals', () => {
     expect(ApiError.parse(broken.json).error).toMatch(/^The design is not valid: /)
     const notJson = await app.request(`/clients/${client.id}/designs`, { method: 'POST', headers: { 'x-test-session': 'a' }, body: '{' })
     expect(notJson.status).toBe(400)
+  })
+})
+
+describe('sync tokens', () => {
+  it('issues a token for a design the session may open, good for that design only', async () => {
+    const design = DesignSummary.parse((await call('a', 'POST', `/clients/${client.id}/designs`, { name: 'Tokened' })).json)
+    const { status, json } = await call('a', 'POST', `/clients/${client.id}/designs/${design.id}/sync-token`)
+    expect(status).toBe(200)
+    const { token, expiresAt } = SyncToken.parse(json)
+    expect(Date.parse(expiresAt)).toBeGreaterThan(Date.now())
+    expect(verifySyncToken(syncSecret, token, design.id)).toMatchObject({ ok: true, payload: { designId: design.id, orgId: org.id, userId: 'user-a' } })
+    expect(verifySyncToken(syncSecret, token, 'another-design')).toEqual({ ok: false, reason: 'token for another design' })
+  })
+
+  it('issues none without a session, for another org, or under another client', async () => {
+    const mine = DesignSummary.parse((await call('a', 'POST', `/clients/${client.id}/designs`, { name: 'Mine' })).json)
+    expect((await call(null, 'POST', `/clients/${client.id}/designs/${mine.id}/sync-token`)).status).toBe(401)
+    expect((await call('b', 'POST', `/clients/${client.id}/designs/${mine.id}/sync-token`)).status).toBe(404)
+    expect((await call('a', 'POST', `/clients/${sibling.id}/designs/${mine.id}/sync-token`)).status).toBe(404)
   })
 })
