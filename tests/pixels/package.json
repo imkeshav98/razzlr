@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "@razzlr/config": "workspace:*",
+    "@razzlr/doc": "workspace:*",
     "@razzlr/schema": "workspace:*",
     "@types/node": "^22.20.0",
     "eslint": "^9.39.0",

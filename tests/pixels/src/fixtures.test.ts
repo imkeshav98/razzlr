@@ -1,3 +1,4 @@
+import { loadDesign, readDesign } from '@razzlr/doc'
 import { parseDesign } from '@razzlr/schema'
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -16,6 +17,12 @@ describe('pixel fixtures', () => {
   it.each(fixtures)('$name validates against the schema', ({ json }) => {
     const result = parseDesign(json)
     expect(result.success ? [] : result.errors).toEqual([])
+  })
+
+  it.each(fixtures)('$name survives a round trip through a design document', ({ json }) => {
+    const result = parseDesign(json)
+    if (!result.success) throw new Error(result.errors.join('\n'))
+    expect(readDesign(loadDesign(result.design))).toEqual(result.design)
   })
 
   it('the carousel has three pages in two formats with format overrides', () => {

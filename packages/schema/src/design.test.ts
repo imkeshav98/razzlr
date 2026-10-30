@@ -132,3 +132,20 @@ describe('parseDesign', () => {
     ])
   })
 })
+
+describe('text runs', () => {
+  it('keep only the style keys they set, so the rest come from the base style', () => {
+    const d = minimal() as ReturnType<typeof minimal> & { nodes: Record<string, unknown> }
+    d.nodes.t1 = {
+      type: 'text', parentId: 'p1', index: 'a1', name: 'Headline',
+      props: {
+        x: 0, y: 0, width: 500, height: 80, text: 'Sale', style: { fontFamily: 'Noto Sans', fontSize: 64, color: '#000000FF', fontWeight: 700 },
+        runs: [{ start: 0, end: 2, style: { color: '#FF0000FF' } }],
+      },
+    }
+    const result = parseDesign(d)
+    if (!result.success) throw new Error(result.errors.join('\n'))
+    const t1 = result.design.nodes.t1
+    expect(t1?.type === 'text' && t1.props.runs).toEqual([{ start: 0, end: 2, style: { color: '#FF0000FF' } }])
+  })
+})
