@@ -111,3 +111,31 @@ test('reduced motion turns chrome animation off', async ({ browser }) => {
     await context.close()
   }
 })
+
+// Riso Pop and frosted surfaces (#81): floating chrome blurs what is under it and carries grain,
+// in both themes; close-ups of the dock, zoom pill and flyout go to output/ for the PR.
+test('floating chrome is frosted with grain in both themes', async ({ page }) => {
+  test.setTimeout(90_000)
+  const designId = await seed(liveDesign())
+  for (const theme of ['dark', 'light'] as const) {
+    await setCookies(page, { theme })
+    await page.goto(editorPath(designId))
+    await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
+    await page.getByRole('button', { name: 'Layers' }).click()
+    await expect(page.getByTestId('flyout')).toBeVisible()
+    for (const surface of [page.getByRole('toolbar'), page.getByRole('group', { name: 'Zoom' }), page.getByTestId('flyout')]) {
+      const style = await surface.evaluate((el) => {
+        const s = getComputedStyle(el)
+        return { filter: s.backdropFilter, image: s.backgroundImage }
+      })
+      expect(style.filter).toContain('blur(18px)')
+      expect(style.image).toContain('feTurbulence')
+    }
+    await page.waitForTimeout(300)
+    await shoot(page, `${theme}-frost`)
+    const dock = await page.getByRole('toolbar').boundingBox()
+    const zoom = await page.getByRole('group', { name: 'Zoom' }).boundingBox()
+    if (!dock || !zoom) throw new Error('missing dock or zoom')
+    writeOutput(`ui-${theme}-frost-dock.png`, await page.screenshot({ clip: { x: dock.x - 40, y: dock.y - 40, width: zoom.x + zoom.width - dock.x + 80, height: dock.height + 80 } }))
+  }
+})
