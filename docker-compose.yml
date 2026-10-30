@@ -1,4 +1,4 @@
-# Local and CI services: Postgres, the API (#33) and the sync server (#8).
+# Local and CI services: Postgres, S3-compatible storage (#35), the API (#33) and the sync server (#8).
 # Start with `docker compose up -d --wait`; the servers run from this checkout's installed packages.
 # The API runs the migrations on start, so the sync server waits for it.
 services:
@@ -16,6 +16,21 @@ services:
       timeout: 3s
       retries: 30
 
+  # RustFS stands in for Cloudflare R2: MinIO no longer publishes images.
+  storage:
+    image: rustfs/rustfs:1.0.4
+    environment:
+      RUSTFS_ACCESS_KEY: razzlr
+      RUSTFS_SECRET_KEY: razzlr-local-secret
+      RUSTFS_VOLUMES: /data
+    ports:
+      - "127.0.0.1:59000:9000"
+    healthcheck:
+      test: ["CMD", "curl", "-s", "-o", "/dev/null", "http://localhost:9000/"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
   api:
     image: node:22.22.0-slim
     working_dir: /repo
@@ -27,12 +42,22 @@ services:
       SYNC_TOKEN_SECRET: ${SYNC_TOKEN_SECRET:-local-only-sync-token-secret-0000}
       # Local and CI only: every request is the development user (apps/api/src/session.ts).
       RAZZLR_DEV_SESSION: "on"
+      STORAGE_ENDPOINT: http://storage:9000
+      STORAGE_BUCKET: razzlr
+      STORAGE_ACCESS_KEY_ID: razzlr
+      STORAGE_SECRET_ACCESS_KEY: razzlr-local-secret
+      STORAGE_REGION: us-east-1
+      # Signed upload URLs must name an address the browser and tests can reach.
+      STORAGE_PUBLIC_ENDPOINT: http://127.0.0.1:59000
+      STORAGE_CREATE_BUCKET: "on"
     volumes:
       - ./:/repo:ro
     ports:
       - "127.0.0.1:8787:8787"
     depends_on:
       postgres:
+        condition: service_healthy
+      storage:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:8787/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]

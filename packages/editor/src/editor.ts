@@ -6,8 +6,8 @@ import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
 import {
   caretAt, caretPosition, drawScene, layoutText, render, renderDesign, resourceCache, type ResourceCache, type Scene, type SceneLayer,
 } from '@razzlr/renderer'
-import type { Design } from '@razzlr/schema'
-import type { CanvasKit, Surface } from 'canvaskit-wasm'
+import { imageAssetIds, type Design } from '@razzlr/schema'
+import type { CanvasKit, Image, Surface } from 'canvaskit-wasm'
 import canvasKitModule from 'canvaskit-wasm/full'
 import * as Y from 'yjs'
 import { hitTest, type Point } from './hit-test.ts'
@@ -23,6 +23,8 @@ export interface EditorOptions {
   syncUrl: string
   /** A sync token for the design, fetched again whenever the editor (re)connects (#34). */
   syncToken: () => Promise<string>
+  /** The stored bytes of an image asset (#35); designs with image fills need it. */
+  assetBytes?: (assetId: string) => Promise<Uint8Array>
   formatId?: string
   onStatus?: (status: string) => void
   /** Aborting it while the editor is still connecting stops it, freeing what it made. */
@@ -78,7 +80,9 @@ export async function startEditor(options: EditorOptions) {
       if (provider.synced) resolve()
       else provider.on('synced', () => resolve())
     })
-    return live(ck, cache, resourceBytes, doc, provider, options)
+    // The first frame and any export need every image the design names, so they load first.
+    const images = await loadImages(imageAssetIds(readDesign(doc)), options)
+    return live(ck, cache, { ...resourceBytes, images }, doc, provider, options)
   } catch (error) {
     provider.destroy()
     doc.destroy()
@@ -87,13 +91,21 @@ export async function startEditor(options: EditorOptions) {
   }
 }
 
+async function loadImages(ids: string[], options: EditorOptions): Promise<Record<string, Uint8Array>> {
+  if (ids.length === 0) return {}
+  const { assetBytes } = options
+  if (!assetBytes) throw new Error('the design has images, but the editor was given no way to load them')
+  return Object.fromEntries(await Promise.all(ids.map(async (id) => [id, await assetBytes(id)] as const)))
+}
+
 /** The editor once the design has arrived: everything it makes is freed by `destroy`. */
 function live(
-  ck: CanvasKit, cache: ResourceCache, resourceBytes: Parameters<typeof renderDesign>[4],
+  ck: CanvasKit, cache: ResourceCache, firstBytes: Parameters<typeof renderDesign>[4],
   doc: Y.Doc, provider: HocuspocusProvider, options: EditorOptions,
 ) {
   const { canvas, overlay, designId } = options
-  const resources = cache.resources(resourceBytes)
+  let resourceBytes = firstBytes
+  let resources = cache.resources(resourceBytes)
   const status = options.onStatus ?? (() => {})
 
   const first = readDesign(doc)
@@ -173,11 +185,36 @@ function live(
     scene = render(design, pageId, formatId)
     if (selected && !find(scene.layers, selected)) selected = null
     if (editing && !find(scene.layers, editing.id)) stopEditing()
-    drawScene(ck, surface.getCanvas(), scene, resources)
+    drawScene(ck, surface.getCanvas(), scene, screenResources(design))
     surface.flush()
     drawOverlay()
     const at = performance.timeOrigin + performance.now()
     for (const listener of drawListeners) listener(design, at)
+  }
+
+  // Images that arrive after the design (another tab added them) load in the background; until
+  // then the screen draws them clear. Exports never do: they throw until every image is loaded.
+  const maybeClear = ck.MakeImage({ width: 1, height: 1, alphaType: ck.AlphaType.Premul, colorType: ck.ColorType.RGBA_8888, colorSpace: ck.ColorSpace.SRGB }, new Uint8Array(4), 4)
+  if (!maybeClear) throw new Error('could not make the image placeholder')
+  const clear: Image = maybeClear
+  const loading = new Set<string>()
+  function screenResources(current: Design) {
+    const missing = imageAssetIds(current).filter((id) => !resources.images.has(id))
+    if (missing.length === 0) return resources
+    const fresh = missing.filter((id) => !loading.has(id))
+    if (fresh.length > 0 && options.assetBytes) {
+      for (const id of fresh) loading.add(id)
+      loadImages(fresh, options).then((images) => {
+        if (listening.signal.aborted) return
+        resourceBytes = { ...resourceBytes, images: { ...resourceBytes.images, ...images } }
+        resources = cache.resources(resourceBytes)
+        redraw()
+      }, (error: unknown) => status(`Error: an image did not load (${error instanceof Error ? error.message : String(error)})`))
+        .finally(() => { for (const id of fresh) loading.delete(id) })
+    }
+    const images = new Map(resources.images)
+    for (const id of missing) images.set(id, clear)
+    return { ...resources, images }
   }
 
   let frame = 0
@@ -333,6 +370,7 @@ function live(
       provider.destroy()
       doc.destroy()
       cache.delete()
+      clear.delete()
       surface.dispose()
     },
   }

@@ -10,6 +10,12 @@ declare global {
   interface Window { razzlr?: Editor }
 }
 
+async function assetBytes(clientId: string, assetId: string) {
+  const response = await fetch(`/clients/${encodeURIComponent(clientId)}/assets/${encodeURIComponent(assetId)}`)
+  if (!response.ok) throw new Error(`asset ${assetId}: ${response.status}`)
+  return new Uint8Array(await response.arrayBuffer())
+}
+
 export function EditorStage({ designId, designName, clientId, clientName, formatId, syncUrl }: {
   designId: string
   designName: string
@@ -26,7 +32,7 @@ export function EditorStage({ designId, designName, clientId, clientName, format
     if (!canvas.current || !overlay.current) return
     let editor: Editor | undefined
     const unmounted = new AbortController()
-    startEditor({ canvas: canvas.current, overlay: overlay.current, designId, syncUrl, syncToken: () => fetchSyncToken(clientId, designId), ...(formatId ? { formatId } : {}), onStatus: setStatus, signal: unmounted.signal })
+    startEditor({ canvas: canvas.current, overlay: overlay.current, designId, syncUrl, syncToken: () => fetchSyncToken(clientId, designId), assetBytes: (assetId) => assetBytes(clientId, assetId), ...(formatId ? { formatId } : {}), onStatus: setStatus, signal: unmounted.signal })
       .then((started) => {
         if (unmounted.signal.aborted) return started.destroy()
         editor = started

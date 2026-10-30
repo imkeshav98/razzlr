@@ -1,6 +1,6 @@
 // The API, called from the web app's server only, with every response read through its contract.
 import 'server-only'
-import { ApiError, ClientSummary, DesignSummary, SyncToken } from '@razzlr/schema'
+import { ApiError, AssetLink, ClientSummary, DesignSummary, SyncToken } from '@razzlr/schema'
 import type { z } from 'zod'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8787'
@@ -47,3 +47,13 @@ export async function findDesign(clientId: string, designId: string) {
 
 export const syncToken = (clientId: string, designId: string) =>
   call(SyncToken, `/clients/${encodeURIComponent(clientId)}/designs/${encodeURIComponent(designId)}/sync-token`, { method: 'POST', body: {} })
+
+/** An asset and a signed URL to its original, or null when the API has no such asset for this session. */
+export async function assetLink(clientId: string, assetId: string) {
+  try {
+    return await call(AssetLink, `/clients/${encodeURIComponent(clientId)}/assets/${encodeURIComponent(assetId)}`)
+  } catch (e) {
+    if (e instanceof ApiFailure && e.status === 404) return null
+    throw e
+  }
+}
