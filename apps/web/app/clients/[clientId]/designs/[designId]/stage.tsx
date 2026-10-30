@@ -54,7 +54,7 @@ export function EditorStage({ designId, designName, clientId, clientName, format
       stop()
     }
   }, [editor])
-  const dockTool = tool === 'hand' ? 'hand' : tool === 'select' ? 'select' : 'shape'
+  const dockTool = tool === 'hand' || tool === 'select' || tool === 'pen' ? tool : 'shape'
   const dismissRemoved = useCallback(() => setRemoved(null), [])
 
   // Lets this page open again without a connection (#37): the worker keeps the page and what it
@@ -105,7 +105,7 @@ export function EditorStage({ designId, designName, clientId, clientName, format
       shape={shape}
       onToolChange={(tool, picked) => {
         setShape(picked)
-        editor?.setTool(tool === 'hand' ? 'hand' : tool === 'shape' ? picked : 'select')
+        editor?.setTool(tool === 'hand' || tool === 'pen' ? tool : tool === 'shape' ? picked : 'select')
       }}
       inspector={editor ? (
         <>

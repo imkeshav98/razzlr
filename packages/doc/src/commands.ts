@@ -490,6 +490,43 @@ export const nodeHug = defineCommand({
   },
 })
 
+/**
+ * Gives a path layer new path data (#45). The data is in the layer's own coordinates as they were,
+ * moved so the new outline starts at 0, 0: `dx` and `dy` are how far its box's corner moves, and
+ * `width` and `height` its new size. Path data is shared by every format, so each format's box moves
+ * the same way; a turned box also shifts with its new centre, so the points that didn't change
+ * stay where they are drawn.
+ */
+export const nodeReshape = defineCommand({
+  name: 'node.reshape',
+  input: z.object({ id: NodeId, d: z.string().min(1), dx: z.number(), dy: z.number(), width: z.number().min(0), height: z.number().min(0) }),
+  check: ({ design }, { id }) => {
+    const node = design.nodes[id]
+    if (!node) return `no layer "${id}"`
+    if (node.type !== 'graphic' || node.props.shape.kind !== 'path') return `"${id}" is not a path`
+    for (const flag of ['style', 'move', 'resize'] as const) {
+      const locked = lockProblem(id, node, flag)
+      if (locked) return locked
+    }
+    return undefined
+  },
+  apply: ({ r, design }, { id, d, dx, dy, width, height }) => {
+    const node = design.nodes[id]
+    if (node?.type !== 'graphic' || node.props.shape.kind !== 'path') return
+    const props = r.nodes.get(id)?.get('props') as Y.Map<unknown>
+    props.set('shape', { ...node.props.shape, d })
+    const place = new Placement(design)
+    for (const scope of place.scopes) {
+      const was = place.get(scope, id)
+      const next = { x: was.x + dx, y: was.y + dy, width, height }
+      const v = { x: centreOf({ ...next, rotation: 0 }).x - centreOf(was).x, y: centreOf({ ...next, rotation: 0 }).y - centreOf(was).y }
+      const turned = turn(v, { x: 0, y: 0 }, was.rotation)
+      place.set(scope, id, { ...next, x: next.x + turned.x - v.x, y: next.y + turned.y - v.y })
+    }
+    place.write(r)
+  },
+})
+
 const TextOp = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('insert'), at: z.number().int().min(0), text: z.string().min(1) }),
   z.object({ kind: z.literal('delete'), at: z.number().int().min(0), length: z.number().int().positive() }),
@@ -697,6 +734,7 @@ export const COMMANDS = {
   'node.boolean': nodeBoolean,
   'node.ungroup': nodeUngroup,
   'node.hug': nodeHug,
+  'node.reshape': nodeReshape,
   'text.edit': textEdit,
   'page.add': pageAdd,
   'page.update': pageUpdate,

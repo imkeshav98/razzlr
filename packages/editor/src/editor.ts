@@ -17,6 +17,10 @@ import { frameAt, frameGrid, intersects, type Frame, type Rect } from './grid.ts
 import { hitTest, type Point } from './hit-test.ts'
 import { align, distribute, type Alignment, type Distribution, type Offset } from './arrange.ts'
 import { clickedBox, drawnBox, isShapeTool, newShape, type ShapeTool } from './draw-tools.ts'
+import {
+  anchorOf, constrain, deleteAnchors, formatPath, hitPath, isSmooth, moveAnchors, moveControl, offsetPath, parsePath, pathBounds, sameRef, segmentsOf, splitSegment,
+  type Anchor, type AnchorRef, type PenPath, type Side,
+} from './path.ts'
 import { rulerParts } from './rulers.ts'
 import { NUDGE, NUDGE_FAR, shortcutFor, type ShortcutAction } from './shortcuts.ts'
 import { SNAP_DISTANCE, snapMove, snapResize, snapTargets, type Gap, type Guide, type Targets } from './snap.ts'
@@ -56,11 +60,18 @@ interface Picked { id: string; frame: string }
 interface Selection { ids: string[]; frame: string }
 /** The caret is anchored in the text, so edits arriving from other tabs carry it along. */
 interface Editing extends Picked { caret: TextAnchor; endGesture: () => void }
-/** What a drag on the stage does: select and move, pan with the hand, or draw a shape (#44). */
-export type Tool = 'select' | 'hand' | ShapeTool
+/** What a drag on the stage does: select and move, pan with the hand, draw a shape (#44) or a path (#45). */
+export type Tool = 'select' | 'hand' | 'pen' | ShapeTool
 
 /** How far, in screen pixels, a press can wander and still draw a shape as a click does. */
 const CLICK_SLOP = 3
+/** How near, in screen pixels, a press picks a path's point, handle or segment (#45). */
+const POINT_REACH = 6
+/** The pen's stroke until a style is picked: the near-black that lines draw with. */
+const PEN_STROKE = { paint: { type: 'solid', color: '#1F2329FF' }, width: 2, cap: 'round', join: 'round' }
+
+/** A path layer being drawn or edited: the box it had when that began, which its points are relative to, and how far the box has moved since. */
+interface Reshaping { id: string; start: Box; applied: Point }
 
 /** Where the design's edits are, once it is open. */
 export type SaveState = 'Saved' | 'Saving' | 'Offline'
@@ -250,6 +261,7 @@ function live(
   const toolListeners = new Set<(tool: Tool) => void>()
   function setTool(next: Tool) {
     if (next === tool) return
+    if (pen) finishPen()
     tool = next
     showCursor()
     for (const listener of toolListeners) listener(tool)
@@ -258,6 +270,17 @@ function live(
   /** The layer under the pointer, outlined while nothing is being dragged. */
   let hovered: Picked | null = null
   let editing: Editing | null = null
+  /** The path layer whose points are being edited (#45), and which of its anchors are selected. */
+  let pathEditing: { id: string; frame: string; selected: AnchorRef[] } | null = null
+  /**
+   * The path the pen is drawing (#45), from its first click until it closes or is finished: its
+   * anchors in its parent's coordinates, the one a drag is pulling handles from, and the layer
+   * once there are two anchors to draw.
+   */
+  let pen: {
+    frame: Frame; around: Box[]; parentId: string; anchors: Anchor[]; closing: boolean; dragging: number | null; from: Point
+    moved: boolean; hover: Point | null; layer: Reshaping | null; end: () => void
+  } | null = null
   /** Called after every redraw with the design it drew; the two-tab test times edits with it. */
   const drawListeners = new Set<(design: Design, at: number, info: DrawInfo) => void>()
 
@@ -384,6 +407,7 @@ function live(
     const ids = selection.ids.filter((id) => design.nodes[id])
     selection = ids.length > 0 && frameOf(selection.frame) ? { ...selection, ids } : null
     if (entered && !design.nodes[entered]) entered = null
+    if (pathEditing && (!selection?.ids.includes(pathEditing.id) || !isPath(design, pathEditing.id))) pathEditing = null
   }
   /** Selected layers that aren't inside another selected layer: the ones a transform moves. */
   function roots(from: Design = session.design()) {
@@ -428,7 +452,47 @@ function live(
   }
   function select(ids: string[], frame: string) {
     selection = ids.length > 0 ? { ids, frame } : null
+    if (pathEditing && (ids.length !== 1 || ids[0] !== pathEditing.id || frame !== pathEditing.frame)) pathEditing = null
     drawOverlay()
+  }
+
+  /** A point inside containers as it is on the page: back through each one's turn, innermost first. */
+  function pageFrom(q: Point, around: Box[]): Point {
+    let p = q
+    for (const outer of [...around].reverse()) p = turn(p, centreOf(outer), outer.rotation)
+    return p
+  }
+  const isPath = (from: Design, id: string) => {
+    const node = from.nodes[id]
+    return node?.type === 'graphic' && node.props.shape.kind === 'path'
+  }
+  /**
+   * A path layer's path in one frame, in the coordinates of its parent before the layer turns it
+   * (#45), with its box and what turns it: its containers, then the layer itself.
+   */
+  function pathIn(frame: Frame, id: string, from: Design = session.design()) {
+    const node = from.nodes[id]
+    const box = boxIn(frame, id, from)
+    if (node?.type !== 'graphic' || !box) return null
+    const shape = { ...node.props, ...from.overrides[scope(frame)]?.[id] }.shape
+    if (shape.kind !== 'path') return null
+    try {
+      return { path: offsetPath(parsePath(shape.d), box.x, box.y), box, around: [...containersOf(frame, node.parentId, from), box] }
+    } catch {
+      return null
+    }
+  }
+  /**
+   * Writes a path drawn or edited in the coordinates its layer had when that began (#45): the data
+   * from the outline's corner, and the box moved by what the corner moved since the last write.
+   */
+  function reshape(layer: Reshaping, path: PenPath) {
+    const b = pathBounds(path)
+    if (!b) return
+    const corner = { x: round(b.x), y: round(b.y) }
+    const moved = { x: round(corner.x - layer.start.x), y: round(corner.y - layer.start.y) }
+    const input = { id: layer.id, d: formatPath(path, corner), dx: round(moved.x - layer.applied.x), dy: round(moved.y - layer.applied.y), width: round(b.width), height: round(b.height) }
+    if (runQuietly(() => session.run('node.reshape', input))) layer.applied = moved
   }
 
   const px = (n: number) => `${n}px`
@@ -530,7 +594,7 @@ function live(
 
   let drawnFrames: Frame[] = []
   function drawOverlay() {
-    const parts: HTMLElement[] = []
+    const parts: Element[] = []
     for (const frame of drawnFrames) {
       const label = frameLabel(frame, drawnFrames)
       if (label) parts.push(label)
@@ -542,7 +606,7 @@ function live(
     const hoverFrame = hover && frameOf(hover.frame)
     const hoverBox = hoverFrame && hover && drawnBoxOf(hoverFrame, hover.id, design)
     if (hoverFrame && hoverBox) parts.push(outline('hover', hoverFrame, hoverBox))
-    parts.push(...selectionParts())
+    parts.push(...(pathEditing ? [] : selectionParts()), ...pathParts())
     if (gesture?.kind === 'marquee') {
       const marquee = document.createElement('div')
       marquee.className = 'marquee'
@@ -578,6 +642,96 @@ function live(
       lastSelection = now
       for (const listener of selectionListeners) listener(selection?.ids ?? [])
     }
+  }
+
+  const SVG = 'http://www.w3.org/2000/svg'
+  /**
+   * The path the pen is drawing or whose points are being edited (#45): its outline, its anchors,
+   * the handles of the anchors in play, and, for the pen, the next segment to where the pointer is.
+   */
+  function pathParts(): Element[] {
+    let frame: Frame | undefined
+    let path: PenPath
+    let around: Box[]
+    let shown: AnchorRef[]
+    let preview: [Anchor, Point] | null = null
+    if (pen) {
+      frame = pen.frame
+      path = [{ anchors: pen.anchors, closed: pen.closing }]
+      around = pen.around
+      const last = pen.anchors.length - 1
+      shown = [{ contour: 0, index: pen.dragging ?? last }]
+      const from = pen.anchors[last]
+      if (from && pen.hover && pen.dragging === null) preview = [from, pen.hover]
+    } else if (pathEditing) {
+      frame = frameOf(pathEditing.frame)
+      const found = frame && pathIn(frame, pathEditing.id, design)
+      if (!found) return []
+      ;({ path, around } = found)
+      shown = pathEditing.selected
+    } else {
+      return []
+    }
+    if (!frame) return []
+    const f = frame
+    const at = (q: Point) => {
+      const p = pageFrom(q, around)
+      return toScreen(camera, { x: f.x + p.x, y: f.y + p.y })
+    }
+    const xy = (q: Point) => {
+      const p = at(q)
+      return `${round(p.x)} ${round(p.y)}`
+    }
+    const svg = document.createElementNS(SVG, 'svg')
+    svg.setAttribute('class', 'path-edit')
+    const line = (className: string, d: string) => {
+      const el = document.createElementNS(SVG, 'path')
+      el.setAttribute('class', className)
+      el.setAttribute('d', d)
+      svg.append(el)
+    }
+    const outline: string[] = []
+    for (const contour of path) {
+      const [first] = contour.anchors
+      if (!first) continue
+      outline.push(`M${xy(first)}`)
+      for (const [from, to] of segmentsOf(contour)) {
+        const a = contour.anchors[from] as Anchor
+        const b = contour.anchors[to] as Anchor
+        outline.push(`C${xy(a.out ?? a)} ${xy(b.in ?? b)} ${xy(b)}`)
+      }
+    }
+    line('path-outline', outline.join(' '))
+    if (preview) {
+      const [from, to] = preview
+      line('pen-preview', `M${xy(from)} C${xy(from.out ?? from)} ${xy(to)} ${xy(to)}`)
+    }
+    const dots: HTMLElement[] = []
+    const dot = (className: string, q: Point, data: Record<string, string>) => {
+      const el = document.createElement('div')
+      el.className = className
+      const p = at(q)
+      Object.assign(el.style, { left: px(p.x), top: px(p.y) })
+      Object.assign(el.dataset, data)
+      dots.push(el)
+    }
+    for (const ref of shown) {
+      const anchor = anchorOf(path, ref)
+      for (const side of ['in', 'out'] as const) {
+        const h = anchor?.[side]
+        if (!anchor || !h) continue
+        line('path-handle-line', `M${xy(anchor)} L${xy(h)}`)
+        dot('path-control', h, { control: `${ref.contour}:${ref.index}:${side}` })
+      }
+    }
+    path.forEach((contour, c) => contour.anchors.forEach((a, i) => {
+      const data: Record<string, string> = { anchor: `${c}:${i}` }
+      if (shown.some((r) => sameRef(r, { contour: c, index: i })) && pathEditing) data.selected = ''
+      // The pen's first anchor shows when a click on it would close the path.
+      if (pen && i === 0 && pen.anchors.length >= 2 && pen.hover && Math.hypot(pen.hover.x - a.x, pen.hover.y - a.y) * camera.zoom <= POINT_REACH) data.closing = ''
+      dot('path-anchor', a, data)
+    }))
+    return [svg, ...dots]
   }
 
   /** Snap guides as lines across the page, and equal gaps as marked spans with their size. */
@@ -785,6 +939,10 @@ function live(
     | { kind: 'rotate'; frame: Frame; around: Box[]; outer: Box; from: number; roots: string[]; boxes: Map<string, Box>; end: () => void }
     | { kind: 'marquee'; from: Point; to: Point; base: string[]; baseFrame: string | null }
     | { kind: 'draw'; tool: ShapeTool; frame: Frame; around: Box[]; from: Point; id: string; moved: boolean; roots: string[]; end: () => void }
+    | {
+      kind: 'path'; frame: Frame; around: Box[]; layer: Reshaping; path: PenPath; grab: Point; moved: boolean; roots: string[]; end: () => void
+      drag: { anchors: AnchorRef[] } | { ref: AnchorRef; side: Side; from: Point; mirror: boolean }
+    }
   let gesture: Gesture | null = null
   /** A click on one of several selected layers selects it alone, unless the pointer moves first. */
   let clickedAlone: string | null = null
@@ -967,7 +1125,7 @@ function live(
   /** The handle under a screen point: one to resize by, or the zone outside a corner to turn by. */
   function handleUnder(screen: Point): { kind: 'resize'; handle: Handle } | { kind: 'rotate'; corner: number } | null {
     const outer = selectionBox()
-    if (!outer || editing) return null
+    if (!outer || editing || pathEditing) return null
     const { frame, drawn: box } = outer
     const onScreen = (p: Point) => toScreen(camera, { x: frame.x + p.x, y: frame.y + p.y })
     const c = centreOf(box)
@@ -992,7 +1150,7 @@ function live(
   const ROTATE_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M6 15a7 7 0 1 1 3 4.7" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/><path d="M6 15a7 7 0 1 1 3 4.7" fill="none" stroke="black" stroke-width="1.75" stroke-linecap="round"/><path d="M3 12l3 3.5 3.5-3" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12l3 3.5 3.5-3" fill="none" stroke="black" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>')}") 12 12, crosshair`
   let hoverCursor = ''
   const showCursor = () => {
-    canvas.style.cursor = pan ? 'grabbing' : panning() ? 'grab' : isShapeTool(tool) ? 'crosshair' : hoverCursor
+    canvas.style.cursor = pan ? 'grabbing' : panning() ? 'grab' : isShapeTool(tool) || tool === 'pen' ? 'crosshair' : hoverCursor
   }
   function cursorFor(screen: Point) {
     if (gesture?.kind === 'resize' || gesture?.kind === 'rotate') return
@@ -1019,6 +1177,11 @@ function live(
       if (at) startDrawing(e, tool, at)
       return
     }
+    if (tool === 'pen') {
+      if (at) penDown(e, at)
+      return
+    }
+    if (pathEditing && startPathEdit(e, at)) return
     const deepest = at && hitTest(cached(at.frame).scene.layers, at.p, pickable)
     if (at && editing && deepest?.id === editing.id && editing.frame === at.frame.key) {
       editing.caret = textAnchor(doc, editing.id, caretFromPoint(at.p))
@@ -1102,6 +1265,10 @@ function live(
       return
     }
     const screen = screenOf(e)
+    if (pen) {
+      penMove(e)
+      return
+    }
     if (!gesture) {
       // Hovering: outline the layer under the pointer and show what a press on a handle would do.
       cursorFor(screen)
@@ -1119,6 +1286,10 @@ function live(
     const p = localTo({ x: world.x - gesture.frame.x, y: world.y - gesture.frame.y }, gesture.around)
     if (gesture.kind === 'draw') {
       drawTo(gesture, p, e.shiftKey, e.altKey)
+      return
+    }
+    if (gesture.kind === 'path') {
+      pathTo(gesture, p, e.shiftKey, e.altKey)
       return
     }
     // Holding Ctrl (⌘ on a Mac) turns snapping off for as long as it is held.
@@ -1158,6 +1329,178 @@ function live(
     runQuietly(() => session.run('node.update', { ids: [g.id], patch: drawnBox(g.tool, g.from, p, shift, alt) }))
   }
 
+  /**
+   * A press while a path's points are being edited (#45): on a handle of a selected anchor, drag
+   * it; on an anchor, select it (Shift adds or takes it away) and drag the selected ones; on a
+   * segment, add an anchor there and drag it, all one undo step. Anywhere else leaves the path,
+   * and the press does what it would have done. Returns whether the press was the path's.
+   */
+  function startPathEdit(e: PointerEvent, at: { frame: Frame; p: Point } | null) {
+    const editingPath = pathEditing
+    const frame = editingPath && frameOf(editingPath.frame)
+    const found = frame && editingPath && pathIn(frame, editingPath.id)
+    const q = found && at?.frame.key === frame.key ? localTo(at.p, found.around) : null
+    const hit = found && q && hitPath(found.path, q, POINT_REACH / camera.zoom, editingPath.selected)
+    if (!editingPath || !frame || !found || !q || !hit) {
+      pathEditing = null
+      drawOverlay()
+      return false
+    }
+    let path = found.path
+    const layer: Reshaping = { id: editingPath.id, start: found.box, applied: { x: 0, y: 0 } }
+    const end = session.beginGesture()
+    let drag: Extract<Gesture, { kind: 'path' }>['drag']
+    if (hit.kind === 'control') {
+      drag = { ref: hit.ref, side: hit.side, from: anchorOf(path, hit.ref)?.[hit.side] ?? q, mirror: isSmooth(anchorOf(path, hit.ref) as Anchor) }
+    } else if (hit.kind === 'anchor') {
+      const picked = editingPath.selected.some((r) => sameRef(r, hit.ref))
+      if (e.shiftKey) editingPath.selected = picked ? editingPath.selected.filter((r) => !sameRef(r, hit.ref)) : [...editingPath.selected, hit.ref]
+      else if (!picked) editingPath.selected = [hit.ref]
+      drag = { anchors: editingPath.selected }
+    } else {
+      const split = splitSegment(path, hit.contour, hit.from, hit.t)
+      path = split.path
+      reshape(layer, path)
+      editingPath.selected = [split.ref]
+      drag = { anchors: [split.ref] }
+    }
+    canvas.setPointerCapture(e.pointerId)
+    gesture = { kind: 'path', frame, around: found.around, layer, path, grab: q, moved: false, roots: [editingPath.id], end, drag }
+    drawOverlay()
+    return true
+  }
+
+  /** Drags anchors (Shift along one axis) or a handle (Shift in 45° steps; Alt lets a smooth anchor's other handle be). */
+  function pathTo(g: Extract<Gesture, { kind: 'path' }>, p: Point, shift: boolean, alt: boolean) {
+    if (!g.moved && Math.hypot(p.x - g.grab.x, p.y - g.grab.y) * camera.zoom < CLICK_SLOP) return
+    g.moved = true
+    let dx = p.x - g.grab.x
+    let dy = p.y - g.grab.y
+    if ('anchors' in g.drag) {
+      if (shift) {
+        if (Math.abs(dx) > Math.abs(dy)) dy = 0
+        else dx = 0
+      }
+      reshape(g.layer, moveAnchors(g.path, g.drag.anchors, round(dx), round(dy)))
+      return
+    }
+    const anchor = anchorOf(g.path, g.drag.ref)
+    if (!anchor) return
+    const to = { x: g.drag.from.x + dx, y: g.drag.from.y + dy }
+    const placed = shift ? constrain(anchor, to) : to
+    reshape(g.layer, moveControl(g.path, g.drag.ref, g.drag.side, { x: round(placed.x), y: round(placed.y) }, g.drag.mirror && !alt))
+  }
+
+  /** Takes the selected anchors out of the path being edited, or the layer once none would be left. One undo step. */
+  function deletePoints() {
+    const editingPath = pathEditing
+    const frame = editingPath && frameOf(editingPath.frame)
+    const found = frame && editingPath && pathIn(frame, editingPath.id)
+    if (!editingPath || !found || editingPath.selected.length === 0) return false
+    const next = deleteAnchors(found.path, editingPath.selected)
+    const parent = session.design().nodes[editingPath.id]?.parentId ?? ''
+    session.gesture(() => {
+      if (next.length === 0) runQuietly(() => session.run('node.delete', { ids: [editingPath.id] }))
+      else reshape({ id: editingPath.id, start: found.box, applied: { x: 0, y: 0 } }, next)
+      hug(session.design().nodes[parent] ? [parent] : next.length > 0 ? [editingPath.id] : [])
+    })
+    editingPath.selected = []
+    return true
+  }
+
+  /**
+   * A press with the pen (#45): a click adds a corner, a drag pulls out smooth handles, Shift turns
+   * the new segment to 45°, and a press on the first anchor closes the path. The first press
+   * starts one undo step that lasts until the path is closed or finished; the layer appears with
+   * the second anchor, inside the group, frame or boolean double-clicked into if it can hold it.
+   */
+  function penDown(e: PointerEvent, at: { frame: Frame; p: Point }) {
+    stopEditing()
+    if (pen && pen.frame.key !== at.frame.key) finishPen()
+    if (!pen) {
+      const now = session.design()
+      const inside = entered ? now.nodes[entered] : undefined
+      const parentId = entered && inside && canHold(inside.type, 'graphic') ? entered : at.frame.pageId
+      const around = containersOf(at.frame, parentId, now)
+      pen = { frame: at.frame, around, parentId, anchors: [], closing: false, dragging: null, from: at.p, moved: false, hover: null, layer: null, end: session.beginGesture() }
+      selection = null
+    }
+    canvas.setPointerCapture(e.pointerId)
+    const p = localTo(at.p, pen.around)
+    const first = pen.anchors[0]
+    const last = pen.anchors.at(-1)
+    pen.from = p
+    pen.moved = false
+    if (first && pen.anchors.length >= 2 && Math.hypot(p.x - first.x, p.y - first.y) * camera.zoom <= POINT_REACH) {
+      pen.closing = true
+      pen.dragging = 0
+    } else {
+      const placed = e.shiftKey && last ? constrain(last, p) : p
+      pen.anchors.push({ x: round(placed.x), y: round(placed.y) })
+      pen.dragging = pen.anchors.length - 1
+    }
+    writePen()
+    drawOverlay()
+  }
+
+  /** Pulls the handles out of the anchor just placed (Shift in 45° steps, Alt only the one ahead), or shows the next segment to the pointer. */
+  function penMove(e: PointerEvent) {
+    if (!pen) return
+    const world = toWorld(camera, screenOf(e))
+    const p = localTo({ x: world.x - pen.frame.x, y: world.y - pen.frame.y }, pen.around)
+    const anchor = pen.dragging === null ? undefined : pen.anchors[pen.dragging]
+    if (!anchor) {
+      pen.hover = e.shiftKey && pen.anchors.at(-1) ? constrain(pen.anchors.at(-1) as Anchor, p) : p
+      drawOverlay()
+      return
+    }
+    if (!pen.moved && Math.hypot(p.x - pen.from.x, p.y - pen.from.y) * camera.zoom < CLICK_SLOP) return
+    pen.moved = true
+    const out = e.shiftKey ? constrain(anchor, p) : p
+    anchor.out = { x: round(out.x), y: round(out.y) }
+    if (!e.altKey) anchor.in = { x: round(2 * anchor.x - out.x), y: round(2 * anchor.y - out.y) }
+    writePen()
+    drawOverlay()
+  }
+
+  /** The press is over: a closing one finishes the path. */
+  function penUp() {
+    if (!pen) return
+    pen.dragging = null
+    if (pen.closing) finishPen()
+    else drawOverlay()
+  }
+
+  /** Writes the pen's path to its layer, making the layer at the second anchor. */
+  function writePen() {
+    if (!pen || pen.anchors.length < 2) return
+    const path: PenPath = [{ anchors: pen.anchors, closed: pen.closing }]
+    if (pen.layer) {
+      reshape(pen.layer, path)
+      return
+    }
+    const b = pathBounds(path)
+    if (!b) return
+    const box = { x: round(b.x), y: round(b.y), width: round(b.width), height: round(b.height), rotation: 0 }
+    const { parentId } = pen
+    let id = ''
+    const shape = { kind: 'path', d: formatPath(path, box) }
+    const layer = { type: 'graphic' as const, name: 'Path', props: { x: box.x, y: box.y, width: box.width, height: box.height, shape, strokes: [PEN_STROKE] } }
+    if (runQuietly(() => { id = session.run('node.create', { parentId, layer }) })) pen.layer = { id, start: box, applied: { x: 0, y: 0 } }
+  }
+
+  /** Ends the pen's path, closed or open: the undo step ends, the new layer is selected, and the select tool comes back. */
+  function finishPen() {
+    const done = pen
+    if (!done) return
+    pen = null
+    if (done.layer) hug([done.layer.id])
+    done.end()
+    if (done.layer && session.design().nodes[done.layer.id]) select([done.layer.id], done.frame.key)
+    setTool('select')
+    drawOverlay()
+  }
+
   /** A click draws the shape at its usual size; either way the new shape is selected and the select tool comes back. */
   function finishDrawing(g: Extract<Gesture, { kind: 'draw' }>) {
     if (!g.moved) runQuietly(() => session.run('node.update', { ids: [g.id], patch: clickedBox(g.tool, g.from) }))
@@ -1169,6 +1512,10 @@ function live(
 
   const endDrag = () => {
     snapped = null
+    if (pen && !pan) {
+      penUp()
+      return
+    }
     if (gesture?.kind === 'draw') {
       finishDrawing(gesture)
       gesture = null
@@ -1208,6 +1555,14 @@ function live(
       entered = picked
       selection = null
       select([target(hit.id, at.frame.key)], at.frame.key)
+      return
+    }
+    if (isPath(design, hit.id) && !design.nodes[hit.id]?.lock?.style) {
+      // Into a path's points (#45).
+      stopEditing()
+      select([hit.id], at.frame.key)
+      pathEditing = { id: hit.id, frame: at.frame.key, selected: [] }
+      drawOverlay()
       return
     }
     if (hit.type !== 'text' || design.nodes[hit.id]?.lock?.content) return
@@ -1333,10 +1688,29 @@ function live(
       toolEllipse: () => setTool('ellipse'),
       toolLine: () => setTool('line'),
       toolArrow: () => setTool('arrow'),
+      toolPen: () => setTool('pen'),
+    }
+    // The pen's path ends with Enter or Escape, open as it is (#45).
+    if (pen && (action === 'deselect' || action === 'editPoints')) {
+      finishPen()
+      return true
+    }
+    if (pathEditing) {
+      if (action === 'deselect' || action === 'editPoints') {
+        pathEditing = null
+        drawOverlay()
+        return true
+      }
+      if (action === 'delete') {
+        deletePoints()
+        drawOverlay()
+        return true
+      }
     }
     const viewAction = view[action]
     if (viewAction) {
       if (action === 'undo' || action === 'redo') {
+        finishPen()
         endDrag()
         stopEditing()
       }
@@ -1386,6 +1760,13 @@ function live(
         break
       case 'distributeVertical': distributeAlong('vertical')
         break
+      case 'editPoints': {
+        // Enter on one path goes into its points (#45).
+        const [only] = selection.ids
+        if (selection.ids.length !== 1 || !only || !isPath(session.design(), only) || nodes[only]?.lock?.style) return false
+        pathEditing = { id: only, frame: frame.key, selected: [] }
+        break
+      }
       case 'booleanUnion': combine('union')
         break
       case 'booleanSubtract': combine('subtract')
