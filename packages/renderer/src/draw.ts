@@ -1,8 +1,10 @@
 import type { Effect, Paint } from '@razzlr/schema'
 import type {
-  Canvas, CanvasKit, FontCollection, Image, ImageFilter, Paint as CkPaint, Path, Shader, TextStyle as CkTextStyle,
+  Canvas, CanvasKit, FontCollection, Image, ImageFilter, Paint as CkPaint, Path, Shader,
 } from 'canvaskit-wasm'
+import { color } from './color.ts'
 import type { Scene, SceneLayer } from './scene.ts'
+import { layoutText } from './text.ts'
 
 /** What drawing needs besides the scene: fonts registered from our own files and images decoded by CanvasKit. */
 export interface Resources {
@@ -18,10 +20,6 @@ type GraphicLayer = Extract<SceneLayer, { type: 'graphic' }>
 
 /** Blur radii in the schema are twice the Gaussian sigma, as in CSS box-shadow and design tools. */
 const sigma = (radius: number) => radius / 2
-
-/** Hebrew, Arabic, Syriac, Thaana, NKo, their presentation forms, and the right-to-left blocks beyond the BMP. */
-const RTL_CHAR = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF\u{10800}-\u{10FFF}\u{1E800}-\u{1EFFF}]/u
-const STRONG_CHAR = /[\p{L}]/u
 
 /**
  * Draws a scene. The one drawing path for every surface: the same calls run on the CPU surface for
@@ -228,58 +226,9 @@ function imageShader(ck: CanvasKit, image: Image, fill: Extract<Paint, { type: '
 }
 
 function drawText(ck: CanvasKit, canvas: Canvas, layer: TextLayer, resources: Resources) {
-  const { props } = layer
-  const direction = props.direction === 'auto' ? autoDirection(props.text) : props.direction
-  const builder = ck.ParagraphBuilder.MakeFromFontCollection(new ck.ParagraphStyle({
-    textAlign: { start: ck.TextAlign.Start, center: ck.TextAlign.Center, end: ck.TextAlign.End, justify: ck.TextAlign.Justify }[props.align],
-    textDirection: direction === 'rtl' ? ck.TextDirection.RTL : ck.TextDirection.LTR,
-    textStyle: textStyle(ck, props.style, resources),
-  }), resources.fonts)
-
-  // Later runs win where runs overlap, so split the text at every run edge and merge per piece.
-  const edges = [...new Set([0, props.text.length, ...props.runs.flatMap((r) => [r.start, r.end])])].sort((a, b) => a - b)
-  for (const [i, start] of edges.slice(0, -1).entries()) {
-    const end = edges[i + 1] ?? props.text.length
-    const style = { ...props.style }
-    for (const run of props.runs) if (run.start <= start && run.end >= end) Object.assign(style, run.style)
-    builder.pushStyle(textStyle(ck, style, resources))
-    builder.addText(props.text.slice(start, end))
-    builder.pop()
-  }
-  const paragraph = builder.build()
-  builder.delete()
-
-  paragraph.layout(props.boxMode === 'autoWidth' ? Number.POSITIVE_INFINITY : props.width)
-  if (props.boxMode === 'autoWidth') paragraph.layout(Math.ceil(paragraph.getMaxIntrinsicWidth()))
-  const free = props.boxMode === 'fixed' ? props.height - paragraph.getHeight() : 0
-  const dy = { top: 0, middle: free / 2, bottom: free }[props.verticalAlign]
-  canvas.drawParagraph(paragraph, props.x, props.y + dy)
+  const { paragraph, dy } = layoutText(ck, layer.props, resources)
+  canvas.drawParagraph(paragraph, layer.props.x, layer.props.y + dy)
   paragraph.delete()
-}
-
-function textStyle(ck: CanvasKit, style: TextLayer['props']['style'], resources: Resources): CkTextStyle {
-  return new ck.TextStyle({
-    color: color(ck, style.color),
-    fontFamilies: [style.fontFamily, ...resources.fallbackFamilies.filter((f) => f !== style.fontFamily)],
-    fontSize: style.fontSize,
-    fontStyle: {
-      weight: { value: style.fontWeight },
-      slant: style.fontStyle === 'italic' ? ck.FontSlant.Italic : ck.FontSlant.Upright,
-    },
-    letterSpacing: style.letterSpacing,
-    ...(style.lineHeight === undefined ? {} : { heightMultiplier: style.lineHeight, halfLeading: true }),
-  })
-}
-
-/** The direction of the first strong character, as the Unicode bidi algorithm picks a paragraph's direction. */
-function autoDirection(text: string): 'ltr' | 'rtl' {
-  for (const ch of text) if (STRONG_CHAR.test(ch)) return RTL_CHAR.test(ch) ? 'rtl' : 'ltr'
-  return 'ltr'
-}
-
-function color(ck: CanvasKit, hex: string) {
-  const n = (i: number) => Number.parseInt(hex.slice(i, i + 2), 16)
-  return ck.Color(n(1), n(3), n(5), n(7) / 255)
 }
 
 function blendMode(ck: CanvasKit, mode: SceneLayer['props']['blendMode']) {

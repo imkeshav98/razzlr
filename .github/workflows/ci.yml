@@ -20,6 +20,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # hb-shape, the reference the shaping checks (#7) compare Skia's glyphs against.
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libharfbuzz-bin
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
