@@ -1,0 +1,283 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "designId": "carousel",
+    "name": "Carousel",
+    "kind": "carousel",
+    "primaryFormatId": "sq"
+  },
+  "formats": {
+    "sq": {
+      "name": "Square 1:1",
+      "width": 1080,
+      "height": 1080,
+      "order": "a0"
+    },
+    "pt": {
+      "name": "Portrait 4:5",
+      "width": 1080,
+      "height": 1350,
+      "order": "a1"
+    }
+  },
+  "pages": {
+    "p1": {
+      "name": "Card 1",
+      "order": "a0",
+      "background": [
+        {
+          "type": "solid",
+          "color": "#ECEFF1FF"
+        }
+      ]
+    },
+    "p2": {
+      "name": "Card 2",
+      "order": "a1",
+      "background": [
+        {
+          "type": "solid",
+          "color": "#ECEFF1FF"
+        }
+      ]
+    },
+    "p3": {
+      "name": "Card 3",
+      "order": "a2",
+      "background": [
+        {
+          "type": "solid",
+          "color": "#ECEFF1FF"
+        }
+      ]
+    }
+  },
+  "nodes": {
+    "p1-photo": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a0",
+      "name": "Photo",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 700,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "image",
+            "assetId": "card-1",
+            "fit": "fill"
+          }
+        ]
+      },
+      "role": "product"
+    },
+    "p1-kicker": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a1",
+      "name": "Kicker",
+      "props": {
+        "x": 60,
+        "y": 760,
+        "width": 960,
+        "height": 60,
+        "text": "Step 1",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 40,
+          "color": "#607D8BFF",
+          "fontWeight": 700
+        }
+      }
+    },
+    "p1-title": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a2",
+      "name": "Title",
+      "props": {
+        "x": 60,
+        "y": 830,
+        "width": 960,
+        "height": 100,
+        "text": "Pick your size",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 72,
+          "color": "#263238FF",
+          "fontWeight": 800
+        }
+      },
+      "role": "headline"
+    },
+    "p2-photo": {
+      "type": "graphic",
+      "parentId": "p2",
+      "index": "a0",
+      "name": "Photo",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 700,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "image",
+            "assetId": "card-2",
+            "fit": "fill"
+          }
+        ]
+      },
+      "role": "product"
+    },
+    "p2-kicker": {
+      "type": "text",
+      "parentId": "p2",
+      "index": "a1",
+      "name": "Kicker",
+      "props": {
+        "x": 60,
+        "y": 760,
+        "width": 960,
+        "height": 60,
+        "text": "Step 2",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 40,
+          "color": "#607D8BFF",
+          "fontWeight": 700
+        }
+      }
+    },
+    "p2-title": {
+      "type": "text",
+      "parentId": "p2",
+      "index": "a2",
+      "name": "Title",
+      "props": {
+        "x": 60,
+        "y": 830,
+        "width": 960,
+        "height": 100,
+        "text": "Choose a colour",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 72,
+          "color": "#263238FF",
+          "fontWeight": 800
+        }
+      },
+      "role": "headline"
+    },
+    "p3-photo": {
+      "type": "graphic",
+      "parentId": "p3",
+      "index": "a0",
+      "name": "Photo",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 700,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "image",
+            "assetId": "card-3",
+            "fit": "fill"
+          }
+        ]
+      },
+      "role": "product"
+    },
+    "p3-kicker": {
+      "type": "text",
+      "parentId": "p3",
+      "index": "a1",
+      "name": "Kicker",
+      "props": {
+        "x": 60,
+        "y": 760,
+        "width": 960,
+        "height": 60,
+        "text": "Step 3",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 40,
+          "color": "#607D8BFF",
+          "fontWeight": 700
+        }
+      }
+    },
+    "p3-title": {
+      "type": "text",
+      "parentId": "p3",
+      "index": "a2",
+      "name": "Title",
+      "props": {
+        "x": 60,
+        "y": 830,
+        "width": 960,
+        "height": 100,
+        "text": "Order today",
+        "style": {
+          "fontFamily": "Noto Sans",
+          "fontSize": 72,
+          "color": "#263238FF",
+          "fontWeight": 800
+        }
+      },
+      "role": "headline"
+    }
+  },
+  "overrides": {
+    "format:pt": {
+      "p1-photo": {
+        "height": 900,
+        "fills": [
+          {
+            "type": "image",
+            "assetId": "card-1-tall",
+            "fit": "fill"
+          }
+        ]
+      },
+      "p1-kicker": {
+        "y": 960
+      },
+      "p1-title": {
+        "y": 1030
+      },
+      "p2-photo": {
+        "height": 900
+      },
+      "p2-kicker": {
+        "y": 960
+      },
+      "p2-title": {
+        "y": 1030,
+        "visible": true
+      },
+      "p3-photo": {
+        "height": 900
+      },
+      "p3-kicker": {
+        "y": 960
+      },
+      "p3-title": {
+        "y": 1030,
+        "text": "Order now"
+      }
+    }
+  }
+}

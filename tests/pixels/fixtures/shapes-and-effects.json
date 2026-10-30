@@ -1,0 +1,166 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "designId": "shapes-and-effects",
+    "name": "Shapes and effects",
+    "kind": "single",
+    "primaryFormatId": "sq"
+  },
+  "formats": {
+    "sq": {
+      "name": "Square 1:1",
+      "width": 1080,
+      "height": 1080,
+      "order": "a0"
+    }
+  },
+  "pages": {
+    "p1": {
+      "name": "Page 1",
+      "order": "a0",
+      "background": [
+        {
+          "type": "solid",
+          "color": "#FAFAFAFF"
+        }
+      ]
+    }
+  },
+  "nodes": {
+    "glow": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a0",
+      "name": "Radial glow",
+      "props": {
+        "x": 140,
+        "y": 140,
+        "width": 800,
+        "height": 800,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "radial",
+            "center": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "radius": 0.5,
+            "stops": [
+              {
+                "offset": 0,
+                "color": "#7C4DFFFF"
+              },
+              {
+                "offset": 1,
+                "color": "#7C4DFF00"
+              }
+            ]
+          }
+        ]
+      },
+      "role": "decoration"
+    },
+    "ring": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a1",
+      "name": "Ring with a hole",
+      "props": {
+        "x": 340,
+        "y": 340,
+        "width": 400,
+        "height": 400,
+        "shape": {
+          "kind": "path",
+          "fillRule": "evenodd",
+          "d": "M200 0 A200 200 0 1 1 199.99 0 Z M200 100 A100 100 0 1 0 200.01 100 Z"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FF4081FF"
+          }
+        ],
+        "strokes": [
+          {
+            "paint": {
+              "type": "solid",
+              "color": "#212121FF"
+            },
+            "width": 6,
+            "align": "center"
+          }
+        ],
+        "effects": [
+          {
+            "type": "dropShadow",
+            "x": 0,
+            "y": 24,
+            "blur": 40,
+            "color": "#00000066"
+          }
+        ]
+      },
+      "role": "decoration"
+    },
+    "card": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a2",
+      "name": "Rounded card",
+      "props": {
+        "x": 80,
+        "y": 760,
+        "width": 420,
+        "height": 220,
+        "rotation": -6,
+        "shape": {
+          "kind": "rect",
+          "cornerRadius": 32
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#00BFA5FF"
+          }
+        ],
+        "opacity": 0.85,
+        "blendMode": "multiply"
+      },
+      "role": "decoration"
+    },
+    "blurred": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a3",
+      "name": "Blurred dot",
+      "props": {
+        "x": 700,
+        "y": 120,
+        "width": 260,
+        "height": 260,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FFC400FF"
+          }
+        ],
+        "effects": [
+          {
+            "type": "layerBlur",
+            "radius": 24
+          }
+        ],
+        "blendMode": "screen"
+      },
+      "role": "decoration"
+    }
+  },
+  "overrides": {}
+}

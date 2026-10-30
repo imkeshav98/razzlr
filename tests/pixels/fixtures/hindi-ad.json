@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "designId": "hindi-ad",
+    "name": "Hindi ad",
+    "kind": "single",
+    "primaryFormatId": "sq"
+  },
+  "formats": {
+    "sq": {
+      "name": "Square 1:1",
+      "width": 1080,
+      "height": 1080,
+      "order": "a0"
+    }
+  },
+  "pages": {
+    "p1": {
+      "name": "Page 1",
+      "order": "a0",
+      "background": [
+        {
+          "type": "solid",
+          "color": "#FFF8E1FF"
+        }
+      ]
+    }
+  },
+  "nodes": {
+    "bg": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a0",
+      "name": "Saffron circle",
+      "props": {
+        "x": 540,
+        "y": -200,
+        "width": 800,
+        "height": 800,
+        "shape": {
+          "kind": "ellipse"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#FF9933FF"
+          }
+        ]
+      },
+      "role": "decoration"
+    },
+    "headline": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a1",
+      "name": "Headline",
+      "props": {
+        "x": 60,
+        "y": 360,
+        "width": 960,
+        "height": 140,
+        "text": "श्री दिवाली सेल",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 96,
+          "color": "#7A1F00FF",
+          "fontWeight": 700
+        }
+      },
+      "role": "headline"
+    },
+    "body": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a2",
+      "name": "Body",
+      "props": {
+        "x": 60,
+        "y": 540,
+        "width": 960,
+        "height": 160,
+        "text": "क्षमता से ज़्यादा बचत, किफ़ायती दाम",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 48,
+          "color": "#3A2E2AFF",
+          "fontWeight": 400,
+          "lineHeight": 1.5
+        }
+      },
+      "role": "body"
+    },
+    "price": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a3",
+      "name": "Price",
+      "props": {
+        "x": 60,
+        "y": 780,
+        "width": 960,
+        "height": 110,
+        "text": "सिर्फ़ ₹1,299",
+        "style": {
+          "fontFamily": "Noto Sans Devanagari",
+          "fontSize": 80,
+          "color": "#C62828FF",
+          "fontWeight": 700
+        }
+      },
+      "role": "price"
+    }
+  },
+  "overrides": {}
+}

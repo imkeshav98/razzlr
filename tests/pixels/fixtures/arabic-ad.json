@@ -1,0 +1,121 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "designId": "arabic-ad",
+    "name": "Arabic ad",
+    "kind": "single",
+    "primaryFormatId": "sq"
+  },
+  "formats": {
+    "sq": {
+      "name": "Square 1:1",
+      "width": 1080,
+      "height": 1080,
+      "order": "a0"
+    }
+  },
+  "pages": {
+    "p1": {
+      "name": "Page 1",
+      "order": "a0",
+      "background": [
+        {
+          "type": "solid",
+          "color": "#F1F8E9FF"
+        }
+      ]
+    }
+  },
+  "nodes": {
+    "band": {
+      "type": "graphic",
+      "parentId": "p1",
+      "index": "a0",
+      "name": "Green band",
+      "props": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 300,
+        "shape": {
+          "kind": "rect"
+        },
+        "fills": [
+          {
+            "type": "solid",
+            "color": "#1B5E20FF"
+          }
+        ]
+      },
+      "role": "decoration"
+    },
+    "headline": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a1",
+      "name": "Headline",
+      "props": {
+        "x": 60,
+        "y": 80,
+        "width": 960,
+        "height": 140,
+        "text": "تخفيضات الصيف",
+        "align": "end",
+        "direction": "rtl",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 96,
+          "color": "#FFFFFFFF",
+          "fontWeight": 700
+        }
+      },
+      "role": "headline"
+    },
+    "body": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a2",
+      "name": "Body",
+      "props": {
+        "x": 60,
+        "y": 400,
+        "width": 960,
+        "height": 200,
+        "text": "احصل على حذاء Nike Air الجديد بخصم 40% اليوم فقط",
+        "align": "end",
+        "direction": "rtl",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 52,
+          "color": "#212121FF",
+          "fontWeight": 400,
+          "lineHeight": 1.6
+        }
+      },
+      "role": "body"
+    },
+    "price": {
+      "type": "text",
+      "parentId": "p1",
+      "index": "a3",
+      "name": "Price",
+      "props": {
+        "x": 60,
+        "y": 700,
+        "width": 960,
+        "height": 120,
+        "text": "السعر 299 ر.س",
+        "align": "end",
+        "direction": "rtl",
+        "style": {
+          "fontFamily": "Noto Naskh Arabic",
+          "fontSize": 80,
+          "color": "#1B5E20FF",
+          "fontWeight": 700
+        }
+      },
+      "role": "price"
+    }
+  },
+  "overrides": {}
+}
