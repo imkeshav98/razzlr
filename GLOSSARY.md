@@ -157,6 +157,10 @@ _Avoid_: Revision, checkpoint (for named versions)
 The version of the design format a design was saved in (`meta.schemaVersion`). A design saved in an older one is migrated when it is read or opened, and looks the same afterwards.
 _Avoid_: Version (that is a snapshot), format version (a format is a size)
 
+**Compaction**:
+What the sync server does to a design when the last person leaves it: deleted layers, kept until then so undo could bring them back, are dropped with their overrides. The design looks the same afterwards.
+_Avoid_: Cleanup, garbage collection (that is Yjs's own, which compaction relies on)
+
 ## Rendering
 
 **Scene**:
