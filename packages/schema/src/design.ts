@@ -88,8 +88,8 @@ function propsInScope(node: Layer, overrides: Record<string, unknown>): InScope 
 
 type Fail = (path: PropertyKey[], message: string) => void
 
-/** The rules no single part can check alone: parents, cycles, and overrides against their layers. */
-function checkDesign(d: DesignShape, fail: Fail) {
+/** The rules about the design's shape: the primary format, pages, parents and cycles. */
+function checkStructure(d: Pick<DesignShape, 'meta' | 'formats' | 'pages' | 'nodes'>, fail: Fail) {
   if (!d.formats[d.meta.primaryFormatId]) fail(['meta', 'primaryFormatId'], `no format "${d.meta.primaryFormatId}"`)
   if (Object.keys(d.pages).length === 0) fail(['pages'], 'a design needs a page')
 
@@ -112,22 +112,28 @@ function checkDesign(d: DesignShape, fail: Fail) {
       seen.add(up)
     }
   }
+}
 
+/** One layer's overrides in one scope, against the layer they override. */
+function checkOverride(scope: string, nodeId: string, node: Layer | undefined, props: Record<string, unknown>, fail: Fail) {
+  if (!node) {
+    fail(['overrides', scope, nodeId], `no layer "${nodeId}"`)
+    return
+  }
+  const merged = propsInScope(node, props)
+  for (const path of merged.unknownPaths) fail(['overrides', scope, nodeId, path], `a ${node.type} has no property "${path}"`)
+  for (const issue of merged.success ? [] : merged.error.issues) {
+    fail(['overrides', scope, nodeId, ...issue.path], issue.message)
+  }
+}
+
+/** The rules no single part can check alone: parents, cycles, and overrides against their layers. */
+function checkDesign(d: DesignShape, fail: Fail) {
+  checkStructure(d, fail)
   for (const [scope, byNode] of Object.entries(d.overrides)) {
     const formatId = formatIdOf(scope) ?? ''
     if (!d.formats[formatId]) fail(['overrides', scope], `no format "${formatId}"`)
-    for (const [nodeId, props] of Object.entries(byNode)) {
-      const node = d.nodes[nodeId]
-      if (!node) {
-        fail(['overrides', scope, nodeId], `no layer "${nodeId}"`)
-        continue
-      }
-      const merged = propsInScope(node, props)
-      for (const path of merged.unknownPaths) fail(['overrides', scope, nodeId, path], `a ${node.type} has no property "${path}"`)
-      for (const issue of merged.success ? [] : merged.error.issues) {
-        fail(['overrides', scope, nodeId, ...issue.path], issue.message)
-      }
-    }
+    for (const [nodeId, props] of Object.entries(byNode)) checkOverride(scope, nodeId, d.nodes[nodeId], props, fail)
   }
 }
 
@@ -195,6 +201,98 @@ const layerCache = new WeakMap<object, Layer>()
 const validIds = new Set<string>()
 const validScopes = new Set<string>()
 
+type Head = z.infer<typeof DesignHead>
+/** Validated heads by their meta object, with the formats and pages they go with; a validated head maps to itself. */
+const headCache = new WeakMap<object, { formats: unknown; pages: unknown; head: Head }>()
+/** The head and layers of the last design parsed here. */
+let last: { head: Head; nodes: Record<string, Layer> } | undefined
+/** Each scope as last parsed: the object it came in as, its filled values, and the layers it was checked against. */
+type ScopeResult = { input: object; filled: Record<string, Record<string, unknown>>; nodes: Record<string, Layer> }
+const lastScopes = new Map<string, ScopeResult>()
+/** Checked override values, by their object and by their filled object, with the layer they were checked against. */
+const pairCache = new WeakMap<object, { node: Layer; filled: Record<string, unknown> }>()
+
+/** Sets a key without ever touching the prototype, even for a key such as `__proto__`. */
+const put = <T>(target: Record<string, T>, key: string, value: T) =>
+  Object.defineProperty(target, key, { value, enumerable: true, writable: true, configurable: true })
+
+function parseHead(input: Record<string, unknown>): Head | undefined {
+  const cached = isRecord(input.meta) ? headCache.get(input.meta) : undefined
+  if (cached && cached.formats === input.formats && cached.pages === input.pages) return cached.head
+  const parsed = DesignHead.safeParse(input)
+  if (!parsed.success) return undefined
+  const head = deepFreeze(parsed.data)
+  if (isRecord(input.meta)) headCache.set(input.meta, { formats: input.formats, pages: input.pages, head })
+  headCache.set(head.meta, { formats: head.formats, pages: head.pages, head })
+  return head
+}
+
+/** The ids whose layer differs between two sets of layers, and whether any of them came, went, or changed parent or type. */
+function changedLayers(before: Record<string, Layer>, after: Record<string, Layer>) {
+  const ids = new Set<string>()
+  let structural = false
+  for (const id in after) {
+    const was = Object.hasOwn(before, id) ? before[id] : undefined
+    const now = after[id] as Layer
+    if (was === now) continue
+    ids.add(id)
+    if (!was || was.parentId !== now.parentId || was.type !== now.type) structural = true
+  }
+  for (const id in before) {
+    if (Object.hasOwn(after, id)) continue
+    ids.add(id)
+    structural = true
+  }
+  return { ids, structural }
+}
+
+/** One layer's override values in one scope, checked and filled, or undefined if they are invalid. */
+function parsePair(scope: string, nodeId: string, node: Layer | undefined, props: unknown) {
+  const hit = isRecord(props) ? pairCache.get(props) : undefined
+  if (hit && hit.node === node) return hit.filled
+  if (!node || !isRecord(props)) return undefined
+  if (!validIds.has(nodeId)) {
+    if (!NodeId.safeParse(nodeId).success) return undefined
+    validIds.add(nodeId)
+  }
+  let failed = false
+  checkOverride(scope, nodeId, node, props, () => { failed = true })
+  if (failed) return undefined
+  const filled = overrideDefaults(node, props)
+  pairCache.set(props, { node, filled })
+  pairCache.set(filled, { node, filled })
+  return filled
+}
+
+/**
+ * Checks one scope's overrides and fills their defaults. A scope object seen last time, whose
+ * layers didn't change since, comes back as it was; one whose layers changed copies the last
+ * result and checks only those layers again.
+ */
+function parseScope(
+  scope: string, byNode: Record<string, unknown>, nodes: Record<string, Layer>, changed: Set<string> | undefined,
+): ScopeResult | undefined {
+  const prev = lastScopes.get(scope)
+  const own = (id: string) => (Object.hasOwn(nodes, id) ? nodes[id] : undefined)
+  if (prev && changed && prev.nodes === last?.nodes && (prev.input === byNode || prev.filled === byNode)) {
+    const filled = { ...prev.filled }
+    for (const id of changed) {
+      if (!Object.hasOwn(byNode, id)) continue
+      const values = parsePair(scope, id, own(id), byNode[id])
+      if (!values) return undefined
+      put(filled, id, values)
+    }
+    return { input: prev.input, filled: changed.size > 0 ? filled : prev.filled, nodes }
+  }
+  const filled: Record<string, Record<string, unknown>> = {}
+  for (const id in byNode) {
+    const values = parsePair(scope, id, own(id), byNode[id])
+    if (!values) return undefined
+    put(filled, id, values)
+  }
+  return { input: byNode, filled, nodes }
+}
+
 /**
  * Validates a design like `parseDesign`, with the same result, but reuses what it validated
  * before for every layer object and override object it has seen: a design read again after one
@@ -203,11 +301,12 @@ const validScopes = new Set<string>()
  */
 export function parseDesignIncrementally(input: unknown): ParseResult {
   if (!isRecord(input) || !isRecord(input.nodes) || !(input.overrides === undefined || isRecord(input.overrides))) return parseDesign(input)
-  const head = DesignHead.safeParse(input)
-  if (!head.success) return parseDesign(input)
+  const head = parseHead(input)
+  if (!head) return parseDesign(input)
 
-  const nodes: Record<string, Layer> = {}
-  for (const [id, raw] of Object.entries(input.nodes)) {
+  const entries: [string, Layer][] = []
+  for (const id in input.nodes) {
+    const raw = input.nodes[id]
     if (!validIds.has(id)) {
       if (!NodeId.safeParse(id).success) return parseDesign(input)
       validIds.add(id)
@@ -221,28 +320,31 @@ export function parseDesignIncrementally(input: unknown): ParseResult {
       if (isRecord(raw)) layerCache.set(raw, layer)
       layerCache.set(layer, layer)
     }
-    nodes[id] = layer
+    entries.push([id, layer])
+  }
+  const nodes = Object.fromEntries(entries)
+
+  // Parents and cycles only change when layers come or go, or a layer changes parent or type.
+  const changed = last && last.head === head ? changedLayers(last.nodes, nodes) : undefined
+  if (!changed || changed.structural) {
+    let failed = false
+    checkStructure({ ...head, nodes }, () => { failed = true })
+    if (failed) return parseDesign(input)
   }
 
-  const overrides: DesignShape['overrides'] = {}
+  const results: [string, ScopeResult][] = []
   for (const [scope, byNode] of Object.entries(input.overrides ?? {})) {
     if (!validScopes.has(scope)) {
       if (!Scope.safeParse(scope).success) return parseDesign(input)
       validScopes.add(scope)
     }
-    if (!isRecord(byNode)) return parseDesign(input)
-    for (const [nodeId, props] of Object.entries(byNode)) {
-      if (!isRecord(props)) return parseDesign(input)
-      if (!validIds.has(nodeId)) {
-        if (!NodeId.safeParse(nodeId).success) return parseDesign(input)
-        validIds.add(nodeId)
-      }
-    }
-    overrides[scope] = byNode as Record<string, Record<string, unknown>>
+    if (!isRecord(byNode) || !head.formats[formatIdOf(scope) ?? '']) return parseDesign(input)
+    const result = parseScope(scope, byNode, nodes, changed?.ids)
+    if (!result) return parseDesign(input)
+    results.push([scope, result])
   }
-
-  const shape: DesignShape = { ...head.data, nodes, overrides }
-  let failed = false
-  checkDesign(shape, () => { failed = true })
-  return failed ? parseDesign(input) : { success: true, design: withOverrideDefaults(shape) }
+  last = { head, nodes }
+  for (const [scope, result] of results) lastScopes.set(scope, result)
+  const overrides = Object.fromEntries(results.map(([scope, result]) => [scope, result.filled]))
+  return { success: true, design: { ...head, nodes, overrides } }
 }

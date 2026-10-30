@@ -15,8 +15,10 @@ export function designView(doc: DesignDoc) {
   const r = root(doc)
   /** Each live layer as JSON; an object is replaced, never changed, when its layer changes. */
   const nodes = new Map<string, Json>()
-  /** Override values by `scope|nodeId`, each set of values replaced whenever one of them changes. */
-  const overrides = new Map<string, { scope: string; nodeId: string; props: Json }>()
+  /** Override values by scope and layer, each set of values replaced whenever one of them changes. */
+  const overrides = new Map<string, Map<string, Json>>()
+  /** Each scope's override values as one object, until one of them changes. */
+  const scopes = new Map<string, Json>()
   const dirtyNodes = new Set<string>()
   let head: { meta: Json; formats: Json; pages: Json } | null = null
   let design: Design | null = null
@@ -28,11 +30,14 @@ export function designView(doc: DesignDoc) {
   }
   const loadOverride = (key: string) => {
     const { scope, nodeId, path } = splitOverrideKey(key)
-    const pair = `${scope}|${nodeId}`
-    const props = Object.fromEntries(Object.entries(overrides.get(pair)?.props ?? {}).filter(([p]) => p !== path))
+    scopes.delete(scope)
+    const byNode = overrides.get(scope) ?? new Map<string, Json>()
+    const props = Object.fromEntries(Object.entries(byNode.get(nodeId) ?? {}).filter(([p]) => p !== path))
     if (r.overrides.has(key)) Object.defineProperty(props, path, { value: r.overrides.get(key), enumerable: true, writable: true, configurable: true })
-    if (Object.keys(props).length > 0) overrides.set(pair, { scope, nodeId, props })
-    else overrides.delete(pair)
+    if (Object.keys(props).length > 0) byNode.set(nodeId, props)
+    else byNode.delete(nodeId)
+    if (byNode.size > 0) overrides.set(scope, byNode)
+    else overrides.delete(scope)
   }
   for (const id of r.nodes.keys()) loadNode(id)
   for (const key of r.overrides.keys()) loadOverride(key)
@@ -76,10 +81,10 @@ export function designView(doc: DesignDoc) {
     for (const id of dirtyNodes) loadNode(id)
     dirtyNodes.clear()
     head ??= { meta: r.meta.toJSON(), formats: r.formats.toJSON(), pages: r.pages.toJSON() }
-    // Maps, then entries: an id such as `__proto__` from another tab stays a plain key.
-    const nested = new Map<string, [string, Json][]>()
-    for (const { scope, nodeId, props } of overrides.values()) nested.set(scope, [...(nested.get(scope) ?? []), [nodeId, props]])
-    const nestedOverrides = Object.fromEntries([...nested].map(([scope, entries]) => [scope, Object.fromEntries(entries)]))
+    // Unchanged scopes keep their objects, so the parser can take them as checked before.
+    // Entries, not assignment: an id such as `__proto__` from another tab stays a plain key.
+    for (const [scope, byNode] of overrides) if (!scopes.has(scope)) scopes.set(scope, Object.freeze(Object.fromEntries(byNode)))
+    const nestedOverrides = Object.fromEntries([...overrides.keys()].map((scope) => [scope, scopes.get(scope)]))
     const repaired = repair({ ...head, nodes: Object.fromEntries(nodes), overrides: nestedOverrides })
     if (repaired.repairs.length > 0) onRepair?.(repaired.repairs)
     const result = parseDesignIncrementally(repaired.snapshot)
