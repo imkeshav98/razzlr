@@ -2,7 +2,7 @@
 import { randomUUID } from 'node:crypto'
 import { clients, designs, designStates, type Db } from '@razzlr/db'
 import { loadDesign } from '@razzlr/doc'
-import { parseDesign, type ClientSummary, type DesignInput, type DesignSummary } from '@razzlr/schema'
+import { parseDesign, SCHEMA_VERSION, type ClientSummary, type DesignInput, type DesignSummary } from '@razzlr/schema'
 import { and, asc, desc, eq } from 'drizzle-orm'
 import * as Y from 'yjs'
 
@@ -44,7 +44,7 @@ export async function findDesign(db: Db, orgId: string, clientId: string, design
 
 /** One blank 1080×1080 page: what a design starts as when nothing else is given. */
 export const blankDesign = (designId: string, name: string): DesignInput => ({
-  meta: { schemaVersion: 1, designId, name, kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: SCHEMA_VERSION, designId, name, kind: 'single', primaryFormatId: 'sq' },
   formats: { sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' } },
   pages: { p1: { name: 'Page 1', order: 'a0', fills: [{ type: 'solid', color: '#FFFFFFFF' }] } },
   nodes: {},

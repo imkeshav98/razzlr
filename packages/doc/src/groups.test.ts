@@ -11,7 +11,7 @@ const rect = (x: number, y: number, width: number, height: number, rotation = 0)
  * where the banner moves, turns back and hides some of them.
  */
 const design = (): DesignInput => ({
-  meta: { schemaVersion: 1, designId: 'd1', name: 'Groups', kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: 2, designId: 'd1', name: 'Groups', kind: 'single', primaryFormatId: 'sq' },
   formats: {
     sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' },
     banner: { name: 'Banner', width: 960, height: 320, order: 'a1' },

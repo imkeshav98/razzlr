@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { LAYER_PROPS, type LayerType } from './layers.ts'
+import { migrateDesign, SCHEMA_VERSION } from './migrate.ts'
 import { Paint } from './paint.ts'
 import { FormatId, FractionalIndex, NodeId, PageId } from './primitives.ts'
 
@@ -113,7 +114,7 @@ export const Page = z.object({
 })
 
 export const DesignMeta = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(SCHEMA_VERSION),
   designId: z.string().min(1),
   name: z.string(),
   kind: z.enum(['single', 'carousel', 'story', 'document']),
@@ -254,9 +255,12 @@ export type DesignInput = z.input<typeof Design>
 
 export type ParseResult = { success: true; design: Design } | { success: false; errors: string[] }
 
-/** Validates untrusted JSON as a design. Errors read `path: message`. */
+/**
+ * Validates untrusted JSON as a design, first bringing one saved at an older schema version up
+ * to this one (see migrate.ts). Errors read `path: message`.
+ */
 export function parseDesign(input: unknown): ParseResult {
-  const result = Design.safeParse(input)
+  const result = Design.safeParse(migrateDesign(input))
   if (result.success) return { success: true, design: result.data }
   return {
     success: false,

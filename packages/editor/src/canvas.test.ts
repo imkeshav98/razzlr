@@ -5,7 +5,7 @@ import { COLUMN_GAP, frameAt, frameGrid, intersects, ROW_GAP } from './grid.ts'
 
 const design = (() => {
   const parsed = parseDesign({
-    meta: { schemaVersion: 1, designId: 'd', name: 'D', kind: 'carousel', primaryFormatId: 'sq' },
+    meta: { schemaVersion: 2, designId: 'd', name: 'D', kind: 'carousel', primaryFormatId: 'sq' },
     formats: {
       story: { name: 'Story', width: 1080, height: 1920, order: 'a1' },
       sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' },

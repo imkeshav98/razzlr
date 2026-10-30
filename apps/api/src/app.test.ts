@@ -81,7 +81,7 @@ describe('designs per client', () => {
 
   it('starts a design from given content, under its own id and name', async () => {
     const content = {
-      meta: { schemaVersion: 1, designId: 'ignored', name: 'Ignored', kind: 'carousel', primaryFormatId: 'pt' },
+      meta: { schemaVersion: 2, designId: 'ignored', name: 'Ignored', kind: 'carousel', primaryFormatId: 'pt' },
       formats: { pt: { name: 'Portrait', width: 1080, height: 1350, order: 'a0' } },
       pages: { p1: { name: 'Card 1', order: 'a0' }, p2: { name: 'Card 2', order: 'a1' } },
       nodes: {},

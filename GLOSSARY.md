@@ -53,8 +53,12 @@ A layer made of a shape plus fills, strokes and effects. Photos and video are fi
 _Avoid_: Image layer, shape layer, rectangle layer
 
 **Fill**:
-One paint on a layer: solid, gradient, image or video. A crop is the fill's transform.
+One paint on a layer: solid, gradient (linear, radial or angular), image or video. A crop is the fill's transform.
 _Avoid_: Background, colour (when a paint is meant)
+
+**Pass-through**:
+How a group or frame blends by default: it adds no layer of its own, so each child blends with whatever is under the group. Any other blend mode first draws the children together, then blends the result.
+_Avoid_: Isolated (that is any other mode)
 
 **Role**:
 A layer's meaning in the ad (headline, price, logo, product, cta, …), used by AI, Ad check, adapt and feed binding.
@@ -108,6 +112,10 @@ _Avoid_: Batch, transaction (a gesture spans many)
 **Version**:
 A snapshot of a design, either named on purpose or taken automatically before AI actions and every 30 minutes.
 _Avoid_: Revision, checkpoint (for named versions)
+
+**Schema version**:
+The version of the design format a design was saved in (`meta.schemaVersion`). A design saved in an older one is migrated when it is read or opened, and looks the same afterwards.
+_Avoid_: Version (that is a snapshot), format version (a format is a size)
 
 ## Rendering
 

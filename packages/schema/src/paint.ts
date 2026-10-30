@@ -15,6 +15,17 @@ export const RadialPaint = z.object({
   stops: Stops,
 })
 
+/**
+ * A conic sweep of colour about `center` (#43): offset 0 starts at `angle` degrees, turning
+ * clockwise from pointing right, and the stops go once round to offset 1 back at the start.
+ */
+export const AngularPaint = z.object({
+  type: z.literal('angular'),
+  center: Point,
+  angle: z.number().default(0),
+  stops: Stops,
+})
+
 /** A crop is the fill's transform: the visible part of the image, in image pixels. */
 export const ImageCrop = z.object({
   x: z.number().min(0),
@@ -30,5 +41,5 @@ export const ImagePaint = z.object({
   opacity: z.number().min(0).max(1).default(1),
 })
 
-export const Paint = z.discriminatedUnion('type', [SolidPaint, LinearPaint, RadialPaint, ImagePaint])
+export const Paint = z.discriminatedUnion('type', [SolidPaint, LinearPaint, RadialPaint, AngularPaint, ImagePaint])
 export type Paint = z.infer<typeof Paint>
