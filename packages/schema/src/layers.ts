@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { Effect } from './effects.ts'
 import { Paint } from './paint.ts'
-import { BlendMode, Color } from './primitives.ts'
+import { BlendMode, Color, ContainerBlendMode } from './primitives.ts'
 
 /**
  * Properties every layer has. Any property can be overridden per format (#1); the
@@ -25,6 +25,18 @@ export const Stroke = z.object({
   paint: Paint,
   width: z.number().positive(),
   align: z.enum(['inside', 'center', 'outside']).default('center'),
+  /**
+   * Dash and gap lengths in design pixels, taken in turn and repeated (#43); none is a solid
+   * line. An odd number of lengths is taken twice, as in SVG, so dashes and gaps alternate.
+   */
+  dashes: z.number().min(0).array().refine((d) => d.length === 0 || d.some((n) => n > 0), 'dashes need a length above 0').default([]),
+  /** How far into the pattern the dashes start, in design pixels. */
+  dashOffset: z.number().default(0),
+  /** The ends of open paths and of each dash. */
+  cap: z.enum(['butt', 'round', 'square']).default('butt'),
+  join: z.enum(['miter', 'round', 'bevel']).default('miter'),
+  /** How far a mitred corner may reach, as a multiple of half the stroke width, before it is bevelled. */
+  miterLimit: z.number().min(1).default(4),
 })
 
 export const Shape = z.discriminatedUnion('kind', [
@@ -43,11 +55,12 @@ export const GraphicProps = z.object({
 
 export const FrameProps = z.object({
   ...commonProps,
+  blendMode: ContainerBlendMode.default('pass-through'),
   clip: z.boolean().default(true),
   fills: Paint.array().default([]),
 })
 
-export const GroupProps = z.object(commonProps)
+export const GroupProps = z.object({ ...commonProps, blendMode: ContainerBlendMode.default('pass-through') })
 
 const textStyleFields = {
   fontFamily: z.string().min(1),

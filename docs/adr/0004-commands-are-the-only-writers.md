@@ -8,4 +8,6 @@ A drag runs a command on every pointer move and typing runs one per key, so othe
 
 ## Exception
 
-A session may write outside a command in one case: right after its own undo or redo, it puts back a value that Yjs left unset because another tab overwrote the same key concurrently. It only restores a value that tab's own command replaced, and the write is untracked so it never becomes an undo step. Everything else still goes through commands.
+A session may write outside a command in two cases. In the first, right after its own undo or redo, it puts back a value that Yjs left unset because another tab overwrote the same key concurrently. It only restores a value that tab's own command replaced, and the write is untracked so it never becomes an undo step.
+
+The second is the schema migration (#43, `migrateDoc` in `packages/doc`). A document saved at an older schema version is brought up to the current one when a tab opens it, or before its first command if the document arrives later. The migration writes only the values it changes, untracked, so no undo step holds it. It describes the same design in the new version's terms and changes nothing anyone sees. Tabs that migrate at once write the same values, so their writes merge to one result. Until a document is migrated, reading it migrates a copy in memory. Everything else still goes through commands.

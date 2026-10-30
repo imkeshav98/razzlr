@@ -1,4 +1,4 @@
-import { formatIdOf, parseDesignIncrementally, parseLayer, parseOverrideValues, type Design, type Layer } from '@razzlr/schema'
+import { formatIdOf, parseDesignIncrementally, parseLayer, parseOverrideValues, SCHEMA_VERSION, type Design, type Layer } from '@razzlr/schema'
 import type * as Y from 'yjs'
 import { buildChildIndex, registerChildIndex, siblingOrder } from './children.ts'
 import { DELETED, nodeToJson, readDesign, root, splitOverrideKey, type DesignDoc } from './design-doc.ts'
@@ -130,7 +130,8 @@ export function designView(doc: DesignDoc) {
    * or the last whole read repaired a layer's place, which a later change can undo.
    */
   function readChanges(): boolean {
-    if (!head) return false
+    // A document saved at an older schema version is migrated as a whole each time it is read.
+    if (!head || r.meta.get('schemaVersion') !== SCHEMA_VERSION) return false
     const pages = head.pages
     const staged = new Map<string, Layer>()
     const removed = new Set<string>()

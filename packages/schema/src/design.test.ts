@@ -15,7 +15,7 @@ const parse = (input: unknown) => {
 
 /** The smallest valid design: one page, one format, one rectangle. */
 const minimal = () => ({
-  meta: { schemaVersion: 1, designId: 'd1', name: 'Minimal', kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: 2, designId: 'd1', name: 'Minimal', kind: 'single', primaryFormatId: 'sq' },
   formats: { sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' } },
   pages: { p1: { name: 'Page 1', order: 'a0', fills: [{ type: 'solid', color: '#FFFFFFFF' }] } },
   nodes: {
@@ -190,7 +190,7 @@ describe('imageAssetIds', () => {
   it('finds image fills on pages, layers and format overrides, once each', () => {
     const image = (assetId: string) => ({ type: 'image', assetId })
     const parsed = parseDesign({
-      meta: { schemaVersion: 1, designId: 'd', name: 'D', kind: 'single', primaryFormatId: 'sq' },
+      meta: { schemaVersion: 2, designId: 'd', name: 'D', kind: 'single', primaryFormatId: 'sq' },
       formats: { sq: { name: 'Square', width: 100, height: 100, order: 'a0' }, st: { name: 'Story', width: 100, height: 200, order: 'a1' } },
       pages: { p1: { name: 'P', order: 'a0', fills: [image('page-bg')] } },
       nodes: {

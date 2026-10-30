@@ -12,6 +12,7 @@ The spike designs from the spike spec (#1), as JSON the schema validates (`pnpm 
 | layer-bounds | the offscreen layer bounds (#18): a thick translucent mitred stroke, a translucent outside stroke, a translucent path larger than its box, a turned frame with a shadowed child, a turned blurred ellipse |
 | text-and-group-bounds | the offscreen layer bounds of text and groups (#31): translucent, shadowed, blurred and multiplied text in all three scripts, a fixed box its text spills out of, a turned translucent group with a shadow, a blurred group holding a turned translucent group |
 | groups-and-frames | groups and frames (#41): a turned clipping frame cutting off a circle and a turned group, a clipping frame nested in that group, a frame that doesn't clip, a translucent group of overlapping shapes |
+| strokes-and-effects | schema version 2 (#43): angular gradients on a fill and a stroke, dashes with an odd list and an offset, butt, round and square caps, mitre, round and bevel joins and a miter limit, inner shadows, glow on a shape and on text, background blur behind a turned translucent card, and groups of multiplied circles that pass through, are drawn together, and pass through at 60% opacity |
 | stress | 300 layers and long wrapped paragraphs in all three scripts |
 
 Image fills name assets (`sneaker`, `card-1` … `card-3`, `card-1-tall`): stand-in photos in `../assets/`, drawn by `scripts/make-assets.ts`.

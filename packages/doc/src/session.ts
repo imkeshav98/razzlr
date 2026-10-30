@@ -4,6 +4,7 @@ import { CommandError } from './command.ts'
 import { COMMANDS, type CommandName } from './commands.ts'
 import { root, type DesignDoc } from './design-doc.ts'
 import { designView } from './design-view.ts'
+import { migrateDoc } from './migrate.ts'
 
 type InputOf<N extends CommandName> = z.input<(typeof COMMANDS)[N]['input']>
 type ResultOf<N extends CommandName> = ReturnType<(typeof COMMANDS)[N]['apply']>
@@ -18,6 +19,7 @@ export function openSession(doc: DesignDoc) {
   const origin = { session: Symbol('session') }
   const r = root(doc)
   const roots = [r.meta, r.formats, r.pages, r.nodes, r.overrides]
+  migrateDoc(doc)
   const view = designView(doc)
   const undoManager = new Y.UndoManager(roots, { trackedOrigins: new Set([origin]), captureTimeout: 0 })
 
@@ -71,6 +73,9 @@ export function openSession(doc: DesignDoc) {
     if (!parsed.success) {
       throw new CommandError(name, parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '))
     }
+    // A document saved at an older schema version is brought up to this one before it is changed;
+    // a session opened before the document arrived from the server meets it here.
+    migrateDoc(doc)
     const ctx = { doc, r, design: view.read() }
     const reason = command.check?.(ctx, parsed.data as never)
     if (reason) throw new CommandError(name, reason)

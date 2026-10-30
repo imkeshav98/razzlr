@@ -116,6 +116,15 @@
       "maxDelta": 79
     }
   },
+  "strokes-and-effects p1.sq": {
+    "differing": 108435,
+    "percent": 9.297,
+    "maxDelta": 255,
+    "limit": {
+      "percent": 11.671,
+      "maxDelta": 255
+    }
+  },
   "text-and-group-bounds p1.sq": {
     "differing": 275436,
     "percent": 23.614,
