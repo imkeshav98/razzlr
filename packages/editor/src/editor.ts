@@ -232,6 +232,8 @@ function live(
   }
 
   const px = (n: number) => `${n}px`
+  /** Screen pixels a frame needs before it gets a label. */
+  const MIN_LABEL_WIDTH = 56
   /** A design-pixel box in a frame, as CSS on the overlay. */
   function placeBox(el: HTMLElement, frame: Frame, box: Rect) {
     const at = toScreen(camera, { x: frame.x + box.x, y: frame.y + box.y })
@@ -248,6 +250,8 @@ function live(
     if (selected?.frame === frame.key || editing?.frame === frame.key) label.dataset.active = ''
     const at = toScreen(camera, frame)
     const width = frame.width * camera.zoom
+    // Too narrow to read even a cut name: zoomed far out, the frames speak for themselves.
+    if (width < MIN_LABEL_WIDTH) return null
     Object.assign(label.style, { left: px(at.x), top: px(at.y), width: px(width) })
     const name = document.createElement('span')
     name.className = 'frame-name'
