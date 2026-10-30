@@ -2,13 +2,15 @@
 // Phase 0 has no authentication, so it must only run locally and in CI, never on a public address.
 import { Database } from '@hocuspocus/extension-database'
 import { Server } from '@hocuspocus/server'
-import { postgresStore } from './store.ts'
+import { openDatabase, readDesignState, writeDesignState } from '@razzlr/db'
 
 const databaseUrl = process.env.DATABASE_URL
 if (!databaseUrl) throw new Error('DATABASE_URL is not set')
 const port = Number(process.env.SYNC_PORT ?? 1234)
 
-const store = postgresStore(databaseUrl)
+// The API creates every design with its first state and runs the migrations; this only reads and
+// replaces states.
+const { db, close } = openDatabase(databaseUrl)
 
 const server = new Server({
   port,
@@ -17,11 +19,11 @@ const server = new Server({
   debounce: 500,
   maxDebounce: 10_000,
   extensions: [new Database({
-    fetch: ({ documentName }) => store.fetch(documentName),
-    store: ({ documentName, state }) => store.store(documentName, state),
+    fetch: ({ documentName }) => readDesignState(db, documentName),
+    store: ({ documentName, state }) => writeDesignState(db, documentName, state),
   })],
   async onDestroy() {
-    await store.close()
+    await close()
   },
 })
 

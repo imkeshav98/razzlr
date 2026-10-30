@@ -8,16 +8,13 @@
     "lint": "eslint ."
   },
   "devDependencies": {
-    "@hocuspocus/provider": "4.8.0",
     "@playwright/test": "1.63.0",
     "@razzlr/config": "workspace:*",
-    "@razzlr/doc": "workspace:*",
     "@razzlr/editor": "workspace:*",
     "@razzlr/schema": "workspace:*",
     "@razzlr/web": "workspace:*",
     "@types/node": "^22.20.0",
     "eslint": "^9.39.0",
-    "typescript": "~5.9.3",
-    "yjs": "^13.6.27"
+    "typescript": "~5.9.3"
   }
 }
