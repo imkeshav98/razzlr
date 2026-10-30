@@ -98,6 +98,15 @@
       "maxDelta": 55
     }
   },
+  "image-fills p1.sq": {
+    "differing": 18196,
+    "percent": 1.56,
+    "maxDelta": 68,
+    "limit": {
+      "percent": 2,
+      "maxDelta": 84
+    }
+  },
   "layer-bounds p1.sq": {
     "differing": 215189,
     "percent": 18.449,

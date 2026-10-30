@@ -25,6 +25,11 @@ const commonProps = {
   sizing: z.object({ width: z.enum(['fixed', 'hug', 'fill']), height: z.enum(['fixed', 'hug', 'fill']) }).optional(),
   /** Inside an auto layout frame, stays where it is put instead of taking its turn in the flow (#46). */
   absolute: z.boolean().optional(),
+  /**
+   * Makes the layer a mask (#48): it is not drawn, and the layers after it in the same parent, up
+   * to the next mask, show only where it is opaque (`alpha`) or bright (`luminance`).
+   */
+  mask: z.enum(['alpha', 'luminance']).optional(),
 }
 
 export const PER_FORMAT_PROPS = ['x', 'y', 'width', 'height', 'rotation', 'visible'] as const

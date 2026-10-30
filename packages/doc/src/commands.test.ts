@@ -391,6 +391,24 @@ describe('commands', () => {
     expect(Object.keys(readDesign(doc).nodes).sort()).toEqual(['box', 'dot', 'g', 'headline'])
   })
 
+  it('node.mask makes layers masks in every format and plain again, each one undo step', () => {
+    const doc = freshDoc()
+    const tab = openSession(doc)
+    // A stray format override of the flag goes when the base one is set.
+    tab.run('node.update', { ids: ['box'], scope: 'format:banner', patch: { mask: 'luminance' } })
+    tab.run('node.mask', { ids: ['box'], mask: 'alpha' })
+    let design = readDesign(doc)
+    expect(design.nodes.box?.props.mask).toBe('alpha')
+    expect(design.overrides['format:banner']?.box).toBeUndefined()
+    tab.run('node.mask', { ids: ['box'], mask: null })
+    design = readDesign(doc)
+    expect(design.nodes.box?.props).not.toHaveProperty('mask')
+    tab.undo()
+    expect(readDesign(doc).nodes.box?.props.mask).toBe('alpha')
+    tab.run('node.lock', { ids: ['box'], lock: { style: true } })
+    expect(() => tab.run('node.mask', { ids: ['box'], mask: null })).toThrow(/locked \(style\)/)
+  })
+
   describe('locks', () => {
     it('node.lock sets flags one by one, and clearing them all drops the field', () => {
       const doc = freshDoc()
