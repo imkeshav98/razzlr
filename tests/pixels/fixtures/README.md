@@ -11,6 +11,10 @@ The six spike designs from the spike spec (#1), as JSON the schema validates (`p
 | carousel | three pages in two formats; the portrait format overrides layout, one image and one text |
 | stress | 300 layers and long wrapped paragraphs in all three scripts |
 
-Image fills name assets (`sneaker`, `card-1` … `card-3`, `card-1-tall`). Their files arrive with the Node renderer ticket, which renders these designs to reference PNGs.
+Image fills name assets (`sneaker`, `card-1` … `card-3`, `card-1-tall`): stand-in photos in `../assets/`, drawn by `scripts/make-assets.ts`.
+
+## Reference images
+
+`../reference/<fixture>/<page>.<format>.png` is what the Node CPU render must match, pixel for pixel. A failing check writes `<page>.<format>.actual.png` and a `.diff.png` (differing pixels in magenta) to `../output/<fixture>/`. After an intended change, rewrite them with `UPDATE_REFERENCES=1 pnpm --filter @razzlr/pixels test`, then look at every changed image before committing.
 
 `invalid/` holds designs that must fail validation, each checked for its exact errors.

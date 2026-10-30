@@ -10,8 +10,11 @@
   "devDependencies": {
     "@razzlr/config": "workspace:*",
     "@razzlr/doc": "workspace:*",
+    "@razzlr/fonts": "workspace:*",
+    "@razzlr/renderer": "workspace:*",
     "@razzlr/schema": "workspace:*",
     "@types/node": "^22.20.0",
+    "canvaskit-wasm": "0.42.0",
     "eslint": "^9.39.0",
     "typescript": "~5.9.3",
     "vitest": "^3.2.7"

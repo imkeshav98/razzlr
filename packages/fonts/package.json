@@ -1,0 +1,21 @@
+{
+  "name": "@razzlr/fonts",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@razzlr/config": "workspace:*",
+    "@types/node": "^22.20.0",
+    "eslint": "^9.39.0",
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.7"
+  }
+}
