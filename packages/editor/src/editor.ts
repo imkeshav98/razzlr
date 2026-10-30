@@ -763,6 +763,15 @@ function live(
     fitAll,
     fitSelection,
     fitFrame: (pageId: string, formatId: string) => fitFrame(defaultFrame(pageId, formatId)),
+    /** Brings one page's row into view: every format of that page, fitted. */
+    fitPage(pageId: string) {
+      const row = grid.frames.filter((f) => f.pageId === pageId)
+      const first = row[0]
+      if (!first) return
+      const right = Math.max(...row.map((f) => f.x + f.width))
+      const bottom = Math.max(...row.map((f) => f.y + f.height))
+      setCamera(fit({ x: first.x, y: first.y, width: right - first.x, height: bottom - first.y }, viewport, focused ? FOCUS_PADDING : undefined))
+    },
     setTool(next: Tool) {
       tool = next
       showCursor()

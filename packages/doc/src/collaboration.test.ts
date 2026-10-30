@@ -18,6 +18,9 @@ function twoTabs() {
   return { a, b, tabA: openSession(a), tabB: openSession(b), sync }
 }
 
+/** A fuzz run makes hundreds of commands and full reads; a cold CI runner needs more than vitest's 5 s. */
+const FUZZ_TIMEOUT = 30_000
+
 describe('two tabs', () => {
   it('undo in one tab reverts only its own edits, never the other tab’s', () => {
     const { a, b, tabA, tabB, sync } = twoTabs()
@@ -169,7 +172,7 @@ describe('two tabs', () => {
     }
     sync()
     expect(readDesign(b)).toEqual(readDesign(a))
-  })
+  }, FUZZ_TIMEOUT)
 
   it.each(process.env.MANY_SEEDS ? Array.from({ length: 300 }, (_, i) => i + 1000) : [3, 99, 4242])("each tab's session view equals a full read after every command, sync and repair (seed %i)", (seed) => {
     const { a, b, tabA, tabB, sync } = twoTabs()
@@ -185,7 +188,7 @@ describe('two tabs', () => {
         expectFullRead(tabB, b)
       }
     }
-  })
+  }, FUZZ_TIMEOUT)
 })
 
 /** A session's live design equals a full read of its document, layer order under every parent included. */

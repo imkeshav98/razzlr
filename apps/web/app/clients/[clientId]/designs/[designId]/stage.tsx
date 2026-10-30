@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { startEditor, type Editor } from '@razzlr/editor'
 import { fetchSyncToken } from './actions.ts'
 import { EditorShell } from '../../../../../components/editor/shell.tsx'
-import { FocusChip, FormatsPanel, RemovedToast } from '../../../../../components/editor/formats-panel.tsx'
+import { FocusChip, FormatsPanel, UndoToast } from '../../../../../components/editor/formats-panel.tsx'
+import { PagesPanel } from '../../../../../components/editor/pages-panel.tsx'
 import { ZoomControl } from '../../../../../components/editor/zoom-control.tsx'
 
 declare global {
@@ -86,7 +87,12 @@ export function EditorStage({ designId, designName, clientId, clientName, format
       designName={designName}
       status={status}
       onToolChange={(tool) => editor?.setTool(tool === 'hand' ? 'hand' : 'select')}
-      inspector={editor ? <FormatsPanel editor={editor} onRemoved={setRemoved} /> : undefined}
+      inspector={editor ? (
+        <>
+          <PagesPanel editor={editor} onRemoved={setRemoved} />
+          <FormatsPanel editor={editor} onRemoved={setRemoved} />
+        </>
+      ) : undefined}
     >
       {/* The design is a picture, so it never mirrors: the stage stays left to right in Arabic too. */}
       <div dir="ltr" className="absolute inset-0">
@@ -96,7 +102,7 @@ export function EditorStage({ designId, designName, clientId, clientName, format
           {editor && <FocusChip editor={editor} />}
         </div>
         <div className="pointer-events-none absolute start-4 bottom-4 z-10">
-          {editor && removed && <RemovedToast key={removed} editor={editor} name={removed} onDone={dismissRemoved} />}
+          {editor && removed && <UndoToast key={removed} editor={editor} message={removed} onDone={dismissRemoved} />}
         </div>
       </div>
       <ZoomControl
