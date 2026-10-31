@@ -84,6 +84,10 @@
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --chrome-fast: 120ms;
   --chrome: 180ms;
+  /* Entrances (menus, cards, toasts): a little longer than chrome, still under 260 ms. */
+  --enter: 220ms;
+  /* The final mock's pop: a slight overshoot as a menu or a toast lands. */
+  --ease-pop: cubic-bezier(0.2, 1.4, 0.4, 1);
 }
 
 @theme inline {
@@ -146,45 +150,97 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  /* Entrances don't run at all, and the sheen isn't there: with a stagger delay, the near-zero
+     duration above would still hold an item hidden for its delay, then show it. */
+  .rise,
+  .pop-in,
+  .pop-in-start,
+  .pop-in-end,
+  .modal-in,
+  .toast-in,
+  .card-rise {
+    animation: none !important;
+  }
+  .ai-sheen {
+    display: none;
+  }
+  /* The AI gradient stands still. */
+  .ai-glow::before,
+  .ai-edge::before {
+    animation: none !important;
+  }
 }
 
-/* The AI glow: a slow drift of the gradient behind AI controls only. The gradient is a layer twice
-   the control's width that slides, so the drift is a compositor transform, never a repaint: a
-   repaint every frame also repainted whatever blurs behind the control, like the home's aurora,
-   which made software-rendered pages (CI) slow to draw. The element needs a position, as all do. */
-@keyframes ai-drift {
-  from { transform: translateX(0); }
+/* The AI gradient in motion, as in the final mock: pink, cobalt, yellow and back to pink at 110deg,
+   each repeat three controls wide, sliding one repeat every 5 s with no seam. It slides as a layer
+   six controls wide (two repeats) moved by transform, so the slide is a compositor transform, never
+   a repaint: a repaint every frame also repainted whatever blurs behind the control, like the home's
+   aurora, which made software-rendered pages (CI) slow to draw. .ai-glow fills AI controls (Make
+   drafts); .ai-edge is the brief composer's gradient edge. The element needs a position. */
+@keyframes ai-slide {
   to { transform: translateX(-50%); }
 }
-@keyframes ai-drift-rtl {
-  from { transform: translateX(0); }
+@keyframes ai-slide-rtl {
   to { transform: translateX(50%); }
 }
-.ai-glow {
+.ai-glow,
+.ai-edge {
   isolation: isolate;
   overflow: hidden;
 }
 .ai-glow::before,
-.ai-glow::after {
+.ai-glow::after,
+.ai-edge::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
 }
-.ai-glow::before {
+.ai-glow::before,
+.ai-edge::before {
   inset-inline-end: auto;
-  width: 200%;
-  background-image: var(--ai-gradient);
-  animation: ai-drift 6s ease-in-out infinite alternate;
+  width: 600%;
+  background-image: linear-gradient(110deg, var(--ai-1), var(--ai-2), var(--ai-3), var(--ai-1));
+  background-size: 50% 100%;
+  animation: ai-slide 5s linear infinite;
 }
-[dir='rtl'] .ai-glow::before {
-  animation-name: ai-drift-rtl;
+[dir='rtl'] .ai-glow::before,
+[dir='rtl'] .ai-edge::before {
+  animation-name: ai-slide-rtl;
 }
-/* A fine halftone over the gradient, like a riso print's dot screen. */
+/* The riso halftone overprinted on AI controls: a still white dot screen. Plain alpha, not a blend
+   mode: a blend over the sliding layer would be redone on every frame. */
 .ai-glow::after {
   background-image: radial-gradient(circle, rgb(255 255 255 / 0.3) 22%, transparent 24%);
-  background-size: 5px 5px;
+  background-size: 0.5vw 0.5vw;
+}
+/* The sheen on AI buttons (Make drafts): a band of light that sweeps across now and then. It is a
+   child span, as both pseudo-elements are taken, and it moves by transform only, for the reason
+   above: no background-position, nothing that repaints what blurs behind the control. */
+@keyframes ai-sheen {
+  0% { transform: translateX(-100%); }
+  45%, 100% { transform: translateX(350%); }
+}
+@keyframes ai-sheen-rtl {
+  0% { transform: translateX(100%); }
+  45%, 100% { transform: translateX(-350%); }
+}
+.ai-sheen {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: -1;
+  width: 40%;
+  /* Off the button whenever it isn't sweeping: before the first sweep, or with animation off. */
+  transform: translateX(-100%);
+  pointer-events: none;
+  background-image: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.32) 50%, transparent 80%);
+  animation: ai-sheen 3.6s var(--ease-out) 0.6s infinite backwards;
+}
+[dir='rtl'] .ai-sheen {
+  transform: translateX(100%);
+  animation-name: ai-sheen-rtl;
 }
 
 /* Frosted surfaces (#81) for chrome that floats over the canvas: dock, zoom, flyouts, menus. */
@@ -208,6 +264,73 @@ body {
 }
 .rise {
   animation: rise var(--chrome) var(--ease-out) both;
+}
+
+/* UI motion from the final mock. Entrances fill backwards only: once they end they leave no
+   transform behind, so a card doesn't stay a stacking context that would trap the font list. */
+
+/* Menus and popovers pop in with a slight overshoot, from the corner they hang from (popin). */
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.96); }
+}
+.pop-in,
+.pop-in-start,
+.pop-in-end {
+  transform-origin: var(--radix-popover-content-transform-origin, top center);
+  animation: pop-in var(--chrome) var(--ease-pop) backwards;
+}
+.pop-in-start { transform-origin: top left; }
+[dir='rtl'] .pop-in-start { transform-origin: top right; }
+.pop-in-end { transform-origin: top right; }
+[dir='rtl'] .pop-in-end { transform-origin: top left; }
+
+/* Dialogs rise and settle (modalin): the Share menu's Export and Save as template forms. */
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+}
+.modal-in {
+  transform-origin: top center;
+  animation: modal-in var(--enter) var(--ease-out) backwards;
+}
+
+/* Toasts come up from below with a little bounce (toastin). */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(12px); }
+}
+.toast-in {
+  animation: toast-in var(--enter) var(--ease-pop) backwards;
+}
+
+/* The property cards rise in a short stagger as they appear (cardin). Translate and opacity only:
+   the frosted cards are layers of their own, and one whose scale was animated can stay drawn at
+   that scale after it ends, which shifts its edges by a fraction of a pixel. */
+@keyframes card-rise {
+  from { opacity: 0; transform: translateY(8px); }
+}
+.card-rise {
+  animation: card-rise var(--enter) var(--ease-out) backwards;
+}
+.card-rise:nth-child(2) { animation-delay: 40ms; }
+.card-rise:nth-child(3) { animation-delay: 80ms; }
+.card-rise:nth-child(n + 4) { animation-delay: 120ms; }
+
+/* Tiles lift on hover, with a deeper shadow under them (lift); in a .group, hovering the group
+   lifts its .lift child, as a template's picture lifts while its name stays. */
+.lift {
+  transition-property: transform, box-shadow, border-color;
+  transition-duration: var(--chrome);
+  transition-timing-function: var(--ease-out);
+}
+.lift:hover,
+.group:hover > .lift {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -12px rgb(0 0 0 / 0.5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lift:hover,
+  .group:hover > .lift {
+    transform: none;
+  }
 }
 
 /* The canvas backdrop: a quiet dot grid under the frames. */
@@ -481,21 +604,33 @@ body {
   pointer-events: none;
 }
 
-/* The home's aurora (#84): slow blurred light in the accent colours behind the brief. */
-@keyframes aurora-drift {
-  0%, 100% { transform: translate3d(-5%, -3%, 0) rotate(0deg) scale(1); }
-  50% { transform: translate3d(5%, 4%, 0) rotate(10deg) scale(1.08); }
+/* The home's aurora (#84), as in the final mock: a blurred conic blob of the AI colours, 70 wide by
+   34 high (in viewport widths), centred just above the headline, at 45%, turning once in 14 s. The
+   blob is a circle squashed into the ellipse; the circle turns by transform, so it never repaints. */
+@keyframes aurora-turn {
+  to { transform: rotate(1turn); }
 }
 .aurora {
   position: absolute;
-  inset: -35% -10%;
+  inset-inline: 15%;
+  inset-block-start: -28vw;
+  aspect-ratio: 1;
+  scale: 1 0.486;
+  opacity: 0.45;
   pointer-events: none;
-  background:
-    radial-gradient(38% 48% at 28% 42%, color-mix(in oklab, var(--accent) 42%, transparent), transparent 70%),
-    radial-gradient(34% 44% at 72% 52%, color-mix(in oklab, var(--accent-2) 38%, transparent), transparent 70%),
-    radial-gradient(26% 36% at 54% 22%, rgb(255 210 63 / 0.22), transparent 70%);
-  filter: blur(48px);
-  animation: aurora-drift 26s ease-in-out infinite;
+}
+.aurora::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(var(--ai-1), var(--ai-2), var(--ai-3), var(--ai-1));
+  filter: blur(6vw);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .aurora::before {
+    animation: aurora-turn 14s linear infinite;
+  }
 }
 
 /* Sign in (mock screen 34): behind the whole page, three copies of a sample ad fanned out over a

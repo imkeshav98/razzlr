@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 
 /** One floating card: frosted, rounded, as tall as its content. */
-export const CARD = 'shrink-0 overflow-hidden rounded-[16px] surface-frost border shadow-panel'
+export const CARD = 'card-rise shrink-0 overflow-hidden rounded-[16px] surface-frost border shadow-panel'
 
 /** A card's content under its title row. */
 export const CARD_BODY = 'px-[18px] pb-4'

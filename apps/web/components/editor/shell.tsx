@@ -295,7 +295,8 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                           />
                         </motion.span>
                       )}
-                      {ai && !open && <span aria-hidden className="ai-glow absolute inset-1.5 rounded-full opacity-20 blur-[6px]" />}
+                      {/* A still gradient: a blur over a sliding one would be redrawn on every frame. */}
+                      {ai && !open && <span aria-hidden className="absolute inset-1.5 rounded-full bg-[image:var(--ai-gradient)] opacity-20 blur-[6px]" />}
                       <PanelIcon size={22} weight={ai ? 'duotone' : open ? 'fill' : 'regular'} aria-hidden className="relative" />
                     </button>
                   </Tooltip>

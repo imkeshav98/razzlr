@@ -76,7 +76,7 @@ export default async function BrandPage({ params }: { params: Promise<{ brandId:
                 <li key={template.id} data-template={template.id} className="rise" style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
                   <form action={start.bind(null, template.id)}>
                     <button type="submit" aria-label={format(t.library.useTemplate, { name: template.name })} className="group block w-full cursor-pointer rounded-card text-start focus-visible:outline-offset-4">
-                      <div className="canvas-dots relative grid aspect-[4/3] place-items-center overflow-hidden rounded-card border border-line transition-[border-color,transform,box-shadow] duration-[var(--chrome)] ease-[var(--ease-out)] group-hover:-translate-y-0.5 group-hover:border-line-strong group-hover:shadow-panel">
+                      <div className="lift canvas-dots relative grid aspect-[4/3] place-items-center overflow-hidden rounded-card border border-line group-hover:border-line-strong">
                         <img
                           src={`/brands/${brand.id}/templates/${template.id}/thumbnail`}
                           alt=""

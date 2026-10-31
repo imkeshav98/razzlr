@@ -1,8 +1,7 @@
 // The app outside the editor, as in the final mock: the editor's top bar (the mark, a crumb whose
 // first part switches brand, the account avatar at the end), the same floating capsule the editor
 // has (#110), and the page under a glow of the accent colours.
-import type { Icon } from '@phosphor-icons/react'
-import { CaretDownIcon, CardsThreeIcon, GearSixIcon, HouseIcon, SquaresFourIcon } from '@phosphor-icons/react/ssr'
+import { CaretDownIcon, SquaresFourIcon } from '@phosphor-icons/react/ssr'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
@@ -13,6 +12,7 @@ import type { BrandSummary } from '@razzlr/schema'
 import { initialsOf } from '../lib/initials.ts'
 import { AccountMenu } from './account-menu.tsx'
 import { BrandMark } from './brand-mark.tsx'
+import { LibraryCapsule } from './library-capsule.tsx'
 
 export function BrandAvatar({ name, active = false }: { name: string; active?: boolean }) {
   return (
@@ -31,23 +31,6 @@ export function BrandAvatar({ name, active = false }: { name: string; active?: b
 /** Where the capsule and the crumb say you are. */
 export type LibraryPlace = 'home' | 'brands' | 'settings'
 
-function CapsuleLink({ href, label, icon: LinkIcon, current }: { href: string; label: string; icon: Icon; current: boolean }) {
-  return (
-    <Link
-      href={href}
-      aria-label={label}
-      title={label}
-      aria-current={current ? 'page' : undefined}
-      className={cn(
-        'grid size-11 place-items-center rounded-full transition-colors duration-[var(--chrome-fast)]',
-        current ? 'bg-accent-solid text-on-accent shadow-[0_6px_18px_-6px_rgb(194_16_108/0.7)]' : 'text-subtle hover:bg-hover hover:text-text',
-      )}
-    >
-      <LinkIcon size={22} weight={current ? 'fill' : 'regular'} aria-hidden />
-    </Link>
-  )
-}
-
 /**
  * The crumb's first part: the brand you are in, or the word for them all, with a menu of the
  * workspace's brands. A <details>, so it opens before any script loads.
@@ -62,7 +45,7 @@ function BrandSwitcher({ t, words, brands, active, showAll }: { t: Messages; wor
         <span className="max-w-48 truncate">{active?.name ?? words.title}</span>
         <CaretDownIcon size={12} weight="bold" aria-hidden className="transition-transform group-open:rotate-180" />
       </summary>
-      <nav aria-label={words.title} className="absolute start-0 top-full z-40 mt-2 flex w-64 flex-col gap-0.5 rounded-card border surface-frost p-1.5 shadow-panel">
+      <nav aria-label={words.title} className="pop-in-start absolute start-0 top-full z-40 mt-2 flex w-64 flex-col gap-0.5 rounded-card border surface-frost p-1.5 shadow-panel">
         {brands.map((brand) => {
           const current = brand.id === active?.id
           return (
@@ -145,19 +128,15 @@ export async function LibraryShell({ t, words, workspace, brands, activeBrandId,
         </div>
       )}
 
-      <nav
-        aria-label={t.app.name}
-        data-testid="library-capsule"
-        className={cn(
-          'fixed z-30 flex gap-2 rounded-full surface-frost border p-2 shadow-panel',
-          // A vertical capsule at the start edge, as in the editor; on phones a tab bar at the bottom.
-          'start-4 top-1/2 -translate-y-1/2 flex-col max-md:start-1/2 max-md:top-auto max-md:bottom-3 max-md:translate-y-0 max-md:flex-row max-md:-translate-x-1/2 max-md:rtl:translate-x-1/2',
-        )}
-      >
-        <CapsuleLink href={active ? `/brands/${active.id}` : '/'} label={active ? t.library.home : words.title} icon={HouseIcon} current={place === 'home' || place === 'brands'} />
-        {active && <CapsuleLink href={`/brands/${active.id}#templates`} label={t.library.templates} icon={CardsThreeIcon} current={false} />}
-        <CapsuleLink href="/settings" label={t.library.settings} icon={GearSixIcon} current={place === 'settings'} />
-      </nav>
+      <LibraryCapsule
+        label={t.app.name}
+        current={place === 'settings' ? 'settings' : 'home'}
+        links={[
+          { entry: 'home', href: active ? `/brands/${active.id}` : '/', label: active ? t.library.home : words.title },
+          ...(active ? [{ entry: 'templates' as const, href: `/brands/${active.id}#templates`, label: t.library.templates }] : []),
+          { entry: 'settings', href: '/settings', label: t.library.settings },
+        ]}
+      />
 
       <TopBar t={t} workspace={workspace}>
         {showBrands || active

@@ -33,8 +33,9 @@ export const editorPath = (designId: string) => `/brands/${DEV_BRAND}/designs/${
  * button's glow is always moving, so two shots of the same design would otherwise differ there.
  */
 export const stageShot = (page: Page) =>
-  // The canvas alone: the capsule and the islands floating over it (#110) are masked.
-  page.getByTestId('stage').screenshot({ mask: [page.getByTestId('rail'), page.getByTestId('island-start'), page.getByTestId('island-end')] })
+  // The canvas alone: the capsule and the islands floating over it (#110) are masked. The cards'
+  // entrance (they rise in a short stagger) is taken at its end, so a shot never catches it halfway.
+  page.getByTestId('stage').screenshot({ animations: 'disabled', mask: [page.getByTestId('rail'), page.getByTestId('island-start'), page.getByTestId('island-end')] })
 
 /** The design as the tab's document holds it now, as JSON with sorted keys so two tabs compare equal. */
 export const designOf = (page: Page) =>
