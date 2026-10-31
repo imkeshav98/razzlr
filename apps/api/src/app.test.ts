@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { brands, fontFaces, migrateDatabase, openDatabase, workspaces, readDesignState } from '@razzlr/db'
 import { readDesign } from '@razzlr/doc'
-import { ApiError, AssetLink, AssetSummary, SignedLink, BrandSummary, DesignSummary, FontFace, FontFamily, FontLink, FontUploadTicket, SyncToken, UploadTicket, WorkspaceSummary } from '@razzlr/schema'
+import { ApiError, AssetLink, AssetSummary, BrandKit, brandVariables, SignedLink, BrandSummary, DesignSummary, FontFace, FontFamily, FontLink, FontUploadTicket, SyncToken, UploadTicket, WorkspaceSummary } from '@razzlr/schema'
 import { openStorage, storageSettings } from '@razzlr/storage'
 import { verifySyncToken } from '@razzlr/sync-token'
 import { FONT_FILES_DIR } from '@razzlr/fonts/node'
@@ -194,6 +194,43 @@ describe('sync tokens', () => {
     expect((await call(null, 'POST', `/brands/${brand.id}/designs/${mine.id}/sync-token`)).status).toBe(401)
     expect((await call('b', 'POST', `/brands/${brand.id}/designs/${mine.id}/sync-token`)).status).toBe(404)
     expect((await call('a', 'POST', `/brands/${sibling.id}/designs/${mine.id}/sync-token`)).status).toBe(404)
+  })
+})
+
+describe('brand kits (#53)', () => {
+  const kit = {
+    colors: [{ token: 'primary', name: 'Harbour red', value: '#E0262BFF' }, { token: 'ink', name: 'Ink', value: '#14213DFF' }],
+    fonts: [{ token: 'heading', name: 'Heading', family: 'Playfair Display' }],
+    logoAssetId: null,
+    voice: 'Warm, short, no jargon.',
+  }
+
+  it('starts empty, saves the whole kit and gives its tokens as variables', async () => {
+    expect((await call('a', 'GET', `/brands/${sibling.id}/kit`)).json).toEqual({ colors: [], fonts: [], logoAssetId: null, voice: '' })
+    const saved = await call('a', 'PUT', `/brands/${brand.id}/kit`, kit)
+    expect(saved).toEqual({ status: 200, json: kit })
+    const changed = { ...kit, colors: [{ ...kit.colors[0], value: '#1F9D55FF' }] }
+    await call('a', 'PUT', `/brands/${brand.id}/kit`, changed)
+    const read = BrandKit.parse((await call('a', 'GET', `/brands/${brand.id}/kit`)).json)
+    expect(brandVariables(read)).toEqual({ 'brand:primary': '#1F9D55FF', 'brand:heading': 'Playfair Display' })
+  })
+
+  it('takes a logo only from the brand\'s own assets', async () => {
+    const sha = createHash('sha256')
+    const bytes = png(12, 12, `${run}-logo`)
+    const ticket = UploadTicket.parse((await call('a', 'POST', `/brands/${brand.id}/assets/uploads`, { sha256: sha.update(bytes).digest('hex'), byteSize: bytes.length, contentType: 'image/png' })).json)
+    if (ticket.upload) await fetch(ticket.upload.url, { method: 'PUT', body: bytes, headers: ticket.upload.headers })
+    const logo = ticket.asset ?? AssetSummary.parse((await call('a', 'POST', `/brands/${brand.id}/assets`, { sha256: createHash('sha256').update(bytes).digest('hex') })).json)
+    expect((await call('a', 'PUT', `/brands/${brand.id}/kit`, { ...kit, logoAssetId: logo.id })).json).toMatchObject({ logoAssetId: logo.id })
+    expect((await call('a', 'PUT', `/brands/${sibling.id}/kit`, { ...kit, logoAssetId: logo.id })).json).toEqual({ error: 'The logo is not an asset of this brand' })
+  })
+
+  it('refuses a token used twice or badly named, and keeps kits to their workspace', async () => {
+    expect((await call('a', 'PUT', `/brands/${brand.id}/kit`, { ...kit, fonts: [{ token: 'primary', name: 'Body', family: 'Inter' }] })).status).toBe(400)
+    expect((await call('a', 'PUT', `/brands/${brand.id}/kit`, { ...kit, colors: [{ token: 'Primary', name: 'P', value: '#000000FF' }] })).status).toBe(400)
+    expect((await call('a', 'PUT', `/brands/${brand.id}/kit`, { ...kit, colors: [{ token: 'p', name: 'P', value: 'red' }] })).status).toBe(400)
+    expect((await call('b', 'GET', `/brands/${brand.id}/kit`)).status).toBe(404)
+    expect((await call('b', 'PUT', `/brands/${brand.id}/kit`, kit)).status).toBe(404)
   })
 })
 

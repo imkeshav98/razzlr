@@ -2,6 +2,8 @@
 // every response with them, so the two can't drift apart.
 import { z } from 'zod'
 import { DesignMeta } from './design.ts'
+import { Color } from './primitives.ts'
+import { BrandToken, brandRef, type Variables } from './variables.ts'
 
 /** Server-made ids of workspaces, brands and designs. Design ids double as Yjs document names. */
 export const RecordId = z.string().regex(/^[\w-]{1,64}$/, 'ids are 1–64 letters, digits, _ and -')
@@ -193,3 +195,35 @@ export const FontLink = z.object({
   expiresAt: z.iso.datetime(),
 })
 export type FontLink = z.infer<typeof FontLink>
+
+/** A colour in a brand kit (#53): its token, the name people see, and its value. */
+export const BrandColor = z.object({ token: BrandToken, name: z.string().trim().min(1).max(60), value: Color })
+export type BrandColor = z.infer<typeof BrandColor>
+/** A font in a brand kit (#53), such as the heading or body family. */
+export const BrandFont = z.object({ token: BrandToken, name: z.string().trim().min(1).max(60), family: z.string().trim().min(1).max(100) })
+export type BrandFont = z.infer<typeof BrandFont>
+
+/**
+ * A brand's kit (#53): its colours and fonts, which designs bind to as `brand:<token>`, its logo (an
+ * asset of the brand) and its tone of voice. A token names one colour or font in the kit.
+ */
+export const BrandKit = z.object({
+  colors: BrandColor.array().max(24),
+  fonts: BrandFont.array().max(8),
+  logoAssetId: RecordId.nullable(),
+  voice: z.string().max(2000),
+}).superRefine((kit, ctx) => {
+  const seen = new Set<string>()
+  for (const { token } of [...kit.colors, ...kit.fonts]) {
+    if (seen.has(token)) ctx.addIssue({ code: 'custom', message: `the token "${token}" names two things` })
+    seen.add(token)
+  }
+})
+export type BrandKit = z.infer<typeof BrandKit>
+export const EMPTY_BRAND_KIT: BrandKit = { colors: [], fonts: [], logoAssetId: null, voice: '' }
+
+/** The values a kit gives its tokens, for drawing designs bound to them. */
+export const brandVariables = (kit: BrandKit): Variables => Object.fromEntries([
+  ...kit.colors.map((c) => [brandRef(c.token), c.value]),
+  ...kit.fonts.map((f) => [brandRef(f.token), f.family]),
+])

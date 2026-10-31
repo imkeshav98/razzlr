@@ -43,6 +43,13 @@
       "when": 1793436267430,
       "tag": "0005_asset-names-tags",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793438254681,
+      "tag": "0006_brand-kits",
+      "breakpoints": true
     }
   ]
 }

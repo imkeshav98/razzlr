@@ -224,11 +224,10 @@ test('the panels live in a capsule floating over the canvas', async ({ page }) =
   await expect(page.getByRole('button', { name: 'Brand' })).toHaveAttribute('aria-expanded', 'true')
   await expect(page.getByRole('button', { name: 'Layers' })).toHaveAttribute('aria-expanded', 'false')
 
-  // The flyout opens beside the capsule and is only as tall as what it holds.
+  // The flyout opens beside the capsule.
   const flyout = await page.getByTestId('flyout').boundingBox()
   if (!flyout) throw new Error('missing flyout')
   expect(flyout.x).toBeGreaterThan(box.x + box.width)
-  expect(flyout.height).toBeLessThan(stage.height / 2)
 
   // Keyboard: the buttons take focus and toggle their panel with Enter. (Space is the canvas's pan
   // key, which the editor takes before any button does.)
@@ -238,6 +237,9 @@ test('the panels live in a capsule floating over the canvas', async ({ page }) =
   await expect(ai).toHaveAttribute('aria-expanded', 'true')
   await expect(ai).toBeFocused()
   await page.waitForTimeout(400)
+  // A flyout is only as tall as what it holds: the AI one, still empty, is short. (Brand holds the
+  // brand kit since #53.)
+  expect((await page.getByTestId('flyout').boundingBox())?.height).toBeLessThan(stage.height / 2)
   await shoot(page, 'capsule-ai')
   await page.keyboard.press('Enter')
   await expect(ai).toHaveAttribute('aria-expanded', 'false')

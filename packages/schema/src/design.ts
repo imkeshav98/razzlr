@@ -3,6 +3,7 @@ import { canHold, LAYER_PROPS, type LayerType } from './layers.ts'
 import { migrateDesign, SCHEMA_VERSION } from './migrate.ts'
 import { Paint } from './paint.ts'
 import { FormatId, FractionalIndex, NodeId, PageId } from './primitives.ts'
+import { Bindings, type Variables } from './variables.ts'
 
 /**
  * What can't be changed about a layer, each on its own (as in Polotno): its position, its size and
@@ -28,6 +29,8 @@ const nodeBase = {
   ]).optional(),
   /** Left out while nothing is locked. */
   lock: LayerLock.optional(),
+  /** Properties that follow brand kit tokens (#53); left out while nothing is bound. */
+  bindings: Bindings.optional(),
 }
 
 const layerOf = <T extends LayerType>(type: T) =>
@@ -480,10 +483,17 @@ export function imageAssetIds(design: Design): string[] {
 
 /**
  * Every font family the design's text names, in base styles, runs and format overrides, sorted
- * (#50): the families the editor and exports load. Fallback families are not among them.
+ * (#50): the families the editor and exports load. Fallback families are not among them. With the
+ * brand's variables, the families of brand fonts text is bound to are among them too (#53).
  */
-export function fontFamilies(design: Design): string[] {
+export function fontFamilies(design: Design, variables?: Variables): string[] {
   const families = new Set<string>()
+  // A font family bound to a brand font draws in the brand's family (#53).
+  for (const node of Object.values(design.nodes)) {
+    const ref = node.type === 'text' ? node.bindings?.fontFamily : undefined
+    const bound = ref ? variables?.[ref]?.trim() : undefined
+    if (bound) families.add(bound)
+  }
   const addStyle = (style: unknown) => {
     const family = style && typeof style === 'object' ? (style as { fontFamily?: unknown }).fontFamily : undefined
     if (typeof family === 'string' && family) families.add(family)
