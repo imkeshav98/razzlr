@@ -1,7 +1,5 @@
-// A brand's home (#84): "What are we making for <brand>?" as a brief under a slow aurora, and the
-// brand's recent work below it as a bento of real pictures of each design.
-import { ArrowLeftIcon } from '@phosphor-icons/react/ssr'
-import Link from 'next/link'
+// A brand's home (#84), as in the final mock: "What are we making for <brand>?" as a brief under a
+// slow aurora, and the brand's recent work below it as a bento of real pictures of each design.
 import { notFound, redirect } from 'next/navigation'
 import { BriefComposer, briefDesign } from '../../../components/brief-composer.tsx'
 import { DesignBento, type BentoDesign } from '../../../components/design-bento.tsx'
@@ -50,19 +48,13 @@ export default async function BrandPage({ params }: { params: Promise<{ brandId:
   }
 
   return (
-    <LibraryShell t={t} words={words} brands={brands} activeBrandId={brand.id} showBrands={switcher}>
-      {switcher && (
-        <Link href="/" className="inline-flex items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-text md:hidden">
-          <ArrowLeftIcon size={14} aria-hidden className="rtl:-scale-x-100" />
-          {words.all}
-        </Link>
-      )}
+    <LibraryShell t={t} words={words} workspace={workspace.name} brands={brands} activeBrandId={brand.id} showBrands={switcher} glow>
       <BriefComposer t={t} brandName={brand.name} kitColors={kit.colors.map((c) => c.value)} action={make} />
 
-      <section aria-labelledby="recent-title" className="mt-2">
-        <div className="mb-3 flex items-baseline justify-between gap-3">
+      <section aria-labelledby="recent-title">
+        <div className="mb-4 flex items-baseline justify-between gap-3">
           <h2 id="recent-title" className="font-display text-lg font-semibold tracking-tight">{t.home.recent}</h2>
-          {designs.length > 0 && <span className="font-mono text-xs text-subtle tabular-nums">{format(t.home.count, { count: designs.length })}</span>}
+          {designs.length > 0 && <span className="text-[13px] text-muted tabular-nums">{format(t.home.count, { count: designs.length })}</span>}
         </div>
         {recent.length === 0
           ? (

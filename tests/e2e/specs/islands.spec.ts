@@ -111,9 +111,9 @@ test('offline colours the cloud and says so in words', async ({ page }) => {
 test('the library navigates with the capsule, and on a phone with a tab bar', async ({ page, browser }) => {
   await page.goto('/brands/dev-brand-coffee')
   const capsule = page.getByTestId('library-capsule')
-  await expect(capsule.getByRole('link', { name: 'Clients' })).toHaveAttribute('aria-current', 'page')
+  await expect(capsule.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
   const shape = await box(page, 'library-capsule')
-  expect(shape.x).toBeLessThan(16)
+  expect(shape.x).toBeLessThanOrEqual(16)
   expect(shape.height).toBeGreaterThan(shape.width)
   await writeOutput('islands-library.png', await page.screenshot())
   await capsule.getByRole('link', { name: 'Templates' }).click()

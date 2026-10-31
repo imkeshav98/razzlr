@@ -1,18 +1,18 @@
-// The app outside the editor: the same floating capsule the editor has (#110), a frosted card of
-// brands beside the page when the workspace has a list to switch between, and the main column.
+// The app outside the editor, as in the final mock: the editor's top bar (the mark, a crumb whose
+// first part switches brand, the account avatar at the end), the same floating capsule the editor
+// has (#110), and the page under a glow of the accent colours.
 import type { Icon } from '@phosphor-icons/react'
-import { CardsThreeIcon, GearSixIcon, SquaresFourIcon } from '@phosphor-icons/react/ssr'
+import { CaretDownIcon, CardsThreeIcon, GearSixIcon, HouseIcon, SquaresFourIcon } from '@phosphor-icons/react/ssr'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { cn } from '../lib/cn.ts'
 import type { BrandWords, Messages } from '../lib/i18n/index.ts'
+import { SESSION_COOKIE } from '../lib/sign-in.ts'
 import type { BrandSummary } from '@razzlr/schema'
+import { initialsOf } from '../lib/initials.ts'
+import { AccountMenu } from './account-menu.tsx'
 import { BrandMark } from './brand-mark.tsx'
-import { LocaleSwitch } from './locale-switch.tsx'
-import { SignOut } from './sign-out.tsx'
-import { ThemeSwitch } from './theme-switch.tsx'
-
-const initials = (name: string) => name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase()
 
 export function BrandAvatar({ name, active = false }: { name: string; active?: boolean }) {
   return (
@@ -23,13 +23,13 @@ export function BrandAvatar({ name, active = false }: { name: string; active?: b
         active ? 'border-transparent bg-accent-solid text-on-accent' : 'border-line bg-raised text-muted',
       )}
     >
-      {initials(name)}
+      {initialsOf(name)}
     </span>
   )
 }
 
-/** Where the capsule says you are. */
-export type LibraryPlace = 'home' | 'settings'
+/** Where the capsule and the crumb say you are. */
+export type LibraryPlace = 'home' | 'brands' | 'settings'
 
 function CapsuleLink({ href, label, icon: LinkIcon, current }: { href: string; label: string; icon: Icon; current: boolean }) {
   return (
@@ -39,85 +39,119 @@ function CapsuleLink({ href, label, icon: LinkIcon, current }: { href: string; l
       title={label}
       aria-current={current ? 'page' : undefined}
       className={cn(
-        'grid size-10 place-items-center rounded-full transition-colors duration-[var(--chrome-fast)]',
+        'grid size-11 place-items-center rounded-full transition-colors duration-[var(--chrome-fast)]',
         current ? 'bg-accent-solid text-on-accent shadow-[0_6px_18px_-6px_rgb(194_16_108/0.7)]' : 'text-subtle hover:bg-hover hover:text-text',
       )}
     >
-      <LinkIcon size={20} weight={current ? 'fill' : 'regular'} aria-hidden />
+      <LinkIcon size={22} weight={current ? 'fill' : 'regular'} aria-hidden />
     </Link>
   )
 }
 
-export function LibraryShell({ t, words, brands, activeBrandId, showBrands = true, place = 'home', children }: {
+/**
+ * The crumb's first part: the brand you are in, or the word for them all, with a menu of the
+ * workspace's brands. A <details>, so it opens before any script loads.
+ */
+function BrandSwitcher({ t, words, brands, active, showAll }: { t: Messages; words: BrandWords; brands: BrandSummary[]; active: BrandSummary | undefined; showAll: boolean }) {
+  return (
+    <details className="group relative" data-testid="brand-switcher">
+      <summary
+        aria-label={t.home.switchBrand}
+        className="flex h-8 cursor-pointer list-none items-center gap-1 rounded-row px-1.5 text-muted transition-colors hover:bg-hover hover:text-text [&::-webkit-details-marker]:hidden"
+      >
+        <span className="max-w-48 truncate">{active?.name ?? words.title}</span>
+        <CaretDownIcon size={12} weight="bold" aria-hidden className="transition-transform group-open:rotate-180" />
+      </summary>
+      <nav aria-label={words.title} className="absolute start-0 top-full z-40 mt-2 flex w-64 flex-col gap-0.5 rounded-card border surface-frost p-1.5 shadow-panel">
+        {brands.map((brand) => {
+          const current = brand.id === active?.id
+          return (
+            <Link
+              key={brand.id}
+              href={`/brands/${brand.id}`}
+              aria-current={current ? 'page' : undefined}
+              className={cn(
+                'flex h-10 items-center gap-2.5 rounded-row px-2 text-[13px] transition-colors duration-[var(--chrome-fast)]',
+                current ? 'bg-hover font-semibold text-text' : 'text-muted hover:bg-hover hover:text-text',
+              )}
+            >
+              <BrandAvatar name={brand.name} active={current} />
+              <span className="truncate">{brand.name}</span>
+            </Link>
+          )
+        })}
+        {showAll && (
+          <>
+            <div className="my-1 h-px bg-line" />
+            <Link href="/" className="flex h-9 items-center gap-2.5 rounded-row px-2 text-[13px] font-medium text-muted hover:bg-hover hover:text-text">
+              <SquaresFourIcon size={16} aria-hidden />
+              {words.all}
+            </Link>
+          </>
+        )}
+      </nav>
+    </details>
+  )
+}
+
+export async function LibraryShell({ t, words, workspace, brands, activeBrandId, showBrands = true, place = 'home', glow = false, children }: {
   t: Messages
   /** "Clients" in an agency workspace, "Brands" otherwise. */
   words: BrandWords
+  /** The workspace's name, for the account avatar. */
+  workspace: string
   brands: BrandSummary[]
   activeBrandId?: string
-  /** The brand list beside the page; a workspace with one brand and no clients goes without (#84). */
+  /** Whether the workspace has brands to switch between; one brand and no clients goes without (#84). */
   showBrands?: boolean
-  /** The capsule's lit entry. */
+  /** The capsule's lit entry and the crumb's last part. */
   place?: LibraryPlace
+  /** The slow aurora behind the top of the page, as on a brand's home. */
+  glow?: boolean
   children: ReactNode
 }) {
+  const jar = await cookies()
+  const active = brands.find((brand) => brand.id === activeBrandId)
+  const placeName = { home: t.library.home, brands: words.title, settings: t.library.settings }[place]
   return (
-    <div className="min-h-dvh bg-bg">
+    <div className="relative isolate min-h-dvh overflow-x-clip bg-bg">
+      {glow && (
+        <div aria-hidden data-testid="home-glow" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] overflow-hidden [mask-image:linear-gradient(to_bottom,black_55%,transparent)]">
+          <div className="aurora" />
+        </div>
+      )}
+
       <nav
         aria-label={t.app.name}
         data-testid="library-capsule"
         className={cn(
-          'fixed z-30 flex gap-1 rounded-full surface-frost border p-1.5 shadow-panel',
+          'fixed z-30 flex gap-2 rounded-full surface-frost border p-2 shadow-panel',
           // A vertical capsule at the start edge, as in the editor; on phones a tab bar at the bottom.
-          'start-3 top-1/2 -translate-y-1/2 flex-col max-md:start-1/2 max-md:top-auto max-md:bottom-3 max-md:translate-y-0 max-md:flex-row max-md:-translate-x-1/2 max-md:rtl:translate-x-1/2',
+          'start-4 top-1/2 -translate-y-1/2 flex-col max-md:start-1/2 max-md:top-auto max-md:bottom-3 max-md:translate-y-0 max-md:flex-row max-md:-translate-x-1/2 max-md:rtl:translate-x-1/2',
         )}
       >
-        <CapsuleLink href="/" label={words.title} icon={SquaresFourIcon} current={place === 'home'} />
-        {activeBrandId && <CapsuleLink href={`/brands/${activeBrandId}#templates`} label={t.library.templates} icon={CardsThreeIcon} current={false} />}
+        <CapsuleLink href={active ? `/brands/${active.id}` : '/'} label={active ? t.library.home : words.title} icon={HouseIcon} current={place === 'home' || place === 'brands'} />
+        {active && <CapsuleLink href={`/brands/${active.id}#templates`} label={t.library.templates} icon={CardsThreeIcon} current={false} />}
         <CapsuleLink href="/settings" label={t.library.settings} icon={GearSixIcon} current={place === 'settings'} />
       </nav>
 
-      <div className="flex min-h-dvh flex-col md:ps-[4.75rem]">
-        <header className="flex h-16 shrink-0 items-center gap-2 px-4 md:px-6">
-          <Link href="/" className="flex items-center gap-2 rounded-[9px]" aria-label={t.app.name}>
-            <BrandMark size={30} />
-            <span aria-hidden className="font-display text-lg font-semibold tracking-tight">{t.app.name}</span>
-          </Link>
-          <span className="ms-auto flex items-center gap-2">
-            <LocaleSwitch />
-            <ThemeSwitch />
-            <SignOut />
-          </span>
-        </header>
-
-        <div className="flex min-w-0 flex-1 gap-6 px-4 pb-24 md:px-6 md:pb-10">
-          {showBrands && (
-            <aside aria-label={words.title} className="sticky top-4 hidden h-fit max-h-[calc(100dvh-6rem)] w-60 shrink-0 flex-col overflow-y-auto rounded-card surface-frost border p-2 shadow-panel md:flex">
-              <h2 className="px-2 pt-1.5 pb-2 font-display text-[15px] font-semibold tracking-tight">{words.title}</h2>
-              <ul className="flex flex-col gap-0.5">
-                {brands.map((brand) => {
-                  const active = brand.id === activeBrandId
-                  return (
-                    <li key={brand.id}>
-                      <Link
-                        href={`/brands/${brand.id}`}
-                        aria-current={active ? 'page' : undefined}
-                        className={cn(
-                          'flex h-10 items-center gap-2.5 rounded-row px-2 text-[13px] transition-colors duration-[var(--chrome-fast)]',
-                          active ? 'bg-hover font-semibold text-text' : 'text-muted hover:bg-hover hover:text-text',
-                        )}
-                      >
-                        <BrandAvatar name={brand.name} active={active} />
-                        <span className="truncate">{brand.name}</span>
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            </aside>
-          )}
-          <main className="mx-auto w-full min-w-0 max-w-6xl flex-1 pt-2">{children}</main>
+      <header className="relative z-30 flex h-[4.5rem] items-center gap-2 px-6">
+        <Link href="/" aria-label={t.app.name} className="grid size-9 shrink-0 place-items-center rounded-row hover:bg-hover">
+          <BrandMark size={28} />
+        </Link>
+        <div className="flex min-w-0 items-center gap-1 text-[13px]">
+          {showBrands || active
+            ? <BrandSwitcher t={t} words={words} brands={brands} active={active} showAll={showBrands} />
+            : null}
+          {(showBrands || active) && <span aria-hidden className="text-subtle">/</span>}
+          <span className="truncate px-1.5 font-semibold text-text">{placeName}</span>
         </div>
-      </div>
+        <span className="ms-auto">
+          <AccountMenu name={workspace} signedIn={jar.has(SESSION_COOKIE)} />
+        </span>
+      </header>
+
+      <main className="mx-auto w-full min-w-0 max-w-[110rem] px-4 pb-28 md:ps-44 md:pe-16 md:pb-12">{children}</main>
     </div>
   )
 }

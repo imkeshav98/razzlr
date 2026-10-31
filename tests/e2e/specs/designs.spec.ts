@@ -32,7 +32,7 @@ test('a design made from the brand list opens in the editor and is there after a
   expect(page.url()).toBe(url)
 
   await page.getByRole('link', { name: 'Harbour Coffee' }).click()
-  const listed = page.getByRole('list', { name: 'Recent work' }).getByRole('link', { name: new RegExp(name) })
+  const listed = page.getByRole('list', { name: 'Recent' }).getByRole('link', { name: new RegExp(name) })
   await expect(listed).toBeVisible()
   writeOutput('designs-3-listed.png', await page.screenshot())
   expect(errors).toEqual([])
@@ -43,7 +43,9 @@ test('a design id from another brand is not found', async ({ page, allowProblems
   await page.goto('/brands/dev-brand-cycles')
   await page.getByLabel('Brief').fill('Cycles only')
   await page.getByRole('button', { name: 'Make drafts' }).click()
-  await expect(page).toHaveURL(/\/designs\/[\w-]+$/)
+  // The design is made at once; the editor's page can take over five seconds to come on a busy
+  // runner (seen at 5.4 s in the full first shard), so the move there gets longer.
+  await expect(page).toHaveURL(/\/designs\/[\w-]+$/, { timeout: 20_000 })
   const designId = page.url().split('/').pop()
   const response = await page.goto(`/brands/dev-brand-coffee/designs/${designId}`)
   expect(response?.status()).toBe(404)

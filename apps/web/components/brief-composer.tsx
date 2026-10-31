@@ -1,13 +1,14 @@
-// The brand home's brief (#84): a few words, the formats to make, the brand kit, and Make drafts,
-// under a slow aurora. The chips are checkboxes, so the form works before any script loads. Until
+// The brand home's brief (#84), as in the final mock: one line asking what we are making, the
+// brand's name in the AI colours, and a composer with a gradient edge holding a few words, the
+// formats to make, the brand kit and Make drafts. The chips are checkboxes, so the form works before any script loads. Until
 // AI drafts arrive (phase 2), Make drafts opens a blank design in the formats picked.
-import { ImageSquareIcon, PaletteIcon, SparkleIcon } from '@phosphor-icons/react/ssr'
+import { PlusIcon, SparkleIcon } from '@phosphor-icons/react/ssr'
 import { FORMAT_PRESETS, SCHEMA_VERSION, type DesignInput } from '@razzlr/schema'
 import { cn } from '../lib/cn.ts'
-import { format, type Messages } from '../lib/i18n/index.ts'
+import type { Messages } from '../lib/i18n/index.ts'
 
 /** The formats offered on the brief, the everyday ones; the editor adds any other. */
-export const BRIEF_FORMATS = ['feed-square', 'feed-portrait', 'story', 'link-image', 'video-hd'] as const
+export const BRIEF_FORMATS = ['feed-square', 'feed-portrait', 'story', 'link-image'] as const
 
 /** A blank design in the formats a brief picked, the first one primary. */
 export function briefDesign(name: string, formatIds: string[], formatName: (id: string) => string): DesignInput {
@@ -22,14 +23,20 @@ export function briefDesign(name: string, formatIds: string[], formatName: (id: 
   }
 }
 
-const CHIP = 'inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium select-none transition-[background-color,border-color,color] duration-[var(--chrome-fast)]'
-const CHIP_OFF = 'border-line bg-raised/70 text-muted hover:border-line-strong hover:text-text'
-const CHIP_ON = 'has-[:checked]:border-transparent has-[:checked]:bg-accent-soft has-[:checked]:text-accent-text'
+const CHIP = 'inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border-[1.5px] px-3.5 text-[13px] font-semibold select-none transition-[background-color,border-color,color] duration-[var(--chrome-fast)] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring'
+const CHIP_OFF = 'border-line text-muted hover:border-line-strong hover:text-text'
+const CHIP_ON = 'has-[:checked]:border-accent has-[:checked]:text-text'
 
-/** A tiny outline of a format's shape, so chips read at a glance. */
-function Shape({ width, height }: { width: number; height: number }) {
-  const scale = 12 / Math.max(width, height)
-  return <span aria-hidden className="inline-block rounded-[2px] border-[1.5px] border-current" style={{ width: Math.max(5, width * scale), height: Math.max(5, height * scale) }} />
+/** The heading with the brand's name in the AI gradient: "What are we making for <brand>?". */
+function Prompt({ template, brandName }: { template: string; brandName: string }) {
+  const [before, after = ''] = template.split('{brand}')
+  return (
+    <>
+      {before}
+      <span className="bg-[image:var(--ai-gradient)] bg-clip-text text-transparent [-webkit-box-decoration-break:clone] [box-decoration-break:clone]">{brandName}</span>
+      {after}
+    </>
+  )
 }
 
 export function BriefComposer({ t, brandName, kitColors, action }: {
@@ -41,59 +48,54 @@ export function BriefComposer({ t, brandName, kitColors, action }: {
 }) {
   const h = t.home
   return (
-    <section aria-labelledby="brief-title" className="relative isolate">
-      <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden rounded-[28px]">
-        <div className="aurora" />
-      </div>
-      <div className="mx-auto max-w-3xl px-1 pt-6 pb-8 md:pt-12 md:pb-12">
-        <h1 id="brief-title" className="text-center font-display text-3xl font-semibold tracking-tight text-balance md:text-5xl">
-          {format(h.prompt, { brand: brandName })}
-        </h1>
-        <form action={action} className="mt-6 rounded-[22px] surface-frost border p-3 shadow-panel md:mt-8 md:p-4">
+    <section aria-labelledby="brief-title" className="pt-2 pb-10 md:-mt-8 md:pt-0 md:pb-12">
+      <h1 id="brief-title" className="mx-auto max-w-5xl text-center font-display text-3xl font-bold tracking-tight text-balance md:text-[2.75rem] md:leading-tight">
+        <Prompt template={h.prompt} brandName={brandName} />
+      </h1>
+      {/* A gradient edge: the gradient behind, the composer inset by its width. */}
+      <div className="mx-auto mt-6 max-w-3xl rounded-[22px] bg-[image:var(--ai-gradient)] p-[1.5px] shadow-[0_24px_60px_-28px_rgb(255_72_176/0.55)] md:mt-7">
+        <form action={action} className="rounded-[20.5px] bg-surface/95 p-3 backdrop-blur md:px-5 md:py-4">
           <label htmlFor="brief" className="sr-only">{h.brief}</label>
           <textarea
             id="brief"
             name="brief"
-            rows={3}
+            rows={1}
             maxLength={2000}
             placeholder={h.briefPlaceholder}
-            className="block w-full resize-none bg-transparent px-2 py-1.5 text-base text-text placeholder:text-subtle focus:outline-none md:text-lg"
+            // One line, as in the final mock, growing with what is written.
+            className="block max-h-48 min-h-9 w-full resize-none bg-transparent px-1 py-1 text-base text-text [field-sizing:content] placeholder:text-subtle focus:outline-none md:text-[17px]"
           />
-          <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-line pt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <fieldset className="contents">
               <legend className="sr-only">{h.formats}</legend>
               {BRIEF_FORMATS.map((id, i) => {
                 const preset = FORMAT_PRESETS.find((p) => p.id === id)
                 if (!preset) return null
                 return (
-                  <label key={id} className={cn(CHIP, CHIP_OFF, CHIP_ON, 'has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring')}>
+                  <label key={id} className={cn(CHIP, CHIP_OFF, CHIP_ON)}>
                     <input type="checkbox" name="format" value={id} defaultChecked={i === 0} className="sr-only" data-testid={`brief-format-${id}`} />
-                    <Shape width={preset.width} height={preset.height} />
-                    {t.editor.formats.preset[id]}
+                    {h.chips[id]}
                   </label>
                 )
               })}
             </fieldset>
-            <span aria-hidden className="mx-1 hidden h-5 w-px bg-line sm:block" />
-            <label className={cn(CHIP, CHIP_OFF, CHIP_ON, 'has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring')}>
-              <input type="checkbox" name="kit" value="on" defaultChecked className="sr-only" data-testid="brief-kit" />
-              {kitColors.length > 0
-                ? (
-                  <span aria-hidden className="flex -space-x-1">
-                    {kitColors.slice(0, 4).map((color) => <span key={color} className="size-3 rounded-full ring-1 ring-bg" style={{ backgroundColor: color }} />)}
-                  </span>
-                )
-                : <PaletteIcon size={14} aria-hidden />}
-              {h.brandKit}
-            </label>
-            <button type="button" disabled title={h.referenceSoon} className={cn(CHIP, CHIP_OFF, 'cursor-not-allowed opacity-60')}>
-              <ImageSquareIcon size={14} aria-hidden />
+            <button type="button" disabled title={h.referenceSoon} className={cn(CHIP, CHIP_OFF, 'cursor-not-allowed opacity-70')}>
+              <PlusIcon size={12} weight="bold" aria-hidden />
               {h.reference}
             </button>
+            <label className={cn(CHIP, CHIP_OFF, CHIP_ON)}>
+              <input type="checkbox" name="kit" value="on" defaultChecked className="sr-only" data-testid="brief-kit" />
+              {kitColors.length > 0 && (
+                <span aria-hidden className="flex -space-x-1">
+                  {kitColors.slice(0, 4).map((color) => <span key={color} className="size-3 rounded-full ring-1 ring-surface" style={{ backgroundColor: color }} />)}
+                </span>
+              )}
+              {h.brandKit}
+            </label>
             <button
               type="submit"
               title={h.makeHint}
-              className="ai-glow relative ms-auto inline-flex h-10 cursor-pointer items-center gap-2 overflow-hidden rounded-full px-5 text-sm font-semibold text-white shadow-panel transition-transform duration-[var(--chrome-fast)] active:scale-[0.97]"
+              className="ai-glow relative ms-auto inline-flex h-10 cursor-pointer items-center gap-2 overflow-hidden rounded-[12px] px-5 text-sm font-semibold text-white shadow-panel transition-transform duration-[var(--chrome-fast)] active:scale-[0.97]"
             >
               <SparkleIcon size={16} weight="fill" aria-hidden />
               {h.make}
