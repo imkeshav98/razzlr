@@ -68,6 +68,10 @@ _Avoid_: Element, object, block, item
 The page's layers as a tree, topmost first: select, reorder, move into and out of groups, rename, lock and hide them. It selects in step with the stage.
 _Avoid_: Outline, layer list
 
+**Property cards**:
+The cards at the stage's top end that edit the selection, or the design when nothing is selected. A value the selected layers don't share shows as mixed. With more than one format, a change goes to every format (the base, with that property's overrides cleared) or to this format only (an override).
+_Avoid_: Inspector (in code), properties panel
+
 **Graphic**:
 A layer made of a shape plus fills, strokes and effects. Photos and video are fills on a graphic, not layers of their own.
 _Avoid_: Image layer, shape layer, rectangle layer
