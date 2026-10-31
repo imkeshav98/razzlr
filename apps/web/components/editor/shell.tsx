@@ -118,7 +118,7 @@ function measureInsets(stage: DOMRect, pieces: (Element | null)[]): ChromeInsets
   return insets
 }
 
-export function EditorShell({ brandId, brandName, designName, status, tool: shownTool, shape = 'rect', onToolChange, onInsets, inspector, children }: {
+export function EditorShell({ brandId, brandName, designName, status, tool: shownTool, shape = 'rect', onToolChange, onInsets, fitted = true, inspector, children }: {
   brandId: string
   brandName: string
   designName: string
@@ -128,8 +128,10 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
   /** The shape the shape tool draws (#44). */
   shape?: ShapeTool
   onToolChange?: (tool: Tool, shape: ShapeTool) => void
-  /** Called with the stage's edges the chrome covers, whenever they change. */
-  onInsets?: (insets: ChromeInsets) => void
+  /** Called with the stage's edges the chrome covers, whenever they change; `withCards` once the cards are in. */
+  onInsets?: (insets: ChromeInsets, withCards: boolean) => void
+  /** False until the stage has fitted the design between the chrome: the editor is not ready before. */
+  fitted?: boolean
   /** The property cards, once the design is open. */
   inspector?: ReactNode
   children: ReactNode
@@ -162,10 +164,10 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
     const measure = () => {
       if (!stage.current) return
       const insets = measureInsets(stage.current.getBoundingClientRect(), [rail.current, cards.current, dock.current])
-      const key = JSON.stringify(insets)
+      const key = JSON.stringify([insets, hasCards])
       if (key === reported.current) return
       reported.current = key
-      report.current?.(insets)
+      report.current?.(insets, hasCards)
     }
     const watch = new ResizeObserver(measure)
     for (const el of [stage.current, rail.current, cards.current, dock.current]) if (el) watch.observe(el)
@@ -192,7 +194,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                 aria-label={t.editor.status}
                 data-testid="status"
                 data-status={status}
-                data-ready={save ? '' : undefined}
+                data-ready={save && fitted ? '' : undefined}
                 title={save ? t.editor.statusHint[shown] : undefined}
                 className={cn(
                   'flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors duration-[var(--chrome)]',

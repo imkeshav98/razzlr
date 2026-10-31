@@ -39,16 +39,20 @@ test('the cards float over a full-width canvas and the ads fit between the capsu
   expect((await box(page, 'page-card')).height).toBeLessThan(140)
   expect(await pageCard.evaluate((el) => getComputedStyle(el).backdropFilter)).toContain('blur(18px)')
 
-  // The square, fitted, sits wholly between the capsule and the cards, centred in that gap.
+  // The square, fitted, sits wholly between the capsule and the cards, centred in that gap: as
+  // it opens (the editor is ready only once it is), and again from Zoom to fit.
+  const between = async () => {
+    await page.evaluate(() => window.razzlr?.drawn())
+    const left = (await screenPoint(page, 0, 0)).x
+    const right = (await screenPoint(page, 1080, 1080)).x
+    expect(left).toBeGreaterThan(rail.x + rail.width)
+    expect(right).toBeLessThan(cards.x)
+    expect(Math.abs((left + right) / 2 - (rail.x + rail.width + cards.x) / 2)).toBeLessThan(12)
+  }
+  await between()
+  await page.evaluate(() => window.razzlr?.setCamera({ x: 0, y: 0, zoom: 1 }))
   await page.getByRole('button', { name: 'Zoom to fit' }).click()
-  await page.evaluate(() => window.razzlr?.drawn())
-  const topLeft = await screenPoint(page, 0, 0)
-  const bottomRight = await screenPoint(page, 1080, 1080)
-  const left = topLeft.x
-  const right = bottomRight.x
-  expect(left).toBeGreaterThan(rail.x + rail.width)
-  expect(right).toBeLessThan(cards.x)
-  expect(Math.abs((left + right) / 2 - (rail.x + rail.width + cards.x) / 2)).toBeLessThan(12)
+  await between()
   await shoot(page, 'design')
 })
 
