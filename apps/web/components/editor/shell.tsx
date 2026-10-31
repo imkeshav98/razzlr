@@ -196,8 +196,8 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
           <div className="relative flex h-full min-h-0">
           {/* No top bar (#110): two islands float over the canvas, the design's name and save state at
               the start and its actions at the end, with no surface of their own, clear of the rulers (top and
-              left, in either direction). */}
-          <header className="pointer-events-none absolute right-3 left-8 top-8 z-30 flex items-center justify-between gap-3">
+              left in either direction, so the insets swap in right-to-left). */}
+          <header className="pointer-events-none absolute start-8 end-3 rtl:start-3 rtl:end-8 top-8 z-30 flex items-center justify-between gap-3">
             <div ref={startIsland} data-testid="island-start" className="pointer-events-auto flex min-w-0 items-center gap-2">
               <Link href="/" aria-label={t.library.home} className="grid size-9 shrink-0 place-items-center rounded-row hover:bg-hover">
                 <BrandMark size={28} />
