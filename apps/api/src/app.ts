@@ -87,7 +87,7 @@ export function createApp({ db, storage, sessionOf, syncSecret, signIn = null }:
     return workspace ? c.json(workspace) : c.json(error('No such workspace'), 404)
   })
 
-  // Onboarding asks who Razzlr is for; the answer only changes defaults and words (ADR-0011).
+  // Onboarding asks who Dazbee is for; the answer only changes defaults and words (ADR-0011).
   app.patch('/workspace', async (c) => {
     const input = await body(c.req.raw, UpdateWorkspace)
     if (input instanceof Response) return input

@@ -17,7 +17,11 @@ test.afterEach(async () => {
 
 test('the web app lists the brands of the development workspace, as clients of an agency', async ({ page }) => {
   await page.goto('/')
-  await expect(page).toHaveTitle('Razzlr')
+  await expect(page).toHaveTitle('Dazbee')
+  for (const link of ['link[rel="icon"][type="image/svg+xml"]', 'link[rel="apple-touch-icon"]', 'link[rel="manifest"]']) {
+    const href = await page.locator(link).first().getAttribute('href')
+    expect((await page.request.get(href ?? '')).ok(), link).toBe(true)
+  }
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Clients')
   await expect(page.getByRole('main').getByRole('link', { name: 'Harbour Coffee' })).toBeVisible()
   await expect(page.getByRole('main').getByRole('link', { name: 'Northline Cycles' })).toBeVisible()
