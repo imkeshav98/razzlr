@@ -1,5 +1,5 @@
 /**
- * The Google Fonts families Razzlr offers (#50). They are copied into our storage once, by
+ * The Google Fonts families Dazbee offers (#50). They are copied into our storage once, by
  * `pnpm --filter @razzlr/api fonts:google`, and from then on loaded from there like any other font
  * file: never from Google, the system or the browser at render time.
  */

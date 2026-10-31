@@ -7,7 +7,7 @@ import { getMessages } from '../../../../../lib/i18n/server.ts'
 import { SESSION_COOKIE } from '../../../../../lib/sign-in.ts'
 import { EditorStage } from './stage.tsx'
 
-export const metadata = { title: 'Razzlr editor' }
+export const metadata = { title: 'Dazbee editor' }
 
 export default async function EditPage({ params, searchParams }: {
   params: Promise<{ brandId: string; designId: string }>

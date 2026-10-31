@@ -1,4 +1,6 @@
-# Razzlr
+# Dazbee
+
+Formerly Razzlr. The repository, package names (`@razzlr/*`), environment variables (`RAZZLR_*`) and local database still use the old name.
 
 ## Develop
 
