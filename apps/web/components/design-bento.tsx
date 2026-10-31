@@ -32,7 +32,10 @@ const SPAN = { large: 'col-span-2 row-span-2', tall: 'row-span-2', wide: 'col-sp
 export function DesignBento({ t, locale, brandId, designs }: { t: Messages; locale: string; brandId: string; designs: BentoDesign[] }) {
   const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' })
   return (
-    <ul aria-label={t.home.recent} className="grid grid-flow-dense auto-rows-[9rem] grid-cols-2 gap-3 sm:auto-rows-[11rem] md:grid-cols-4">
+    // Rows as tall as a column is wide, so a single tile is square, the big one too, a story tile
+    // is 1:2 and a banner 2:1: each picture fills its tile with little cut away.
+    <div className="@container">
+    <ul aria-label={t.home.recent} className="grid grid-flow-dense auto-rows-[calc((100cqw-0.75rem)/2)] grid-cols-2 gap-3 md:auto-rows-[calc((100cqw-2.25rem)/4)] md:grid-cols-4">
       {designs.map((design, i) => {
         const span = spanOf(design, i)
         return (
@@ -67,5 +70,6 @@ export function DesignBento({ t, locale, brandId, designs }: { t: Messages; loca
         )
       })}
     </ul>
+    </div>
   )
 }
