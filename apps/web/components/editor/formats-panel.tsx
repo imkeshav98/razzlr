@@ -19,6 +19,9 @@ import { Button } from '../ui/button.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { CARD, CardHeader } from './card.tsx'
 
+/** A small pill button, as the mock's chips under a list. */
+export const CHIP = 'inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border border-line px-3 text-xs font-semibold text-muted transition-colors duration-[var(--chrome-fast)] hover:border-line-strong hover:text-text disabled:pointer-events-none disabled:opacity-40'
+
 export const ICON_BUTTON = 'grid size-7 shrink-0 cursor-pointer place-items-center rounded-row text-subtle transition-colors duration-[var(--chrome-fast)] hover:bg-hover hover:text-text disabled:pointer-events-none disabled:opacity-30'
 
 /** The design as the editor holds it, kept current: every redraw hands over the latest one. */
@@ -53,12 +56,26 @@ function Proportion({ width, height, className }: { width: number; height: numbe
   )
 }
 
+/** The first page's background, when it is one colour: what a format's tile is filled with. */
+const backgroundOf = (design: Design) => {
+  const first = Object.values(design.pages).sort((x, y) => (x.order < y.order ? -1 : x.order > y.order ? 1 : 0))[0]
+  const fill = first?.fills[0]
+  return fill?.type === 'solid' ? fill.color : undefined
+}
+
+/** A format's tile in the strip: a box in its proportions, at most 44 tall and 64 wide. */
+const tileSize = ({ width, height }: { width: number; height: number }) => {
+  const scale = Math.min(44 / height, 64 / width)
+  return { width: Math.max(12, Math.round(width * scale)), height: Math.max(12, Math.round(height * scale)) }
+}
+
 export function FormatsPanel({ editor, onRemoved }: { editor: Editor; onRemoved: (message: string) => void }) {
   const t = useMessages()
   const { design, focused } = useEditorDesign(editor)
   const formats = ordered(design)
   const [renaming, setRenaming] = useState<string | null>(null)
   const run = editor.session.run.bind(editor.session)
+  const background = backgroundOf(design)
 
   const rename = (id: string, name: string) => {
     setRenaming(null)
@@ -71,7 +88,23 @@ export function FormatsPanel({ editor, onRemoved }: { editor: Editor; onRemoved:
       <CardHeader id="formats-title" title={t.editor.formats.title} count={formats.length}>
         <AddFormat editor={editor} />
       </CardHeader>
-      <ul aria-label={t.editor.formats.title} className="pb-2" data-testid="formats">
+      {/* The formats as a picture, as in the final mock: each a tile in its proportions, filled with
+          the first page's background, ringed while shown alone, starred if primary. The list below
+          does the work. */}
+      <div aria-hidden className="flex items-end gap-3 overflow-x-auto px-[18px] pb-3 [scrollbar-width:none]" data-testid="format-tiles">
+        {formats.map(([id, f]) => (
+          <span key={id} className="flex shrink-0 flex-col items-center gap-1.5 text-[11px] font-semibold text-muted">
+            <span
+              className={cn('relative rounded-[4px] border border-line-strong bg-hover', focused === id && 'shadow-[0_0_0_2px_var(--accent)]')}
+              style={{ ...tileSize(f), backgroundColor: background }}
+            >
+              {design.meta.primaryFormatId === id && <StarIcon size={10} weight="fill" className="absolute -end-1 -top-1 text-accent-text drop-shadow" />}
+            </span>
+            <span className="max-w-16 truncate">{f.name}</span>
+          </span>
+        ))}
+      </div>
+      <ul aria-label={t.editor.formats.title} className="px-2.5 pb-2" data-testid="formats">
         {formats.map(([id, f], i) => {
           const primary = design.meta.primaryFormatId === id
           return (
@@ -79,7 +112,7 @@ export function FormatsPanel({ editor, onRemoved }: { editor: Editor; onRemoved:
               key={id}
               data-format={id}
               data-focused={focused === id ? '' : undefined}
-              className="group mx-2 flex h-[var(--row)] items-center gap-1 rounded-row ps-1 pe-0.5 hover:bg-hover data-[focused]:bg-accent-soft"
+              className="group flex h-[var(--row)] items-center gap-1 rounded-row ps-1 pe-2 hover:bg-hover data-[focused]:bg-accent-soft"
             >
               <Tooltip label={primary ? t.editor.formats.primary : t.editor.formats.makePrimary}>
                 <button

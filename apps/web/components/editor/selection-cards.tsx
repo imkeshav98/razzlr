@@ -22,7 +22,6 @@ type P = Messages['editor']['props']
 
 const FIELD = 'h-7 min-w-0 w-full rounded-row border border-line bg-surface px-1.5 font-mono text-[12px] tabular-nums text-text outline-none placeholder:text-subtle focus:border-accent'
 const SELECT = 'h-7 min-w-0 w-full rounded-row border border-line bg-surface px-1 text-[12px] text-text outline-none focus:border-accent'
-const LABEL = 'text-[11px] font-medium text-muted'
 const NEW_FILL: Paint = { type: 'solid', color: '#D9D9D9FF' }
 const NEW_STROKE = { paint: { type: 'solid', color: '#1A1420FF' } as Paint, width: 2, align: 'center' as const }
 
@@ -36,6 +35,8 @@ interface Target {
   /** Each layer's values in the frame: its own, with its format's overrides on top. */
   props: Props[]
   types: string[]
+  /** The layers' names, for a card's note. */
+  names: string[]
 }
 
 const set = (target: Target, to: (now: Props, i: number) => Patch | null) => {
@@ -205,11 +206,11 @@ function Choice<T extends string>({ name, value, options, labels, onSet }: { nam
   )
 }
 
-function Card({ id, title, action, children }: { id: string; title: string; action?: ReactNode; children: ReactNode }) {
+function Card({ id, title, note, action, children }: { id: string; title: string; note?: string; action?: ReactNode; children: ReactNode }) {
   return (
     <section aria-labelledby={id} className={CARD} data-testid={id}>
-      <CardHeader id={`${id}-title`} title={title}>{action}</CardHeader>
-      <div className="flex flex-col gap-2 px-4 pb-3">{children}</div>
+      <CardHeader id={`${id}-title`} title={title} note={note}>{action}</CardHeader>
+      <div className="flex flex-col gap-2.5 px-[18px] pb-4 empty:hidden">{children}</div>
     </section>
   )
 }
@@ -377,7 +378,7 @@ function EffectsCard({ target, p }: { target: Target; p: P }) {
           aria-label={p.addEffect}
           value=""
           onChange={(event) => write([...(list === 'mixed' ? [] : list), NEW_EFFECT[event.target.value as Effect['type']]])}
-          className="h-7 w-28 rounded-row border border-line bg-surface px-1 text-[12px] text-muted"
+          className="h-7 w-28 cursor-pointer rounded-full border border-line bg-bg/40 px-2 text-[12px] font-semibold text-muted hover:border-line-strong focus:border-accent focus:outline-none"
         >
           <option value="" disabled>{p.addEffect}</option>
           {Object.keys(NEW_EFFECT).map((type) => <option key={type} value={type}>{p.effect[type as Effect['type']]}</option>)}
@@ -395,12 +396,12 @@ function EffectsCard({ target, p }: { target: Target; p: P }) {
           const change = (next: Effect) => write(list.map((x, j) => (j === i ? next : x)))
           const effectName = p.effect[effect.type]
           return (
-              <div key={i} className="flex flex-col gap-1 border-t border-line pt-2 first:border-t-0 first:pt-0" data-item={`effects-${i}`}>
+            <div key={i} className="flex flex-col gap-1.5 border-t border-line pt-2.5 first:border-t-0 first:pt-0" data-item={`effects-${i}`}>
               <div className="flex items-center justify-between">
-                <span className={LABEL}>{effectName}</span>
+                <span className="text-xs font-bold text-text">{effectName}</span>
                 <RemoveButton label={format(p.remove, { name: effectName.toLowerCase(), n: i + 1 })} onClick={() => write(list.filter((_, j) => j !== i))} />
               </div>
-              <div className="grid grid-cols-2 gap-1">
+              <div className="grid grid-cols-2 gap-1.5">
                 {EFFECT_FIELDS[effect.type].map((field) => {
                   const value = (effect as unknown as Record<string, number>)[field] ?? 0
                   const min = field === 'x' || field === 'y' || (field === 'spread' && effect.type === 'dropShadow') ? undefined : 0
@@ -438,7 +439,7 @@ function TextCard({ target, p }: { target: Target; p: P }) {
       return { style: { ...s, [key]: tidy(clamp(((s[key] as number | undefined) ?? from) + by, min)) } }
     })
   return (
-    <Card id="text-card" title={p.text}>
+    <Card id="text-card" title={p.text} note={target.names.join(', ')}>
       <div className="grid grid-cols-2 gap-x-3 gap-y-2">
         <NumberField label="Aa" name={p.fontSize} value={style('fontSize') as number | 'mixed'} min={1} editor={target.editor} onSet={(v) => setStyle('fontSize', v)} onShift={(by) => shiftStyle('fontSize', by, 1)} />
         <NumberField
@@ -544,8 +545,11 @@ function ScopeSwitch({ everyFormat, onChange, p }: { everyFormat: boolean; onCha
   )
 }
 
-/** The selection's cards, after Arrange and the font. */
-export function SelectionCards({ editor, ids }: { editor: Editor; ids: string[] }) {
+/**
+ * The selection's cards, after the font: the look first, then Arrange (first of all for several
+ * layers, as the mock's "3 selected"), then position, size and the rest.
+ */
+export function SelectionCards({ editor, ids, arrange }: { editor: Editor; ids: string[]; arrange: ReactNode }) {
   const t = useMessages()
   const p = t.editor.props
   const { design } = useLiveDesign(editor)
@@ -555,16 +559,20 @@ export function SelectionCards({ editor, ids }: { editor: Editor; ids: string[] 
   const formatId = frameFormat && design.formats[frameFormat] ? frameFormat : design.meta.primaryFormatId
   const pageId = framePage ?? ''
   const live = ids.filter((id) => design.nodes[id])
-  if (live.length === 0) return null
+  if (live.length === 0) return arrange
   const placedIn = (d: Design, id: string) => ({ ...d.nodes[id]?.props, ...d.overrides[`format:${formatId}`]?.[id] }) as Props
   const types = live.map((id) => design.nodes[id]?.type ?? '')
-  const target: Target = { editor, ids: live, pageId, formatId, everyFormat: everyFormat || Object.keys(design.formats).length === 1, props: live.map((id) => placedIn(design, id)), types }
+  const target: Target = {
+    editor, ids: live, pageId, formatId, everyFormat: everyFormat || Object.keys(design.formats).length === 1, props: live.map((id) => placedIn(design, id)), types,
+    names: live.map((id) => design.nodes[id]?.name ?? ''),
+  }
   const all = (...kinds: string[]) => types.every((type) => kinds.includes(type))
+  const several = live.length > 1
   return (
     <>
+      {several && arrange}
       {Object.keys(design.formats).length > 1 && <ScopeSwitch everyFormat={everyFormat} onChange={setEveryFormat} p={p} />}
-      <LayoutCard target={target} p={p} />
-      <AppearanceCard target={target} p={p} />
+      {all('text') && <TextCard target={target} p={p} />}
       {all('graphic', 'frame', 'boolean') && (
         <ListCard<Paint>
           id="fill-card"
@@ -588,7 +596,9 @@ export function SelectionCards({ editor, ids }: { editor: Editor; ids: string[] 
         />
       )}
       <EffectsCard target={target} p={p} />
-      {all('text') && <TextCard target={target} p={p} />}
+      {!several && arrange}
+      <LayoutCard target={target} p={p} />
+      <AppearanceCard target={target} p={p} />
       {all('frame') && <AutoLayoutCard target={target} p={p} />}
     </>
   )
