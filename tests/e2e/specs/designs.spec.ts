@@ -42,7 +42,9 @@ test('a design id from another brand is not found', async ({ page }) => {
   await page.goto('/brands/dev-brand-cycles')
   await page.getByLabel('Brief').fill('Cycles only')
   await page.getByRole('button', { name: 'Make drafts' }).click()
-  await expect(page).toHaveURL(/\/designs\/[\w-]+$/)
+  // The design is made at once; the editor's page can take over five seconds to come on a busy
+  // runner (seen at 5.4 s in the full first shard), so the move there gets longer.
+  await expect(page).toHaveURL(/\/designs\/[\w-]+$/, { timeout: 20_000 })
   const designId = page.url().split('/').pop()
   const response = await page.goto(`/brands/dev-brand-coffee/designs/${designId}`)
   expect(response?.status()).toBe(404)
