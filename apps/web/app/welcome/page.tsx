@@ -1,4 +1,4 @@
-// Onboarding (#109): who Razzlr is for, as three big cards, then "Paste your website" for the
+// Onboarding (#109): who Dazbee is for, as three big cards, then "Paste your website" for the
 // first brand (or client), named from the site's address. The app opens here until the workspace
 // has a brand; the kind can be changed later in settings. It looks like the final mock's
 // onboarding: the library's top bar, progress dashes over a bold headline, and the website in one

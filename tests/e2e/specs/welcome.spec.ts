@@ -1,4 +1,4 @@
-// Onboarding (#109): who Razzlr is for as three big cards, then "Paste your website" names the
+// Onboarding (#109): who Dazbee is for as three big cards, then "Paste your website" names the
 // first brand and opens its home. The tests that change who it is for are in smoke.spec.ts, the one
 // file that changes the workspace's kind, so no other file runs beside them in another kind.
 import { expect, test, type Page } from '../support/test.ts'

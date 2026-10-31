@@ -2,7 +2,7 @@ import type { Messages } from './en.ts'
 
 // Arabic. Same keys as English; the type checker refuses a missing one.
 export const ar: Messages = {
-  app: { name: 'Razzlr' },
+  app: { name: 'Dazbee' },
   library: {
     brands: 'العلامات التجارية',
     brandsLead: 'اختر علامة تجارية لترى تصاميمها وتنشئ جديدها.',
@@ -48,7 +48,7 @@ export const ar: Messages = {
   welcome: {
     step: 'الخطوة {n} من 2',
     place: 'لنبدأ',
-    title: 'لمن Razzlr؟',
+    title: 'لمن Dazbee؟',
     lead: 'يغيّر بضع كلمات وإعدادات فقط. يمكنك تغييره لاحقًا من الإعدادات.',
     kinds: {
       solo: { title: 'لي وحدي', body: 'نشاط واحد هو نشاطك. إعلانات لعلامتك.' },
@@ -69,7 +69,7 @@ export const ar: Messages = {
   },
   settings: {
     title: 'الإعدادات',
-    kind: 'لمن Razzlr',
+    kind: 'لمن Dazbee',
     save: 'حفظ',
     saved: 'تم الحفظ',
   },
@@ -380,7 +380,7 @@ export const ar: Messages = {
   language: { label: 'اللغة' },
   account: { open: 'حسابك', settings: 'الإعدادات' },
   signIn: {
-    title: 'سجّل الدخول إلى Razzlr',
+    title: 'سجّل الدخول إلى Dazbee',
     headline: 'اصنع كل مقاس،',
     headlineEnd: 'لكل عميل.',
     lead: 'سجّل الدخول أو أنشئ حسابًا. أول تسجيل دخول ينشئ مساحة عملك.',

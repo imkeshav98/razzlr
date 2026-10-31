@@ -1,5 +1,5 @@
 /*
- * Razzlr's design tokens (#51, restyled in #81: Riso Pop colours, frosted surfaces, dark by default).
+ * Dazbee's design tokens (#51, restyled in #81: Riso Pop colours, frosted surfaces, dark by default).
  * Themes change only these variables, through html[data-theme]: a script in the layout sets it
  * from the person's pick or the system before first paint, and dark is the default. Components use the semantic names, never raw colours.
  * tokens.test.ts checks every text token against the surfaces it sits on at 4.5:1 or more.

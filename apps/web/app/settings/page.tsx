@@ -1,4 +1,4 @@
-// Settings (#109): who Razzlr is for, the same three cards onboarding asks with. Changing it
+// Settings (#109): who Dazbee is for, the same three cards onboarding asks with. Changing it
 // changes only words and defaults (ADR-0011): an agency calls its brands clients. It looks like the
 // final mock's settings: a bold title with the workspace beside it, and each setting in a panel.
 import { CheckIcon } from '@phosphor-icons/react/ssr'

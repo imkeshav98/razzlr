@@ -1,4 +1,4 @@
-// Who Razzlr is for (#109), as three big cards: Just me, My company, My clients. They are radio
+// Who Dazbee is for (#109), as three big cards: Just me, My company, My clients. They are radio
 // buttons in a form, so they work before any script loads. Onboarding asks once; settings shows
 // the same cards to change it later. The answer changes only words and defaults (ADR-0011).
 import { BuildingsIcon, CheckIcon, UserIcon, UsersThreeIcon } from '@phosphor-icons/react/ssr'
