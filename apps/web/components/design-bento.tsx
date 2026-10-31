@@ -35,7 +35,7 @@ export function DesignBento({ t, locale, brandId, designs }: { t: Messages; loca
     // Rows as tall as a column is wide, so a single tile is square, the big one too, a story tile
     // is 1:2 and a banner 2:1: each picture fills its tile with little cut away.
     <div className="@container">
-    <ul aria-label={t.home.recent} className="grid grid-flow-dense auto-rows-[calc((100cqw-0.75rem)/2)] grid-cols-2 gap-3 md:auto-rows-[calc((100cqw-2.25rem)/4)] md:grid-cols-4">
+    <ul aria-label={t.home.recent} className="grid grid-flow-dense auto-rows-[calc((100cqw-0.75rem)/2)] grid-cols-2 gap-3 md:auto-rows-[calc((100cqw-2.25rem)/4)] md:grid-cols-4 xl:auto-rows-[calc((100cqw-3.75rem)/6)] xl:grid-cols-6">
       {designs.map((design, i) => {
         const span = spanOf(design, i)
         return (
@@ -45,7 +45,8 @@ export function DesignBento({ t, locale, brandId, designs }: { t: Messages; loca
               // Not prefetched: up to 24 editor pages, each a design read, for the one that gets opened.
               // In CI those prefetches also held up the router's next navigation (#84).
               prefetch={false}
-              className="group relative block size-full overflow-hidden rounded-[18px] border border-line canvas-dots shadow-panel transition-[border-color,transform] duration-[var(--chrome)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-line-strong focus-visible:outline-offset-4"
+              title={format(t.library.edited, { when: when.format(new Date(design.updatedAt)) })}
+              className="group relative block size-full overflow-hidden rounded-[16px] bg-raised shadow-panel transition-transform duration-[var(--chrome)] ease-[var(--ease-out)] hover:-translate-y-0.5 focus-visible:outline-offset-4"
             >
               {design.cover
                 ? (
@@ -64,9 +65,9 @@ export function DesignBento({ t, locale, brandId, designs }: { t: Messages; loca
                     <span className="font-display text-4xl font-bold text-white/90">{design.name.trim().charAt(0).toUpperCase()}</span>
                   </span>
                 )}
-              <span className="absolute inset-x-0 bottom-0 flex flex-col bg-gradient-to-t from-black/70 via-black/35 to-transparent px-3 pt-8 pb-2.5 text-white">
-                <span className={cn('truncate font-medium', span === 'large' ? 'text-base' : 'text-[13px]')}>{design.name}</span>
-                <span className="truncate text-xs text-white/70">{format(t.library.edited, { when: when.format(new Date(design.updatedAt)) })}</span>
+              {/* Only the name, on a short shade, as in the final mock; when it changed is in the title. */}
+              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-3 pt-6 pb-2 text-white">
+                <span className={cn('block truncate font-medium', span === 'large' ? 'text-sm' : 'text-[13px]')}>{design.name}</span>
               </span>
             </Link>
           </li>

@@ -29,6 +29,7 @@ test('signing out forgets the session and lands on the sign-in page', async ({ p
   await expect(page.getByTestId('sign-out')).toHaveCount(0)
   await context.addCookies([{ name: SESSION_COOKIE, value: 'a-session-token', url: new URL(page.url()).origin, httpOnly: true, sameSite: 'Lax' }])
   await page.reload()
+  await page.getByTestId('account-open').click()
   await page.getByTestId('sign-out').click()
   await expect(page).toHaveURL(/\/login$/)
   expect((await context.cookies()).map((c) => c.name)).not.toContain(SESSION_COOKIE)

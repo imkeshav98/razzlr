@@ -32,7 +32,7 @@ test('recent work is a bento of real pictures: the latest large, a story tall, a
   await page.goto('/brands/dev-brand-coffee')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('What are we making for Harbour Coffee?')
 
-  const bento = page.getByRole('list', { name: 'Recent work' })
+  const bento = page.getByRole('list', { name: 'Recent' })
   const tile = (name: string) => bento.getByTestId('bento-tile').filter({ has: page.getByRole('link', { name: new RegExp(name) }) })
   // Newest first: the square, made last, is the big tile.
   await expect(bento.getByTestId('bento-tile').first()).toContainText(`Square ${run}`)
