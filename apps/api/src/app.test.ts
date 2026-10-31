@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { brands, fontFaces, migrateDatabase, openDatabase, workspaces, readDesignState } from '@razzlr/db'
 import { readDesign } from '@razzlr/doc'
-import { ApiError, AssetLink, AssetSummary, BrandSummary, DesignSummary, FontFace, FontFamily, FontLink, FontUploadTicket, SyncToken, UploadTicket, WorkspaceSummary } from '@razzlr/schema'
+import { ApiError, AssetLink, AssetSummary, SignedLink, BrandSummary, DesignSummary, FontFace, FontFamily, FontLink, FontUploadTicket, SyncToken, UploadTicket, WorkspaceSummary } from '@razzlr/schema'
 import { openStorage, storageSettings } from '@razzlr/storage'
 import { verifySyncToken } from '@razzlr/sync-token'
 import { FONT_FILES_DIR } from '@razzlr/fonts/node'
@@ -13,6 +13,7 @@ import * as Y from 'yjs'
 import { eq } from 'drizzle-orm'
 import { createApp } from './app.ts'
 import { fontFiles, importGoogleFamily } from './fonts.ts'
+import { readImageHeader } from './images.ts'
 import { png } from './images.test.ts'
 import type { Session } from './session.ts'
 
@@ -196,16 +197,17 @@ describe('sync tokens', () => {
   })
 })
 
-describe('image uploads', () => {
+// Recording an image makes its thumbnail with CanvasKit, which takes seconds to load on a busy CI runner.
+describe('image uploads', { timeout: 30_000 }, () => {
   const sha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
 
   /** Starts an upload, PUTs the bytes when asked to, and records the asset. */
-  async function upload(as: string, brandId: string, bytes: Uint8Array) {
+  async function upload(as: string, brandId: string, bytes: Uint8Array, name?: string) {
     const ticket = UploadTicket.parse((await call(as, 'POST', `/brands/${brandId}/assets/uploads`, { sha256: sha256(bytes), byteSize: bytes.length, contentType: 'image/png' })).json)
     if (ticket.asset) return { asset: ticket.asset, uploaded: false }
     const put = await fetch(ticket.upload.url, { method: 'PUT', body: bytes, headers: ticket.upload.headers })
     expect(put.status).toBe(200)
-    const recorded = await call(as, 'POST', `/brands/${brandId}/assets`, { sha256: sha256(bytes) })
+    const recorded = await call(as, 'POST', `/brands/${brandId}/assets`, { sha256: sha256(bytes), ...(name ? { name } : {}) })
     expect(recorded.status).toBe(201)
     return { asset: AssetSummary.parse(recorded.json), uploaded: true }
   }
@@ -263,6 +265,60 @@ describe('image uploads', () => {
     // The bad bytes are gone, so the real owner of that hash can still upload it.
     const honest = await upload('a', brand.id, png(2, 2, `${run}-claimed`))
     expect(honest).toMatchObject({ uploaded: true, asset: { sha256: claimed } })
+  })
+
+  it('names an asset as uploaded, renames and tags it, and finds it by either (#52)', async () => {
+    const { asset } = await upload('a', brand.id, png(7, 3, `${run}-named`), `Summer sale ${run}.png`)
+    expect(asset).toMatchObject({ name: `Summer sale ${run}.png`, tags: [] })
+    const tagged = await call('a', 'PATCH', `/brands/${brand.id}/assets/${asset.id}`, { tags: ['Beach ', 'hero', 'beach'] })
+    expect(tagged.status).toBe(200)
+    expect(AssetSummary.parse(tagged.json).tags).toEqual(['beach', 'hero'])
+    const { asset: plain } = await upload('a', brand.id, png(7, 4, `${run}-plain`), `Winter ${run}.png`)
+
+    const search = async (q: string) => AssetSummary.array().parse((await call('a', 'GET', `/brands/${brand.id}/assets?q=${encodeURIComponent(q)}`)).json).map((a) => a.id)
+    // A word finds names that have it anywhere and tags that start with it, ignoring case.
+    expect(await search(`SALE ${run}`)).toEqual([asset.id])
+    expect(await search(`bea ${run}`)).toEqual([asset.id])
+    expect(await search('each')).not.toContain(asset.id)
+    // Every word has to match; newest first.
+    expect(await search(`${run}.png`)).toEqual([plain.id, asset.id])
+    expect(await search(`winter hero ${run}`)).toEqual([])
+    // LIKE's wildcards are only letters here.
+    expect(await search(`%${run}`)).toEqual([])
+
+    const renamed = AssetSummary.parse((await call('a', 'PATCH', `/brands/${brand.id}/assets/${plain.id}`, { name: `  Winter hero ${run} ` })).json)
+    expect(renamed.name).toBe(`Winter hero ${run}`)
+    expect(await search(`winter hero ${run}`)).toEqual([plain.id])
+  })
+
+  it('keeps names, tags and search to the brand', async () => {
+    const { asset } = await upload('a', brand.id, png(8, 3, `${run}-walled`), `Walled ${run}`)
+    await call('a', 'PATCH', `/brands/${brand.id}/assets/${asset.id}`, { tags: [`walled-${run}`] })
+    // The sibling brand uploads the same bytes and gets its own, unnamed and untagged asset.
+    const { asset: theirs } = await upload('a', sibling.id, png(8, 3, `${run}-walled`))
+    expect(theirs).toMatchObject({ name: '', tags: [] })
+    expect((await call('a', 'GET', `/brands/${sibling.id}/assets?q=walled-${run}`)).json).toEqual([])
+    expect((await call('a', 'PATCH', `/brands/${sibling.id}/assets/${asset.id}`, { name: 'Mine now' })).status).toBe(404)
+    expect((await call('b', 'PATCH', `/brands/${brand.id}/assets/${asset.id}`, { name: 'Mine now' })).status).toBe(404)
+  })
+
+  it('refuses an empty name, too many tags or nothing to change', async () => {
+    const { asset } = await upload('a', brand.id, png(9, 3, `${run}-refused`))
+    expect((await call('a', 'PATCH', `/brands/${brand.id}/assets/${asset.id}`, { name: '   ' })).status).toBe(400)
+    expect((await call('a', 'PATCH', `/brands/${brand.id}/assets/${asset.id}`, { tags: Array.from({ length: 21 }, (_, i) => `t${i}`) })).status).toBe(400)
+    expect((await call('a', 'PATCH', `/brands/${brand.id}/assets/${asset.id}`, {})).status).toBe(400)
+    expect((await call('a', 'GET', `/brands/${brand.id}/assets?q=${'x'.repeat(201)}`)).status).toBe(400)
+  })
+
+  it('makes a thumbnail no larger than 320 pixels a side, for the brand only', async () => {
+    const { asset } = await upload('a', brand.id, png(960, 600, `${run}-big`))
+    const link = SignedLink.parse((await call('a', 'GET', `/brands/${brand.id}/assets/${asset.id}/thumbnail`)).json)
+    const thumbnail = new Uint8Array(await (await fetch(link.url)).arrayBuffer())
+    expect(readImageHeader(thumbnail)).toEqual({ contentType: 'image/png', width: 320, height: 200 })
+    const { asset: small } = await upload('a', brand.id, png(40, 30, `${run}-small`))
+    const smallLink = SignedLink.parse((await call('a', 'GET', `/brands/${brand.id}/assets/${small.id}/thumbnail`)).json)
+    expect(readImageHeader(new Uint8Array(await (await fetch(smallLink.url)).arrayBuffer()))).toMatchObject({ width: 40, height: 30 })
+    expect((await call('a', 'GET', `/brands/${sibling.id}/assets/${asset.id}/thumbnail`)).status).toBe(404)
   })
 
   it('refuses uploads that are too big or not an image type', async () => {

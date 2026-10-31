@@ -20,6 +20,10 @@ _Avoid_: Client (except as an agency workspace's word for a brand in UI copy), c
 A brand's logo, colours, fonts and tone of voice, applied automatically. Its colours and fonts are exposed to designs as variables.
 _Avoid_: Brand guide, theme, style
 
+**Asset library**:
+A brand's uploaded images, each with a name and tags it is found by. Placing one on a design makes a graphic whose fill is that image; the original is stored once per workspace, but each brand's asset, name and tags are its own.
+_Avoid_: Media library, uploads, gallery
+
 **Reviewer**:
 A guest who views, comments on and approves designs without a paid seat.
 _Avoid_: Client user, approver

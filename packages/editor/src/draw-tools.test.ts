@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clickedBox, drawnBox, newShape } from './draw-tools.ts'
+import { clickedBox, drawnBox, newImage, newShape } from './draw-tools.ts'
 
 describe('drawing a shape (#44)', () => {
   it('spans the drag in any direction, square with Shift, out from the centre with Alt', () => {
@@ -28,5 +28,25 @@ describe('drawing a shape (#44)', () => {
     expect(newShape('star').props).toMatchObject({ shape: { kind: 'star' }, fills: [{ type: 'solid' }] })
     expect(newShape('arrow').props).toMatchObject({ shape: { kind: 'line', end: 'arrow' }, strokes: [{ width: 4 }] })
     expect(newShape('line').props).not.toHaveProperty('fills')
+  })
+})
+
+describe('placing an image from the asset library (#52)', () => {
+  const photo = { id: 'a1', name: 'Sneaker.jpg', width: 1920, height: 1200 }
+
+  it('takes at most half the frame, keeps its shape and centres on the point', () => {
+    const layer = newImage(photo, { x: 540, y: 540 }, { width: 1080, height: 1080 })
+    expect(layer).toEqual({
+      type: 'graphic', name: 'Sneaker.jpg',
+      props: { x: 270, y: 371, width: 540, height: 338, shape: { kind: 'rect' }, fills: [{ type: 'image', assetId: 'a1', fit: 'fill' }] },
+    })
+    // A tall frame: the width is what limits it.
+    expect(newImage(photo, { x: 0, y: 0 }, { width: 300, height: 1000 }).props).toMatchObject({ width: 150, height: 94 })
+  })
+
+  it('keeps a small image at its own size and names an unnamed one Image', () => {
+    expect(newImage({ ...photo, name: ' ', width: 40, height: 30 }, { x: 100, y: 100 }, { width: 1080, height: 1080 })).toMatchObject({
+      name: 'Image', props: { x: 80, y: 85, width: 40, height: 30 },
+    })
   })
 })

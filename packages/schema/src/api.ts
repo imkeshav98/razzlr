@@ -83,6 +83,8 @@ export const AssetSummary = z.object({
   byteSize: z.number().int().positive(),
   width: z.number().int().positive(),
   height: z.number().int().positive(),
+  name: z.string(),
+  tags: z.array(z.string()),
   createdAt: z.iso.datetime(),
 })
 export type AssetSummary = z.infer<typeof AssetSummary>
@@ -92,6 +94,8 @@ export const StartUpload = z.object({
   sha256: Sha256,
   byteSize: z.number().int().positive().max(MAX_UPLOAD_BYTES),
   contentType: ImageType,
+  /** The asset's name, used when the API records it straight away. */
+  name: z.string().trim().min(1).max(120).optional(),
 })
 export type StartUpload = z.infer<typeof StartUpload>
 
@@ -102,8 +106,26 @@ export const UploadTicket = z.union([
 ])
 export type UploadTicket = z.infer<typeof UploadTicket>
 
-export const RecordAsset = z.object({ sha256: Sha256 })
+/** What a brand calls an asset (#52). */
+export const AssetName = z.string().trim().min(1).max(120)
+/** A word a brand finds assets by: lowercase, without spaces at either end (#52). */
+export const AssetTag = z.string().trim().toLowerCase().min(1).max(40)
+/** Most tags one asset has. */
+export const MAX_ASSET_TAGS = 20
+
+export const RecordAsset = z.object({ sha256: Sha256, name: AssetName.optional() })
 export type RecordAsset = z.infer<typeof RecordAsset>
+
+/** Renames an asset or sets its tags (#52); tags are kept once each, in the order given. */
+export const UpdateAsset = z.object({
+  name: AssetName.optional(),
+  tags: z.array(AssetTag).max(MAX_ASSET_TAGS).transform((tags) => [...new Set(tags)]).optional(),
+}).refine((u) => u.name !== undefined || u.tags !== undefined, 'send a name, tags or both')
+export type UpdateAsset = z.infer<typeof UpdateAsset>
+
+/** A short-lived URL to read something from storage. */
+export const SignedLink = z.object({ url: z.url(), expiresAt: z.iso.datetime() })
+export type SignedLink = z.infer<typeof SignedLink>
 
 /** An asset and a short-lived URL to read its original. */
 export const AssetLink = z.object({

@@ -1,6 +1,6 @@
 // The API, called from the web app's server only, with every response read through its contract.
 import 'server-only'
-import { ApiError, AssetLink, BrandSummary, DesignSummary, FontFace, FontFamily, FontLink, FontUploadTicket, SyncToken, WorkspaceSummary, type FontType } from '@razzlr/schema'
+import { ApiError, AssetLink, AssetSummary, BrandSummary, DesignSummary, FontFace, FontFamily, FontLink, FontUploadTicket, SignedLink, SyncToken, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type UpdateAsset } from '@razzlr/schema'
 import type { z } from 'zod'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8787'
@@ -82,4 +82,33 @@ export async function uploadFont(brandId: string, bytes: Uint8Array<ArrayBuffer>
   const put = await fetch(ticket.upload.url, { method: 'PUT', body: bytes, headers: ticket.upload.headers })
   if (!put.ok) throw new ApiFailure(502, `Storage answered ${put.status} to the upload`)
   return call(FontFace, brand, { method: 'POST', body: { sha256 } })
+}
+
+/** The brand's assets, newest first; with a query, those whose name or tags match every word of it (#52). */
+export const listAssets = (brandId: string, query = '') =>
+  call(AssetSummary.array(), `/brands/${encodeURIComponent(brandId)}/assets${query.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`)
+
+/** Renames an asset or sets its tags (#52). */
+export const updateAsset = (brandId: string, assetId: string, update: UpdateAsset) =>
+  call(AssetSummary, `/brands/${encodeURIComponent(brandId)}/assets/${encodeURIComponent(assetId)}`, { method: 'PATCH', body: update })
+
+/** A signed URL to the asset's thumbnail, or null when the API has no such asset for this session (#52). */
+export async function thumbnailLink(brandId: string, assetId: string) {
+  try {
+    return await call(SignedLink, `/brands/${encodeURIComponent(brandId)}/assets/${encodeURIComponent(assetId)}/thumbnail`)
+  } catch (e) {
+    if (e instanceof ApiFailure && e.status === 404) return null
+    throw e
+  }
+}
+
+/** Uploads an image for the brand under a name: asks, PUTs the bytes to storage when asked to, records it (#52). */
+export async function uploadAsset(brandId: string, bytes: Uint8Array<ArrayBuffer>, contentType: ImageType, name: string) {
+  const brand = `/brands/${encodeURIComponent(brandId)}/assets`
+  const sha256 = Buffer.from(await crypto.subtle.digest('SHA-256', bytes)).toString('hex')
+  const ticket = await call(UploadTicket, `${brand}/uploads`, { method: 'POST', body: { sha256, byteSize: bytes.length, contentType, name } })
+  if (ticket.asset) return ticket.asset
+  const put = await fetch(ticket.upload.url, { method: 'PUT', body: bytes, headers: ticket.upload.headers })
+  if (!put.ok) throw new ApiFailure(502, `Storage answered ${put.status} to the upload`)
+  return call(AssetSummary, brand, { method: 'POST', body: { sha256, name } })
 }

@@ -92,3 +92,26 @@ export function newText(x: number, y: number, box: { x: number; y: number; width
       : { x, y, width: 0, height: 0, text: '', boxMode: 'autoWidth', style: NEW_TEXT_STYLE },
   }
 }
+
+/** The most of a frame's width or height an image placed from the asset library takes at first (#52). */
+export const PLACED_SHARE = 0.5
+
+/**
+ * A graphic filled with an image asset (#52), centred on `at` in a frame of `frame` size: the
+ * image's own size, or smaller to take at most half the frame's width and height, its shape kept.
+ */
+export function newImage(asset: { id: string; name: string; width: number; height: number }, at: Point, frame: { width: number; height: number }): NewLayer {
+  const scale = Math.min(1, (frame.width * PLACED_SHARE) / asset.width, (frame.height * PLACED_SHARE) / asset.height)
+  // Whole pixels, so the image starts sharp.
+  const width = Math.max(1, Math.round(asset.width * scale))
+  const height = Math.max(1, Math.round(asset.height * scale))
+  return {
+    type: 'graphic',
+    name: asset.name.trim() || 'Image',
+    props: {
+      x: Math.round(at.x - width / 2), y: Math.round(at.y - height / 2), width, height,
+      shape: { kind: 'rect' },
+      fills: [{ type: 'image', assetId: asset.id, fit: 'fill' }],
+    },
+  }
+}
