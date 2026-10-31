@@ -32,7 +32,9 @@ export const editorPath = (designId: string) => `/brands/${DEV_BRAND}/designs/${
  * What the stage shows, with the panel capsule masked: it floats over the canvas (#82) and the AI
  * button's glow is always moving, so two shots of the same design would otherwise differ there.
  */
-export const stageShot = (page: Page) => page.getByTestId('stage').screenshot({ mask: [page.getByTestId('rail')] })
+export const stageShot = (page: Page) =>
+  // The canvas alone: the capsule and the islands floating over it (#110) are masked.
+  page.getByTestId('stage').screenshot({ mask: [page.getByTestId('rail'), page.getByTestId('island-start'), page.getByTestId('island-end')] })
 
 /** The design as the tab's document holds it now, as JSON with sorted keys so two tabs compare equal. */
 export const designOf = (page: Page) =>

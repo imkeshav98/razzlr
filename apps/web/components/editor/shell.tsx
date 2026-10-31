@@ -1,9 +1,10 @@
 'use client'
 
-// The editor's chrome (#51): a capsule floating over the canvas whose buttons open flyouts (Layers,
-// Assets, AI, Brand; #82), property cards floating at the top end (#83), a bottom tool dock and a
-// slot for the mini bar above the selection. The canvas runs edge to edge under all of it; the
-// stage is the editor itself, told which edges the chrome covers so it fits the ads between.
+// The editor's chrome (#51): no top bar, but two islands floating at the top (#110); a capsule
+// floating over the canvas whose buttons open flyouts (Layers, Assets, AI, Brand; #82); property
+// cards floating at the top end (#83); a bottom tool dock and a slot for the mini bar above the
+// selection. The canvas runs edge to edge under all of it; the stage is the editor itself, told
+// which edges the chrome covers so it fits the ads between.
 import {
   CloudArrowUpIcon, CloudCheckIcon, CloudSlashIcon, CursorIcon, FrameCornersIcon, HandIcon, ImageIcon, ImagesIcon, PaletteIcon, PenNibIcon, ShapesIcon,
   SlidersHorizontalIcon, SparkleIcon, StackIcon, TextTIcon, XIcon, type Icon,
@@ -48,11 +49,14 @@ const BLOB = { type: 'spring', stiffness: 520, damping: 34, mass: 0.9 } as const
 /** On arrival the blob is stretched along its travel and settles round: the squish. */
 const SQUISH = { tall: { scaleX: 0.78, scaleY: 1.28 }, wide: { scaleX: 1.28, scaleY: 0.78 }, still: { scaleX: 1, scaleY: 1 } }
 
-/** The design's save state (#37) and how the badge shows it. */
-const SAVE: Record<string, { icon: Icon; tone: string }> = {
-  Saved: { icon: CloudCheckIcon, tone: 'border-success/30 text-success' },
-  Saving: { icon: CloudArrowUpIcon, tone: 'border-line text-muted' },
-  Offline: { icon: CloudSlashIcon, tone: 'border-warning/40 text-warning' },
+/**
+ * The design's save state (#37) and how it shows: a small muted cloud while all is well (#110), so
+ * it never competes with the work; Offline (and an error) colour it and say so in words.
+ */
+const SAVE: Record<string, { icon: Icon; tone: string; words?: boolean }> = {
+  Saved: { icon: CloudCheckIcon, tone: 'text-subtle' },
+  Saving: { icon: CloudArrowUpIcon, tone: 'text-subtle' },
+  Offline: { icon: CloudSlashIcon, tone: 'text-warning', words: true },
 }
 /** Saving stays up at least this long, so a quick edit doesn't flicker the badge. */
 const SAVING_HOLD_MS = 600
@@ -99,14 +103,19 @@ function useShownStatus(status: string) {
 export interface ChromeInsets { top: number; right: number; bottom: number; left: number }
 
 /**
- * Measures how much of the stage the capsule, the cards and the dock cover. A piece in the stage's
- * lower part covers the bottom (the dock, and the capsule when it is the phones' tab bar); one on
- * the left or right of the middle covers that side. The phones' open sheet spans the stage, so
- * fitting around it would leave nothing: it counts for nothing, as do hidden pieces.
+ * Measures how much of the stage the islands, the capsule, the cards and the dock cover. The
+ * islands at the top (#110) cover the top. Of the other pieces, one in the stage's lower part covers
+ * the bottom (the dock, and the capsule when it is the phones' tab bar); one on the left or right of
+ * the middle covers that side. The phones' open sheet spans the stage, so fitting around it would
+ * leave nothing: it counts for nothing, as do hidden pieces.
  */
-function measureInsets(stage: DOMRect, pieces: (Element | null)[]): ChromeInsets {
+function measureInsets(stage: DOMRect, tops: (Element | null)[], pieces: (Element | null)[]): ChromeInsets {
   const insets = { top: 0, right: 0, bottom: 0, left: 0 }
   const gap = 12
+  for (const top of tops) {
+    const box = top?.getBoundingClientRect()
+    if (box && box.width > 0 && box.height > 0) insets.top = Math.max(insets.top, box.bottom - stage.top + gap)
+  }
   for (const piece of pieces) {
     const box = piece?.getBoundingClientRect()
     if (!box || box.width === 0 || box.height === 0) continue
@@ -158,6 +167,8 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
   const hasCards = Boolean(inspector)
 
   const stage = useRef<HTMLElement>(null)
+  const startIsland = useRef<HTMLDivElement>(null)
+  const endIsland = useRef<HTMLDivElement>(null)
   const rail = useRef<HTMLElement>(null)
   const cards = useRef<HTMLElement>(null)
   const dock = useRef<HTMLDivElement>(null)
@@ -167,32 +178,35 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
   useLayoutEffect(() => {
     const measure = () => {
       if (!stage.current) return
-      const insets = measureInsets(stage.current.getBoundingClientRect(), [rail.current, cards.current, dock.current])
+      const insets = measureInsets(stage.current.getBoundingClientRect(), [startIsland.current, endIsland.current], [rail.current, cards.current, dock.current])
       const key = JSON.stringify([insets, hasCards])
       if (key === reported.current) return
       reported.current = key
       report.current?.(insets, hasCards)
     }
     const watch = new ResizeObserver(measure)
-    for (const el of [stage.current, rail.current, cards.current, dock.current]) if (el) watch.observe(el)
+    for (const el of [stage.current, startIsland.current, endIsland.current, rail.current, cards.current, dock.current]) if (el) watch.observe(el)
     measure()
     return () => watch.disconnect()
   }, [hasCards])
 
   return (
     <MotionConfig reducedMotion="user">
-        <div className="grid h-dvh grid-rows-[48px_minmax(0,1fr)] overflow-hidden bg-bg text-text">
-          <header className="flex min-w-0 items-center gap-3 border-b border-line bg-surface ps-2 pe-3">
-            <Link href="/" aria-label={t.library.home} className="grid size-9 place-items-center rounded-row hover:bg-hover">
-              <BrandMark size={26} />
-            </Link>
-            <nav aria-label={t.library.designs} className="flex min-w-0 items-center gap-2 text-[13px]">
-              <Link href={`/brands/${brandId}`} className="truncate text-muted transition-colors hover:text-text">{brandName}</Link>
-              <span aria-hidden className="text-subtle">/</span>
-              <h1 className="truncate font-semibold">{designName}</h1>
-            </nav>
-            <div className="ms-auto flex items-center gap-2">
-              {actions}
+        <div className="h-dvh overflow-hidden bg-bg text-text">
+          <div className="relative flex h-full min-h-0">
+          {/* No top bar (#110): two islands float over the canvas, the design's name and save state at
+              the start and its actions at the end, with no surface of their own, clear of the rulers (top and
+              left in either direction, so the insets swap in right-to-left). */}
+          <header className="pointer-events-none absolute start-8 end-3 rtl:start-3 rtl:end-8 top-8 z-30 flex items-center justify-between gap-3">
+            <div ref={startIsland} data-testid="island-start" className="pointer-events-auto flex min-w-0 items-center gap-2">
+              <Link href="/" aria-label={t.library.home} className="grid size-9 shrink-0 place-items-center rounded-row hover:bg-hover">
+                <BrandMark size={28} />
+              </Link>
+              <nav aria-label={t.library.designs} className="flex min-w-0 items-center gap-1.5 text-[13px]">
+                <Link href={`/brands/${brandId}`} className="truncate text-muted transition-colors hover:text-text max-sm:hidden">{brandName}</Link>
+                <span aria-hidden className="text-subtle max-sm:hidden">/</span>
+                <h1 className="truncate font-display text-sm font-semibold tracking-tight">{designName}</h1>
+              </nav>
               <span
                 role="status"
                 aria-atomic="true"
@@ -202,26 +216,27 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                 data-ready={save && fitted ? '' : undefined}
                 title={save ? t.editor.statusHint[shown] : undefined}
                 className={cn(
-                  'flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors duration-[var(--chrome)]',
-                  failed ? 'border-danger/40 text-danger' : save ? save.tone : 'border-line text-muted',
+                  'flex h-7 shrink-0 items-center gap-1.5 text-xs font-medium transition-colors duration-[var(--chrome)]',
+                  failed ? 'text-danger' : save ? save.tone : 'text-subtle',
                 )}
               >
                 {save ? (
-                  <save.icon size={14} weight={shown === 'Saved' ? 'fill' : 'regular'} aria-hidden className={cn(shown === 'Saving' && 'animate-pulse')} />
+                  <save.icon size={17} aria-hidden className={cn(shown === 'Saving' && 'animate-pulse')} />
                 ) : (
                   <span aria-hidden className={cn('size-1.5 rounded-full', failed ? 'bg-danger' : 'animate-pulse bg-subtle')} />
                 )}
-                {t.editor.statusText[shown] ?? shown}
+                <span className={cn(!(failed || save?.words) && 'sr-only')}>{t.editor.statusText[shown] ?? shown}</span>
                 {shown === 'Offline' && <span className="hidden font-normal text-muted md:inline">{t.editor.statusHint.Offline}</span>}
               </span>
+            </div>
+            <div ref={endIsland} data-testid="island-end" className="pointer-events-auto flex shrink-0 items-center gap-2">
+              {actions}
               <span className="hidden sm:contents">
                 <LocaleSwitch />
               </span>
               <ThemeSwitch />
             </div>
           </header>
-
-          <div className="relative flex min-h-0">
             <nav
               ref={rail}
               aria-label={t.editor.tools}
@@ -283,7 +298,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                   exit={{ opacity: 0, x: rtl ? 12 : -12 }}
                   transition={chrome}
                   data-testid="flyout"
-                  className="absolute start-[4.75rem] top-7 z-10 flex max-h-[calc(100%-2.5rem)] w-72 flex-col overflow-hidden rounded-card surface-frost border shadow-panel max-sm:inset-x-3 max-sm:start-3 max-sm:top-auto max-sm:bottom-[8.5rem] max-sm:w-auto"
+                  className="absolute start-[4.75rem] top-20 z-10 flex max-h-[calc(100%-5.75rem)] w-72 flex-col overflow-hidden rounded-card surface-frost border shadow-panel max-sm:inset-x-3 max-sm:start-3 max-sm:top-auto max-sm:bottom-[8.5rem] max-sm:w-auto"
                 >
                   <div className="flex h-12 shrink-0 items-center justify-between border-b border-line ps-4 pe-2">
                     <h2 className={cn('font-display text-[15px] font-semibold tracking-tight', flyout === 'ai' && 'bg-[image:var(--ai-gradient)] bg-clip-text text-transparent')}>{panelTitle(flyout)}</h2>
@@ -347,9 +362,9 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                 data-testid="cards"
                 data-open={panel === 'properties' ? '' : undefined}
                 className={cn(
-                  // A stack at the top end, below the ruler, each card only as tall as its content; past
-                  // the room above the zoom pill the stack scrolls. Its gaps let clicks through.
-                  'pointer-events-none absolute end-3 top-7 z-20 flex max-h-[calc(100%-6.25rem)] w-72 flex-col gap-2 overflow-y-auto overscroll-contain [scrollbar-width:none] *:pointer-events-auto',
+                  // A stack at the top end, below the end island, each card only as tall as its content;
+                  // past the room above the zoom pill the stack scrolls. Its gaps let clicks through.
+                  'pointer-events-none absolute end-3 top-20 z-20 flex max-h-[calc(100%-9.5rem)] w-72 flex-col gap-2 overflow-y-auto overscroll-contain [scrollbar-width:none] *:pointer-events-auto',
                   // On phones, a bottom sheet over the dock, opened from the tab bar.
                   'max-sm:inset-x-2 max-sm:top-auto max-sm:bottom-[4.75rem] max-sm:max-h-[55%] max-sm:w-auto max-sm:not-data-[open]:hidden',
                 )}

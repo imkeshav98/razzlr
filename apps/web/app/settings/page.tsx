@@ -25,7 +25,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   }
 
   return (
-    <LibraryShell t={t} words={brandWords(t, workspace.kind)} brands={brands} showBrands={showsBrandList(workspace.kind, brands)}>
+    <LibraryShell t={t} words={brandWords(t, workspace.kind)} brands={brands} showBrands={showsBrandList(workspace.kind, brands)} place="settings">
       <h1 className="font-display text-3xl font-semibold tracking-tight">{t.settings.title}</h1>
       <section aria-labelledby="kind-title" className="mt-8">
         <h2 id="kind-title" className="font-display text-lg font-semibold tracking-tight">{t.settings.kind}</h2>
