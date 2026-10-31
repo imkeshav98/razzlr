@@ -18,6 +18,7 @@
     "@razzlr/schema": "workspace:*",
     "@razzlr/storage": "workspace:*",
     "@razzlr/sync-token": "workspace:*",
+    "@workos-inc/node": "11.0.0",
     "drizzle-orm": "^0.45.0",
     "hono": "^4.13.0",
     "yjs": "^13.6.27",

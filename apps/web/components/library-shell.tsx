@@ -7,6 +7,7 @@ import type { BrandWords, Messages } from '../lib/i18n/index.ts'
 import type { BrandSummary } from '@razzlr/schema'
 import { BrandMark } from './brand-mark.tsx'
 import { LocaleSwitch } from './locale-switch.tsx'
+import { SignOut } from './sign-out.tsx'
 import { ThemeSwitch } from './theme-switch.tsx'
 
 const initials = (name: string) => name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase()
@@ -83,6 +84,7 @@ export function LibraryShell({ t, words, brands, activeBrandId, showBrands = tru
           <Link href="/settings" aria-label={t.library.settings} title={t.library.settings} className="grid size-9 place-items-center rounded-row text-muted transition-colors duration-[var(--chrome-fast)] hover:bg-hover hover:text-text">
             <GearSixIcon size={18} aria-hidden />
           </Link>
+          <SignOut />
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-8 md:py-10">{children}</main>
       </div>

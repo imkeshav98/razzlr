@@ -5,7 +5,7 @@ import type { DesignInput } from '@razzlr/schema'
 import { writeOutput } from '../support/editor.ts'
 import { seed } from '../support/seed.ts'
 
-const shoot = async (page: Page, name: string) => writeOutput(`home-${name}.png`, await page.screenshot({ fullPage: true }))
+const shoot = async (page: Page, name: string, fullPage = false) => writeOutput(`home-${name}.png`, await page.screenshot({ fullPage }))
 
 /** A design in one format with a coloured page and a block, so its picture is easy to tell apart. */
 const poster = (name: string, width: number, height: number, page: string, block: string): DesignInput => ({
@@ -69,10 +69,12 @@ test('recent work is a bento of real pictures: the latest large, a story tall, a
     for (const [i, c] of colour.entries()) expect(Math.abs((pixel[i] ?? 0) - c), `${name} channel ${i}`).toBeLessThanOrEqual(2)
   }
   await page.waitForTimeout(400)
-  await shoot(page, 'bento')
+  await shoot(page, 'bento', true)
 })
 
 test('Make drafts opens a design in the formats the brief picked, named by the brief', async ({ page }) => {
+  // The home, then the editor opening, which alone may take its 30 s on a busy runner.
+  test.setTimeout(60_000)
   await page.goto('/brands/dev-brand-coffee')
   const brief = `Autumn roast launch ${crypto.randomUUID().slice(0, 6)}`
   await page.getByLabel('Brief').fill(`${brief}\nWarm, cosy, a cup on a wooden table`)
@@ -99,6 +101,6 @@ test('on a phone the brief and the bento fit the screen', async ({ browser }) =>
   // Nothing runs off the side.
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
   await page.waitForTimeout(400)
-  await shoot(page, 'phone')
+  await shoot(page, 'phone', true)
   await context.close()
 })

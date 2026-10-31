@@ -148,16 +148,43 @@ body {
   }
 }
 
-/* The AI glow: a slow drift of the gradient behind AI controls only. */
+/* The AI glow: a slow drift of the gradient behind AI controls only. The gradient is a layer twice
+   the control's width that slides, so the drift is a compositor transform, never a repaint: a
+   repaint every frame also repainted whatever blurs behind the control, like the home's aurora,
+   which made software-rendered pages (CI) slow to draw. The element needs a position, as all do. */
 @keyframes ai-drift {
-  from { background-position: 0 0, 0% 50%; }
-  to { background-position: 0 0, 100% 50%; }
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes ai-drift-rtl {
+  from { transform: translateX(0); }
+  to { transform: translateX(50%); }
+}
+.ai-glow {
+  isolation: isolate;
+  overflow: hidden;
+}
+.ai-glow::before,
+.ai-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.ai-glow::before {
+  inset-inline-end: auto;
+  width: 200%;
+  background-image: var(--ai-gradient);
+  animation: ai-drift 6s ease-in-out infinite alternate;
+}
+[dir='rtl'] .ai-glow::before {
+  animation-name: ai-drift-rtl;
 }
 /* A fine halftone over the gradient, like a riso print's dot screen. */
-.ai-glow {
-  background-image: radial-gradient(circle, rgb(255 255 255 / 0.3) 22%, transparent 24%), var(--ai-gradient);
-  background-size: 5px 5px, 200% 200%;
-  animation: ai-drift 6s ease-in-out infinite alternate;
+.ai-glow::after {
+  background-image: radial-gradient(circle, rgb(255 255 255 / 0.3) 22%, transparent 24%);
+  background-size: 5px 5px;
 }
 
 /* Frosted surfaces (#81) for chrome that floats over the canvas: dock, zoom, flyouts, menus. */
