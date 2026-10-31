@@ -1,11 +1,12 @@
 // The API's routes. /workspace and every route below /brands need a session, and reads and writes only that
 // session's workspace; a brand or design of another workspace is answered as if it didn't exist.
 import type { Db } from '@razzlr/db'
-import { CreateBrand, CreateDesign, RecordAsset, RecordFont, StartFontUpload, StartUpload, UpdateAsset, UpdateWorkspace, type ApiError, type AssetLink, type SignedLink, type SyncToken } from '@razzlr/schema'
+import { BrandKit, CreateBrand, CreateDesign, RecordAsset, RecordFont, StartFontUpload, StartUpload, UpdateAsset, UpdateWorkspace, type ApiError, type AssetLink, type SignedLink, type SyncToken } from '@razzlr/schema'
 import type { Storage } from '@razzlr/storage'
 import { signSyncToken } from '@razzlr/sync-token'
 import { Hono, type MiddlewareHandler } from 'hono'
 import type { z } from 'zod'
+import { getBrandKit, InvalidKit, saveBrandKit } from './brand-kits.ts'
 import { ensureThumbnail, findAsset, InvalidUpload, listAssets, originalKey, recordAsset, SIGNED_URL_SECONDS, startUpload, updateAsset } from './assets.ts'
 import { fontLink, InvalidFont, listFonts, recordFont, startFontUpload } from './fonts.ts'
 import { createBrand, createDesign, findBrand, findDesign, findWorkspace, InvalidContent, listBrands, listDesigns, setWorkspaceKind } from './designs.ts'
@@ -156,6 +157,28 @@ export function createApp({ db, storage, sessionOf, syncSecret }: { db: Db; stor
     if (!asset) return c.json(error('No such asset'), 404)
     const url = await storage.signedGet(await ensureThumbnail(storage, workspaceId, asset), SIGNED_URL_SECONDS)
     return c.json({ url, expiresAt: new Date(Date.now() + SIGNED_URL_SECONDS * 1000).toISOString() } satisfies SignedLink)
+  })
+
+  // Brand kits (#53): the colours and fonts designs bind to, the logo and the tone of voice.
+  app.get('/brands/:brandId/kit', async (c) => {
+    const { workspaceId } = c.var.session
+    const brand = await findBrand(db, workspaceId, c.req.param('brandId'))
+    if (!brand) return c.json(error('No such brand'), 404)
+    return c.json(await getBrandKit(db, workspaceId, brand.id))
+  })
+
+  app.put('/brands/:brandId/kit', async (c) => {
+    const { workspaceId } = c.var.session
+    const brand = await findBrand(db, workspaceId, c.req.param('brandId'))
+    if (!brand) return c.json(error('No such brand'), 404)
+    const input = await body(c.req.raw, BrandKit)
+    if (input instanceof Response) return input
+    try {
+      return c.json(await saveBrandKit(db, workspaceId, brand.id, input))
+    } catch (e) {
+      if (e instanceof InvalidKit) return c.json(error(e.message), 400)
+      throw e
+    }
   })
 
   // Fonts (#50): Google Fonts copied into our storage and the brand's uploads, read back from there.

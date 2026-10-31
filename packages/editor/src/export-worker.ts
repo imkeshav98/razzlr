@@ -24,7 +24,7 @@ scope.onmessage = async ({ data: job }) => {
     if (job.fonts) bytes.fonts = job.fonts
     if (job.fallbackFamilies) bytes.fallbackFamilies = job.fallbackFamilies
     Object.assign(bytes.images, job.images)
-    const file: ExportedFile = exportDesign(ck, JSON.parse(job.design), job.request, bytes, cache, (done, total) => scope.postMessage({ id: job.id, kind: 'progress', done, total }))
+    const file: ExportedFile = exportDesign(ck, JSON.parse(job.design), job.request, { ...bytes, ...(job.variables ? { variables: job.variables } : {}) }, cache, (done, total) => scope.postMessage({ id: job.id, kind: 'progress', done, total }))
     scope.postMessage({ id: job.id, kind: 'done', file }, [file.bytes.buffer])
   } catch (error) {
     scope.postMessage({ id: job.id, kind: 'error', message: error instanceof Error ? error.message : String(error) })

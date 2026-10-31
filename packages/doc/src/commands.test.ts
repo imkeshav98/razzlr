@@ -410,6 +410,37 @@ describe('commands', () => {
     expect(() => tab.run('node.mask', { ids: ['box'], mask: null })).toThrow(/locked \(style\)/)
   })
 
+  it('node.bind binds a fill, text colour and font to brand tokens and unbinds them, each one undo step (#53)', () => {
+    const doc = freshDoc()
+    const tab = openSession(doc)
+    tab.run('node.bind', { ids: ['box'], target: 'fill', ref: 'brand:primary', value: '#E0262BFF' })
+    let design = readDesign(doc)
+    expect(design.nodes.box?.bindings).toEqual({ fill: 'brand:primary' })
+    // The token's value is stored too, for drawing without the brand kit.
+    expect(design.nodes.box?.type === 'graphic' && design.nodes.box.props.fills.at(-1)).toMatchObject({ type: 'solid', color: '#E0262BFF' })
+    tab.run('node.bind', { ids: ['headline'], target: 'fontFamily', ref: 'brand:heading', value: 'Playfair Display' })
+    tab.run('node.bind', { ids: ['headline'], target: 'textColor', ref: 'brand:primary', value: '#E0262BFF' })
+    design = readDesign(doc)
+    expect(design.nodes.headline?.bindings).toEqual({ fontFamily: 'brand:heading', textColor: 'brand:primary' })
+    expect(design.nodes.headline?.type === 'text' && design.nodes.headline.props.style).toMatchObject({ fontFamily: 'Playfair Display', color: '#E0262BFF' })
+    // Unbinding keeps the value; the last binding gone, the key goes.
+    tab.run('node.bind', { ids: ['box'], target: 'fill', ref: null })
+    design = readDesign(doc)
+    expect(design.nodes.box).not.toHaveProperty('bindings')
+    expect(design.nodes.box?.type === 'graphic' && design.nodes.box.props.fills.at(-1)).toMatchObject({ color: '#E0262BFF' })
+    tab.undo()
+    expect(readDesign(doc).nodes.box?.bindings).toEqual({ fill: 'brand:primary' })
+    tab.undo()
+    tab.undo()
+    expect(readDesign(doc).nodes.headline).not.toHaveProperty('bindings')
+    // A text layer has no fill, a binding needs the value, and a locked style can't be bound.
+    expect(() => tab.run('node.bind', { ids: ['headline'], target: 'fill', ref: 'brand:primary', value: '#E0262BFF' })).toThrow(/a text has no fill/)
+    expect(() => tab.run('node.bind', { ids: ['box'], target: 'fill', ref: 'brand:primary' })).toThrow(/needs the value/)
+    expect(() => tab.run('node.bind', { ids: ['box'], target: 'fill', ref: 'brand:primary', value: 'red' })).toThrow(/#RRGGBBAA/)
+    tab.run('node.lock', { ids: ['box'], lock: { style: true } })
+    expect(() => tab.run('node.bind', { ids: ['box'], target: 'fill', ref: null })).toThrow(/locked \(style\)/)
+  })
+
   describe('design.place', () => {
     // A group holding a box and a text, as a copy puts it on the clipboard.
     const tree = () => ({

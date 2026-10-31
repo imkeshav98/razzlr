@@ -1,4 +1,4 @@
-import { BooleanOp, canHold, Format, LayerTree, FormatId, formatIdOf, formatSizeProblem, Layer, LAYER_PROPS, LayerLock, LOCK_FLAGS, type Layer as LayerT, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
+import { BINDING_TARGETS, BooleanOp, canBind, canHold, fitsTarget, Paint, VariableRef, Format, LayerTree, FormatId, formatIdOf, formatSizeProblem, Layer, LAYER_PROPS, LayerLock, LOCK_FLAGS, type Layer as LayerT, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
 import { generateKeyBetween } from 'fractional-indexing'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
@@ -211,6 +211,49 @@ export const nodeLock = defineCommand({
       const next = LayerLock.parse({ ...design.nodes[id]?.lock, ...lock })
       if (LOCK_FLAGS.some((flag) => next[flag])) r.nodes.get(id)?.set('lock', next)
       else r.nodes.get(id)?.delete('lock')
+    }
+  },
+})
+
+/**
+ * Binds a property of layers to a brand kit token, or unbinds it with a null ref (#53). Binding
+ * also stores the token's value as the property's own, so a design drawn without the brand kit (or
+ * before it loads) still looks as it did; a fill binds the topmost solid fill, added if there is none.
+ * Unbinding keeps the value the property has.
+ */
+export const nodeBind = defineCommand({
+  name: 'node.bind',
+  input: z.object({ ids: NodeId.array().min(1), target: z.enum(BINDING_TARGETS), ref: VariableRef.nullable(), value: z.string().optional() }),
+  check: ({ design }, { ids, target, ref, value }) => {
+    if (ref && value === undefined) return 'binding needs the value the token has now'
+    if (value !== undefined && !fitsTarget(target, value)) return target === 'fontFamily' ? 'a font family needs a name' : 'colours are #RRGGBBAA'
+    for (const id of ids) {
+      const node = design.nodes[id]
+      if (!node) return `no layer "${id}"`
+      if (!canBind(node.type, target)) return `a ${node.type} has no ${target} to bind`
+      const locked = lockProblem(id, node, 'style')
+      if (locked) return locked
+    }
+    return undefined
+  },
+  apply: ({ r, design }, { ids, target, ref, value }) => {
+    for (const id of ids) {
+      const node = design.nodes[id]
+      const ynode = r.nodes.get(id)
+      if (!node || !ynode) continue
+      const bindings = Object.fromEntries(Object.entries({ ...node.bindings, [target]: ref }).filter(([, v]) => v))
+      if (Object.keys(bindings).length > 0) ynode.set('bindings', bindings)
+      else ynode.delete('bindings')
+      if (value === undefined) continue
+      const props = ynode.get('props') as Y.Map<unknown>
+      if (target === 'fill') {
+        const fills = (props.get('fills') ?? []) as z.infer<typeof Paint>[]
+        const at = fills.findLastIndex((f) => f.type === 'solid')
+        props.set('fills', at < 0 ? [...fills, { type: 'solid', color: value }] : fills.map((f, i) => (i === at ? { ...f, color: value } : f)))
+      } else {
+        const key = target === 'textColor' ? 'color' : 'fontFamily'
+        props.set('style', { ...(props.get('style') as Record<string, unknown>), [key]: value })
+      }
     }
   },
 })
@@ -846,6 +889,7 @@ export const COMMANDS = {
   'node.delete': nodeDelete,
   'node.lock': nodeLock,
   'node.mask': nodeMask,
+  'node.bind': nodeBind,
   'node.reorder': nodeReorder,
   'node.duplicate': nodeDuplicate,
   'design.place': designPlace,

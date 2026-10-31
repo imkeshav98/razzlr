@@ -1,6 +1,6 @@
 // The API, called from the web app's server only, with every response read through its contract.
 import 'server-only'
-import { ApiError, AssetLink, AssetSummary, BrandSummary, DesignSummary, FontFace, FontFamily, FontLink, FontUploadTicket, SignedLink, SyncToken, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type UpdateAsset } from '@razzlr/schema'
+import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignSummary, FontFace, FontFamily, FontLink, FontUploadTicket, SignedLink, SyncToken, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type UpdateAsset } from '@razzlr/schema'
 import type { z } from 'zod'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8787'
@@ -112,3 +112,9 @@ export async function uploadAsset(brandId: string, bytes: Uint8Array<ArrayBuffer
   if (!put.ok) throw new ApiFailure(502, `Storage answered ${put.status} to the upload`)
   return call(AssetSummary, brand, { method: 'POST', body: { sha256, name } })
 }
+
+/** The brand's kit (#53): its colours and fonts designs bind to, its logo and its tone of voice. */
+export const getBrandKit = (brandId: string) => call(BrandKit, `/brands/${encodeURIComponent(brandId)}/kit`)
+
+/** Saves the brand's whole kit (#53). */
+export const saveBrandKit = (brandId: string, kit: BrandKit) => call(BrandKit, `/brands/${encodeURIComponent(brandId)}/kit`, { method: 'PUT', body: kit })

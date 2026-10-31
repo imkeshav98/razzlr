@@ -2,7 +2,7 @@
 // workspace (ADR-0011); the API scopes every query by them. Change these, then write a migration with
 // `pnpm --filter @razzlr/db migration`.
 import { sql } from 'drizzle-orm'
-import { check, customType, foreignKey, index, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
+import { check, customType, foreignKey, index, integer, jsonb, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
 
 const bytea = customType<{ data: Uint8Array; driverData: Buffer }>({
   dataType: () => 'bytea',
@@ -75,6 +75,22 @@ export const assets = pgTable('assets', {
 }, (t) => [
   unique('assets_brand_sha256').on(t.brandId, t.sha256),
   foreignKey({ name: 'assets_brand_in_workspace', columns: [t.brandId, t.workspaceId], foreignColumns: [brands.id, brands.workspaceId] }),
+])
+
+/**
+ * A brand's kit (#53): the colours and fonts designs bind to as `brand:<token>`, its logo and its
+ * tone of voice. One row per brand, made the first time the kit is saved.
+ */
+export const brandKits = pgTable('brand_kits', {
+  brandId: text('brand_id').primaryKey(),
+  workspaceId: text('workspace_id').notNull().references(() => workspaces.id),
+  colors: jsonb().$type<{ token: string; name: string; value: string }[]>().notNull().default([]),
+  fonts: jsonb().$type<{ token: string; name: string; family: string }[]>().notNull().default([]),
+  logoAssetId: text('logo_asset_id').references(() => assets.id, { onDelete: 'set null' }),
+  voice: text().notNull().default(''),
+  updatedAt: updatedAt(),
+}, (t) => [
+  foreignKey({ name: 'brand_kits_brand_in_workspace', columns: [t.brandId, t.workspaceId], foreignColumns: [brands.id, brands.workspaceId] }),
 ])
 
 /**

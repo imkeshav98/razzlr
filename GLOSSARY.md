@@ -17,8 +17,12 @@ What a workspace makes work for: a solo user's business, a company's product lin
 _Avoid_: Client (except as an agency workspace's word for a brand in UI copy), customer, project
 
 **Brand kit**:
-A brand's logo, colours, fonts and tone of voice, applied automatically. Its colours and fonts are exposed to designs as variables.
+A brand's logo, colours, fonts and tone of voice, applied automatically. Its colours and fonts are exposed to designs as variables, `brand:<token>`: a layer's fill, text colour or font family bound to one follows the brand, so changing the brand colour changes every design that uses it.
 _Avoid_: Brand guide, theme, style
+
+**Binding**:
+A layer property that follows a variable, such as a fill bound to `brand:primary`. The layer also keeps the value it had, which it shows wherever the variable has none.
+_Avoid_: Link, sync, style reference
 
 **Asset library**:
 A brand's uploaded images, each with a name and tags it is found by. Placing one on a design makes a graphic whose fill is that image; the original is stored once per workspace, but each brand's asset, name and tags are its own.

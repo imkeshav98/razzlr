@@ -11,7 +11,8 @@ import { ZoomControl } from '../../../../../components/editor/zoom-control.tsx'
 import { ExportMenu } from '../../../../../components/editor/export-menu.tsx'
 import { FontPanel } from '../../../../../components/editor/font-panel.tsx'
 import { ASSET_DRAG_TYPE, AssetLibrary, draggedAsset } from '../../../../../components/editor/asset-library.tsx'
-import { FontFamily } from '@razzlr/schema'
+import { BrandKitPanel } from '../../../../../components/editor/brand-kit-panel.tsx'
+import { BrandKit, brandVariables, FontFamily, type Variables } from '@razzlr/schema'
 
 declare global {
   interface Window { razzlr?: Editor }
@@ -48,6 +49,16 @@ function fontLoader(brandId: string) {
       return { family: face.family, bytes: new Uint8Array(await response.arrayBuffer()) }
     }))
   }
+}
+
+/**
+ * The values of the brand kit's tokens (#53), for layers bound to them. Without a connection the
+ * editor starts without them, and bound layers keep the values they were bound with.
+ */
+async function brandKitVariables(brandId: string): Promise<Variables | undefined> {
+  const response = await fetch(`/brands/${encodeURIComponent(brandId)}/kit`).catch(() => null)
+  if (!response?.ok) return undefined
+  return brandVariables(BrandKit.parse(await response.json()))
 }
 
 /** Asks the offline worker to keep this page and everything it has loaded so far. */
@@ -101,11 +112,13 @@ export function EditorStage({ designId, designName, brandId, brandName, formatId
     if (!canvas.current || !overlay.current) return
     let editor: Editor | undefined
     const unmounted = new AbortController()
-    startEditor({
-      canvas: canvas.current, overlay: overlay.current, designId, syncUrl,
-      syncToken: () => fetchSyncToken(brandId, designId), assetBytes: (assetId) => assetBytes(brandId, assetId), fontFiles: fontLoader(brandId),
-      ...(formatId ? { formatId } : {}), onStatus: setStatus, onZoom: setZoom, signal: unmounted.signal,
-    })
+    const [stage, layer] = [canvas.current, overlay.current]
+    brandKitVariables(brandId)
+      .then((variables) => startEditor({
+        canvas: stage, overlay: layer, designId, syncUrl,
+        syncToken: () => fetchSyncToken(brandId, designId), assetBytes: (assetId) => assetBytes(brandId, assetId), fontFiles: fontLoader(brandId),
+        ...(variables ? { variables } : {}), ...(formatId ? { formatId } : {}), onStatus: setStatus, onZoom: setZoom, signal: unmounted.signal,
+      }))
       .then((started) => {
         if (unmounted.signal.aborted) return started.destroy()
         editor = started
@@ -139,7 +152,7 @@ export function EditorStage({ designId, designName, brandId, brandName, formatId
         editor?.setTool(tool === 'hand' || tool === 'pen' || tool === 'text' ? tool : tool === 'shape' ? picked : 'select')
       }}
       actions={editor ? <ExportMenu editor={editor} /> : undefined}
-      panels={editor ? { assets: <AssetLibrary editor={editor} brandId={brandId} /> } : {}}
+      panels={editor ? { assets: <AssetLibrary editor={editor} brandId={brandId} />, brand: <BrandKitPanel editor={editor} brandId={brandId} /> } : {}}
       inspector={editor ? (
         <>
           <ArrangePanel editor={editor} />

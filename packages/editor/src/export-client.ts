@@ -2,7 +2,7 @@
 // fonts and images only the first time the worker needs them.
 import type { ExportedFile } from '@razzlr/export'
 import type { ResourceBytes } from '@razzlr/renderer'
-import type { Design, ExportRequestInput } from '@razzlr/schema'
+import type { Design, ExportRequestInput, Variables } from '@razzlr/schema'
 
 export interface ExportJob {
   id: number
@@ -12,6 +12,8 @@ export interface ExportJob {
   fonts?: ResourceBytes['fonts']
   fallbackFamilies?: string[]
   images: Record<string, Uint8Array>
+  /** The brand kit's values bound layers take (#53), sent with every job: they are small. */
+  variables?: Variables
 }
 export type ExportReply =
   | { id: number; kind: 'progress'; done: number; total: number }
@@ -54,7 +56,7 @@ export function exportClient() {
       const id = next++
       const fresh = fontsSent !== bytes.fonts
       const images = Object.fromEntries(Object.entries(bytes.images).filter(([assetId, data]) => imagesSent.get(assetId) !== data))
-      const job: ExportJob = { id, design: JSON.stringify(design), request, images, ...(fresh ? { fonts: bytes.fonts, fallbackFamilies: bytes.fallbackFamilies } : {}) }
+      const job: ExportJob = { id, design: JSON.stringify(design), request, images, ...(bytes.variables ? { variables: bytes.variables } : {}), ...(fresh ? { fonts: bytes.fonts, fallbackFamilies: bytes.fallbackFamilies } : {}) }
       const result = new Promise<ExportedFile>((resolve, reject) => waiting.set(id, { resolve, reject, ...(progress ? { progress } : {}) }))
       worker.postMessage(job)
       fontsSent = bytes.fonts

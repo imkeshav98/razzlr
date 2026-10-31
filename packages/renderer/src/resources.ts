@@ -1,4 +1,5 @@
 import type { CanvasKit, FontCollection, Image, TypefaceFontProvider } from 'canvaskit-wasm'
+import type { Variables } from '@razzlr/schema'
 import type { Resources } from './draw.ts'
 
 export interface ResourceBytes {
@@ -7,6 +8,8 @@ export interface ResourceBytes {
   fallbackFamilies: string[]
   /** Encoded images (PNG, JPEG, WebP) by asset id, from originals or renditions we store. */
   images: Record<string, Uint8Array>
+  /** The values bound properties take: the brand kit's colours and fonts by `brand:<token>` (#53). */
+  variables?: Variables
 }
 
 /** Registers fonts and decodes images with CanvasKit itself, so every runtime reads the same bytes the same way. */
