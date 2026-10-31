@@ -15,6 +15,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { cn } from '../../lib/cn.ts'
 import { useLocale, useMessages } from '../../lib/i18n/client.tsx'
 import { dirOf, format } from '../../lib/i18n/index.ts'
+import { useLiveDesign } from './use-live-design.ts'
 
 /** A row's height in pixels: every row is the same, which is what lets only the rows in view render. */
 export const LAYER_ROW = 28
@@ -58,21 +59,6 @@ function iconOf(node: Layer): Icon {
 }
 
 const isLocked = (node: Layer) => LOCK_FLAGS.some((flag) => node.lock?.[flag])
-
-/**
- * The design and a count of the changes to it. The editor's design is live, the same object as it
- * changes, so the count is what tells the panel to read it again.
- */
-function useLiveDesign(editor: Editor) {
-  const [version, setVersion] = useState(0)
-  useEffect(() => {
-    const stop = editor.onDraw(() => setVersion((v) => v + 1))
-    return () => {
-      stop()
-    }
-  }, [editor])
-  return { design: editor.design(), version }
-}
 
 /** The selection and the frame it is in, kept current. */
 function useSelection(editor: Editor) {

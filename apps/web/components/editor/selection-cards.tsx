@@ -8,12 +8,13 @@
 import { MinusIcon, PlusIcon } from '@phosphor-icons/react'
 import type { Editor } from '@razzlr/editor'
 import { BlendMode, ContainerBlendMode, type Design, type Effect, type Paint } from '@razzlr/schema'
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useId, useRef, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format, type Messages } from '../../lib/i18n/index.ts'
 import { CARD, CardHeader } from './card.tsx'
 import { ICON_BUTTON } from './formats-panel.tsx'
+import { useLiveDesign } from './use-live-design.ts'
 
 type Props = Readonly<Record<string, unknown>>
 type Patch = Record<string, unknown>
@@ -24,18 +25,6 @@ const SELECT = 'h-7 min-w-0 w-full rounded-row border border-line bg-surface px-
 const LABEL = 'text-[11px] font-medium text-muted'
 const NEW_FILL: Paint = { type: 'solid', color: '#D9D9D9FF' }
 const NEW_STROKE = { paint: { type: 'solid', color: '#1A1420FF' } as Paint, width: 2, align: 'center' as const }
-
-/** The design and a count of its changes: the editor's design is live, the same object as it changes. */
-export function useLiveDesign(editor: Editor) {
-  const [version, setVersion] = useState(0)
-  useEffect(() => {
-    const stop = editor.onDraw(() => setVersion((v) => v + 1))
-    return () => {
-      stop()
-    }
-  }, [editor])
-  return { design: editor.design(), version }
-}
 
 /** What the cards act on: the layers, the frame they are shown in, and where changes go. */
 interface Target {
