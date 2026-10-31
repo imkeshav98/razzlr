@@ -29,6 +29,27 @@
       "when": 1793388838205,
       "tag": "0003_workspaces-brands",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793432973640,
+      "tag": "0004_font-faces",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793436267430,
+      "tag": "0005_asset-names-tags",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793438254681,
+      "tag": "0006_brand-kits",
+      "breakpoints": true
     }
   ]
 }

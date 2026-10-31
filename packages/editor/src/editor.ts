@@ -8,7 +8,7 @@ import {
   caretAt, caretPosition, drawPage, layerPictures, paragraphCache, selectionBoxes, render, renderDesign, resourceCache, sceneMemo, textMeasure, type MeasureText, type ResourceCache, type Resources, type Scene, type SceneLayer,
 } from '@razzlr/renderer'
 import {
-  canHold, imageAssetIds, isContainer, LAYER_CLIPBOARD_TYPE, LayerClipboard, LOCK_FLAGS, SCHEMA_VERSION, type Design, type Layer, type LayerTree, type Paint,
+  canBind, canHold, fontFamilies, imageAssetIds, isContainer, LAYER_CLIPBOARD_TYPE, LayerClipboard, LOCK_FLAGS, SCHEMA_VERSION, type BindingTarget, type Design, type ExportRequestInput, type Layer, type LayerTree, type Paint, type Variables, type VariableRef,
 } from '@razzlr/schema'
 import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from 'canvaskit-wasm'
 import canvasKitModule from 'canvaskit-wasm/full'
@@ -19,7 +19,8 @@ import { frameAt, frameGrid, intersects, type Frame, type Rect } from './grid.ts
 import { hitTest, type Point } from './hit-test.ts'
 import { align, distribute, type Alignment, type Distribution, type Offset } from './arrange.ts'
 import { coverCrop, cornersOfRect, cropOf, imageRect, panned, scaled } from './crop.ts'
-import { clickedBox, drawnBox, isShapeTool, newShape, newText, type ShapeTool } from './draw-tools.ts'
+import { exportClient } from './export-client.ts'
+import { clickedBox, drawnBox, isShapeTool, newImage, newShape, newText, type ShapeTool } from './draw-tools.ts'
 import {
   anchorOf, constrain, deleteAnchors, formatPath, hitPath, isSmooth, moveAnchors, moveControl, offsetPath, parsePath, pathBounds, sameRef, segmentsOf, splitSegment,
   type Anchor, type AnchorRef, type PenPath, type Side,
@@ -45,6 +46,14 @@ export interface EditorOptions {
   syncToken: () => Promise<string>
   /** The stored bytes of an image asset (#35); designs with image fills need it. */
   assetBytes?: (assetId: string) => Promise<Uint8Array>
+  /**
+   * The font files of the named families, from our storage (#50): the editor asks for the families
+   * the design uses that it doesn't ship, when it opens and whenever text names a new one. A family
+   * the catalog doesn't have is left out, and its text draws in the fallback fonts.
+   */
+  fontFiles?: (families: string[]) => Promise<{ family: string; bytes: Uint8Array }[]>
+  /** The brand kit's values that bound properties take (#53), until `setVariables` changes them. */
+  variables?: Variables
   /** The format to show first, zoomed to fit on the first page; every frame when left out. */
   formatId?: string
   /**
@@ -131,11 +140,11 @@ export async function startEditor(options: EditorOptions) {
   const status = options.onStatus ?? (() => {})
   status('Loading renderer')
   const ck: CanvasKit = await CanvasKitInit({ locateFile: (file: string) => `/vendor/${file}` })
+  // The fonts we ship, the fallbacks among them, load first; the design's own families once it is here.
   const fontBytes = await Promise.all(FONT_FACES.map(async (f) => ({ family: f.family, bytes: await bytes(`/vendor/fonts/${f.file}`) })))
-  const resourceBytes = { fonts: fontBytes, fallbackFamilies: [...FALLBACK_FAMILIES], images: {} }
+  const resourceBytes = { fonts: fontBytes, fallbackFamilies: [...FALLBACK_FAMILIES], images: {}, ...(options.variables ? { variables: options.variables } : {}) }
   // One cache for the screen and exports: fonts and images are decoded once for the editor's life.
   const cache = resourceCache(ck)
-  cache.resources(resourceBytes)
   status('Connecting')
   const doc = new Y.Doc()
   // The design kept in this browser (#37): a crash, a closed tab or a reload without a connection
@@ -158,11 +167,18 @@ export async function startEditor(options: EditorOptions) {
     })
     // The first frame and any export need every image the design names, so they load first;
     // offline, a kept design opens without them and they load when they can.
-    const images = await loadImages(imageAssetIds(readDesign(doc)), options).catch((error: unknown) => {
-      if (kept) return {}
-      throw error
-    })
-    return live(ck, cache, { ...resourceBytes, images }, doc, provider, local, options)
+    const opened = readDesign(doc)
+    const [images, fonts] = await Promise.all([
+      loadImages(imageAssetIds(opened), options).catch((error: unknown) => {
+        if (kept) return {}
+        throw error
+      }),
+      loadFonts(fontFamilies(opened, options.variables), options).catch((error: unknown) => {
+        if (kept) return []
+        throw error
+      }),
+    ])
+    return live(ck, cache, { ...resourceBytes, fonts: [...resourceBytes.fonts, ...fonts], images }, doc, provider, local, options)
   } catch (error) {
     provider.destroy()
     await local.destroy()
@@ -179,6 +195,14 @@ async function loadImages(ids: string[], options: EditorOptions): Promise<Record
   return Object.fromEntries(await Promise.all(ids.map(async (id) => [id, await assetBytes(id)] as const)))
 }
 
+
+/** The families we ship are loaded already; the rest come from the catalog, when the editor was given a way. */
+const SHIPPED_FAMILIES = new Set(FONT_FACES.map((f) => f.family))
+async function loadFonts(families: string[], options: EditorOptions): Promise<{ family: string; bytes: Uint8Array }[]> {
+  const wanted = families.filter((family) => !SHIPPED_FAMILIES.has(family))
+  if (wanted.length === 0 || !options.fontFiles) return []
+  return options.fontFiles(wanted)
+}
 
 /** The editor once the design has arrived: everything it makes is freed by `destroy`. */
 function live(
@@ -316,7 +340,8 @@ function live(
 
   function depsOf(frame: Frame) {
     const overrides = design.overrides[scope(frame)]
-    const deps: unknown[] = [design.pages[frame.pageId], design.formats[frame.formatId]]
+    // The brand kit's values too (#53): a change rebuilds the scene, reusing every unbound layer.
+    const deps: unknown[] = [design.pages[frame.pageId], design.formats[frame.formatId], resourceBytes.variables]
     const walk = (parentId: string) => {
       for (const [id, node] of childrenOf(design, parentId)) {
         deps.push(id, node, overrides?.[id])
@@ -339,7 +364,7 @@ function live(
     const entry = frames.get(frame.key)
     if (entry && sameDeps(entry.deps, deps)) return entry
     entry?.picture?.delete()
-    const fresh = { deps, scene: render(design, frame.pageId, frame.formatId, scenes, measureText()), picture: null }
+    const fresh = { deps, scene: render(design, frame.pageId, frame.formatId, scenes, measureText(), resourceBytes.variables), picture: null }
     frames.set(frame.key, fresh)
     return fresh
   }
@@ -966,6 +991,9 @@ function live(
     for (const listener of drawListeners) listener(design, at, info)
   }
 
+  // Exports are drawn in a worker of their own (#55), started at the first one.
+  const exporter = exportClient()
+
   // Images that arrive after the design (another tab added them) load in the background; until
   // then the screen draws them clear. Exports never do: they throw until every image is loaded.
   const maybeClear = ck.MakeImage({ width: 1, height: 1, alphaType: ck.AlphaType.Premul, colorType: ck.ColorType.RGBA_8888, colorSpace: ck.ColorSpace.SRGB }, new Uint8Array(4), 4)
@@ -974,13 +1002,44 @@ function live(
   const loading = new Set<string>()
   /** The last resources with placeholders, kept while the same images are missing so pictures stay. */
   let placeholders: { for: Resources; missing: string; resources: Resources } | null = null
+  // Families text names after the design opened (a pick in the font menu, another tab) load in the
+  // background (#50); until then that text draws in the fallback fonts. Exports wait for them.
+  const fontsAsked = new Set([...SHIPPED_FAMILIES, ...resourceBytes.fonts.map((f) => f.family)])
+  let fontsLoading: Promise<void> = Promise.resolve()
+  /** Images a design named after it opened (one placed from the asset library, #52); exports wait for them too. */
+  let imagesLoading: Promise<void> = Promise.resolve()
+  function loadNewFonts(current: Design) {
+    if (!options.fontFiles) return
+    const fresh = fontFamilies(current, resourceBytes.variables).filter((family) => !fontsAsked.has(family))
+    if (fresh.length === 0) return
+    for (const family of fresh) fontsAsked.add(family)
+    const loading = loadFonts(fresh, options).then((fonts) => {
+      if (listening.signal.aborted || fonts.length === 0) return
+      resourceBytes = { ...resourceBytes, fonts: [...resourceBytes.fonts, ...fonts] }
+      resources = cache.resources(resourceBytes)
+      // Auto layout measures text in its font, so every frame's scene is made again, not only its picture.
+      for (const entry of frames.values()) entry.picture?.delete()
+      frames.clear()
+      redraw()
+    }, (error: unknown) => {
+      // Offline, a family waits for the connection; the next redraw asks for it again.
+      if (connection !== WebSocketStatus.Connected) {
+        for (const family of fresh) fontsAsked.delete(family)
+        return
+      }
+      status(`Error: a font did not load (${error instanceof Error ? error.message : String(error)})`)
+    })
+    fontsLoading = Promise.all([fontsLoading, loading]).then(() => undefined)
+  }
+
   function screenResources(current: Design): Resources {
+    loadNewFonts(current)
     const missing = imageAssetIds(current).filter((id) => !resources.images.has(id))
     if (missing.length === 0) return resources
     const fresh = missing.filter((id) => !loading.has(id))
     if (fresh.length > 0 && options.assetBytes) {
       for (const id of fresh) loading.add(id)
-      loadImages(fresh, options).then((images) => {
+      const arriving = loadImages(fresh, options).then((images) => {
         if (listening.signal.aborted) return
         resourceBytes = { ...resourceBytes, images: { ...resourceBytes.images, ...images } }
         resources = cache.resources(resourceBytes)
@@ -991,6 +1050,7 @@ function live(
         status(`Error: an image did not load (${error instanceof Error ? error.message : String(error)})`)
       })
         .finally(() => { for (const id of fresh) loading.delete(id) })
+      imagesLoading = Promise.all([imagesLoading, arriving]).then(() => undefined)
     }
     const key = missing.join('\n')
     if (placeholders?.for === resources && placeholders.missing === key) return placeholders.resources
@@ -2525,9 +2585,96 @@ function live(
       const frame = defaultFrame(pageId, formatId)
       return renderDesign(ck, session.design(), frame.pageId, frame.formatId, resourceBytes, cache).pixels
     },
+    /**
+     * Exports pages in formats as PNG or JPG, as this tab holds the design now, drawn in the export
+     * worker so the stage stays responsive (#55). One file comes as itself, more as one zip.
+     */
+    async exportFiles(request: ExportRequestInput, progress?: (done: number, total: number) => void) {
+      // A family picked or an image placed a moment ago is drawn as itself, never the fallback or a gap.
+      screenResources(session.design())
+      await Promise.all([fontsLoading, imagesLoading])
+      return exporter.run(session.design(), request, resourceBytes, progress)
+    },
+    /** The families whose files the editor has, shipped ones included (#50). */
+    loadedFamilies: () => [...new Set(resourceBytes.fonts.map((f) => f.family))],
+    /**
+     * Sets the font of the selected text layers, as one undo step (#50): the family, and the weight
+     * when one is given. Their files load in the background, and the text redraws when they are here.
+     */
+    setFont(fontFamily: string, fontWeight?: number) {
+      const current = session.design()
+      const ids = (selection?.ids ?? []).filter((id) => current.nodes[id]?.type === 'text')
+      if (ids.length === 0) return
+      session.gesture(() => {
+        for (const id of ids) {
+          const node = current.nodes[id]
+          if (node?.type !== 'text') continue
+          // A font picked by hand no longer follows the brand's (#53).
+          if (node.bindings?.fontFamily) runQuietly(() => session.run('node.bind', { ids: [id], target: 'fontFamily', ref: null }))
+          const style = { ...node.props.style, fontFamily, ...(fontWeight === undefined ? {} : { fontWeight }) }
+          runQuietly(() => session.run('node.update', { ids: [id], patch: { style } }))
+        }
+      })
+    },
+    /** The brand kit's values bound properties take now (#53). */
+    variables: () => resourceBytes.variables ?? {},
+    /**
+     * Gives bound properties new values, as when the brand kit changes (#53): bound layers redraw
+     * with them, the families of brand fonts load, and exports use them. The design is unchanged.
+     */
+    setVariables(variables: Variables) {
+      resourceBytes = { ...resourceBytes, variables }
+      loadNewFonts(session.design())
+      redraw()
+    },
+    /**
+     * Binds the selected layers to a brand colour or font, or unbinds them with null, in one undo
+     * step (#53). A colour binds a text layer's colour and any other layer's fill; a font binds text
+     * only. Returns how many layers changed.
+     */
+    bindSelection(kind: 'color' | 'font', ref: VariableRef | null): number {
+      const current = session.design()
+      const value = ref ? resourceBytes.variables?.[ref] : undefined
+      if (ref && value === undefined) return 0
+      const targets = (selection?.ids ?? []).flatMap((id) => {
+        const type = current.nodes[id]?.type ?? ''
+        const target: BindingTarget = kind === 'font' ? 'fontFamily' : type === 'text' ? 'textColor' : 'fill'
+        return canBind(type, target) ? [{ id, target }] : []
+      })
+      if (targets.length === 0) return 0
+      let changed = 0
+      session.gesture(() => {
+        for (const { id, target } of targets) {
+          if (runQuietly(() => session.run('node.bind', { ids: [id], target, ref, ...(value === undefined ? {} : { value }) }))) changed++
+        }
+      })
+      return changed
+    },
+    /**
+     * Places an image asset as a graphic filled with it (#52), in one undo step: centred where
+     * `client` is, in client coordinates, or else in the middle of the frame in the middle of the view.
+     * The image's bytes load in the background. Returns the new layer's id, or null when the point
+     * is on no frame.
+     */
+    placeImage(asset: { id: string; name: string; width: number; height: number }, client?: Point): string | null {
+      const rect = canvas.getBoundingClientRect()
+      const screen = client ? { x: client.x - rect.left, y: client.y - rect.top } : centre()
+      const world = toWorld(camera, screen)
+      const under = frameAt(grid.frames, world)
+      const frame = client ? under : under ?? frameOf(selection?.frame) ?? grid.frames[0]
+      if (!frame) return null
+      const at = client ? { x: world.x - frame.x, y: world.y - frame.y } : { x: frame.width / 2, y: frame.height / 2 }
+      stopEditing()
+      let id = ''
+      if (!runQuietly(() => { id = session.run('node.create', { parentId: frame.pageId, layer: newImage(asset, at, frame) }) })) return null
+      setTool('select')
+      select([id], frame.key)
+      return id
+    },
     synced: () => provider.synced && provider.unsyncedChanges === 0,
     destroy() {
       listening.abort()
+      exporter.destroy()
       resized.disconnect()
       cancelAnimationFrame(pending)
       drawListeners.clear()

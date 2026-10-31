@@ -26,6 +26,12 @@ importers:
       '@razzlr/doc':
         specifier: workspace:*
         version: link:../../packages/doc
+      '@razzlr/fonts':
+        specifier: workspace:*
+        version: link:../../packages/fonts
+      '@razzlr/renderer':
+        specifier: workspace:*
+        version: link:../../packages/renderer
       '@razzlr/schema':
         specifier: workspace:*
         version: link:../../packages/schema
@@ -293,6 +299,9 @@ importers:
       '@razzlr/doc':
         specifier: workspace:*
         version: link:../doc
+      '@razzlr/export':
+        specifier: workspace:*
+        version: link:../export
       '@razzlr/fonts':
         specifier: workspace:*
         version: link:../fonts
@@ -315,6 +324,37 @@ importers:
       '@razzlr/config':
         specifier: workspace:*
         version: link:../config
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.5
+      eslint:
+        specifier: ^9.39.0
+        version: 9.39.5(jiti@2.7.0)
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.7
+        version: 3.2.7(@types/node@22.20.5)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.15)
+
+  packages/export:
+    dependencies:
+      '@razzlr/renderer':
+        specifier: workspace:*
+        version: link:../renderer
+      '@razzlr/schema':
+        specifier: workspace:*
+        version: link:../schema
+      canvaskit-wasm:
+        specifier: 0.42.0
+        version: 0.42.0
+    devDependencies:
+      '@razzlr/config':
+        specifier: workspace:*
+        version: link:../config
+      '@razzlr/fonts':
+        specifier: workspace:*
+        version: link:../fonts
       '@types/node':
         specifier: ^22.20.0
         version: 22.20.5
@@ -450,6 +490,9 @@ importers:
       '@razzlr/editor':
         specifier: workspace:*
         version: link:../../packages/editor
+      '@razzlr/export':
+        specifier: workspace:*
+        version: link:../../packages/export
       '@razzlr/fonts':
         specifier: workspace:*
         version: link:../../packages/fonts
@@ -483,6 +526,9 @@ importers:
       '@razzlr/doc':
         specifier: workspace:*
         version: link:../../packages/doc
+      '@razzlr/export':
+        specifier: workspace:*
+        version: link:../../packages/export
       '@razzlr/fonts':
         specifier: workspace:*
         version: link:../../packages/fonts

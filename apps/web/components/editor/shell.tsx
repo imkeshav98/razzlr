@@ -21,7 +21,7 @@ import { ThemeSwitch } from '../theme-switch.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { ShapeTools } from './shape-menu.tsx'
 
-type Panel = 'layers' | 'assets' | 'ai' | 'brand' | 'properties'
+export type Panel = 'layers' | 'assets' | 'ai' | 'brand' | 'properties'
 export type Tool = 'select' | 'frame' | 'shape' | 'text' | 'pen' | 'image' | 'hand'
 
 const PANELS: { id: Panel; icon: Icon; phone?: true }[] = [
@@ -118,7 +118,7 @@ function measureInsets(stage: DOMRect, pieces: (Element | null)[]): ChromeInsets
   return insets
 }
 
-export function EditorShell({ brandId, brandName, designName, status, tool: shownTool, shape = 'rect', onToolChange, onInsets, fitted = true, inspector, children }: {
+export function EditorShell({ brandId, brandName, designName, status, tool: shownTool, shape = 'rect', onToolChange, onInsets, fitted = true, inspector, actions, panels, children }: {
   brandId: string
   brandName: string
   designName: string
@@ -134,6 +134,10 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
   fitted?: boolean
   /** The property cards, once the design is open. */
   inspector?: ReactNode
+  /** Buttons for the design as a whole, such as Export, at the header's end. */
+  actions?: ReactNode
+  /** What a flyout shows once its ticket fills it, such as the asset library (#52); an empty state until then. */
+  panels?: Partial<Record<Panel, ReactNode>>
   children: ReactNode
 }) {
   const t = useMessages()
@@ -188,6 +192,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
               <h1 className="truncate font-semibold">{designName}</h1>
             </nav>
             <div className="ms-auto flex items-center gap-2">
+              {actions}
               <span
                 role="status"
                 aria-atomic="true"
@@ -286,7 +291,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                       <XIcon size={16} aria-hidden />
                     </button>
                   </div>
-                  <p className="p-4 text-[13px] text-muted">{panelEmpty[flyout]}</p>
+                  {panels?.[flyout] ?? <p className="p-4 text-[13px] text-muted">{panelEmpty[flyout]}</p>}
                 </motion.section>
               )}
             </AnimatePresence>

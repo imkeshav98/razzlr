@@ -12,6 +12,7 @@
     "@razzlr/config": "workspace:*",
     "@razzlr/doc": "workspace:*",
     "@razzlr/editor": "workspace:*",
+    "@razzlr/export": "workspace:*",
     "@razzlr/fonts": "workspace:*",
     "@razzlr/renderer": "workspace:*",
     "@razzlr/schema": "workspace:*",

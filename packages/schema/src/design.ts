@@ -3,6 +3,7 @@ import { canHold, LAYER_PROPS, type LayerType } from './layers.ts'
 import { migrateDesign, SCHEMA_VERSION } from './migrate.ts'
 import { Paint } from './paint.ts'
 import { FormatId, FractionalIndex, NodeId, PageId } from './primitives.ts'
+import { Bindings, type Variables } from './variables.ts'
 
 /**
  * What can't be changed about a layer, each on its own (as in Polotno): its position, its size and
@@ -28,6 +29,8 @@ const nodeBase = {
   ]).optional(),
   /** Left out while nothing is locked. */
   lock: LayerLock.optional(),
+  /** Properties that follow brand kit tokens (#53); left out while nothing is bound. */
+  bindings: Bindings.optional(),
 }
 
 const layerOf = <T extends LayerType>(type: T) =>
@@ -476,4 +479,32 @@ export function imageAssetIds(design: Design): string[] {
     for (const values of Object.values(byNode)) add(values.fills)
   }
   return [...ids].sort()
+}
+
+/**
+ * Every font family the design's text names, in base styles, runs and format overrides, sorted
+ * (#50): the families the editor and exports load. Fallback families are not among them. With the
+ * brand's variables, the families of brand fonts text is bound to are among them too (#53).
+ */
+export function fontFamilies(design: Design, variables?: Variables): string[] {
+  const families = new Set<string>()
+  // A font family bound to a brand font draws in the brand's family (#53).
+  for (const node of Object.values(design.nodes)) {
+    const ref = node.type === 'text' ? node.bindings?.fontFamily : undefined
+    const bound = ref ? variables?.[ref]?.trim() : undefined
+    if (bound) families.add(bound)
+  }
+  const addStyle = (style: unknown) => {
+    const family = style && typeof style === 'object' ? (style as { fontFamily?: unknown }).fontFamily : undefined
+    if (typeof family === 'string' && family) families.add(family)
+  }
+  const addText = (values: { style?: unknown; runs?: unknown }) => {
+    addStyle(values.style)
+    if (Array.isArray(values.runs)) for (const run of values.runs) addStyle((run as { style?: unknown } | null)?.style)
+  }
+  for (const node of Object.values(design.nodes)) if (node.type === 'text') addText(node.props)
+  for (const byNode of Object.values(design.overrides)) {
+    for (const [id, values] of Object.entries(byNode)) if (design.nodes[id]?.type === 'text') addText(values)
+  }
+  return [...families].sort()
 }

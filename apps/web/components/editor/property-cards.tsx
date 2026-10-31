@@ -2,7 +2,7 @@
 
 // The property cards floating at the stage's top end (#83). With nothing selected they show the
 // design: the Page card (its background), then Formats and Pages. With a selection they show
-// Arrange; the selection's own properties join it with #60. Each card is only as tall as what it
+// Arrange, and the font when text is selected; the selection's other properties join them with #60. Each card is only as tall as what it
 // holds, and controls are visual first, with numbers behind "Fine-tune".
 import { CheckIcon, PlusIcon } from '@phosphor-icons/react'
 import type { Editor } from '@razzlr/editor'
@@ -13,6 +13,7 @@ import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { ArrangePanel, useSelection } from './arrange-panel.tsx'
 import { CARD, CardHeader } from './card.tsx'
+import { FontPanel } from './font-panel.tsx'
 import { FormatsPanel, useEditorDesign } from './formats-panel.tsx'
 import { PagesPanel } from './pages-panel.tsx'
 
@@ -92,13 +93,20 @@ function PageCard({ editor, pageId }: { editor: Editor; pageId: string }) {
   )
 }
 
-export function PropertyCards({ editor, onRemoved }: { editor: Editor; onRemoved: (message: string) => void }) {
+export function PropertyCards({ editor, brandId, onRemoved }: { editor: Editor; brandId: string; onRemoved: (message: string) => void }) {
   const selected = useSelection(editor)
   const { design } = useEditorDesign(editor)
   // The page the Page card paints: the one last brought into view from Pages, or the first.
   const [shown, setShown] = useState<string | null>(null)
   const pageId = shown && design.pages[shown] ? shown : ordered(design)[0]?.[0]
-  if (selected.length > 0) return <ArrangePanel editor={editor} />
+  if (selected.length > 0) {
+    return (
+      <>
+        <ArrangePanel editor={editor} />
+        <FontPanel editor={editor} brandId={brandId} />
+      </>
+    )
+  }
   return (
     <>
       {pageId && <PageCard editor={editor} pageId={pageId} />}

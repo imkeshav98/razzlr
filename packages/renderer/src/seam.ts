@@ -24,7 +24,7 @@ function drawOn(ck: CanvasKit, surface: Surface, json: unknown, pageId: string, 
   const owned = cache ?? resourceCache(ck)
   try {
     const resources = owned.resources(bytes)
-    const scene = render(parsed.design, pageId, formatId, undefined, textMeasure(ck, resources))
+    const scene = render(parsed.design, pageId, formatId, undefined, textMeasure(ck, resources), bytes.variables)
     drawScene(ck, surface.getCanvas(), scene, resources)
     surface.flush()
     return scene

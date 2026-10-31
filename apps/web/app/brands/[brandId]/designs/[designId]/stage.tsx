@@ -7,6 +7,10 @@ import { EditorShell, type ChromeInsets } from '../../../../../components/editor
 import { FocusChip, UndoToast } from '../../../../../components/editor/formats-panel.tsx'
 import { PropertyCards } from '../../../../../components/editor/property-cards.tsx'
 import { ZoomControl } from '../../../../../components/editor/zoom-control.tsx'
+import { ExportMenu } from '../../../../../components/editor/export-menu.tsx'
+import { ASSET_DRAG_TYPE, AssetLibrary, draggedAsset } from '../../../../../components/editor/asset-library.tsx'
+import { BrandKitPanel } from '../../../../../components/editor/brand-kit-panel.tsx'
+import { BrandKit, brandVariables, FontFamily, type Variables } from '@razzlr/schema'
 
 declare global {
   interface Window { razzlr?: Editor }
@@ -16,6 +20,43 @@ async function assetBytes(brandId: string, assetId: string) {
   const response = await fetch(`/brands/${encodeURIComponent(brandId)}/assets/${encodeURIComponent(assetId)}`)
   if (!response.ok) throw new Error(`asset ${assetId}: ${response.status}`)
   return new Uint8Array(await response.arrayBuffer())
+}
+
+/**
+ * The files of the families the editor asks for (#50), from the brand's catalog: fetched once, and
+ * again when a family isn't in it yet, as after an upload.
+ */
+function fontLoader(brandId: string) {
+  const brand = `/brands/${encodeURIComponent(brandId)}/fonts`
+  let catalog: Promise<FontFamily[]> | null = null
+  const fetchCatalog = async () => {
+    const response = await fetch(brand)
+    if (!response.ok) throw new Error(`fonts: ${response.status}`)
+    return FontFamily.array().parse(await response.json())
+  }
+  return async (families: string[]) => {
+    let known = await (catalog ??= fetchCatalog()).catch((error: unknown) => {
+      catalog = null
+      throw error
+    })
+    if (families.some((family) => !known.some((f) => f.family === family))) known = await (catalog = fetchCatalog())
+    const faces = known.filter((f) => families.includes(f.family)).flatMap((f) => f.faces)
+    return Promise.all(faces.map(async (face) => {
+      const response = await fetch(`${brand}/${encodeURIComponent(face.id)}`)
+      if (!response.ok) throw new Error(`font ${face.family} ${face.weight}: ${response.status}`)
+      return { family: face.family, bytes: new Uint8Array(await response.arrayBuffer()) }
+    }))
+  }
+}
+
+/**
+ * The values of the brand kit's tokens (#53), for layers bound to them. Without a connection the
+ * editor starts without them, and bound layers keep the values they were bound with.
+ */
+async function brandKitVariables(brandId: string): Promise<Variables | undefined> {
+  const response = await fetch(`/brands/${encodeURIComponent(brandId)}/kit`).catch(() => null)
+  if (!response?.ok) return undefined
+  return brandVariables(BrandKit.parse(await response.json()))
 }
 
 /** Asks the offline worker to keep this page and everything it has loaded so far. */
@@ -86,11 +127,13 @@ export function EditorStage({ designId, designName, brandId, brandName, formatId
     if (!canvas.current || !overlay.current) return
     let editor: Editor | undefined
     const unmounted = new AbortController()
-    startEditor({
-      canvas: canvas.current, overlay: overlay.current, designId, syncUrl,
-      syncToken: () => fetchSyncToken(brandId, designId), assetBytes: (assetId) => assetBytes(brandId, assetId),
-      ...(formatId ? { formatId } : {}), onStatus: setStatus, onZoom: setZoom, signal: unmounted.signal,
-    })
+    const [stage, layer] = [canvas.current, overlay.current]
+    brandKitVariables(brandId)
+      .then((variables) => startEditor({
+        canvas: stage, overlay: layer, designId, syncUrl,
+        syncToken: () => fetchSyncToken(brandId, designId), assetBytes: (assetId) => assetBytes(brandId, assetId), fontFiles: fontLoader(brandId),
+        ...(variables ? { variables } : {}), ...(formatId ? { formatId } : {}), onStatus: setStatus, onZoom: setZoom, signal: unmounted.signal,
+      }))
       .then((started) => {
         if (unmounted.signal.aborted) return started.destroy()
         editor = started
@@ -125,10 +168,27 @@ export function EditorStage({ designId, designName, brandId, brandName, formatId
       }}
       onInsets={onInsets}
       fitted={editor !== null && fittedTo === editor}
-      inspector={editor ? <PropertyCards editor={editor} onRemoved={setRemoved} /> : undefined}
+      actions={editor ? <ExportMenu editor={editor} /> : undefined}
+      panels={editor ? { assets: <AssetLibrary editor={editor} brandId={brandId} />, brand: <BrandKitPanel editor={editor} brandId={brandId} /> } : {}}
+      inspector={editor ? <PropertyCards editor={editor} brandId={brandId} onRemoved={setRemoved} /> : undefined}
     >
       {/* The design is a picture, so it never mirrors: the stage stays left to right in Arabic too. */}
-      <div dir="ltr" className="absolute inset-0">
+      {/* An asset dragged from the library lands where it is dropped (#52). */}
+      <div
+        dir="ltr"
+        className="absolute inset-0"
+        onDragOver={(e) => {
+          if (!editor || !e.dataTransfer.types.includes(ASSET_DRAG_TYPE)) return
+          e.preventDefault()
+          e.dataTransfer.dropEffect = 'copy'
+        }}
+        onDrop={(e) => {
+          const asset = editor && draggedAsset(e)
+          if (!asset) return
+          e.preventDefault()
+          editor.placeImage(asset, { x: e.clientX, y: e.clientY })
+        }}
+      >
         <canvas ref={canvas} className="block size-full touch-none" data-testid="stage" />
         <div ref={overlay} className="stage-overlay pointer-events-none absolute inset-0 overflow-hidden" aria-hidden />
         <div data-slot="mini-bar" className="pointer-events-none absolute inset-x-0 top-4 flex justify-center">

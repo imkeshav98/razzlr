@@ -17,8 +17,16 @@ What a workspace makes work for: a solo user's business, a company's product lin
 _Avoid_: Client (except as an agency workspace's word for a brand in UI copy), customer, project
 
 **Brand kit**:
-A brand's logo, colours, fonts and tone of voice, applied automatically. Its colours and fonts are exposed to designs as variables.
+A brand's logo, colours, fonts and tone of voice, applied automatically. Its colours and fonts are exposed to designs as variables, `brand:<token>`: a layer's fill, text colour or font family bound to one follows the brand, so changing the brand colour changes every design that uses it.
 _Avoid_: Brand guide, theme, style
+
+**Binding**:
+A layer property that follows a variable, such as a fill bound to `brand:primary`. The layer also keeps the value it had, which it shows wherever the variable has none.
+_Avoid_: Link, sync, style reference
+
+**Asset library**:
+A brand's uploaded images, each with a name and tags it is found by. Placing one on a design makes a graphic whose fill is that image; the original is stored once per workspace, but each brand's asset, name and tags are its own.
+_Avoid_: Media library, uploads, gallery
 
 **Reviewer**:
 A guest who views, comments on and approves designs without a paid seat.
@@ -87,6 +95,14 @@ _Avoid_: Block (that is the renderer's laid-out paragraph), line (a paragraph wr
 **Shrink to fit**:
 A text layer setting that picks the largest font size, between a least and a most, at which the text fits its box; every size in the text scales with it.
 _Avoid_: Auto size, fit text
+
+**Font catalog**:
+The families a brand can set text in: the fonts we ship (the fallbacks among them), the Google Fonts families we copied into our storage, and the brand's own uploads. A brand's upload of a family name is the one it sees. Every font file is loaded from our storage, never from Google, the system or the browser.
+_Avoid_: Font library (that is the asset library's word), web fonts
+
+**Font face**:
+One font file in the catalog: a family in one weight and style.
+_Avoid_: Font (when one file is meant), variant (see Variant)
 
 **Fill**:
 One paint on a layer: solid, gradient (linear, radial or angular), image or video. A crop is the fill's transform.

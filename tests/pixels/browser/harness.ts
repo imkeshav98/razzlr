@@ -1,5 +1,6 @@
 // Runs in Chromium. Bundled by specs/parity.fixture.ts and served from memory, with the
 // CanvasKit wasm, the font files and the fixture images beside it.
+import { exportDesign } from '@razzlr/export'
 import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
 import { drawDesign, renderDesign, type ResourceBytes } from '@razzlr/renderer'
 import type { Surface } from 'canvaskit-wasm'
@@ -66,4 +67,10 @@ async function renderFixture(json: unknown, pageId: string, formatId: string, su
   return { width, height, pixels: toBase64(pixels) }
 }
 
-Object.assign(globalThis, { renderFixture, harnessReady: true })
+/** One page in one format exported as PNG or JPG, the file's bytes as base64 (#55). */
+async function exportFixture(json: unknown, pageId: string, formatId: string, type: 'png' | 'jpg', assetIds: string[]) {
+  const file = exportDesign(ck, json, { pageIds: [pageId], formatIds: [formatId], type, quality: 85 }, await resourcesFor(assetIds))
+  return toBase64(file.bytes)
+}
+
+Object.assign(globalThis, { renderFixture, exportFixture, harnessReady: true })

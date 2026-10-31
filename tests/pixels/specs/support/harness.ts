@@ -12,6 +12,8 @@ const ORIGIN = 'http://parity.test'
 export type Surface = 'cpu' | 'webgl'
 export interface Harness {
   render(json: unknown, pageId: string, formatId: string, surface: Surface, assetIds: string[]): Promise<Pixels>
+  /** The file the browser's export makes, PNG or JPG at quality 85 (#55). */
+  exportFile(json: unknown, pageId: string, formatId: string, type: 'png' | 'jpg', assetIds: string[]): Promise<Uint8Array>
 }
 
 async function files() {
@@ -59,6 +61,13 @@ export const test = base.extend<object, { harness: Harness }>({
           [json, pageId, formatId, surface, assetIds] as const,
         )
         return { width: out.width, height: out.height, pixels: new Uint8Array(Buffer.from(out.pixels, 'base64')) }
+      },
+      async exportFile(json, pageId, formatId, type, assetIds) {
+        const out = await page.evaluate(
+          ([j, p, f, t, a]) => (globalThis as unknown as { exportFixture: (...args: unknown[]) => Promise<string> }).exportFixture(j, p, f, t, a),
+          [json, pageId, formatId, type, assetIds] as const,
+        )
+        return new Uint8Array(Buffer.from(out, 'base64'))
       },
     })
     await page.close()

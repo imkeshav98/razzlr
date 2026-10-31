@@ -1,13 +1,19 @@
 // The API seam, against Postgres from Docker Compose (`docker compose up -d --wait postgres`).
 import { createHash, randomUUID } from 'node:crypto'
-import { brands, migrateDatabase, openDatabase, workspaces, readDesignState } from '@razzlr/db'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { brands, fontFaces, migrateDatabase, openDatabase, workspaces, readDesignState } from '@razzlr/db'
 import { readDesign } from '@razzlr/doc'
-import { ApiError, AssetLink, AssetSummary, BrandSummary, DesignSummary, SyncToken, UploadTicket, WorkspaceSummary } from '@razzlr/schema'
+import { ApiError, AssetLink, AssetSummary, BrandKit, brandVariables, SignedLink, BrandSummary, DesignSummary, FontFace, FontFamily, FontLink, FontUploadTicket, SyncToken, UploadTicket, WorkspaceSummary } from '@razzlr/schema'
 import { openStorage, storageSettings } from '@razzlr/storage'
 import { verifySyncToken } from '@razzlr/sync-token'
+import { FONT_FILES_DIR } from '@razzlr/fonts/node'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
+import { eq } from 'drizzle-orm'
 import { createApp } from './app.ts'
+import { fontFiles, importGoogleFamily } from './fonts.ts'
+import { readImageHeader } from './images.ts'
 import { png } from './images.test.ts'
 import type { Session } from './session.ts'
 
@@ -26,6 +32,9 @@ const sessions: Record<string, Session> = {
   a: { userId: 'user-a', workspaceId: workspace.id },
   b: { userId: 'user-b', workspaceId: other.id },
 }
+/** A stand-in Google family, served by a fake Google from the Noto files, removed after the run. */
+const googleFamily = { family: `Test Sans ${run}`, category: 'sans-serif', weights: [400, 700], italic: false } as const
+
 const syncSecret = 'test-secret-'.padEnd(32, 'x')
 const storage = openStorage(storageSettings({
   STORAGE_ENDPOINT: 'http://127.0.0.1:59000',
@@ -50,7 +59,10 @@ beforeAll(async () => {
   await db.insert(workspaces).values([workspace, other])
   await db.insert(brands).values([brand, sibling, otherBrand])
 })
-afterAll(() => close())
+afterAll(async () => {
+  await db.delete(fontFaces).where(eq(fontFaces.family, googleFamily.family))
+  await close()
+})
 
 describe('the workspace', () => {
   it('answers with the session’s own workspace and its kind', async () => {
@@ -185,16 +197,54 @@ describe('sync tokens', () => {
   })
 })
 
-describe('image uploads', () => {
+describe('brand kits (#53)', () => {
+  const kit = {
+    colors: [{ token: 'primary', name: 'Harbour red', value: '#E0262BFF' }, { token: 'ink', name: 'Ink', value: '#14213DFF' }],
+    fonts: [{ token: 'heading', name: 'Heading', family: 'Playfair Display' }],
+    logoAssetId: null,
+    voice: 'Warm, short, no jargon.',
+  }
+
+  it('starts empty, saves the whole kit and gives its tokens as variables', async () => {
+    expect((await call('a', 'GET', `/brands/${sibling.id}/kit`)).json).toEqual({ colors: [], fonts: [], logoAssetId: null, voice: '' })
+    const saved = await call('a', 'PUT', `/brands/${brand.id}/kit`, kit)
+    expect(saved).toEqual({ status: 200, json: kit })
+    const changed = { ...kit, colors: [{ ...kit.colors[0], value: '#1F9D55FF' }] }
+    await call('a', 'PUT', `/brands/${brand.id}/kit`, changed)
+    const read = BrandKit.parse((await call('a', 'GET', `/brands/${brand.id}/kit`)).json)
+    expect(brandVariables(read)).toEqual({ 'brand:primary': '#1F9D55FF', 'brand:heading': 'Playfair Display' })
+  })
+
+  it('takes a logo only from the brand\'s own assets', async () => {
+    const sha = createHash('sha256')
+    const bytes = png(12, 12, `${run}-logo`)
+    const ticket = UploadTicket.parse((await call('a', 'POST', `/brands/${brand.id}/assets/uploads`, { sha256: sha.update(bytes).digest('hex'), byteSize: bytes.length, contentType: 'image/png' })).json)
+    if (ticket.upload) await fetch(ticket.upload.url, { method: 'PUT', body: bytes, headers: ticket.upload.headers })
+    const logo = ticket.asset ?? AssetSummary.parse((await call('a', 'POST', `/brands/${brand.id}/assets`, { sha256: createHash('sha256').update(bytes).digest('hex') })).json)
+    expect((await call('a', 'PUT', `/brands/${brand.id}/kit`, { ...kit, logoAssetId: logo.id })).json).toMatchObject({ logoAssetId: logo.id })
+    expect((await call('a', 'PUT', `/brands/${sibling.id}/kit`, { ...kit, logoAssetId: logo.id })).json).toEqual({ error: 'The logo is not an asset of this brand' })
+  })
+
+  it('refuses a token used twice or badly named, and keeps kits to their workspace', async () => {
+    expect((await call('a', 'PUT', `/brands/${brand.id}/kit`, { ...kit, fonts: [{ token: 'primary', name: 'Body', family: 'Inter' }] })).status).toBe(400)
+    expect((await call('a', 'PUT', `/brands/${brand.id}/kit`, { ...kit, colors: [{ token: 'Primary', name: 'P', value: '#000000FF' }] })).status).toBe(400)
+    expect((await call('a', 'PUT', `/brands/${brand.id}/kit`, { ...kit, colors: [{ token: 'p', name: 'P', value: 'red' }] })).status).toBe(400)
+    expect((await call('b', 'GET', `/brands/${brand.id}/kit`)).status).toBe(404)
+    expect((await call('b', 'PUT', `/brands/${brand.id}/kit`, kit)).status).toBe(404)
+  })
+})
+
+// Recording an image makes its thumbnail with CanvasKit, which takes seconds to load on a busy CI runner.
+describe('image uploads', { timeout: 30_000 }, () => {
   const sha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
 
   /** Starts an upload, PUTs the bytes when asked to, and records the asset. */
-  async function upload(as: string, brandId: string, bytes: Uint8Array) {
+  async function upload(as: string, brandId: string, bytes: Uint8Array, name?: string) {
     const ticket = UploadTicket.parse((await call(as, 'POST', `/brands/${brandId}/assets/uploads`, { sha256: sha256(bytes), byteSize: bytes.length, contentType: 'image/png' })).json)
     if (ticket.asset) return { asset: ticket.asset, uploaded: false }
     const put = await fetch(ticket.upload.url, { method: 'PUT', body: bytes, headers: ticket.upload.headers })
     expect(put.status).toBe(200)
-    const recorded = await call(as, 'POST', `/brands/${brandId}/assets`, { sha256: sha256(bytes) })
+    const recorded = await call(as, 'POST', `/brands/${brandId}/assets`, { sha256: sha256(bytes), ...(name ? { name } : {}) })
     expect(recorded.status).toBe(201)
     return { asset: AssetSummary.parse(recorded.json), uploaded: true }
   }
@@ -254,6 +304,60 @@ describe('image uploads', () => {
     expect(honest).toMatchObject({ uploaded: true, asset: { sha256: claimed } })
   })
 
+  it('names an asset as uploaded, renames and tags it, and finds it by either (#52)', async () => {
+    const { asset } = await upload('a', brand.id, png(7, 3, `${run}-named`), `Summer sale ${run}.png`)
+    expect(asset).toMatchObject({ name: `Summer sale ${run}.png`, tags: [] })
+    const tagged = await call('a', 'PATCH', `/brands/${brand.id}/assets/${asset.id}`, { tags: ['Beach ', 'hero', 'beach'] })
+    expect(tagged.status).toBe(200)
+    expect(AssetSummary.parse(tagged.json).tags).toEqual(['beach', 'hero'])
+    const { asset: plain } = await upload('a', brand.id, png(7, 4, `${run}-plain`), `Winter ${run}.png`)
+
+    const search = async (q: string) => AssetSummary.array().parse((await call('a', 'GET', `/brands/${brand.id}/assets?q=${encodeURIComponent(q)}`)).json).map((a) => a.id)
+    // A word finds names that have it anywhere and tags that start with it, ignoring case.
+    expect(await search(`SALE ${run}`)).toEqual([asset.id])
+    expect(await search(`bea ${run}`)).toEqual([asset.id])
+    expect(await search('each')).not.toContain(asset.id)
+    // Every word has to match; newest first.
+    expect(await search(`${run}.png`)).toEqual([plain.id, asset.id])
+    expect(await search(`winter hero ${run}`)).toEqual([])
+    // LIKE's wildcards are only letters here.
+    expect(await search(`%${run}`)).toEqual([])
+
+    const renamed = AssetSummary.parse((await call('a', 'PATCH', `/brands/${brand.id}/assets/${plain.id}`, { name: `  Winter hero ${run} ` })).json)
+    expect(renamed.name).toBe(`Winter hero ${run}`)
+    expect(await search(`winter hero ${run}`)).toEqual([plain.id])
+  })
+
+  it('keeps names, tags and search to the brand', async () => {
+    const { asset } = await upload('a', brand.id, png(8, 3, `${run}-walled`), `Walled ${run}`)
+    await call('a', 'PATCH', `/brands/${brand.id}/assets/${asset.id}`, { tags: [`walled-${run}`] })
+    // The sibling brand uploads the same bytes and gets its own, unnamed and untagged asset.
+    const { asset: theirs } = await upload('a', sibling.id, png(8, 3, `${run}-walled`))
+    expect(theirs).toMatchObject({ name: '', tags: [] })
+    expect((await call('a', 'GET', `/brands/${sibling.id}/assets?q=walled-${run}`)).json).toEqual([])
+    expect((await call('a', 'PATCH', `/brands/${sibling.id}/assets/${asset.id}`, { name: 'Mine now' })).status).toBe(404)
+    expect((await call('b', 'PATCH', `/brands/${brand.id}/assets/${asset.id}`, { name: 'Mine now' })).status).toBe(404)
+  })
+
+  it('refuses an empty name, too many tags or nothing to change', async () => {
+    const { asset } = await upload('a', brand.id, png(9, 3, `${run}-refused`))
+    expect((await call('a', 'PATCH', `/brands/${brand.id}/assets/${asset.id}`, { name: '   ' })).status).toBe(400)
+    expect((await call('a', 'PATCH', `/brands/${brand.id}/assets/${asset.id}`, { tags: Array.from({ length: 21 }, (_, i) => `t${i}`) })).status).toBe(400)
+    expect((await call('a', 'PATCH', `/brands/${brand.id}/assets/${asset.id}`, {})).status).toBe(400)
+    expect((await call('a', 'GET', `/brands/${brand.id}/assets?q=${'x'.repeat(201)}`)).status).toBe(400)
+  })
+
+  it('makes a thumbnail no larger than 320 pixels a side, for the brand only', async () => {
+    const { asset } = await upload('a', brand.id, png(960, 600, `${run}-big`))
+    const link = SignedLink.parse((await call('a', 'GET', `/brands/${brand.id}/assets/${asset.id}/thumbnail`)).json)
+    const thumbnail = new Uint8Array(await (await fetch(link.url)).arrayBuffer())
+    expect(readImageHeader(thumbnail)).toEqual({ contentType: 'image/png', width: 320, height: 200 })
+    const { asset: small } = await upload('a', brand.id, png(40, 30, `${run}-small`))
+    const smallLink = SignedLink.parse((await call('a', 'GET', `/brands/${brand.id}/assets/${small.id}/thumbnail`)).json)
+    expect(readImageHeader(new Uint8Array(await (await fetch(smallLink.url)).arrayBuffer()))).toMatchObject({ width: 40, height: 30 })
+    expect((await call('a', 'GET', `/brands/${sibling.id}/assets/${asset.id}/thumbnail`)).status).toBe(404)
+  })
+
   it('refuses uploads that are too big or not an image type', async () => {
     expect((await call('a', 'POST', `/brands/${brand.id}/assets/uploads`, { sha256: 'a'.repeat(64), byteSize: 31 * 1024 * 1024, contentType: 'image/png' })).status).toBe(400)
     expect((await call('a', 'POST', `/brands/${brand.id}/assets/uploads`, { sha256: 'a'.repeat(64), byteSize: 10, contentType: 'image/svg+xml' })).status).toBe(400)
@@ -268,5 +372,87 @@ describe('image uploads', () => {
     const elsewhere = new URL(ticket.upload.url)
     elsewhere.pathname = elsewhere.pathname.replace(/[^/]+$/, 'b'.repeat(64))
     expect((await fetch(elsewhere, { method: 'PUT', body: bytes, headers: ticket.upload.headers })).status).toBe(403)
+  })
+})
+
+// Recording a font draws its preview with CanvasKit, which takes seconds on a busy two-core CI runner.
+describe('fonts', { timeout: 30_000 }, () => {
+  const fontFile = (file: string) => new Uint8Array(readFileSync(join(FONT_FILES_DIR, file)))
+  const sha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
+  const regular = fontFile('NotoSans-Regular.ttf')
+  const bold = fontFile('NotoSans-Bold.ttf')
+
+  /** Google Fonts as the importer sees it: a stylesheet naming two TrueType files, and the files. */
+  const fakeGoogle = (async (input: string | URL | Request) => {
+    const url = String(input)
+    if (url.startsWith('https://fonts.googleapis.com/css2?family=Test+Sans+')) {
+      const face = (weight: number) => `@font-face {\n  font-family: '${googleFamily.family}';\n  font-style: normal;\n  font-weight: ${weight};\n  src: url(https://fonts.gstatic.com/s/test/v1/w${weight}.ttf) format('truetype');\n}\n`
+      return new Response(face(400) + face(700))
+    }
+    if (url === 'https://fonts.gstatic.com/s/test/v1/w400.ttf') return new Response(regular)
+    if (url === 'https://fonts.gstatic.com/s/test/v1/w700.ttf') return new Response(bold)
+    return new Response('not found', { status: 404 })
+  }) as typeof fetch
+
+  async function upload(as: string, brandId: string, bytes: Uint8Array) {
+    const ticket = FontUploadTicket.parse((await call(as, 'POST', `/brands/${brandId}/fonts/uploads`, { sha256: sha256(bytes), byteSize: bytes.length, contentType: 'font/ttf' })).json)
+    if (ticket.face) return { face: ticket.face, uploaded: false }
+    expect((await fetch(ticket.upload.url, { method: 'PUT', body: bytes, headers: ticket.upload.headers })).status).toBe(200)
+    const recorded = await call(as, 'POST', `/brands/${brandId}/fonts`, { sha256: sha256(bytes) })
+    expect(recorded.status).toBe(201)
+    return { face: FontFace.parse(recorded.json), uploaded: true }
+  }
+
+  it('copies a Google family into our storage once, and every brand lists it', async () => {
+    expect(await importGoogleFamily(db, storage, googleFamily, fakeGoogle)).toBe(2)
+    expect(await importGoogleFamily(db, storage, googleFamily, fakeGoogle)).toBe(0)
+    for (const [as, brandId] of [['a', brand.id], ['b', otherBrand.id]] as const) {
+      const catalog = FontFamily.array().parse((await call(as, 'GET', `/brands/${brandId}/fonts`)).json)
+      expect(catalog.find((f) => f.family === googleFamily.family)).toMatchObject({
+        source: 'google', category: 'sans-serif',
+        faces: [{ weight: 400, style: 'normal', source: 'google', byteSize: regular.length }, { weight: 700, style: 'normal', source: 'google', byteSize: bold.length }],
+      })
+    }
+  })
+
+  it('uploads a font for a brand, named by its own tables, with a preview, and keeps it to that brand', async () => {
+    const { face, uploaded } = await upload('a', brand.id, bold)
+    expect(uploaded).toBe(true)
+    expect(face).toMatchObject({ family: 'Noto Sans', weight: 700, style: 'normal', source: 'upload', byteSize: bold.length })
+    expect(await upload('a', brand.id, bold)).toEqual({ face, uploaded: false })
+
+    const link = FontLink.parse((await call('a', 'GET', `/brands/${brand.id}/fonts/faces/${face.id}`)).json)
+    expect(new Uint8Array(await (await fetch(link.url)).arrayBuffer())).toEqual(bold)
+    const preview = new Uint8Array(await (await fetch(link.previewUrl)).arrayBuffer())
+    expect([...preview.subarray(1, 4)]).toEqual([...new TextEncoder().encode('PNG')])
+
+    const mine = FontFamily.array().parse((await call('a', 'GET', `/brands/${brand.id}/fonts`)).json)
+    expect(mine.find((f) => f.family === 'Noto Sans')?.faces.map((f) => f.id)).toEqual([face.id])
+    const theirs = FontFamily.array().parse((await call('a', 'GET', `/brands/${sibling.id}/fonts`)).json)
+    expect(theirs.find((f) => f.family === 'Noto Sans')).toBeUndefined()
+    expect((await call('a', 'GET', `/brands/${sibling.id}/fonts/faces/${face.id}`)).status).toBe(404)
+    expect((await call('b', 'GET', `/brands/${brand.id}/fonts`)).status).toBe(404)
+    expect((await call(null, 'GET', `/brands/${brand.id}/fonts`)).status).toBe(401)
+  })
+
+  it('gives Node the same bytes for the families a design names, uploads and Google alike', async () => {
+    await upload('a', brand.id, bold)
+    const files = await fontFiles(db, storage, workspace.id, brand.id, ['Noto Sans', googleFamily.family, 'Not A Font'])
+    const byFamily = (family: string) => files.filter((f) => f.family === family).map((f) => sha256(f.bytes)).sort()
+    expect(byFamily('Noto Sans')).toEqual([sha256(bold)])
+    expect(byFamily(googleFamily.family)).toEqual([sha256(regular), sha256(bold)].sort())
+    expect(files).toHaveLength(3)
+    // Another brand has no upload of that family.
+    expect(await fontFiles(db, storage, workspace.id, sibling.id, ['Noto Sans'])).toEqual([])
+  })
+
+  it('refuses a file that is not a font, and an upload of the wrong type', async () => {
+    const text = new TextEncoder().encode(`not a font ${run}`)
+    const ticket = FontUploadTicket.parse((await call('a', 'POST', `/brands/${brand.id}/fonts/uploads`, { sha256: sha256(text), byteSize: text.length, contentType: 'font/ttf' })).json)
+    if (!ticket.upload) throw new Error('expected an upload URL')
+    await fetch(ticket.upload.url, { method: 'PUT', body: text, headers: ticket.upload.headers })
+    expect((await call('a', 'POST', `/brands/${brand.id}/fonts`, { sha256: sha256(text) })).json).toEqual({ error: 'The upload is not a TrueType or OpenType font' })
+    expect((await call('a', 'POST', `/brands/${brand.id}/fonts`, { sha256: 'e'.repeat(64) })).json).toEqual({ error: 'Nothing was uploaded for that SHA-256' })
+    expect((await call('a', 'POST', `/brands/${brand.id}/fonts/uploads`, { sha256: 'a'.repeat(64), byteSize: 10, contentType: 'font/woff2' })).status).toBe(400)
   })
 })
