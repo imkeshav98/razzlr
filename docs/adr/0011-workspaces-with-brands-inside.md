@@ -1,6 +1,6 @@
-# Razzlr is for solo users, companies and agencies: a workspace each, brands inside
+# Dazbee is for solo users, companies and agencies: a workspace each, brands inside
 
-Razzlr started agency-first: an org was an agency, and every design belonged to one of its clients. Keshav chose not to lock Razzlr to agencies (option A in the [tenancy options](https://claude.ai/artifact/53KcdqMDCoEkxepn1nYJG6), 2026-10-30), so a solo user or a company can use it directly too.
+Dazbee started agency-first: an org was an agency, and every design belonged to one of its clients. Keshav chose not to lock Dazbee to agencies (option A in the [tenancy options](https://claude.ai/artifact/53KcdqMDCoEkxepn1nYJG6), 2026-10-30), so a solo user or a company can use it directly too.
 
 Every sign-up gets a **workspace**: who pays, its seats and its AI credits. The work inside a workspace is organised by **brand**: a brand has its brand kit, designs, assets and feeds, and later its publishing accounts and reviewers. A solo user has one brand (their business), a company a few (product lines, regions), an agency one per client. The workspace's **kind** (`solo`, `company` or `agency`), asked at onboarding, changes defaults and words only, never the data: an agency workspace calls its brands "Clients", the others "Brands". A person can belong to several workspaces.
 
