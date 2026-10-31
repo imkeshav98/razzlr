@@ -1,6 +1,6 @@
 // The properties cards (#60) in Chromium, with real input: change each property of one layer and of
-// several, see mixed values, write a this-format-only change as an override (and an every-format one
-// as the base, with the override gone), and scrub a number as one undo step.
+// several, see mixed values, write a change to the format shown only, as a canvas drag does (and an
+// every-format one as the base, with the override gone), and scrub a number as one undo step.
 import { expect, test, type Locator, type Page } from '@playwright/test'
 import type { DesignInput } from '@razzlr/schema'
 import { writeOutput } from '../support/editor.ts'
@@ -37,8 +37,10 @@ const design = (): DesignInput => ({
 
 type Node = { props: Record<string, unknown> }
 const nodes = (page: Page) => page.evaluate(() => window.razzlr?.design().nodes) as Promise<Record<string, Node>>
-const props = async (page: Page, id: string) => (await nodes(page))[id]?.props ?? {}
+const base = async (page: Page, id: string) => (await nodes(page))[id]?.props ?? {}
 const overrides = (page: Page) => page.evaluate(() => JSON.parse(JSON.stringify(window.razzlr?.design().overrides ?? {}))) as Promise<Record<string, Record<string, Record<string, unknown>>>>
+/** A layer's props as the Square format shows them: the base with Square's own on top. */
+const props = async (page: Page, id: string) => ({ ...await base(page, id), ...(await overrides(page))['format:sq']?.[id] })
 const select = async (page: Page, ids: string[]) => {
   await page.evaluate((ids) => window.razzlr?.select(ids), ids)
   await expect(page.getByTestId('layout-card')).toBeVisible()
@@ -93,9 +95,10 @@ test('one layer: position, size, turn, opacity, blend, fill, stroke and effects'
   await enter(effects.getByRole('textbox', { name: 'Drop shadow 1 Blur' }), '40')
   await expect.poll(async () => (await props(page, 'box')).effects).toMatchObject([{ type: 'dropShadow', blur: 40 }])
 
-  // A single-format change is in the base, with no override left behind in either format.
+  // Like a drag, every change is Square's own: the base and Story are as they were.
   const o = await overrides(page)
-  expect(o['format:sq']?.box ?? {}).toEqual({})
+  expect(o['format:sq']?.box).toMatchObject({ x: 140, width: 311, rotation: 15, opacity: 0.5, blendMode: 'multiply' })
+  expect(await base(page, 'box')).toMatchObject({ ...rect(80, 80, 300, 200, '#E0262BFF'), rotation: 0, opacity: 1, blendMode: 'normal', strokes: [], effects: [] })
   expect(o['format:story']?.box ?? {}).toEqual({})
   await page.evaluate(() => window.razzlr?.drawn())
   writeOutput('props-0-one-layer.png', await page.screenshot())
@@ -153,28 +156,28 @@ test('several layers: mixed values, set together or each from its own; text and 
   expect(errors).toEqual([])
 })
 
-test('this format only writes an override; all formats writes the base and clears it', async ({ browser }) => {
+test('a change goes to the format shown, like a drag; all formats writes the base and clears it', async ({ browser }) => {
   const { page, errors } = await openStage(browser, design())
   await select(page, ['box'])
   const scope = page.getByTestId('scope-card')
-  await expect(scope.getByRole('radio', { name: 'All formats' })).toHaveAttribute('aria-checked', 'true')
-  await scope.getByRole('radio', { name: 'This format' }).click()
-  await expect(scope).toContainText('Changes become this format’s own')
+  await expect(scope.getByRole('radio', { name: 'This format' })).toHaveAttribute('aria-checked', 'true')
+  await expect(scope).not.toContainText('Changes go to every format')
   const x = page.getByTestId('layout-card').getByRole('textbox', { name: 'X position' })
   await enter(x, '500')
   await enter(page.getByTestId('fill-card').getByRole('textbox', { name: 'Colour 1 hex' }), '00A889')
   await expect.poll(async () => (await overrides(page))['format:sq']?.box).toMatchObject({ x: 500, fills: [{ type: 'solid', color: '#00A889FF' }] })
   // The base and the other format are as they were.
-  expect((await props(page, 'box')).x).toBe(80)
-  expect((await props(page, 'box')).fills).toEqual([{ type: 'solid', color: '#E0262BFF' }])
+  expect((await base(page, 'box')).x).toBe(80)
+  expect((await base(page, 'box')).fills).toEqual([{ type: 'solid', color: '#E0262BFF' }])
   expect((await overrides(page))['format:story']?.box ?? {}).toEqual({})
   await expect(x).toHaveValue('500')
   writeOutput('props-4-this-format.png', await page.screenshot())
 
-  // Back to all formats: the value goes to the base and this format's override of it goes.
+  // All formats: the value goes to the base and this format's override of it goes.
   await scope.getByRole('radio', { name: 'All formats' }).click()
+  await expect(scope).toContainText('Changes go to every format')
   await enter(x, '200')
-  await expect.poll(async () => (await props(page, 'box')).x).toBe(200)
+  await expect.poll(async () => (await base(page, 'box')).x).toBe(200)
   const after = (await overrides(page))['format:sq']?.box ?? {}
   expect(after).not.toHaveProperty('x')
   // The fill override stays: only the property changed is made the same everywhere.

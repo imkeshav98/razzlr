@@ -77,7 +77,7 @@ The page's layers as a tree, topmost first: select, reorder, move into and out o
 _Avoid_: Outline, layer list
 
 **Property cards**:
-The cards at the stage's top end that edit the selection, or the design when nothing is selected. A value the selected layers don't share shows as mixed. With more than one format, a change goes to every format (the base, with that property's overrides cleared) or to this format only (an override).
+The cards at the stage's top end that edit the selection, or the design when nothing is selected. A value the selected layers don't share shows as mixed. With more than one format, a change goes to the format shown only (an override), as a drag on the canvas does, unless every format is picked (the base, with that property's overrides cleared).
 _Avoid_: Inspector (in code), properties panel
 
 **Graphic**:
