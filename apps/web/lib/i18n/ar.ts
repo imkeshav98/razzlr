@@ -29,7 +29,7 @@ export const ar: Messages = {
   home: {
     prompt: 'ماذا نصنع لـ {brand}؟',
     brief: 'الموجز',
-    briefPlaceholder: 'تخفيضات الصيف على الأحذية الجديدة: جريئة ومرحة، خصم 20٪ هذا الأسبوع',
+    briefPlaceholder: 'لماذا، ولمن، والطابع والعرض. مثلًا: تخفيضات نهاية الأسبوع، جريئة ومرحة، خصم 20٪',
     formats: 'الصيغ',
     brandKit: 'هوية العلامة',
     reference: 'إعلان مرجعي',

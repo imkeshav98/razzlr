@@ -30,7 +30,7 @@ export const en = {
     // The brand's home (#84): a brief, its formats, and the brand's recent work as a bento.
     prompt: 'What are we making for {brand}?',
     brief: 'Brief',
-    briefPlaceholder: 'A summer sale on the new trainers: bold, playful, 20% off this weekend',
+    briefPlaceholder: 'What it is for, who it speaks to, the feel and the offer. Say, a weekend sale: bold, playful, 20% off',
     formats: 'Formats',
     brandKit: 'Brand kit',
     reference: 'Reference ad',
