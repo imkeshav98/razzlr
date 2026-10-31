@@ -2,7 +2,7 @@
 // with clicks and drags, go into its points, drag one, and undo the drag in one step; then an open
 // path with Shift, a point added on a segment, a handle dragged, and a point deleted.
 import { parsePath, pathBounds, type Anchor, type PenPath } from '@razzlr/editor/path'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { exportHashOf, writeOutput } from '../support/editor.ts'
 import { liveDesign } from '../support/seed.ts'
 import { click, drag, dragScreen, openStage, press, read, selection, type Design } from '../support/stage.ts'

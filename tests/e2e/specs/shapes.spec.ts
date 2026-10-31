@@ -2,7 +2,7 @@
 // the dock, its menu and its keys, Shift-draw a square, combine two shapes from the inspector and by
 // shortcut, then enter the boolean, drag one shape inside it and see the boolean follow.
 import type { DesignInput } from '@razzlr/schema'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { exportHashOf, screenPoint, writeOutput } from '../support/editor.ts'
 import { liveDesign } from '../support/seed.ts'
 import { click, drag, openStage, press, read, selection, type Design } from '../support/stage.ts'

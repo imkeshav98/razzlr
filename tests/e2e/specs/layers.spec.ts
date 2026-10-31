@@ -2,7 +2,7 @@
 // stage's selection both ways, a layer dragged into a group (the stage redraws it there, one undo
 // step), rename, lock and hide; the same by keyboard alone; and 300 layers scrolling smoothly with
 // only the rows in view in the page.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import type { DesignInput } from '@razzlr/schema'
 import { writeOutput } from '../support/editor.ts'
 import { click, openStage, read } from '../support/stage.ts'

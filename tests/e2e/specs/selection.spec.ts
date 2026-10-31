@@ -3,7 +3,7 @@
 // arrow nudges, duplicate, z-order, delete, lock and hide from the shortcut table. Every drag,
 // resize and rotate undoes in one step.
 import type { DesignInput } from '@razzlr/schema'
-import { expect, test, type Browser } from '@playwright/test'
+import { expect, test, type Browser } from '../support/test.ts'
 import { screenPoint, writeOutput } from '../support/editor.ts'
 import { liveDesign } from '../support/seed.ts'
 import { click, drag, dragScreen, handle, openStage, order, press, props, read, selection, zoomOf } from '../support/stage.ts'

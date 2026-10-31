@@ -1,6 +1,6 @@
 // Autosave and offline edits (#37): the design is kept in the browser, an edit made offline
 // survives a reload without a connection, and it reaches the other tab once the connection is back.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { designOf, openTabs, settle, writeOutput } from '../support/editor.ts'
 
 const headline = async (page: Page) => (JSON.parse(await designOf(page)) as { nodes: { headline: { props: { text: string } } } }).nodes.headline.props.text
