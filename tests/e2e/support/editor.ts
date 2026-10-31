@@ -98,3 +98,11 @@ export function storedAfter(designId: string, since: Date) {
   const out = execFileSync('docker', ['compose', 'exec', '-T', 'postgres', 'psql', '-U', 'razzlr', '-d', 'razzlr', '-tAc', sql], { cwd: root, encoding: 'utf8' })
   return out.trim() === '1'
 }
+
+/** How many bytes the sync server last stored for the design (packages/db's design_states). */
+export function storedSize(designId: string) {
+  const root = join(import.meta.dirname, '..', '..', '..')
+  const sql = `select octet_length(state) from design_states where design_id = '${designId.replace(/'/g, "''")}'`
+  const out = execFileSync('docker', ['compose', 'exec', '-T', 'postgres', 'psql', '-U', 'razzlr', '-d', 'razzlr', '-tAc', sql], { cwd: root, encoding: 'utf8' })
+  return Number(out.trim())
+}
