@@ -1,6 +1,7 @@
-import { parseDesign } from '@razzlr/schema'
+import { LayerTree, parseDesign } from '@razzlr/schema'
 import { describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
+import type { z } from 'zod'
 import { childrenOf, loadDesign, openSession, readDesign } from './index.ts'
 import { testDesign } from './test-design.ts'
 
@@ -407,6 +408,58 @@ describe('commands', () => {
     expect(readDesign(doc).nodes.box?.props.mask).toBe('alpha')
     tab.run('node.lock', { ids: ['box'], lock: { style: true } })
     expect(() => tab.run('node.mask', { ids: ['box'], mask: null })).toThrow(/locked \(style\)/)
+  })
+
+  describe('design.place', () => {
+    // A group holding a box and a text, as a copy puts it on the clipboard.
+    const tree = () => ({
+      roots: ['g'],
+      nodes: {
+        g: { type: 'group', parentId: 'elsewhere', index: 'a5', name: 'Card', props: { x: 10, y: 20, width: 300, height: 200 } },
+        tile: { type: 'graphic', parentId: 'g', index: 'a0', name: 'Tile', props: { x: 10, y: 20, width: 300, height: 200, shape: { kind: 'rect' }, fills: [{ type: 'solid', color: '#2F6BFFFF' }] } },
+        label: { type: 'text', parentId: 'g', index: 'a1', name: 'Label', props: { x: 30, y: 40, width: 200, height: 60, text: 'Hi', style: { fontFamily: 'Noto Sans', fontSize: 40, color: '#FFFFFFFF' } } },
+      },
+    }) satisfies z.input<typeof LayerTree>
+
+    it('places a tree with fresh ids on top, moved by the offset, in one undo step', () => {
+      const doc = freshDoc()
+      const tab = openSession(doc)
+      const [g] = tab.run('design.place', { parentId: 'p1', tree: tree(), dx: 100, dy: 5 })
+      const design = readDesign(doc)
+      expect(g).not.toBe('g')
+      expect(childrenOf(design, 'p1').map(([id]) => id)).toEqual(['box', 'headline', g])
+      const inside = childrenOf(design, g ?? '')
+      expect(inside.map(([, n]) => n.name)).toEqual(['Tile', 'Label'])
+      expect(inside.every(([id]) => !['tile', 'label'].includes(id))).toBe(true)
+      expect(design.nodes[g ?? '']?.props).toMatchObject({ x: 110, y: 25 })
+      expect(inside[1]?.[1].props).toMatchObject({ x: 130, y: 45, text: 'Hi' })
+      tab.undo()
+      expect(Object.keys(readDesign(doc).nodes).sort()).toEqual(['box', 'headline'])
+    })
+
+    it('placing the same tree twice gives two copies', () => {
+      const doc = freshDoc()
+      const tab = openSession(doc)
+      const [a] = tab.run('design.place', { parentId: 'p1', tree: tree() })
+      const [b] = tab.run('design.place', { parentId: 'p1', tree: tree() })
+      const design = readDesign(doc)
+      expect(a).not.toBe(b)
+      expect(childrenOf(design, 'p1').map(([id]) => id)).toEqual(['box', 'headline', a, b])
+      expect(Object.keys(design.nodes)).toHaveLength(2 + 6)
+    })
+
+    it('refuses a tree that is not whole, holds a layer its parent cannot, loops, or does not fit where it goes', () => {
+      const tab = openSession(freshDoc())
+      const t = tree()
+      expect(() => tab.run('design.place', { parentId: 'p1', tree: { ...t, roots: ['nope'] } })).toThrow(/root "nope" is not in the tree/)
+      expect(() => tab.run('design.place', { parentId: 'p1', tree: { ...t, nodes: { ...t.nodes, label: { ...t.nodes.label, parentId: 'gone' } } } })).toThrow(/"label" is neither a root nor inside one/)
+      expect(() => tab.run('design.place', { parentId: 'p1', tree: { ...t, nodes: { ...t.nodes, label: { ...t.nodes.label, parentId: 'tile' } } } })).toThrow(/a graphic, which can't hold "label"/)
+      const loop = { roots: ['tile'], nodes: { tile: t.nodes.tile, a: { ...t.nodes.g, parentId: 'b' }, b: { ...t.nodes.g, parentId: 'a' } } }
+      expect(() => tab.run('design.place', { parentId: 'p1', tree: loop })).toThrow(/is inside itself/)
+      expect(() => tab.run('design.place', { parentId: 'p1', tree: { ...t, nodes: { ...t.nodes, tile: { ...t.nodes.tile, props: { ...t.nodes.tile.props, width: -1 } } } } })).toThrow(/width/)
+      expect(() => tab.run('design.place', { parentId: 'box', tree: t })).toThrow(/a graphic, which can't hold layers/)
+      expect(() => tab.run('design.place', { parentId: 'nowhere', tree: t })).toThrow(/neither a page nor a layer/)
+    })
   })
 
   describe('locks', () => {

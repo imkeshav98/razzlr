@@ -1,4 +1,4 @@
-import { BooleanOp, canHold, Format, FormatId, formatIdOf, formatSizeProblem, Layer, LAYER_PROPS, LayerLock, LOCK_FLAGS, type Layer as LayerT, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
+import { BooleanOp, canHold, Format, LayerTree, FormatId, formatIdOf, formatSizeProblem, Layer, LAYER_PROPS, LayerLock, LOCK_FLAGS, type Layer as LayerT, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
 import { generateKeyBetween } from 'fractional-indexing'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
@@ -333,6 +333,32 @@ export const nodeDuplicate = defineCommand({
       return { parentId: node.parentId, index: indexBetween(node.index, next) }
     })
     return roots.map((root) => copies.get(root) as string)
+  },
+})
+
+/**
+ * Places a tree of layers, such as the clipboard's, in a page or container (#49): every layer gets
+ * a fresh id, the roots go on top in their order, and everything moves by `dx`, `dy`. Placing the
+ * same tree twice gives two copies. Returns the new roots' ids, bottom to top.
+ */
+export const designPlace = defineCommand({
+  name: 'design.place',
+  input: z.object({ parentId: z.union([PageId, NodeId]), tree: LayerTree, dx: z.number().default(0), dy: z.number().default(0) }),
+  check: ({ design }, { parentId, tree }) => tree.roots.map((root) => parentProblem(design, parentId, tree.nodes[root]?.type ?? '')).find(Boolean),
+  apply: ({ r, design }, { parentId, tree, dx, dy }) => {
+    const ids = new Map(Object.keys(tree.nodes).map((id) => [id, nanoid()]))
+    let index = childrenOf(design, parentId).at(-1)?.[1].index ?? null
+    const placed = new Map<string, { parentId: string; index: string }>()
+    for (const root of tree.roots) {
+      index = indexBetween(index, null)
+      placed.set(root, { parentId, index })
+    }
+    for (const [old, node] of Object.entries(tree.nodes)) {
+      const where = placed.get(old) ?? { parentId: ids.get(node.parentId) as string, index: node.index }
+      const props = { ...node.props, x: node.props.x + dx, y: node.props.y + dy }
+      r.nodes.set(ids.get(old) as string, toYNode(Layer.parse({ ...node, ...where, props })))
+    }
+    return tree.roots.map((root) => ids.get(root) as string)
   },
 })
 
@@ -822,6 +848,7 @@ export const COMMANDS = {
   'node.mask': nodeMask,
   'node.reorder': nodeReorder,
   'node.duplicate': nodeDuplicate,
+  'design.place': designPlace,
   'node.group': nodeGroup,
   'node.boolean': nodeBoolean,
   'node.ungroup': nodeUngroup,
