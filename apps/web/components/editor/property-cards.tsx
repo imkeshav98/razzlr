@@ -2,7 +2,7 @@
 
 // The property cards floating at the stage's top end (#83). With nothing selected they show the
 // design: the Page card (its background), then Formats and Pages. With a selection they show
-// Arrange, and the font when text is selected; the selection's other properties join them with #60. Each card is only as tall as what it
+// Arrange, the font when text is selected, and the selection's other properties (#60). Each card is only as tall as what it
 // holds, and controls are visual first, with numbers behind "Fine-tune".
 import { CheckIcon, PlusIcon } from '@phosphor-icons/react'
 import type { Editor } from '@razzlr/editor'
@@ -16,6 +16,7 @@ import { CARD, CardHeader } from './card.tsx'
 import { FontPanel } from './font-panel.tsx'
 import { FormatsPanel, useEditorDesign } from './formats-panel.tsx'
 import { PagesPanel } from './pages-panel.tsx'
+import { SelectionCards } from './selection-cards.tsx'
 
 /** Page backgrounds a click away; the Fine-tune row takes any colour. */
 const SWATCHES = ['#FFFFFF', '#FBF7F2', '#1A1420', '#FF48B0', '#3D6BFF', '#FFD23F', '#3DD68C', '#FF6B3D'] as const
@@ -104,6 +105,7 @@ export function PropertyCards({ editor, brandId, onRemoved }: { editor: Editor; 
       <>
         <ArrangePanel editor={editor} />
         <FontPanel editor={editor} brandId={brandId} />
+        <SelectionCards editor={editor} ids={selected} />
       </>
     )
   }

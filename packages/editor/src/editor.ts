@@ -2520,6 +2520,68 @@ function live(
         hug([id, ...(from && session.design().nodes[from] ? [from] : [])])
       }))
     },
+    /**
+     * Starts one undo step for the properties panel's scrubbing (#60): every change until the
+     * returned function is called is undone together.
+     */
+    beginGesture: () => session.beginGesture(),
+    /**
+     * Sets properties of layers as the properties panel does (#60), as one undo step, or as part of
+     * the gesture open. `to` gives a layer's patch from the values it has in the frame now (base
+     * and that format's overrides); null leaves it be. In this format only (`everyFormat` false)
+     * the values become overrides of the frame's format, as a drag on the stage does. In every
+     * format they become the base values and the layers' overrides of those properties go, so every
+     * format shows what this one does. X and Y of a group or frame carry what it holds along;
+     * groups fit what they hold again. A fill, text colour or font set by hand no longer follows
+     * the brand. False when a change isn't allowed, such as on a locked layer.
+     */
+    setProps(ids: string[], to: (id: string, now: Readonly<Record<string, unknown>>) => Record<string, unknown> | null, everyFormat: boolean, pageId?: string, formatId?: string) {
+      const frame = defaultFrame(pageId, formatId)
+      const here = scope(frame)
+      return runQuietly(() => session.gesture(() => {
+        const now = session.design()
+        const placedProps = (id: string) => ({ ...now.nodes[id]?.props, ...now.overrides[here]?.[id] }) as Record<string, unknown>
+        const writes = new Map<string, Record<string, unknown>>()
+        for (const id of ids) {
+          const node = now.nodes[id]
+          if (!node) continue
+          const at = placedProps(id)
+          const patch = to(id, at)
+          if (!patch || Object.keys(patch).length === 0) continue
+          writes.set(id, { ...writes.get(id), ...patch })
+          if (!isContainer(node.type) || !('x' in patch || 'y' in patch)) continue
+          const dx = 'x' in patch ? Number(patch.x) - Number(at.x) : 0
+          const dy = 'y' in patch ? Number(patch.y) - Number(at.y) : 0
+          for (const inner of under(id, now)) {
+            if (ids.includes(inner)) continue
+            const was = placedProps(inner)
+            writes.set(inner, { ...writes.get(inner), x: round(Number(was.x) + dx), y: round(Number(was.y) + dy) })
+          }
+        }
+        for (const [id, patch] of writes) {
+          const node = session.design().nodes[id]
+          const at = placedProps(id)
+          const style = patch.style as { color?: string; fontFamily?: string } | undefined
+          const was = at.style as { color?: string; fontFamily?: string } | undefined
+          const unbind: BindingTarget[] = [
+            ...(node?.bindings?.fill && 'fills' in patch ? ['fill' as const] : []),
+            ...(node?.bindings?.textColor && style && style.color !== was?.color ? ['textColor' as const] : []),
+            ...(node?.bindings?.fontFamily && style && style.fontFamily !== was?.fontFamily ? ['fontFamily' as const] : []),
+          ]
+          for (const target of unbind) session.run('node.bind', { ids: [id], target, ref: null })
+          if (!everyFormat) {
+            session.run('node.update', { ids: [id], scope: here, patch })
+            continue
+          }
+          session.run('node.update', { ids: [id], scope: 'base', patch })
+          for (const [other, byNode] of Object.entries(session.design().overrides)) {
+            const paths = Object.keys(patch).filter((path) => byNode[id] && path in byNode[id])
+            if (paths.length > 0) session.run('override.reset', { ids: [id], scope: other as `format:${string}`, paths })
+          }
+        }
+        hug([...writes.keys()])
+      }))
+    },
     /** Renames a layer (#59), as one undo step; false for an empty name. */
     renameLayer: (id: string, name: string) => runQuietly(() => session.run('node.rename', { id, name })),
     /** Locks layers completely, or unlocks them (#59), as one undo step. */
