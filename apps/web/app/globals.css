@@ -84,6 +84,10 @@
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --chrome-fast: 120ms;
   --chrome: 180ms;
+  /* Entrances (menus, cards, toasts): a little longer than chrome, still under 260 ms. */
+  --enter: 220ms;
+  /* The final mock's pop: a slight overshoot as a menu or a toast lands. */
+  --ease-pop: cubic-bezier(0.2, 1.4, 0.4, 1);
 }
 
 @theme inline {
@@ -146,6 +150,20 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  /* Entrances don't run at all, and the sheen isn't there: with a stagger delay, the near-zero
+     duration above would still hold an item hidden for its delay, then show it. */
+  .rise,
+  .pop-in,
+  .pop-in-start,
+  .pop-in-end,
+  .modal-in,
+  .toast-in,
+  .card-rise {
+    animation: none !important;
+  }
+  .ai-sheen {
+    display: none;
+  }
 }
 
 /* The AI glow: a slow drift of the gradient behind AI controls only. The gradient is a layer twice
@@ -186,6 +204,33 @@ body {
   background-image: radial-gradient(circle, rgb(255 255 255 / 0.3) 22%, transparent 24%);
   background-size: 5px 5px;
 }
+/* The sheen on AI buttons (Make drafts): a band of light that sweeps across now and then. It is a
+   child span, as both pseudo-elements are taken, and it moves by transform only, for the reason
+   above: no background-position, nothing that repaints what blurs behind the control. */
+@keyframes ai-sheen {
+  0% { transform: translateX(-100%); }
+  45%, 100% { transform: translateX(350%); }
+}
+@keyframes ai-sheen-rtl {
+  0% { transform: translateX(100%); }
+  45%, 100% { transform: translateX(-350%); }
+}
+.ai-sheen {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: -1;
+  width: 40%;
+  /* Off the button whenever it isn't sweeping: before the first sweep, or with animation off. */
+  transform: translateX(-100%);
+  pointer-events: none;
+  background-image: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.32) 50%, transparent 80%);
+  animation: ai-sheen 3.6s var(--ease-out) 0.6s infinite backwards;
+}
+[dir='rtl'] .ai-sheen {
+  transform: translateX(100%);
+  animation-name: ai-sheen-rtl;
+}
 
 /* Frosted surfaces (#81) for chrome that floats over the canvas: dock, zoom, flyouts, menus. */
 .surface-frost {
@@ -208,6 +253,71 @@ body {
 }
 .rise {
   animation: rise var(--chrome) var(--ease-out) both;
+}
+
+/* UI motion from the final mock. Entrances fill backwards only: once they end they leave no
+   transform behind, so a card doesn't stay a stacking context that would trap the font list. */
+
+/* Menus and popovers pop in with a slight overshoot, from the corner they hang from (popin). */
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.96); }
+}
+.pop-in,
+.pop-in-start,
+.pop-in-end {
+  transform-origin: var(--radix-popover-content-transform-origin, top center);
+  animation: pop-in var(--chrome) var(--ease-pop) backwards;
+}
+.pop-in-start { transform-origin: top left; }
+[dir='rtl'] .pop-in-start { transform-origin: top right; }
+.pop-in-end { transform-origin: top right; }
+[dir='rtl'] .pop-in-end { transform-origin: top left; }
+
+/* Dialogs rise and settle (modalin): the Share menu's Export and Save as template forms. */
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+}
+.modal-in {
+  transform-origin: top center;
+  animation: modal-in var(--enter) var(--ease-out) backwards;
+}
+
+/* Toasts come up from below with a little bounce (toastin). */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(12px); }
+}
+.toast-in {
+  animation: toast-in var(--enter) var(--ease-pop) backwards;
+}
+
+/* The property cards rise in a short stagger as they appear (cardin). */
+@keyframes card-rise {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+}
+.card-rise {
+  animation: card-rise var(--enter) var(--ease-out) backwards;
+}
+.card-rise:nth-child(2) { animation-delay: 40ms; }
+.card-rise:nth-child(3) { animation-delay: 80ms; }
+.card-rise:nth-child(n + 4) { animation-delay: 120ms; }
+
+/* Tiles lift on hover, with a deeper shadow under them (lift); in a .group, hovering the group
+   lifts its .lift child, as a template's picture lifts while its name stays. */
+.lift {
+  transition-property: transform, box-shadow, border-color;
+  transition-duration: var(--chrome);
+  transition-timing-function: var(--ease-out);
+}
+.lift:hover,
+.group:hover > .lift {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px -12px rgb(0 0 0 / 0.5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lift:hover,
+  .group:hover > .lift {
+    transform: none;
+  }
 }
 
 /* The canvas backdrop: a quiet dot grid under the frames. */

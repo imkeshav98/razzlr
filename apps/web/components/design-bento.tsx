@@ -46,7 +46,7 @@ export function DesignBento({ t, locale, brandId, designs }: { t: Messages; loca
               // In CI those prefetches also held up the router's next navigation (#84).
               prefetch={false}
               title={format(t.library.edited, { when: when.format(new Date(design.updatedAt)) })}
-              className="group relative block size-full overflow-hidden rounded-[16px] bg-raised shadow-panel transition-transform duration-[var(--chrome)] ease-[var(--ease-out)] hover:-translate-y-0.5 focus-visible:outline-offset-4"
+              className="lift group relative block size-full overflow-hidden rounded-[16px] bg-raised shadow-panel focus-visible:outline-offset-4"
             >
               {design.cover
                 ? (

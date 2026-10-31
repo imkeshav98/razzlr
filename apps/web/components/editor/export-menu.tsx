@@ -69,7 +69,7 @@ export function ExportForm({ id, editor, design }: { id: string; editor: Editor;
       role="dialog"
       aria-label={t.editor.exports.title}
       data-testid="export"
-      className="absolute end-0 top-full z-30 mt-2 flex w-72 flex-col gap-3 rounded-card border surface-frost p-3 shadow-panel"
+      className="modal-in absolute end-0 top-full z-30 mt-2 flex w-72 flex-col gap-3 rounded-card border surface-frost p-3 shadow-panel"
     >
       <label className="flex flex-col gap-1.5">
         <span className={LABEL}>{t.editor.exports.pages}</span>

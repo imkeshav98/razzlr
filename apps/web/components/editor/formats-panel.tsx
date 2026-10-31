@@ -201,7 +201,7 @@ function AddFormat({ editor }: { editor: Editor }) {
           sideOffset={12}
           aria-label={t.editor.formats.add}
           onKeyDown={(e) => e.stopPropagation()}
-          className="z-50 flex max-h-[min(560px,var(--radix-popover-content-available-height))] w-72 flex-col overflow-hidden rounded-card surface-frost border shadow-panel data-[state=open]:animate-[tooltip-in_var(--chrome-fast)_var(--ease-out)]"
+          className="z-50 flex max-h-[min(560px,var(--radix-popover-content-available-height))] w-72 flex-col overflow-hidden rounded-card surface-frost border shadow-panel pop-in"
         >
           <div className="min-h-0 flex-1 overflow-y-auto py-1" role="group" aria-label={t.editor.formats.presets}>
             {FORMAT_SHAPES.map((shape) => {
@@ -296,7 +296,7 @@ export function UndoToast({ editor, message, onDone }: { editor: Editor; message
       onPointerLeave={() => setHeld(false)}
       onFocus={() => setHeld(true)}
       onBlur={() => setHeld(false)}
-      className="rise pointer-events-auto flex h-10 items-center gap-2 rounded-card surface-frost border ps-3.5 pe-1.5 text-[13px] shadow-panel">
+      className="toast-in pointer-events-auto flex h-10 items-center gap-2 rounded-card surface-frost border ps-3.5 pe-1.5 text-[13px] shadow-panel">
       <TrashIcon size={14} aria-hidden className="text-subtle" />
       <span>{message}</span>
       <Button

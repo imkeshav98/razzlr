@@ -97,6 +97,7 @@ export function BriefComposer({ t, brandName, kitColors, action }: {
               title={h.makeHint}
               className="ai-glow relative ms-auto inline-flex h-10 cursor-pointer items-center gap-2 overflow-hidden rounded-[12px] px-5 text-sm font-semibold text-white shadow-panel transition-transform duration-[var(--chrome-fast)] active:scale-[0.97]"
             >
+              <span aria-hidden className="ai-sheen" />
               <SparkleIcon size={16} weight="fill" aria-hidden />
               {h.make}
             </button>

@@ -14,7 +14,7 @@ import { TemplateForm } from './template-menu.tsx'
 
 type Open = 'menu' | 'export' | 'template' | null
 
-const ROW = 'flex h-10 w-full cursor-pointer items-center gap-3 rounded-row px-3 text-start text-[13px] font-medium hover:bg-hover focus-visible:bg-hover focus-visible:outline-none'
+const ROW = 'flex h-10 w-full cursor-pointer items-center gap-3 rounded-row px-3 text-start text-[13px] font-medium transition-colors duration-[var(--chrome-fast)] hover:bg-hover focus-visible:bg-hover focus-visible:outline-none'
 
 export function ShareMenu({ editor, brandId, brandName, designName, everyBrand }: {
   editor: Editor
@@ -58,7 +58,7 @@ export function ShareMenu({ editor, brandId, brandName, designName, everyBrand }
         {t.editor.share.open}
       </Button>
       {open === 'menu' && (
-        <div id={id} role="menu" aria-label={t.editor.share.title} className="absolute end-0 top-full z-30 mt-2 flex w-60 flex-col rounded-card border surface-frost p-1.5 shadow-panel">
+        <div id={id} role="menu" aria-label={t.editor.share.title} className="pop-in-end absolute end-0 top-full z-30 mt-2 flex w-60 flex-col rounded-card border surface-frost p-1.5 shadow-panel">
           <button type="button" role="menuitem" className={ROW} onClick={() => setOpen('export')} data-testid="export-open">
             <DownloadSimpleIcon size={18} aria-hidden className="text-muted" />
             <span className="flex-1">{t.editor.exports.open}</span>

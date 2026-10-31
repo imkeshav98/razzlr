@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react'
 
 /** One floating card: frosted, rounded, as tall as its content. */
-export const CARD = 'overflow-hidden rounded-card surface-frost border shadow-panel'
+export const CARD = 'card-rise overflow-hidden rounded-card surface-frost border shadow-panel'
 
 /** A card's title row: the name, an optional count, and an optional action at the end. */
 export function CardHeader({ id, title, count, children }: { id: string; title: string; count?: number; children?: ReactNode }) {

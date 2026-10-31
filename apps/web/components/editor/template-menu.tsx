@@ -56,7 +56,7 @@ export function TemplateForm({ id, editor, brandId, brandName, designName, every
       role="dialog"
       aria-label={t.editor.templates.title}
       data-testid="template"
-      className="absolute end-0 top-full z-30 mt-2 flex w-72 flex-col gap-3 rounded-card border surface-frost p-3 shadow-panel"
+      className="modal-in absolute end-0 top-full z-30 mt-2 flex w-72 flex-col gap-3 rounded-card border surface-frost p-3 shadow-panel"
     >
       {saved
         ? (
