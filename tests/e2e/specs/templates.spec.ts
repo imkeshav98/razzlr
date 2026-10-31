@@ -74,18 +74,18 @@ test('save a template, start a design from it, edit that design, and the templat
   const template = listed.find((t) => t.name === name)
   expect(template).toMatchObject({ scope: 'brand', brandId: DEV_BRAND, kind: 'single', width: 1080, height: 1080 })
 
-  // The brand page lists it with its thumbnail, the small copy the API drew.
+  // The brand home's Templates panel lists it with its thumbnail, the small copy the API drew.
   await dialog.getByRole('link', { name: 'See it with the templates' }).click()
-  await expect(page).toHaveURL(new RegExp(`/brands/${DEV_BRAND}#templates$`))
+  await expect(page).toHaveURL(new RegExp(`/brands/${DEV_BRAND}\\?show=templates$`))
   const card = page.locator(`li[data-template="${template?.id}"]`)
   await expect(card).toBeVisible()
   await expect(card).toContainText('Harbour Coffee')
   await expect.poll(() => card.locator('img').evaluate((img: HTMLImageElement) => img.complete ? [img.naturalWidth, img.naturalHeight] : null)).toEqual([320, 320])
-  writeOutput('templates-2-gallery.png', await page.locator('#templates').screenshot({ animations: 'disabled' }))
+  writeOutput('templates-2-gallery.png', await page.getByTestId('home-panel-templates').screenshot({ animations: 'disabled' }))
 
   // Start a design from it: a new design, the same pixels, none of the template's ids.
   await card.getByRole('button', { name: `Use ${name}` }).click()
-  await expect(page).toHaveURL(/\/designs\/(?!.*#)/, { timeout: 20_000 })
+  await expect(page).toHaveURL(/\/designs\/[\w-]+$/, { timeout: 20_000 })
   await ready(page)
   const started = await read(page)
   const startedId = page.url().split('/designs/')[1]
@@ -103,7 +103,7 @@ test('save a template, start a design from it, edit that design, and the templat
   writeOutput('templates-4-edited.png', await page.screenshot())
 
   // The template is as it was: a second design started from it is the original again.
-  await page.goto(`/brands/${DEV_BRAND}#templates`)
+  await page.goto(`/brands/${DEV_BRAND}?show=templates`)
   await page.locator(`li[data-template="${template?.id}"]`).getByRole('button', { name: `Use ${name}` }).click()
   await expect(page).not.toHaveURL(new RegExp(`/designs/${startedId}$`))
   await expect(page).toHaveURL(/\/designs\//, { timeout: 20_000 })

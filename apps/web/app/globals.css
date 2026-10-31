@@ -158,7 +158,8 @@ body {
   .pop-in-end,
   .modal-in,
   .toast-in,
-  .card-rise {
+  .card-rise,
+  .home-panel {
     animation: none !important;
   }
   .ai-sheen {
@@ -299,6 +300,42 @@ body {
 }
 .toast-in {
   animation: toast-in var(--enter) var(--ease-pop) backwards;
+}
+
+/* A brand home's Recent or Templates panel rises under the brief; on phones it is a bottom sheet
+   over the page, above a scrim, with the capsule's tab bar on top of it. */
+@keyframes panel-rise {
+  from { opacity: 0; transform: translateY(48px); }
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+}
+.home-panel {
+  animation: panel-rise 460ms var(--ease-out) backwards;
+}
+@media (width < 48rem) {
+  .home-panel {
+    position: fixed;
+    inset-inline: 0;
+    inset-block: 12dvh 0;
+    z-index: 30;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 10px 16px 7rem;
+    border: 1px solid var(--glass-line);
+    border-block-end: 0;
+    border-start-start-radius: 26px;
+    border-start-end-radius: 26px;
+    background-color: color-mix(in oklab, var(--surface) 94%, transparent);
+    box-shadow: 0 -30px 60px -20px rgb(0 0 0 / 0.6);
+    animation: sheet-up 480ms cubic-bezier(0.2, 1, 0.3, 1) backwards;
+  }
+  .home-scrim {
+    animation: fade-in var(--enter) var(--ease-out) backwards;
+  }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
 }
 
 /* The property cards rise in a short stagger as they appear (cardin). Translate and opacity only:

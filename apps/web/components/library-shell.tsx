@@ -12,6 +12,7 @@ import type { BrandSummary } from '@razzlr/schema'
 import { initialsOf } from '../lib/initials.ts'
 import { AccountMenu } from './account-menu.tsx'
 import { BrandMark } from './brand-mark.tsx'
+import { homePanelHref } from '../lib/home-panel.ts'
 import { LibraryCapsule } from './library-capsule.tsx'
 
 export function BrandAvatar({ name, active = false }: { name: string; active?: boolean }) {
@@ -102,7 +103,7 @@ export async function TopBar({ t, workspace, children }: {
   )
 }
 
-export async function LibraryShell({ t, words, workspace, brands, activeBrandId, showBrands = true, place = 'home', glow = false, children }: {
+export async function LibraryShell({ t, words, workspace, brands, activeBrandId, showBrands = true, place = 'home', glow = false, recentCount, children }: {
   t: Messages
   /** "Clients" in an agency workspace, "Brands" otherwise. */
   words: BrandWords
@@ -116,6 +117,8 @@ export async function LibraryShell({ t, words, workspace, brands, activeBrandId,
   place?: LibraryPlace
   /** The slow aurora behind the top of the page, as on a brand's home. */
   glow?: boolean
+  /** How many designs the brand has, on the capsule's Recent; given on the brand's home, which opens Recent in place. */
+  recentCount?: number
   children: ReactNode
 }) {
   const active = brands.find((brand) => brand.id === activeBrandId)
@@ -131,9 +134,15 @@ export async function LibraryShell({ t, words, workspace, brands, activeBrandId,
       <LibraryCapsule
         label={t.app.name}
         current={place === 'settings' ? 'settings' : 'home'}
+        home={active && recentCount !== undefined ? `/brands/${active.id}` : undefined}
         links={[
           { entry: 'home', href: active ? `/brands/${active.id}` : '/', label: active ? t.library.home : words.title },
-          ...(active ? [{ entry: 'templates' as const, href: `/brands/${active.id}#templates`, label: t.library.templates }] : []),
+          ...(active
+            ? [
+              { entry: 'recent' as const, href: homePanelHref(`/brands/${active.id}`, 'recent'), label: t.home.recent, badge: recentCount },
+              { entry: 'templates' as const, href: homePanelHref(`/brands/${active.id}`, 'templates'), label: t.library.templates },
+            ]
+            : []),
           { entry: 'settings', href: '/settings', label: t.library.settings },
         ]}
       />

@@ -62,7 +62,7 @@ export function TemplateForm({ id, editor, brandId, brandName, designName, every
         ? (
           <>
             <p role="status" className="text-[13px]">{format(t.editor.templates.saved, { name: saved.name })}</p>
-            <Link href={`/brands/${encodeURIComponent(brandId)}#templates`} className="text-[13px] font-medium text-accent-text hover:underline">
+            <Link href={`/brands/${encodeURIComponent(brandId)}?show=templates`} className="text-[13px] font-medium text-accent-text hover:underline">
               {t.editor.templates.see}
             </Link>
           </>

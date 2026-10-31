@@ -43,6 +43,10 @@ export const en = {
     count: '{count} designs',
     noDesigns: 'Nothing made yet. Write a brief above to start.',
     switchBrand: 'Switch brand',
+    /** Under the brief while no panel is open: where the brand's work went. */
+    panelHint: 'Your recent designs and templates open from the bar.',
+    /** Closes the Recent or Templates panel under the brief. */
+    close: 'Close',
   },
   welcome: {
     // Onboarding (#109): who Razzlr is for, then the first brand from a website.
