@@ -1,7 +1,8 @@
 // The database's tables. Every row has a workspace, and every design and asset a brand of that
 // workspace (ADR-0011); the API scopes every query by them. Change these, then write a migration with
 // `pnpm --filter @razzlr/db migration`.
-import { customType, foreignKey, index, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { check, customType, foreignKey, index, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
 
 const bytea = customType<{ data: Uint8Array; driverData: Buffer }>({
   dataType: () => 'bytea',
@@ -68,4 +69,30 @@ export const assets = pgTable('assets', {
 }, (t) => [
   unique('assets_brand_sha256').on(t.brandId, t.sha256),
   foreignKey({ name: 'assets_brand_in_workspace', columns: [t.brandId, t.workspaceId], foreignColumns: [brands.id, brands.workspaceId] }),
+])
+
+/**
+ * One font file (#50): a family in one weight and style. Google Fonts faces are shared by every
+ * workspace and have no workspace or brand (stored at fonts/google/<sha256>); a brand's uploads
+ * are its own (workspaces/<workspace>/fonts/<sha256>). A family name is unique per brand, weight
+ * and style, so uploading a face again replaces it.
+ */
+export const fontFaces = pgTable('font_faces', {
+  id: text().primaryKey(),
+  workspaceId: text('workspace_id').references(() => workspaces.id),
+  brandId: text('brand_id'),
+  source: text({ enum: ['google', 'upload'] }).notNull(),
+  family: text().notNull(),
+  weight: integer().notNull(),
+  style: text({ enum: ['normal', 'italic'] }).notNull(),
+  /** Google's category, such as serif; null for uploads. */
+  category: text(),
+  sha256: text().notNull(),
+  byteSize: integer('byte_size').notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  unique('font_faces_face').on(t.workspaceId, t.brandId, t.family, t.weight, t.style).nullsNotDistinct(),
+  index('font_faces_brand').on(t.workspaceId, t.brandId),
+  foreignKey({ name: 'font_faces_brand_in_workspace', columns: [t.brandId, t.workspaceId], foreignColumns: [brands.id, brands.workspaceId] }),
+  check('font_faces_scope', sql`(${t.source} = 'google' and ${t.workspaceId} is null and ${t.brandId} is null) or (${t.source} = 'upload' and ${t.workspaceId} is not null and ${t.brandId} is not null)`),
 ])

@@ -1,6 +1,6 @@
 // The API, called from the web app's server only, with every response read through its contract.
 import 'server-only'
-import { ApiError, AssetLink, BrandSummary, DesignSummary, SyncToken, WorkspaceSummary } from '@razzlr/schema'
+import { ApiError, AssetLink, BrandSummary, DesignSummary, FontFace, FontFamily, FontLink, FontUploadTicket, SyncToken, WorkspaceSummary, type FontType } from '@razzlr/schema'
 import type { z } from 'zod'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8787'
@@ -58,4 +58,28 @@ export async function assetLink(brandId: string, assetId: string) {
     if (e instanceof ApiFailure && e.status === 404) return null
     throw e
   }
+}
+
+/** The fonts a brand picks from (#50): Google Fonts copied into our storage and the brand's uploads. */
+export const listFonts = (brandId: string) => call(FontFamily.array(), `/brands/${encodeURIComponent(brandId)}/fonts`)
+
+/** A face and signed URLs to its file and preview, or null when the API has no such face for this session. */
+export async function fontLink(brandId: string, faceId: string) {
+  try {
+    return await call(FontLink, `/brands/${encodeURIComponent(brandId)}/fonts/faces/${encodeURIComponent(faceId)}`)
+  } catch (e) {
+    if (e instanceof ApiFailure && e.status === 404) return null
+    throw e
+  }
+}
+
+/** Uploads a font file for the brand: asks, PUTs the bytes to storage when asked to, records it. */
+export async function uploadFont(brandId: string, bytes: Uint8Array<ArrayBuffer>, contentType: FontType) {
+  const brand = `/brands/${encodeURIComponent(brandId)}/fonts`
+  const sha256 = Buffer.from(await crypto.subtle.digest('SHA-256', bytes)).toString('hex')
+  const ticket = await call(FontUploadTicket, `${brand}/uploads`, { method: 'POST', body: { sha256, byteSize: bytes.length, contentType } })
+  if (ticket.face) return ticket.face
+  const put = await fetch(ticket.upload.url, { method: 'PUT', body: bytes, headers: ticket.upload.headers })
+  if (!put.ok) throw new ApiFailure(502, `Storage answered ${put.status} to the upload`)
+  return call(FontFace, brand, { method: 'POST', body: { sha256 } })
 }

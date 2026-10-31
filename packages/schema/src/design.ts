@@ -477,3 +477,24 @@ export function imageAssetIds(design: Design): string[] {
   }
   return [...ids].sort()
 }
+
+/**
+ * Every font family the design's text names, in base styles, runs and format overrides, sorted
+ * (#50): the families the editor and exports load. Fallback families are not among them.
+ */
+export function fontFamilies(design: Design): string[] {
+  const families = new Set<string>()
+  const addStyle = (style: unknown) => {
+    const family = style && typeof style === 'object' ? (style as { fontFamily?: unknown }).fontFamily : undefined
+    if (typeof family === 'string' && family) families.add(family)
+  }
+  const addText = (values: { style?: unknown; runs?: unknown }) => {
+    addStyle(values.style)
+    if (Array.isArray(values.runs)) for (const run of values.runs) addStyle((run as { style?: unknown } | null)?.style)
+  }
+  for (const node of Object.values(design.nodes)) if (node.type === 'text') addText(node.props)
+  for (const byNode of Object.values(design.overrides)) {
+    for (const [id, values] of Object.entries(byNode)) if (design.nodes[id]?.type === 'text') addText(values)
+  }
+  return [...families].sort()
+}

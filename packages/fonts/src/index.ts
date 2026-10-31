@@ -26,3 +26,4 @@ export const FALLBACK_FAMILY = 'Noto Sans'
  * headline draws in a script's font instead of as empty boxes. Noto Sans comes first.
  */
 export const FALLBACK_FAMILIES: readonly string[] = [FALLBACK_FAMILY, 'Noto Sans Devanagari', 'Noto Naskh Arabic']
+export * from './google.ts'

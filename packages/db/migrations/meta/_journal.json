@@ -29,6 +29,13 @@
       "when": 1793388838205,
       "tag": "0003_workspaces-brands",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793432973640,
+      "tag": "0004_font-faces",
+      "breakpoints": true
     }
   ]
 }

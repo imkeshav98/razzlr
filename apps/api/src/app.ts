@@ -1,12 +1,13 @@
 // The API's routes. /workspace and every route below /brands need a session, and reads and writes only that
 // session's workspace; a brand or design of another workspace is answered as if it didn't exist.
 import type { Db } from '@razzlr/db'
-import { CreateBrand, CreateDesign, RecordAsset, StartUpload, UpdateWorkspace, type ApiError, type AssetLink, type SyncToken } from '@razzlr/schema'
+import { CreateBrand, CreateDesign, RecordAsset, RecordFont, StartFontUpload, StartUpload, UpdateWorkspace, type ApiError, type AssetLink, type SyncToken } from '@razzlr/schema'
 import type { Storage } from '@razzlr/storage'
 import { signSyncToken } from '@razzlr/sync-token'
 import { Hono, type MiddlewareHandler } from 'hono'
 import type { z } from 'zod'
 import { findAsset, InvalidUpload, listAssets, originalKey, recordAsset, SIGNED_URL_SECONDS, startUpload } from './assets.ts'
+import { fontLink, InvalidFont, listFonts, recordFont, startFontUpload } from './fonts.ts'
 import { createBrand, createDesign, findBrand, findDesign, findWorkspace, InvalidContent, listBrands, listDesigns, setWorkspaceKind } from './designs.ts'
 import type { Session, SessionOf } from './session.ts'
 
@@ -135,6 +136,45 @@ export function createApp({ db, storage, sessionOf, syncSecret }: { db: Db; stor
     if (!asset) return c.json(error('No such asset'), 404)
     const url = await storage.signedGet(originalKey(workspaceId, asset.sha256), SIGNED_URL_SECONDS)
     return c.json({ asset, url, expiresAt: new Date(Date.now() + SIGNED_URL_SECONDS * 1000).toISOString() } satisfies AssetLink)
+  })
+
+  // Fonts (#50): Google Fonts copied into our storage and the brand's uploads, read back from there.
+  app.get('/brands/:brandId/fonts', async (c) => {
+    const { workspaceId } = c.var.session
+    const brand = await findBrand(db, workspaceId, c.req.param('brandId'))
+    if (!brand) return c.json(error('No such brand'), 404)
+    return c.json(await listFonts(db, workspaceId, brand.id))
+  })
+
+  app.post('/brands/:brandId/fonts/uploads', async (c) => {
+    const { workspaceId } = c.var.session
+    const brand = await findBrand(db, workspaceId, c.req.param('brandId'))
+    if (!brand) return c.json(error('No such brand'), 404)
+    const input = await body(c.req.raw, StartFontUpload)
+    if (input instanceof Response) return input
+    return c.json(await startFontUpload(db, storage, workspaceId, brand.id, input))
+  })
+
+  app.post('/brands/:brandId/fonts', async (c) => {
+    const { workspaceId } = c.var.session
+    const brand = await findBrand(db, workspaceId, c.req.param('brandId'))
+    if (!brand) return c.json(error('No such brand'), 404)
+    const input = await body(c.req.raw, RecordFont)
+    if (input instanceof Response) return input
+    try {
+      return c.json(await recordFont(db, storage, workspaceId, brand.id, input.sha256), 201)
+    } catch (e) {
+      if (e instanceof InvalidFont) return c.json(error(e.message), 400)
+      throw e
+    }
+  })
+
+  app.get('/brands/:brandId/fonts/faces/:faceId', async (c) => {
+    const { workspaceId } = c.var.session
+    const brand = await findBrand(db, workspaceId, c.req.param('brandId'))
+    if (!brand) return c.json(error('No such brand'), 404)
+    const link = await fontLink(db, storage, workspaceId, brand.id, c.req.param('faceId'))
+    return link ? c.json(link) : c.json(error('No such font'), 404)
   })
 
   app.onError((e, c) => {

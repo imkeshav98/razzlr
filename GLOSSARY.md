@@ -88,6 +88,14 @@ _Avoid_: Block (that is the renderer's laid-out paragraph), line (a paragraph wr
 A text layer setting that picks the largest font size, between a least and a most, at which the text fits its box; every size in the text scales with it.
 _Avoid_: Auto size, fit text
 
+**Font catalog**:
+The families a brand can set text in: the fonts we ship (the fallbacks among them), the Google Fonts families we copied into our storage, and the brand's own uploads. A brand's upload of a family name is the one it sees. Every font file is loaded from our storage, never from Google, the system or the browser.
+_Avoid_: Font library (that is the asset library's word), web fonts
+
+**Font face**:
+One font file in the catalog: a family in one weight and style.
+_Avoid_: Font (when one file is meant), variant (see Variant)
+
 **Fill**:
 One paint on a layer: solid, gradient (linear, radial or angular), image or video. A crop is the fill's transform.
 _Avoid_: Background, colour (when a paint is meant)
