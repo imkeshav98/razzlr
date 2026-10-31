@@ -376,11 +376,16 @@ export const en = {
   account: { open: 'Your account', settings: 'Settings' },
   signIn: {
     title: 'Sign in to Razzlr',
+    /** The sign-in page's headline, in two lines. */
+    headline: 'Make every size,',
+    headlineEnd: 'for every client.',
     lead: 'Sign in or make an account. Your first sign-in makes your workspace.',
     signIn: 'Sign in',
     signOut: 'Sign out',
     failed: 'That sign-in did not work. Try again.',
     unavailable: 'Sign-in is not set up on this server yet.',
+    /** The sample ad drawn three times beside the sign-in form, as decoration. */
+    sample: { brand: 'Harbour Coffee', headline: 'Cold brew is back', price: '₹149', cta: 'Order now' },
   },
 }
 
