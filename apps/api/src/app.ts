@@ -1,7 +1,7 @@
 // The API's routes. /workspace and every route below /brands need a session, and reads and writes only that
 // session's workspace; a brand or design of another workspace is answered as if it didn't exist.
 import type { Db } from '@razzlr/db'
-import { BrandKit, CompleteSignIn, CreateBrand, CreateDesign, SaveTemplate, StartFromTemplate, RecordAsset, RecordFont, StartFontUpload, StartUpload, UpdateAsset, UpdateWorkspace, type ApiError, type AssetLink, type SignedIn, type SignedLink, type SignedOut, type SignInLink, type SyncToken } from '@razzlr/schema'
+import { BrandKit, CompleteSignIn, CreateBrand, CreateDesign, SaveTemplate, StartFromTemplate, RecordAsset, RecordFont, StartFontUpload, StartUpload, UpdateAsset, UpdateWorkspace, type ApiError, type AssetLink, type DesignCover, type DesignThumbnail, type SignedIn, type SignedLink, type SignedOut, type SignInLink, type SyncToken } from '@razzlr/schema'
 import type { Storage } from '@razzlr/storage'
 import { signSyncToken } from '@razzlr/sync-token'
 import { Hono, type MiddlewareHandler } from 'hono'
@@ -9,6 +9,7 @@ import type { z } from 'zod'
 import { getBrandKit, InvalidKit, saveBrandKit } from './brand-kits.ts'
 import { findTemplate, listTemplates, saveTemplate, startFromTemplate, templateThumbnailKey } from './templates.ts'
 import { ensureThumbnail, findAsset, InvalidUpload, listAssets, originalKey, recordAsset, SIGNED_URL_SECONDS, startUpload, updateAsset } from './assets.ts'
+import { designCover, ensureDesignThumbnail } from './design-thumbnails.ts'
 import { fontLink, InvalidFont, listFonts, recordFont, startFontUpload } from './fonts.ts'
 import { createBrand, createDesign, findBrand, findDesign, findWorkspace, InvalidContent, listBrands, listDesigns, setWorkspaceKind } from './designs.ts'
 import { bearerToken, readSessionToken, type Session, type SessionOf } from './session.ts'
@@ -129,6 +130,24 @@ export function createApp({ db, storage, sessionOf, syncSecret, signIn = null }:
   })
 
   // A token for the sync server, only after the same workspace and brand checks as opening the design.
+  // The primary format's size alone, read without drawing, for the home to lay out its bento (#84).
+  app.get('/brands/:brandId/designs/:designId/cover', async (c) => {
+    const design = await findDesign(db, c.var.session.workspaceId, c.req.param('brandId'), c.req.param('designId'))
+    if (!design) return c.json(error('No such design'), 404)
+    const cover = await designCover(db, design)
+    return cover ? c.json(cover satisfies DesignCover) : c.json(error('This design has nothing to show yet'), 404)
+  })
+
+  app.get('/brands/:brandId/designs/:designId/thumbnail', async (c) => {
+    const { workspaceId } = c.var.session
+    const design = await findDesign(db, workspaceId, c.req.param('brandId'), c.req.param('designId'))
+    if (!design) return c.json(error('No such design'), 404)
+    const cover = await ensureDesignThumbnail(db, storage, workspaceId, design)
+    if (!cover) return c.json(error('This design has nothing to show yet'), 404)
+    const url = await storage.signedGet(cover.key, SIGNED_URL_SECONDS)
+    return c.json({ url, width: cover.width, height: cover.height, expiresAt: new Date(Date.now() + SIGNED_URL_SECONDS * 1000).toISOString() } satisfies DesignThumbnail)
+  })
+
   app.post('/brands/:brandId/designs/:designId/sync-token', async (c) => {
     const { workspaceId, userId } = c.var.session
     const design = await findDesign(db, workspaceId, c.req.param('brandId'), c.req.param('designId'))

@@ -148,16 +148,43 @@ body {
   }
 }
 
-/* The AI glow: a slow drift of the gradient behind AI controls only. */
+/* The AI glow: a slow drift of the gradient behind AI controls only. The gradient is a layer twice
+   the control's width that slides, so the drift is a compositor transform, never a repaint: a
+   repaint every frame also repainted whatever blurs behind the control, like the home's aurora,
+   which made software-rendered pages (CI) slow to draw. The element needs a position, as all do. */
 @keyframes ai-drift {
-  from { background-position: 0 0, 0% 50%; }
-  to { background-position: 0 0, 100% 50%; }
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes ai-drift-rtl {
+  from { transform: translateX(0); }
+  to { transform: translateX(50%); }
+}
+.ai-glow {
+  isolation: isolate;
+  overflow: hidden;
+}
+.ai-glow::before,
+.ai-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.ai-glow::before {
+  inset-inline-end: auto;
+  width: 200%;
+  background-image: var(--ai-gradient);
+  animation: ai-drift 6s ease-in-out infinite alternate;
+}
+[dir='rtl'] .ai-glow::before {
+  animation-name: ai-drift-rtl;
 }
 /* A fine halftone over the gradient, like a riso print's dot screen. */
-.ai-glow {
-  background-image: radial-gradient(circle, rgb(255 255 255 / 0.3) 22%, transparent 24%), var(--ai-gradient);
-  background-size: 5px 5px, 200% 200%;
-  animation: ai-drift 6s ease-in-out infinite alternate;
+.ai-glow::after {
+  background-image: radial-gradient(circle, rgb(255 255 255 / 0.3) 22%, transparent 24%);
+  background-size: 5px 5px;
 }
 
 /* Frosted surfaces (#81) for chrome that floats over the canvas: dock, zoom, flyouts, menus. */
@@ -452,4 +479,21 @@ body {
   position: absolute;
   background: color-mix(in oklab, var(--accent) 28%, transparent);
   pointer-events: none;
+}
+
+/* The home's aurora (#84): slow blurred light in the accent colours behind the brief. */
+@keyframes aurora-drift {
+  0%, 100% { transform: translate3d(-5%, -3%, 0) rotate(0deg) scale(1); }
+  50% { transform: translate3d(5%, 4%, 0) rotate(10deg) scale(1.08); }
+}
+.aurora {
+  position: absolute;
+  inset: -35% -10%;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 48% at 28% 42%, color-mix(in oklab, var(--accent) 42%, transparent), transparent 70%),
+    radial-gradient(34% 44% at 72% 52%, color-mix(in oklab, var(--accent-2) 38%, transparent), transparent 70%),
+    radial-gradient(26% 36% at 54% 22%, rgb(255 210 63 / 0.22), transparent 70%);
+  filter: blur(48px);
+  animation: aurora-drift 26s ease-in-out infinite;
 }

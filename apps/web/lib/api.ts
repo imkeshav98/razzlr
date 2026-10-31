@@ -2,7 +2,7 @@
 import 'server-only'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignSummary, FontFace, FontFamily, FontLink, FontUploadTicket, SignedIn, SignedLink, SignedOut, SignInLink, SyncToken, TemplateSummary, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type SaveTemplate, type UpdateAsset } from '@razzlr/schema'
+import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignCover, DesignSummary, DesignThumbnail, FontFace, FontFamily, FontLink, FontUploadTicket, SignedIn, SignedLink, SignedOut, SignInLink, SyncToken, TemplateSummary, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type SaveTemplate, type UpdateAsset } from '@razzlr/schema'
 import type { z } from 'zod'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8787'
@@ -60,8 +60,28 @@ export const listBrands = () => call(BrandSummary.array(), '/brands')
 
 export const listDesigns = (brandId: string) => call(DesignSummary.array(), `/brands/${encodeURIComponent(brandId)}/designs`)
 
-export const createDesign = (brandId: string, name: string) =>
-  call(DesignSummary, `/brands/${encodeURIComponent(brandId)}/designs`, { method: 'POST', body: { name } })
+export const createDesign = (brandId: string, name: string, content?: unknown) =>
+  call(DesignSummary, `/brands/${encodeURIComponent(brandId)}/designs`, { method: 'POST', body: content === undefined ? { name } : { name, content } })
+
+/** The size of a design's primary format (#84), read without drawing, or null when it has nothing to show. */
+export async function designCover(brandId: string, designId: string) {
+  try {
+    return await call(DesignCover, `/brands/${encodeURIComponent(brandId)}/designs/${encodeURIComponent(designId)}/cover`)
+  } catch (e) {
+    if (e instanceof ApiFailure && e.status === 404) return null
+    throw e
+  }
+}
+
+/** A design's picture for the home (#84), or null when it has nothing to show yet. */
+export async function designThumbnail(brandId: string, designId: string) {
+  try {
+    return await call(DesignThumbnail, `/brands/${encodeURIComponent(brandId)}/designs/${encodeURIComponent(designId)}/thumbnail`)
+  } catch (e) {
+    if (e instanceof ApiFailure && e.status === 404) return null
+    throw e
+  }
+}
 
 /** The brand and design, or null when the API has no such design for this session. */
 export async function findDesign(brandId: string, designId: string) {

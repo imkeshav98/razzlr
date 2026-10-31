@@ -26,12 +26,14 @@ export function BrandAvatar({ name, active = false }: { name: string; active?: b
   )
 }
 
-export function LibraryShell({ t, words, brands, activeBrandId, children }: {
+export function LibraryShell({ t, words, brands, activeBrandId, showBrands = true, children }: {
   t: Messages
   /** "Clients" in an agency workspace, "Brands" otherwise. */
   words: BrandWords
   brands: BrandSummary[]
   activeBrandId?: string
+  /** The brand list beside the page; a workspace with one brand and no clients goes without (#84). */
+  showBrands?: boolean
   children: ReactNode
 }) {
   return (
@@ -47,6 +49,7 @@ export function LibraryShell({ t, words, brands, activeBrandId, children }: {
         </div>
       </nav>
 
+      {showBrands && (
       <aside aria-label={words.title} className="hidden w-64 shrink-0 flex-col border-e border-line bg-surface md:flex">
         <div className="flex h-14 items-center px-4">
           <h2 className="font-display text-[15px] font-semibold tracking-tight">{words.title}</h2>
@@ -72,6 +75,7 @@ export function LibraryShell({ t, words, brands, activeBrandId, children }: {
           })}
         </ul>
       </aside>
+      )}
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 shrink-0 items-center justify-end gap-2 border-b border-line px-4 md:px-8">
