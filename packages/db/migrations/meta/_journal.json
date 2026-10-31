@@ -36,6 +36,13 @@
       "when": 1793432973640,
       "tag": "0004_font-faces",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793436267430,
+      "tag": "0005_asset-names-tags",
+      "breakpoints": true
     }
   ]
 }

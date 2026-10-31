@@ -54,7 +54,9 @@ export const designStates = pgTable('design_states', {
 
 /**
  * An image a brand uploaded. The original is stored once per workspace under its SHA-256
- * (workspaces/<workspace>/originals/<sha256>); each brand that uploads it gets one asset row.
+ * (workspaces/<workspace>/originals/<sha256>), with a small copy for the asset library next to it
+ * (workspaces/<workspace>/thumbnails/<sha256>); each brand that uploads it gets one asset row, with
+ * its own name and tags (#52).
  */
 export const assets = pgTable('assets', {
   id: text().primaryKey(),
@@ -65,6 +67,10 @@ export const assets = pgTable('assets', {
   byteSize: integer('byte_size').notNull(),
   width: integer().notNull(),
   height: integer().notNull(),
+  /** What the brand calls it; the file's name when it was uploaded. */
+  name: text().notNull().default(''),
+  /** Lowercase words the brand searches by, each once. */
+  tags: text().array().notNull().default(sql`'{}'::text[]`),
   createdAt: createdAt(),
 }, (t) => [
   unique('assets_brand_sha256').on(t.brandId, t.sha256),

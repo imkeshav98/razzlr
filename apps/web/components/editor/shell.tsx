@@ -20,7 +20,7 @@ import { ThemeSwitch } from '../theme-switch.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { ShapeTools } from './shape-menu.tsx'
 
-type Panel = 'layers' | 'assets' | 'ai' | 'brand'
+export type Panel = 'layers' | 'assets' | 'ai' | 'brand'
 export type Tool = 'select' | 'frame' | 'shape' | 'text' | 'pen' | 'image' | 'hand'
 
 const PANELS: { id: Panel; icon: Icon }[] = [
@@ -92,7 +92,7 @@ function useShownStatus(status: string) {
   return shown
 }
 
-export function EditorShell({ brandId, brandName, designName, status, tool: shownTool, shape = 'rect', onToolChange, inspector, actions, children }: {
+export function EditorShell({ brandId, brandName, designName, status, tool: shownTool, shape = 'rect', onToolChange, inspector, actions, panels, children }: {
   brandId: string
   brandName: string
   designName: string
@@ -106,6 +106,8 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
   inspector?: ReactNode
   /** Buttons for the design as a whole, such as Export, at the header's end. */
   actions?: ReactNode
+  /** What a flyout shows once its ticket fills it, such as the asset library (#52); an empty state until then. */
+  panels?: Partial<Record<Panel, ReactNode>>
   children: ReactNode
 }) {
   const t = useMessages()
@@ -233,7 +235,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                       <XIcon size={16} aria-hidden />
                     </button>
                   </div>
-                  <p className="p-4 text-[13px] text-muted">{panelEmpty[panel]}</p>
+                  {panels?.[panel] ?? <p className="p-4 text-[13px] text-muted">{panelEmpty[panel]}</p>}
                 </motion.section>
               )}
             </AnimatePresence>

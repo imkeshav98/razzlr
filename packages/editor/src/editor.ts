@@ -20,7 +20,7 @@ import { hitTest, type Point } from './hit-test.ts'
 import { align, distribute, type Alignment, type Distribution, type Offset } from './arrange.ts'
 import { coverCrop, cornersOfRect, cropOf, imageRect, panned, scaled } from './crop.ts'
 import { exportClient } from './export-client.ts'
-import { clickedBox, drawnBox, isShapeTool, newShape, newText, type ShapeTool } from './draw-tools.ts'
+import { clickedBox, drawnBox, isShapeTool, newImage, newShape, newText, type ShapeTool } from './draw-tools.ts'
 import {
   anchorOf, constrain, deleteAnchors, formatPath, hitPath, isSmooth, moveAnchors, moveControl, offsetPath, parsePath, pathBounds, sameRef, segmentsOf, splitSegment,
   type Anchor, type AnchorRef, type PenPath, type Side,
@@ -1001,6 +1001,8 @@ function live(
   // background (#50); until then that text draws in the fallback fonts. Exports wait for them.
   const fontsAsked = new Set([...SHIPPED_FAMILIES, ...resourceBytes.fonts.map((f) => f.family)])
   let fontsLoading: Promise<void> = Promise.resolve()
+  /** Images a design named after it opened (one placed from the asset library, #52); exports wait for them too. */
+  let imagesLoading: Promise<void> = Promise.resolve()
   function loadNewFonts(current: Design) {
     if (!options.fontFiles) return
     const fresh = fontFamilies(current).filter((family) => !fontsAsked.has(family))
@@ -1032,7 +1034,7 @@ function live(
     const fresh = missing.filter((id) => !loading.has(id))
     if (fresh.length > 0 && options.assetBytes) {
       for (const id of fresh) loading.add(id)
-      loadImages(fresh, options).then((images) => {
+      const arriving = loadImages(fresh, options).then((images) => {
         if (listening.signal.aborted) return
         resourceBytes = { ...resourceBytes, images: { ...resourceBytes.images, ...images } }
         resources = cache.resources(resourceBytes)
@@ -1043,6 +1045,7 @@ function live(
         status(`Error: an image did not load (${error instanceof Error ? error.message : String(error)})`)
       })
         .finally(() => { for (const id of fresh) loading.delete(id) })
+      imagesLoading = Promise.all([imagesLoading, arriving]).then(() => undefined)
     }
     const key = missing.join('\n')
     if (placeholders?.for === resources && placeholders.missing === key) return placeholders.resources
@@ -2578,8 +2581,9 @@ function live(
      * worker so the stage stays responsive (#55). One file comes as itself, more as one zip.
      */
     async exportFiles(request: ExportRequestInput, progress?: (done: number, total: number) => void) {
-      // A family picked a moment ago is drawn in its own font, never the fallback.
-      await fontsLoading
+      // A family picked or an image placed a moment ago is drawn as itself, never the fallback or a gap.
+      screenResources(session.design())
+      await Promise.all([fontsLoading, imagesLoading])
       return exporter.run(session.design(), request, resourceBytes, progress)
     },
     /** The families whose files the editor has, shipped ones included (#50). */
@@ -2600,6 +2604,27 @@ function live(
           runQuietly(() => session.run('node.update', { ids: [id], patch: { style } }))
         }
       })
+    },
+    /**
+     * Places an image asset as a graphic filled with it (#52), in one undo step: centred where
+     * `client` is, in client coordinates, or else in the middle of the frame in the middle of the view.
+     * The image's bytes load in the background. Returns the new layer's id, or null when the point
+     * is on no frame.
+     */
+    placeImage(asset: { id: string; name: string; width: number; height: number }, client?: Point): string | null {
+      const rect = canvas.getBoundingClientRect()
+      const screen = client ? { x: client.x - rect.left, y: client.y - rect.top } : centre()
+      const world = toWorld(camera, screen)
+      const under = frameAt(grid.frames, world)
+      const frame = client ? under : under ?? frameOf(selection?.frame) ?? grid.frames[0]
+      if (!frame) return null
+      const at = client ? { x: world.x - frame.x, y: world.y - frame.y } : { x: frame.width / 2, y: frame.height / 2 }
+      stopEditing()
+      let id = ''
+      if (!runQuietly(() => { id = session.run('node.create', { parentId: frame.pageId, layer: newImage(asset, at, frame) }) })) return null
+      setTool('select')
+      select([id], frame.key)
+      return id
     },
     synced: () => provider.synced && provider.unsyncedChanges === 0,
     destroy() {

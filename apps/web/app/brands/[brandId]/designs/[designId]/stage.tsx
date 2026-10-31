@@ -10,6 +10,7 @@ import { PagesPanel } from '../../../../../components/editor/pages-panel.tsx'
 import { ZoomControl } from '../../../../../components/editor/zoom-control.tsx'
 import { ExportMenu } from '../../../../../components/editor/export-menu.tsx'
 import { FontPanel } from '../../../../../components/editor/font-panel.tsx'
+import { ASSET_DRAG_TYPE, AssetLibrary, draggedAsset } from '../../../../../components/editor/asset-library.tsx'
 import { FontFamily } from '@razzlr/schema'
 
 declare global {
@@ -138,6 +139,7 @@ export function EditorStage({ designId, designName, brandId, brandName, formatId
         editor?.setTool(tool === 'hand' || tool === 'pen' || tool === 'text' ? tool : tool === 'shape' ? picked : 'select')
       }}
       actions={editor ? <ExportMenu editor={editor} /> : undefined}
+      panels={editor ? { assets: <AssetLibrary editor={editor} brandId={brandId} /> } : {}}
       inspector={editor ? (
         <>
           <ArrangePanel editor={editor} />
@@ -148,7 +150,22 @@ export function EditorStage({ designId, designName, brandId, brandName, formatId
       ) : undefined}
     >
       {/* The design is a picture, so it never mirrors: the stage stays left to right in Arabic too. */}
-      <div dir="ltr" className="absolute inset-0">
+      {/* An asset dragged from the library lands where it is dropped (#52). */}
+      <div
+        dir="ltr"
+        className="absolute inset-0"
+        onDragOver={(e) => {
+          if (!editor || !e.dataTransfer.types.includes(ASSET_DRAG_TYPE)) return
+          e.preventDefault()
+          e.dataTransfer.dropEffect = 'copy'
+        }}
+        onDrop={(e) => {
+          const asset = editor && draggedAsset(e)
+          if (!asset) return
+          e.preventDefault()
+          editor.placeImage(asset, { x: e.clientX, y: e.clientY })
+        }}
+      >
         <canvas ref={canvas} className="block size-full touch-none" data-testid="stage" />
         <div ref={overlay} className="stage-overlay pointer-events-none absolute inset-0 overflow-hidden" aria-hidden />
         <div data-slot="mini-bar" className="pointer-events-none absolute inset-x-0 top-4 flex justify-center">
