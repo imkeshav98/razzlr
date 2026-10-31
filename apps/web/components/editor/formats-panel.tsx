@@ -17,6 +17,7 @@ import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { Button } from '../ui/button.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
+import { CARD, CardHeader } from './card.tsx'
 
 export const ICON_BUTTON = 'grid size-7 shrink-0 cursor-pointer place-items-center rounded-row text-subtle transition-colors duration-[var(--chrome-fast)] hover:bg-hover hover:text-text disabled:pointer-events-none disabled:opacity-30'
 
@@ -66,14 +67,10 @@ export function FormatsPanel({ editor, onRemoved }: { editor: Editor; onRemoved:
   }
 
   return (
-    <section aria-labelledby="formats-title" className="border-b border-line">
-      <div className="flex h-10 items-center justify-between ps-4 pe-2">
-        <h3 id="formats-title" className="text-xs font-semibold tracking-wide text-muted">
-          {t.editor.formats.title}
-          <span className="ms-1.5 font-mono font-normal text-subtle tabular-nums">{formats.length}</span>
-        </h3>
+    <section aria-labelledby="formats-title" className={CARD}>
+      <CardHeader id="formats-title" title={t.editor.formats.title} count={formats.length}>
         <AddFormat editor={editor} />
-      </div>
+      </CardHeader>
       <ul aria-label={t.editor.formats.title} className="pb-2" data-testid="formats">
         {formats.map(([id, f], i) => {
           const primary = design.meta.primaryFormatId === id

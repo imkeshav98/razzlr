@@ -3,13 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { SHAPE_TOOLS, startEditor, type Editor, type ShapeTool, type Tool } from '@razzlr/editor'
 import { fetchSyncToken } from './actions.ts'
-import { EditorShell } from '../../../../../components/editor/shell.tsx'
-import { FocusChip, FormatsPanel, UndoToast } from '../../../../../components/editor/formats-panel.tsx'
-import { ArrangePanel } from '../../../../../components/editor/arrange-panel.tsx'
-import { PagesPanel } from '../../../../../components/editor/pages-panel.tsx'
+import { EditorShell, type ChromeInsets } from '../../../../../components/editor/shell.tsx'
+import { FocusChip, UndoToast } from '../../../../../components/editor/formats-panel.tsx'
+import { PropertyCards } from '../../../../../components/editor/property-cards.tsx'
 import { ZoomControl } from '../../../../../components/editor/zoom-control.tsx'
 import { ExportMenu } from '../../../../../components/editor/export-menu.tsx'
-import { FontPanel } from '../../../../../components/editor/font-panel.tsx'
 import { ASSET_DRAG_TYPE, AssetLibrary, draggedAsset } from '../../../../../components/editor/asset-library.tsx'
 import { BrandKitPanel } from '../../../../../components/editor/brand-kit-panel.tsx'
 import { BrandKit, brandVariables, FontFamily, type Variables } from '@razzlr/schema'
@@ -99,6 +97,23 @@ export function EditorStage({ designId, designName, brandId, brandName, formatId
   const dockTool = tool === 'hand' || tool === 'select' || tool === 'pen' || tool === 'text' ? tool : 'shape'
   const dismissRemoved = useCallback(() => setRemoved(null), [])
 
+  // The stage's edges the capsule, cards and dock cover (#83): the editor fits the ads between
+  // them. The first time they are known the design is fitted again, since it opened fitted to the
+  // whole stage. The editor counts as ready only after that, so nothing set on its camera (or
+  // read from it) before then is undone by the fit.
+  const [chrome, setChrome] = useState<{ insets: ChromeInsets; withCards: boolean } | null>(null)
+  const onInsets = useCallback((insets: ChromeInsets, withCards: boolean) => setChrome({ insets, withCards }), [])
+  const [fittedTo, setFittedTo] = useState<Editor | null>(null)
+  useEffect(() => {
+    if (!editor || !chrome) return
+    editor.setInsets(chrome.insets)
+    // Measured before the cards were in, the insets would fit the design under them.
+    if (chrome.withCards && fittedTo !== editor) {
+      editor.fitAll()
+      setFittedTo(editor)
+    }
+  }, [editor, chrome, fittedTo])
+
   // Lets this page open again without a connection (#37): the worker keeps the page and what it
   // loaded, and the design itself is in IndexedDB.
   useEffect(() => {
@@ -151,16 +166,11 @@ export function EditorStage({ designId, designName, brandId, brandName, formatId
         setShape(picked)
         editor?.setTool(tool === 'hand' || tool === 'pen' || tool === 'text' ? tool : tool === 'shape' ? picked : 'select')
       }}
+      onInsets={onInsets}
+      fitted={editor !== null && fittedTo === editor}
       actions={editor ? <ExportMenu editor={editor} /> : undefined}
       panels={editor ? { assets: <AssetLibrary editor={editor} brandId={brandId} />, brand: <BrandKitPanel editor={editor} brandId={brandId} /> } : {}}
-      inspector={editor ? (
-        <>
-          <ArrangePanel editor={editor} />
-          <FontPanel editor={editor} brandId={brandId} />
-          <PagesPanel editor={editor} onRemoved={setRemoved} />
-          <FormatsPanel editor={editor} onRemoved={setRemoved} />
-        </>
-      ) : undefined}
+      inspector={editor ? <PropertyCards editor={editor} brandId={brandId} onRemoved={setRemoved} /> : undefined}
     >
       {/* The design is a picture, so it never mirrors: the stage stays left to right in Arabic too. */}
       {/* An asset dragged from the library lands where it is dropped (#52). */}

@@ -139,8 +139,9 @@ test('two layers become a mask and what it masks in one key press, and one undo'
   expect(d.nodes.poster?.props).not.toHaveProperty('mask')
   expect(await exportHashOf(page)).not.toBe(before)
   writeOutput('mask-0-masked.png', await page.screenshot({ animations: 'disabled' }))
-  // A click on the poster's corner, outside the circle, picks nothing now.
-  await click(page, 790, 1050)
+  // A click on the poster's corner, outside the circle, picks nothing now. (The top corner: the
+  // bottom one sits under the tools dock at this camera.)
+  await click(page, 790, 790)
   expect(await selection(page)).toEqual([])
   await click(page, 900, 900)
   expect(await selection(page)).toEqual([group])

@@ -66,6 +66,7 @@ export const ar: Messages = {
       booleanSubtract: 'طرح',
       booleanIntersect: 'تقاطع',
       booleanExclude: 'استبعاد',
+      group: 'تجميع',
       withKey: '{label} ({key})',
     },
     shapes: {
@@ -77,6 +78,12 @@ export const ar: Messages = {
       star: 'نجمة',
       line: 'خط',
       arrow: 'سهم',
+    },
+    page: {
+      title: 'الصفحة · {name}',
+      background: 'الخلفية',
+      fineTune: 'ضبط دقيق',
+      hex: 'الرمز',
     },
     pages: {
       title: 'الصفحات',

@@ -66,6 +66,7 @@ export const en = {
       booleanSubtract: 'Subtract',
       booleanIntersect: 'Intersect',
       booleanExclude: 'Exclude',
+      group: 'Group',
       withKey: '{label} ({key})',
     },
     shapes: {
@@ -77,6 +78,12 @@ export const en = {
       star: 'Star',
       line: 'Line',
       arrow: 'Arrow',
+    },
+    page: {
+      title: 'Page · {name}',
+      background: 'Background',
+      fineTune: 'Fine-tune',
+      hex: 'Hex',
     },
     pages: {
       title: 'Pages',
