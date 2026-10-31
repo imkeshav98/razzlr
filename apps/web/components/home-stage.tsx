@@ -9,7 +9,8 @@ import { motion, useReducedMotion } from 'motion/react'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, type ReactNode } from 'react'
 import { cn } from '../lib/cn.ts'
-import { homePanelHref, panelOf, type HomePanel } from '../lib/home-panel.ts'
+import { panelOf, type HomePanel } from '../lib/home-panel.ts'
+import { showHomePanel, useHomePanel } from '../lib/use-home-panel.ts'
 
 /** What a panel shows: its title, a line beside or under it, and its content. */
 export type HomePanelContent = { title: string; meta?: string | undefined; lead?: string; body: ReactNode }
@@ -26,19 +27,19 @@ export function HomeStage({ home, brief, hint, closeLabel, panels }: {
   panels: Record<HomePanel, HomePanelContent>
 }) {
   const reduced = useReducedMotion()
-  const panel = panelOf(useSearchParams().get('show'))
+  const panel = useHomePanel(panelOf(useSearchParams().get('show')))
   const open = panel ? panels[panel] : null
 
   useEffect(() => {
     if (!panel) return
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !event.defaultPrevented) window.history.pushState(null, '', homePanelHref(home, null))
+      if (event.key === 'Escape' && !event.defaultPrevented) showHomePanel(home, null)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [panel, home])
 
-  const close = () => window.history.pushState(null, '', homePanelHref(home, null))
+  const close = () => showHomePanel(home, null)
 
   return (
     <div data-testid="home-stage" data-show={panel ?? undefined}>

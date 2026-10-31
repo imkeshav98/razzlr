@@ -11,7 +11,8 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useCallback, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
 import { cn } from '../lib/cn.ts'
-import { homePanelHref, panelOf, type HomePanel } from '../lib/home-panel.ts'
+import { panelOf, type HomePanel } from '../lib/home-panel.ts'
+import { showHomePanel, useHomePanel } from '../lib/use-home-panel.ts'
 
 export type CapsuleEntry = 'home' | HomePanel | 'settings'
 
@@ -53,7 +54,7 @@ export function LibraryCapsule({ label, links, current, home }: {
   home?: string | undefined
 }) {
   const reduced = useReducedMotion()
-  const panel = panelOf(useSearchParams().get('show'))
+  const panel = useHomePanel(panelOf(useSearchParams().get('show')))
   // A click that leaves the page lights its entry at once, before the next page comes.
   const [leaving, setLeaving] = useState<CapsuleEntry | null>(null)
   const shown = home && panel && links.some((link) => link.entry === panel) ? panel : current
@@ -90,12 +91,12 @@ export function LibraryCapsule({ label, links, current, home }: {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
     if (home && (entry === 'recent' || entry === 'templates')) {
       event.preventDefault()
-      window.history.pushState(null, '', homePanelHref(home, entry === panel ? null : entry))
+      showHomePanel(home, entry === panel ? null : entry)
       return
     }
     if (home && entry === 'home') {
       event.preventDefault()
-      if (panel) window.history.pushState(null, '', home)
+      if (panel) showHomePanel(home, null)
       return
     }
     if (entry !== lit) setLeaving(entry)
