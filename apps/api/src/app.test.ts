@@ -282,7 +282,8 @@ describe('image uploads', () => {
   })
 })
 
-describe('fonts', () => {
+// Recording a font draws its preview with CanvasKit, which takes seconds on a busy two-core CI runner.
+describe('fonts', { timeout: 30_000 }, () => {
   const fontFile = (file: string) => new Uint8Array(readFileSync(join(FONT_FILES_DIR, file)))
   const sha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
   const regular = fontFile('NotoSans-Regular.ttf')
