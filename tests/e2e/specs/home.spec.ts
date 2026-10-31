@@ -1,5 +1,6 @@
 // The brand's home (#84): "What are we making for <brand>?" as a brief with Format chips and Make
-// drafts, and recent work as a bento of real pictures, the latest large, stories tall, banners wide.
+// drafts. The capsule opens recent work (a bento of real pictures, the latest large, stories tall,
+// banners wide) and the templates under the brief, one at a time, kept in the address (?show=).
 import { expect, test, type Page } from '../support/test.ts'
 import type { DesignInput } from '@razzlr/schema'
 import { writeOutput } from '../support/editor.ts'
@@ -29,7 +30,7 @@ test('recent work is a bento of real pictures: the latest large, a story tall, a
   await seed(poster(`Banner ${run}`, 1500, 500, '#1A1420FF', '#FF48B0FF'))
   await seed(poster(`Square ${run}`, 1080, 1080, '#FF48B0FF', '#FFFFFFFF'))
   await page.context().addCookies([{ name: 'theme', value: 'dark', url: 'http://localhost:3100' }])
-  await page.goto('/brands/dev-brand-coffee')
+  await page.goto('/brands/dev-brand-coffee?show=recent')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('What are we making for Harbour Coffee?')
 
   // As in the final mock: one line, the brand's name in the AI gradient, the editor's top bar
@@ -81,6 +82,57 @@ test('recent work is a bento of real pictures: the latest large, a story tall, a
   await shoot(page, 'bento', true)
 })
 
+test('the capsule opens Recent and Templates under the brief, one at a time, and the address keeps it', async ({ page }) => {
+  await page.goto('/brands/dev-brand-coffee')
+  const capsule = page.getByTestId('library-capsule')
+  const recent = capsule.getByRole('link', { name: 'Recent' })
+  const templates = capsule.getByRole('link', { name: 'Templates' })
+  const bento = page.getByRole('list', { name: 'Recent' })
+  const brief = page.getByRole('heading', { level: 1 })
+
+  // At first the brief is alone, and Home is lit.
+  await expect(bento).toHaveCount(0)
+  await expect(page.getByTestId('home-panel-templates')).toHaveCount(0)
+  await expect(capsule.locator('[data-lit]')).toHaveAttribute('data-entry', 'home')
+  const alone = await brief.boundingBox()
+  await shoot(page, 'brief-alone')
+
+  // Recent lights up, the brief moves up and the bento rises under it.
+  await recent.click()
+  await expect(page).toHaveURL(/\/brands\/dev-brand-coffee\?show=recent$/)
+  await expect(bento).toBeVisible()
+  await expect(recent).toHaveAttribute('aria-expanded', 'true')
+  await expect(capsule.locator('[data-lit]')).toHaveAttribute('data-entry', 'recent')
+  await expect.poll(async () => (await brief.boundingBox())?.y).toBeLessThan((alone?.y ?? 0) - 40)
+  await page.waitForTimeout(500)
+  await shoot(page, 'recent-open')
+
+  // Templates takes its place.
+  await templates.click()
+  await expect(page).toHaveURL(/\?show=templates$/)
+  await expect(page.getByTestId('home-panel-templates')).toBeVisible()
+  await expect(bento).toHaveCount(0)
+  await page.waitForTimeout(500)
+  await shoot(page, 'templates-open')
+
+  // A reload keeps it; back goes to Recent; the lit entry again, Esc and the close button close it.
+  await page.reload()
+  await expect(page.getByTestId('home-panel-templates')).toBeVisible()
+  await page.goBack()
+  await expect(page).toHaveURL(/\?show=recent$/)
+  await expect(bento).toBeVisible()
+  await recent.click()
+  await expect(page).toHaveURL(/\/brands\/dev-brand-coffee$/)
+  await expect(bento).toHaveCount(0)
+  await templates.click()
+  await page.keyboard.press('Escape')
+  await expect(page).toHaveURL(/\/brands\/dev-brand-coffee$/)
+  await recent.click()
+  await page.getByTestId('home-panel-recent').getByRole('button', { name: 'Close' }).click()
+  await expect(page).toHaveURL(/\/brands\/dev-brand-coffee$/)
+  await expect(capsule.locator('[data-lit]')).toHaveAttribute('data-entry', 'home')
+})
+
 test('Make drafts opens a design in the formats the brief picked, named by the brief', async ({ page }) => {
   // The home, then the editor opening, which alone may take its 30 s on a busy runner.
   test.setTimeout(60_000)
@@ -102,7 +154,7 @@ test('Make drafts opens a design in the formats the brief picked, named by the b
   expect(design?.meta.primaryFormatId).toBe('f1')
 })
 
-test('on a phone the brief and the bento fit the screen', async ({ browser }) => {
+test('on a phone the brief fits the screen and Recent is a bottom sheet over it', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
   const page = await context.newPage()
   await page.goto('/brands/dev-brand-coffee')
@@ -111,5 +163,15 @@ test('on a phone the brief and the bento fit the screen', async ({ browser }) =>
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
   await page.waitForTimeout(400)
   await shoot(page, 'phone', true)
+
+  await page.getByTestId('library-capsule').getByRole('link', { name: 'Recent' }).click()
+  const sheet = page.getByTestId('home-panel-recent')
+  await expect(sheet).toBeVisible()
+  await page.waitForTimeout(600)
+  const box = await sheet.boundingBox()
+  expect(box?.width).toBe(390)
+  expect(Math.round((box?.y ?? 0) + (box?.height ?? 0))).toBe(844)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
+  await shoot(page, 'phone-recent')
   await context.close()
 })

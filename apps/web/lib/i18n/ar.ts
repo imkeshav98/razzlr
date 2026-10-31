@@ -42,6 +42,8 @@ export const ar: Messages = {
     count: '{count} تصاميم',
     noDesigns: 'لا شيء بعد. اكتب موجزًا في الأعلى لتبدأ.',
     switchBrand: 'بدّل العلامة',
+    panelHint: 'تُفتح تصاميمك الأخيرة وقوالبك من الشريط.',
+    close: 'إغلاق',
   },
   welcome: {
     step: 'الخطوة {n} من 2',

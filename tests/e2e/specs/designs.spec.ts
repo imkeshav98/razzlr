@@ -32,6 +32,7 @@ test('a design made from the brand list opens in the editor and is there after a
   expect(page.url()).toBe(url)
 
   await page.getByRole('link', { name: 'Harbour Coffee' }).click()
+  await page.getByTestId('library-capsule').getByRole('link', { name: 'Recent' }).click()
   const listed = page.getByRole('list', { name: 'Recent' }).getByRole('link', { name: new RegExp(name) })
   await expect(listed).toBeVisible()
   writeOutput('designs-3-listed.png', await page.screenshot())
