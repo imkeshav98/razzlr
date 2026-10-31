@@ -7,7 +7,9 @@ import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
 import {
   caretAt, caretPosition, drawPage, layerPictures, paragraphCache, selectionBoxes, render, renderDesign, resourceCache, sceneMemo, textMeasure, type MeasureText, type ResourceCache, type Resources, type Scene, type SceneLayer,
 } from '@razzlr/renderer'
-import { canHold, imageAssetIds, isContainer, LOCK_FLAGS, type Design, type Paint } from '@razzlr/schema'
+import {
+  canHold, imageAssetIds, isContainer, LAYER_CLIPBOARD_TYPE, LayerClipboard, LOCK_FLAGS, SCHEMA_VERSION, type Design, type Layer, type LayerTree, type Paint,
+} from '@razzlr/schema'
 import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from 'canvaskit-wasm'
 import canvasKitModule from 'canvaskit-wasm/full'
 import { IndexeddbPersistence } from 'y-indexeddb'
@@ -2156,6 +2158,8 @@ function live(
 
   function onKey(e: KeyboardEvent) {
     if (inField(e.target)) return
+    // The paste event that follows doesn't say whether Shift was down.
+    if ((e.metaKey || e.ctrlKey) && e.code === 'KeyV') pasteAtPointer = e.shiftKey
     const action = shortcutFor(e)
     if (action === 'undo' || action === 'redo') {
       e.preventDefault()
@@ -2247,14 +2251,124 @@ function live(
     const range = textRange()
     return node?.type === 'text' && range ? { id: node, text: node.props.text, range } : null
   }
-  // Copy, cut and paste plain text while typing (#47). Pasted line breaks become paragraphs.
+  /**
+   * The selected layers as a tree for the clipboard (#49), bottom to top with everything inside
+   * them, each as the selection's format shows it: placed by auto layout, with the format's overrides.
+   */
+  function copiedLayers(): LayerClipboard | null {
+    const frame = selection && frameOf(selection.frame)
+    if (!frame || editing) return null
+    const now = session.design()
+    const stacked: string[] = []
+    const walk = (parentId: string) => {
+      for (const [id] of childrenOf(now, parentId)) {
+        stacked.push(id)
+        walk(id)
+      }
+    }
+    walk(frame.pageId)
+    const tops = roots(now).sort((a, b) => stacked.indexOf(a) - stacked.indexOf(b))
+    if (tops.length === 0) return null
+    const nodes: Record<string, Layer> = {}
+    const add = (id: string) => {
+      const node = now.nodes[id]
+      const box = boxIn(frame, id, now)
+      if (!node || !box) return
+      nodes[id] = { ...node, props: { ...node.props, ...now.overrides[scope(frame)]?.[id], ...box } } as Layer
+      for (const [child] of childrenOf(now, id)) add(child)
+    }
+    for (const id of tops) add(id)
+    return { kind: 'razzlr.layers', schemaVersion: SCHEMA_VERSION, designId: options.designId, tree: { nodes, roots: tops } }
+  }
+  /**
+   * The last layers copied, kept in this browser too with the plain text the copy wrote: a paste
+   * that brings that text but not our own type (Mod+Shift+V pastes plain text only, and Safari
+   * drops custom types) still pastes the layers.
+   */
+  const REMEMBERED = 'razzlr.copiedLayers'
+  function putOnClipboard(data: DataTransfer, copied: LayerClipboard) {
+    const json = JSON.stringify(copied)
+    const plain = copied.tree.roots.map((id) => copied.tree.nodes[id]?.name || 'Layer').join('\n')
+    data.setData(LAYER_CLIPBOARD_TYPE, json)
+    data.setData('text/plain', plain)
+    try {
+      localStorage.setItem(REMEMBERED, JSON.stringify({ plain, json }))
+    } catch {
+      // Without storage, only pastes that keep our own type paste layers.
+    }
+  }
+  function layersOnClipboard(data: DataTransfer | null): LayerTree | null {
+    let raw = data?.getData(LAYER_CLIPBOARD_TYPE)
+    const plain = data?.getData('text/plain')
+    try {
+      if (!raw && plain) {
+        const kept = JSON.parse(localStorage.getItem(REMEMBERED) ?? 'null') as { plain?: string; json?: string } | null
+        if (kept?.plain === plain) raw = kept.json
+      }
+      const parsed = raw ? LayerClipboard.safeParse(JSON.parse(raw)) : null
+      return parsed?.success ? parsed.data.tree : null
+    } catch {
+      return null
+    }
+  }
+  /** Whether the paste being made goes where the pointer is (Mod+Shift+V), not where the layers were. */
+  let pasteAtPointer = false
+  /**
+   * Pastes layers (#49) into the frame the selection is in, or else the one under the pointer: in
+   * the group or frame double-clicked into when it can hold them, otherwise on the page, where they
+   * were or centred on the pointer. One undo step; the pasted layers end up selected.
+   */
+  function pasteLayers(tree: LayerTree, atPointer: boolean) {
+    const under = pointer ? pointIn(pointer) : null
+    const frame = frameOf(selection?.frame) ?? under?.frame ?? drawnFrames[0] ?? grid.frames[0]
+    if (!frame) return
+    const now = session.design()
+    const inside = entered ? now.nodes[entered] : undefined
+    const holds = inside && tree.roots.every((root) => canHold(inside.type, tree.nodes[root]?.type ?? ''))
+    const parentId = entered && holds && selection?.frame === frame.key ? entered : frame.pageId
+    let dx = 0
+    let dy = 0
+    if (atPointer && under?.frame.key === frame.key) {
+      const p = localTo(under.p, containersOf(frame, parentId, now))
+      const b = boundsOf(tree.roots.flatMap((root) => {
+        const props = tree.nodes[root]?.props
+        return props ? [{ x: props.x, y: props.y, width: props.width, height: props.height, rotation: props.rotation }] : []
+      }))
+      dx = round(p.x - (b.x + b.width / 2))
+      dy = round(p.y - (b.y + b.height / 2))
+    }
+    let pasted: string[] = []
+    if (runQuietly(() => session.gesture(() => {
+      pasted = session.run('design.place', { parentId, tree, dx, dy })
+      if (now.nodes[parentId]) hug([parentId])
+    }))) select(pasted, frame.key)
+  }
+
+  // Copy, cut and paste plain text while typing (#47), and layers otherwise (#49). Pasted line
+  // breaks become paragraphs.
   window.addEventListener('copy', (e) => {
+    if (inField(e.target) || !e.clipboardData) return
     const at = clipboardText()
-    if (!at || inField(e.target) || at.range.end === at.range.start) return
-    e.clipboardData?.setData('text/plain', at.text.slice(at.range.start, at.range.end))
+    if (at) {
+      if (at.range.end === at.range.start) return
+      e.clipboardData.setData('text/plain', at.text.slice(at.range.start, at.range.end))
+      e.preventDefault()
+      return
+    }
+    const copied = copiedLayers()
+    if (!copied) return
+    putOnClipboard(e.clipboardData, copied)
     e.preventDefault()
   }, on)
   window.addEventListener('cut', (e) => {
+    if (!editing && !inField(e.target) && e.clipboardData) {
+      const copied = copiedLayers()
+      if (!copied) return
+      putOnClipboard(e.clipboardData, copied)
+      e.preventDefault()
+      perform('delete')
+      return
+    }
     const at = clipboardText()
     if (!at || !editing || inField(e.target) || at.range.end === at.range.start) return
     e.clipboardData?.setData('text/plain', at.text.slice(at.range.start, at.range.end))
@@ -2265,8 +2379,18 @@ function live(
     drawOverlay()
   }, on)
   window.addEventListener('paste', (e) => {
+    if (inField(e.target)) return
+    if (!editing) {
+      // Layers copied in this or another design; anything else on the clipboard isn't ours to paste.
+      const tree = layersOnClipboard(e.clipboardData)
+      if (!tree) return
+      e.preventDefault()
+      pasteLayers(tree, pasteAtPointer)
+      pasteAtPointer = false
+      return
+    }
     const at = clipboardText()
-    if (!at || !editing || inField(e.target)) return
+    if (!at) return
     const pasted = (e.clipboardData?.getData('text/plain') ?? '').replace(/\r\n?/g, '\n')
     e.preventDefault()
     const { id } = editing
