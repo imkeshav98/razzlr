@@ -2508,6 +2508,31 @@ function live(
     },
     /** Does what a shortcut does, as if its key was pressed on the stage. */
     perform,
+    /**
+     * Moves a layer under a page or container, before a sibling or on top (#59), as one undo step;
+     * groups it leaves and enters fit what they hold again. False when the move isn't allowed, such
+     * as into itself or into a layer that can't hold it.
+     */
+    moveLayer(id: string, parentId: string, before?: string) {
+      const from = session.design().nodes[id]?.parentId
+      return runQuietly(() => session.gesture(() => {
+        session.run('node.move', { id, parentId, ...(before ? { before } : {}) })
+        hug([id, ...(from && session.design().nodes[from] ? [from] : [])])
+      }))
+    },
+    /** Renames a layer (#59), as one undo step; false for an empty name. */
+    renameLayer: (id: string, name: string) => runQuietly(() => session.run('node.rename', { id, name })),
+    /** Locks layers completely, or unlocks them (#59), as one undo step. */
+    setLocked: (ids: string[], locked: boolean) =>
+      runQuietly(() => session.run('node.lock', { ids, lock: Object.fromEntries(LOCK_FLAGS.map((flag) => [flag, locked])) })),
+    /**
+     * Hides layers in one frame's format, or shows them (#59), as one undo step: like the Hide
+     * shortcut, in that format only. The first page in the primary format by default.
+     */
+    setHidden(ids: string[], hidden: boolean, pageId?: string, formatId?: string) {
+      const frame = defaultFrame(pageId, formatId)
+      return runQuietly(() => session.run('node.update', { ids, scope: scope(frame), patch: { visible: !hidden } }))
+    },
     /** Calls back with the selected layers whenever the selection changes. */
     onSelection(listener: (ids: string[]) => void) {
       selectionListeners.add(listener)

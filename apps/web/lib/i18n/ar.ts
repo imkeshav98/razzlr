@@ -124,6 +124,18 @@ export const ar: Messages = {
       noLogo: 'بلا شعار',
       saveFailed: 'تعذّر حفظ هوية العلامة: {reason}',
     },
+    layersPanel: {
+      tree: 'طبقات {page}',
+      empty: 'لا توجد طبقات في هذه الصفحة بعد. ارسم شكلًا أو أضف نصًا لتبدأ.',
+      expand: 'توسيع {name}',
+      collapse: 'طي {name}',
+      lock: 'قفل {name}',
+      unlock: 'فتح قفل {name}',
+      hide: 'إخفاء {name}',
+      show: 'إظهار {name}',
+      rename: 'اسم {name}',
+      hint: 'اسحب لإعادة الترتيب أو للإدخال في مجموعة. الأسهم للتنقل، و Enter لإعادة التسمية، و Alt مع الأسهم لنقل الطبقة.',
+    },
     templates: {
       open: 'حفظ كقالب',
       title: 'حفظ كقالب',
