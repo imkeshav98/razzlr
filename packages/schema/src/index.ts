@@ -1,4 +1,5 @@
 export * from './api.ts'
+export * from './clipboard.ts'
 export * from './design.ts'
 export * from './effects.ts'
 export * from './layers.ts'

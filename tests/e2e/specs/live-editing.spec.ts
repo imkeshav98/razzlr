@@ -3,7 +3,7 @@
 // `docker compose up -d --wait` from the repo root. The tests in this file run one at a time,
 // which the restart test relies on: it restarts the server under no other test.
 import { expect, test, type Page } from '@playwright/test'
-import { designOf, exportHashOf, openTabs, placed, restartSyncServer, screenPoint, storedAfter, settle, writeOutput } from '../support/editor.ts'
+import { designOf, exportHashOf, openTabs, placed, restartSyncServer, screenPoint, stageShot, storedAfter, settle, writeOutput } from '../support/editor.ts'
 
 test.describe.configure({ timeout: 120_000 })
 
@@ -89,7 +89,7 @@ test('two tabs make 200 random edits each and end with the same document and the
   expect(hashA).toBe(hashB)
   for (const tab of tabs) await tab.keyboard.press('Escape')
   await expect.poll(async () => {
-    const [stageA, stageB] = await Promise.all([a.getByTestId('stage').screenshot(), b.getByTestId('stage').screenshot()])
+    const [stageA, stageB] = await Promise.all([stageShot(a), stageShot(b)])
     return stageA.equals(stageB)
   }, { timeout: 10_000 }).toBe(true)
 

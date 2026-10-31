@@ -1,8 +1,8 @@
 'use client'
 
-// The editor's chrome (#51): a left rail whose buttons open flyouts (Layers, Assets, AI, Brand),
-// a right inspector, a bottom tool dock and a slot for the mini bar above the selection. The
-// panels are empty until their tickets fill them; the stage in the middle is the editor itself.
+// The editor's chrome (#51): a capsule floating over the canvas whose buttons open flyouts (Layers,
+// Assets, AI, Brand; #82), a right inspector, a bottom tool dock and a slot for the mini bar above
+// the selection. The panels are empty until their tickets fill them; the stage is the editor itself.
 import {
   CloudArrowUpIcon, CloudCheckIcon, CloudSlashIcon, CursorIcon, FrameCornersIcon, HandIcon, ImageIcon, ImagesIcon, PaletteIcon, PenNibIcon, ShapesIcon,
   SlidersHorizontalIcon, SparkleIcon, StackIcon, TextTIcon, XIcon, type Icon,
@@ -40,6 +40,10 @@ const TOOLS: { id: Tool; icon: Icon; key: string }[] = [
 ]
 
 const CHROME = { duration: 0.18, ease: [0.2, 0.8, 0.2, 1] as const }
+/** The capsule's pink blob slides to the open panel on a spring, so it overshoots a little. */
+const BLOB = { type: 'spring', stiffness: 520, damping: 34, mass: 0.9 } as const
+/** On arrival the blob is stretched along its travel and settles round: the squish. */
+const SQUISH = { tall: { scaleX: 0.78, scaleY: 1.28 }, wide: { scaleX: 1.28, scaleY: 0.78 }, still: { scaleX: 1, scaleY: 1 } }
 
 /** The design's save state (#37) and how the badge shows it. */
 const SAVE: Record<string, { icon: Icon; tone: string }> = {
@@ -49,6 +53,19 @@ const SAVE: Record<string, { icon: Icon; tone: string }> = {
 }
 /** Saving stays up at least this long, so a quick edit doesn't flicker the badge. */
 const SAVING_HOLD_MS = 600
+
+/** Phones get the capsule as a bottom tab bar, so the blob travels sideways there. */
+function usePhone() {
+  const [phone, setPhone] = useState(false)
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 639px)')
+    const update = () => setPhone(query.matches)
+    update()
+    query.addEventListener('change', update)
+    return () => query.removeEventListener('change', update)
+  }, [])
+  return phone
+}
 
 /**
  * The status to show: the editor's own, except that Saving lingers a moment before Saved, so a
@@ -92,7 +109,9 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
   const t = useMessages()
   const rtl = dirOf(useLocale()) === 'rtl'
   // Motion's own reduced-motion mode still fades; chrome should simply appear.
-  const chrome = useReducedMotion() ? { duration: 0 } : CHROME
+  const reduced = useReducedMotion()
+  const chrome = reduced ? { duration: 0 } : CHROME
+  const phone = usePhone()
   const [panel, setPanel] = useState<Panel | null>(null)
   const [ownTool, setTool] = useState<Tool>('select')
   const tool = shownTool ?? ownTool
@@ -144,7 +163,16 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
           </header>
 
           <div className="relative flex min-h-0">
-            <nav aria-label={t.editor.tools} className="z-20 flex w-14 shrink-0 flex-col items-center gap-1 border-e border-line bg-surface py-2">
+            <nav
+              aria-label={t.editor.tools}
+              data-testid="rail"
+              className={cn(
+                // Clipped, so the AI button's moving glow stays inside and never shows on the canvas.
+                'absolute z-20 flex gap-1 overflow-hidden rounded-full surface-frost border p-1.5 shadow-panel',
+                // A vertical capsule at the start edge; on phones a tab bar floating at the bottom.
+                'start-3 top-1/2 -translate-y-1/2 flex-col max-sm:start-1/2 max-sm:top-auto max-sm:bottom-3 max-sm:translate-y-0 max-sm:flex-row max-sm:-translate-x-1/2 max-sm:rtl:translate-x-1/2',
+              )}
+            >
               {PANELS.map(({ id, icon: PanelIcon }) => {
                 const open = panel === id
                 const ai = id === 'ai'
@@ -155,15 +183,27 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                       aria-label={panelTitle(id)}
                       aria-expanded={open}
                       aria-controls="editor-flyout"
+                      data-panel={id}
                       onClick={() => setPanel(open ? null : id)}
                       className={cn(
-                        'relative grid size-10 cursor-pointer place-items-center rounded-row transition-colors duration-[var(--chrome-fast)]',
-                        open ? 'bg-hover text-text' : 'text-subtle hover:bg-hover hover:text-text',
-                        ai && 'text-accent-text',
+                        'relative grid size-10 cursor-pointer place-items-center rounded-full transition-colors duration-[var(--chrome-fast)]',
+                        open ? 'text-on-accent' : 'text-subtle hover:bg-hover hover:text-text',
+                        ai && !open && 'text-accent-text',
                       )}
                     >
-                      {open && <motion.span layoutId="rail-mark" transition={chrome} aria-hidden className="absolute inset-y-2 -start-2 w-[3px] rounded-full bg-accent" />}
-                      {ai && <span aria-hidden className="ai-glow absolute inset-1.5 rounded-[7px] opacity-20 blur-[6px]" />}
+                      {open && (
+                        <motion.span layoutId="rail-blob" transition={reduced ? { duration: 0 } : BLOB} aria-hidden data-testid="rail-blob" className="absolute inset-0">
+                          <motion.span
+                            key={id}
+                            initial={reduced ? false : phone ? 'wide' : 'tall'}
+                            animate="still"
+                            variants={SQUISH}
+                            transition={BLOB}
+                            className={cn('absolute inset-0 rounded-full shadow-[0_6px_18px_-6px_rgb(194_16_108/0.7)]', ai ? 'ai-glow' : 'bg-accent-solid')}
+                          />
+                        </motion.span>
+                      )}
+                      {ai && !open && <span aria-hidden className="ai-glow absolute inset-1.5 rounded-full opacity-20 blur-[6px]" />}
                       <PanelIcon size={20} weight={ai ? 'duotone' : open ? 'fill' : 'regular'} aria-hidden className="relative" />
                     </button>
                   </Tooltip>
@@ -182,7 +222,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                   exit={{ opacity: 0, x: rtl ? 12 : -12 }}
                   transition={chrome}
                   data-testid="flyout"
-                  className="absolute inset-y-2 start-16 z-10 flex w-72 flex-col overflow-hidden rounded-card surface-frost border shadow-panel"
+                  className="absolute start-[4.75rem] top-3 z-10 flex max-h-[calc(100%-1.5rem)] w-72 flex-col overflow-hidden rounded-card surface-frost border shadow-panel max-sm:inset-x-3 max-sm:start-3 max-sm:top-auto max-sm:bottom-[8.5rem] max-sm:w-auto"
                 >
                   <div className="flex h-12 shrink-0 items-center justify-between border-b border-line ps-4 pe-2">
                     <h2 className={cn('font-display text-[15px] font-semibold tracking-tight', panel === 'ai' && 'bg-[image:var(--ai-gradient)] bg-clip-text text-transparent')}>{panelTitle(panel)}</h2>
@@ -197,7 +237,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
 
             <main className="canvas-dots relative min-w-0 flex-1 overflow-hidden">
               {children}
-              <div role="toolbar" aria-label={t.editor.tools} className="absolute inset-x-0 bottom-4 z-10 mx-auto flex w-max items-center gap-0.5 rounded-card surface-frost border p-1 shadow-panel">
+              <div role="toolbar" aria-label={t.editor.tools} className="absolute inset-x-0 bottom-4 z-10 mx-auto flex w-max max-sm:bottom-[4.75rem] items-center gap-0.5 rounded-card surface-frost border p-1 shadow-panel">
                 {TOOLS.map(({ id, icon: ToolIcon, key }) => {
                   if (id === 'shape') {
                     return (
