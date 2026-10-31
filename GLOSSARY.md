@@ -64,6 +64,10 @@ The format whose layout seeds any format that has no stored value yet.
 One element in a page's tree, stored in the flat `nodes` map with a parent id and fractional index. There are seven layer types: frame, group, graphic, boolean, text, instance, lottie.
 _Avoid_: Element, object, block, item
 
+**Layers panel**:
+The page's layers as a tree, topmost first: select, reorder, move into and out of groups, rename, lock and hide them. It selects in step with the stage.
+_Avoid_: Outline, layer list
+
 **Graphic**:
 A layer made of a shape plus fills, strokes and effects. Photos and video are fills on a graphic, not layers of their own.
 _Avoid_: Image layer, shape layer, rectangle layer

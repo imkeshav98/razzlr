@@ -415,6 +415,18 @@ describe('commands', () => {
     expect(() => tab.run('node.mask', { ids: ['box'], mask: null })).toThrow(/locked \(style\)/)
   })
 
+  it('node.rename renames a layer in one undo step, locked or not, and refuses an empty name (#59)', () => {
+    const doc = freshDoc()
+    const tab = openSession(doc)
+    tab.run('node.lock', { ids: ['box'], lock: { move: true, resize: true, content: true, style: true, delete: true } })
+    tab.run('node.rename', { id: 'box', name: '  Hero card ' })
+    expect(readDesign(doc).nodes.box?.name).toBe('Hero card')
+    tab.undo()
+    expect(readDesign(doc).nodes.box?.name).not.toBe('Hero card')
+    expect(() => tab.run('node.rename', { id: 'box', name: '   ' })).toThrow()
+    expect(() => tab.run('node.rename', { id: 'nope', name: 'X' })).toThrow(/no layer "nope"/)
+  })
+
   it('node.bind binds a fill, text colour and font to brand tokens and unbinds them, each one undo step (#53)', () => {
     const doc = freshDoc()
     const tab = openSession(doc)

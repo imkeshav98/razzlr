@@ -201,6 +201,16 @@ export const nodeDelete = defineCommand({
   },
 })
 
+/** Renames a layer (#59). A name is how the layers panel shows it; it changes nothing drawn, so no lock stops it. */
+export const nodeRename = defineCommand({
+  name: 'node.rename',
+  input: z.object({ id: NodeId, name: z.string().trim().min(1).max(120) }),
+  check: ({ design }, { id }) => (design.nodes[id] ? undefined : `no layer "${id}"`),
+  apply: ({ r }, { id, name }) => {
+    r.nodes.get(id)?.set('name', name)
+  },
+})
+
 /** Sets some of layers' lock flags, keeping the others; a layer with nothing locked loses the field. */
 export const nodeLock = defineCommand({
   name: 'node.lock',
@@ -890,6 +900,7 @@ export const COMMANDS = {
   'node.move': nodeMove,
   'node.delete': nodeDelete,
   'node.lock': nodeLock,
+  'node.rename': nodeRename,
   'node.mask': nodeMask,
   'node.bind': nodeBind,
   'node.reorder': nodeReorder,

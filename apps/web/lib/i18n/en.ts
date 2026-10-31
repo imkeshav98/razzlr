@@ -124,6 +124,18 @@ export const en = {
       noLogo: 'No logo',
       saveFailed: 'Couldn’t save the brand kit: {reason}',
     },
+    layersPanel: {
+      tree: 'Layers of {page}',
+      empty: 'No layers on this page yet. Draw a shape or add text to start.',
+      expand: 'Expand {name}',
+      collapse: 'Collapse {name}',
+      lock: 'Lock {name}',
+      unlock: 'Unlock {name}',
+      hide: 'Hide {name}',
+      show: 'Show {name}',
+      rename: 'Name of {name}',
+      hint: 'Drag to reorder or into a group. Arrows move, Enter renames, Alt with arrows moves a layer.',
+    },
     templates: {
       open: 'Save as template',
       title: 'Save as template',
