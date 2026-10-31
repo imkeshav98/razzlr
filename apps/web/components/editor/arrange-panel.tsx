@@ -5,8 +5,8 @@
 // layer lines up with the format, or the group or frame it is in. Two or more shapes combine into
 // a live boolean.
 import {
-  AlignBottomIcon, AlignCenterHorizontalIcon, AlignCenterVerticalIcon, AlignLeftIcon, AlignRightIcon, AlignTopIcon, ColumnsIcon, ExcludeSquareIcon,
-  IntersectSquareIcon, RowsIcon, SelectionPlusIcon, SubtractSquareIcon, UniteSquareIcon, type Icon,
+  AlignBottomIcon, AlignCenterHorizontalIcon, AlignCenterVerticalIcon, AlignLeftIcon, AlignRightIcon, AlignTopIcon, ArrowsHorizontalIcon, ArrowsVerticalIcon, ExcludeSquareIcon,
+  IntersectSquareIcon, SelectionPlusIcon, SubtractSquareIcon, UniteSquareIcon, type Icon,
 } from '@phosphor-icons/react'
 import { SHORTCUTS, type Editor, type ShortcutAction } from '@razzlr/editor'
 import { useEffect, useState } from 'react'
@@ -15,7 +15,7 @@ import { format } from '../../lib/i18n/index.ts'
 import { cn } from '../../lib/cn.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { CARD, CardHeader } from './card.tsx'
-import { ICON_BUTTON } from './formats-panel.tsx'
+import { CHIP, ICON_BUTTON, useEditorDesign } from './formats-panel.tsx'
 
 type Action = Extract<ShortcutAction, `align${string}` | `distribute${string}` | `boolean${string}` | 'group'>
 const ALIGN: { action: Action; icon: Icon }[] = [
@@ -27,8 +27,8 @@ const ALIGN: { action: Action; icon: Icon }[] = [
   { action: 'alignBottom', icon: AlignBottomIcon },
 ]
 const DISTRIBUTE: { action: Action; icon: Icon }[] = [
-  { action: 'distributeHorizontal', icon: ColumnsIcon },
-  { action: 'distributeVertical', icon: RowsIcon },
+  { action: 'distributeHorizontal', icon: ArrowsHorizontalIcon },
+  { action: 'distributeVertical', icon: ArrowsVerticalIcon },
 ]
 
 const COMBINE: { action: Action; icon: Icon }[] = [
@@ -60,7 +60,9 @@ export function useSelection(editor: Editor) {
 export function ArrangePanel({ editor }: { editor: Editor }) {
   const t = useMessages()
   const selected = useSelection(editor)
-  const button = ({ action, icon: ActionIcon }: { action: Action; icon: Icon }, disabled: boolean, big = false) => {
+  const { design } = useEditorDesign(editor)
+  const names = selected.flatMap((id) => design.nodes[id]?.name ?? [])
+  const button = ({ action, icon: ActionIcon }: { action: Action; icon: Icon }, disabled: boolean, look: 'tile' | 'icon' | 'chip' = 'icon') => {
     const label = t.editor.arrange[action]
     return (
       <Tooltip key={action} label={format(t.editor.arrange.withKey, { label, key: keyOf(action) })}>
@@ -71,33 +73,42 @@ export function ArrangePanel({ editor }: { editor: Editor }) {
           disabled={disabled}
           onClick={() => editor.perform(action)}
           data-action={action}
-          className={cn(ICON_BUTTON, big && 'h-10 w-full rounded-[10px] bg-hover/60')}
+          className={cn(
+            look === 'icon' && ICON_BUTTON,
+            // The align buttons are the big ones: square tiles, as in the mock.
+            look === 'tile' && 'grid h-10 w-full cursor-pointer place-items-center rounded-[10px] border border-line text-muted transition-colors duration-[var(--chrome-fast)] hover:border-accent hover:text-text disabled:pointer-events-none disabled:opacity-30',
+            look === 'chip' && CHIP,
+            // Group is the card's main action, pink as in the mock.
+            action === 'group' && 'h-8 border-transparent bg-accent-solid px-5 text-on-accent hover:border-transparent hover:bg-accent-solid-hover hover:text-on-accent',
+          )}
         >
-          <ActionIcon size={big ? 20 : 16} aria-hidden />
+          {look === 'chip' && <span aria-hidden>{action === 'group' ? label : t.editor.arrange.distribute}</span>}
+          {action !== 'group' && <ActionIcon size={look === 'tile' ? 20 : look === 'chip' ? 14 : 16} aria-hidden />}
         </button>
       </Tooltip>
     )
   }
-  const label = (text: string) => <span className="text-xs text-muted">{text}</span>
+  const several = selected.length > 1
   return (
     <section aria-labelledby="arrange-title" className={CARD} data-testid="arrange">
-      <CardHeader id="arrange-title" title={t.editor.arrange.title} count={selected.length} />
+      <CardHeader
+        id="arrange-title"
+        title={several ? format(t.editor.arrange.selected, { n: selected.length }) : t.editor.arrange.title}
+        note={names.join(', ')}
+      />
       {/* The design never mirrors, so neither do left and right here. */}
-      <div dir="ltr" role="group" aria-label={t.editor.arrange.align} className="grid grid-cols-6 gap-1 px-3 pb-3">
-        {ALIGN.map((a) => button(a, selected.length === 0, true))}
+      <div dir="ltr" role="group" aria-label={t.editor.arrange.align} className="grid grid-cols-6 gap-1.5 px-[18px] pb-3.5">
+        {ALIGN.map((a) => button(a, selected.length === 0, 'tile'))}
       </div>
-      <div dir="ltr" className="flex items-center justify-between gap-2 border-t border-line px-4 py-2">
-        {label(t.editor.arrange.distribute)}
-        <div role="group" aria-label={t.editor.arrange.distribute} className="flex gap-0.5">
-          {DISTRIBUTE.map((d) => button(d, selected.length < 3))}
-        </div>
+      <div dir="ltr" role="group" aria-label={t.editor.arrange.distribute} className="flex flex-wrap gap-1.5 px-[18px] pb-4">
+        {DISTRIBUTE.map((d) => button(d, selected.length < 3, 'chip'))}
       </div>
-      <div dir="ltr" className="flex items-center justify-between gap-2 border-t border-line px-4 py-2">
-        {label(t.editor.arrange.combine)}
-        <div role="group" aria-label={t.editor.arrange.combine} className="flex gap-0.5">
-          {button({ action: 'group', icon: SelectionPlusIcon }, selected.length < 2)}
-          <span aria-hidden className="mx-1 h-5 w-px self-center bg-line" />
-          {COMBINE.map((c) => button(c, selected.length < 2))}
+      <div className="px-[18px]">
+        <div dir="ltr" className="flex items-center justify-between gap-2 border-t border-line py-3">
+          {button({ action: 'group', icon: SelectionPlusIcon }, selected.length < 2, 'chip')}
+          <div role="group" aria-label={t.editor.arrange.combine} className="flex gap-0.5">
+            {COMBINE.map((c) => button(c, selected.length < 2))}
+          </div>
         </div>
       </div>
     </section>

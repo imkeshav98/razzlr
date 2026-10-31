@@ -117,6 +117,7 @@ export const ar: Messages = {
       booleanExclude: 'استبعاد',
       group: 'تجميع',
       withKey: '{label} ({key})',
+      selected: 'المحدد: {n}',
     },
     shapes: {
       menu: 'الأشكال',
@@ -129,7 +130,7 @@ export const ar: Messages = {
       arrow: 'سهم',
     },
     page: {
-      title: 'الصفحة · {name}',
+      title: 'الصفحة',
       background: 'الخلفية',
       fineTune: 'ضبط دقيق',
       hex: 'الرمز',
@@ -137,6 +138,10 @@ export const ar: Messages = {
     pages: {
       title: 'الصفحات',
       add: 'إضافة صفحة',
+      addShort: 'صفحة',
+      numbered: '{n}. {name}',
+      formatsOne: 'مقاس واحد',
+      formatsMany: 'المقاسات: {n}',
       newName: 'صفحة {n}',
       copyName: 'نسخة من {name}',
       show: 'اعرض {name}',
@@ -204,6 +209,10 @@ export const ar: Messages = {
       aligns: { inside: 'داخل', center: 'وسط', outside: 'خارج' },
       effect: { dropShadow: 'ظل خارجي', innerShadow: 'ظل داخلي', glow: 'توهج', layerBlur: 'تمويه الطبقة', backgroundBlur: 'تمويه الخلفية' },
       addEffect: 'إضافة تأثير',
+      noEffects: 'بلا',
+      effectSample: 'أب',
+      effectShort: { dropShadow: 'ظل', innerShadow: 'داخلي', glow: 'توهج', layerBlur: 'تمويه', backgroundBlur: 'الخلفية' },
+      effectPresets: 'تأثيرات للإضافة',
       effectField: { x: 'س', y: 'ص', blur: 'التمويه', spread: 'الانتشار', radius: 'نصف القطر' },
       effectFieldName: '{effect} {n} {field}',
       text: 'النص',
@@ -310,6 +319,8 @@ export const ar: Messages = {
     formats: {
       title: 'المقاسات',
       add: 'إضافة مقاس',
+      addTile: 'إضافة',
+      manage: 'إدارة المقاسات',
       presets: 'مقاسات جاهزة',
       custom: 'مقاس مخصص',
       width: 'العرض',

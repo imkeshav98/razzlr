@@ -17,6 +17,10 @@ test('a format added from presets starts from the primary layout, and is renamed
   await page.setViewportSize({ width: 1440, height: 900 })
   const formats = page.getByTestId('formats')
   await expect(formats.getByRole('listitem')).toHaveCount(1)
+  // The card shows the formats as a strip of tiles, as in the final mock; the chevron opens the
+  // list that renames, reorders, shows one alone and removes them.
+  await page.getByRole('button', { name: 'Manage formats' }).click()
+  await expect(formats.getByRole('listitem')).toHaveCount(1)
 
   // Presets grouped by shape, and a custom size checked as it is typed.
   await page.getByRole('button', { name: 'Add format' }).click()

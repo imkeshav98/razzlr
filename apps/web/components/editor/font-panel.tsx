@@ -50,15 +50,20 @@ function useSelection(editor: Editor) {
   return ids
 }
 
-/** The base style of the selected text layers: their family and weight, or null where they differ. */
-function selectedFont(design: Design, ids: string[]) {
+/**
+ * The style of the selected text layers in the format they are shown in: their family, weight and
+ * size, or null where they differ.
+ */
+function selectedFont(design: Design, ids: string[], formatId: string) {
   const styles = ids.flatMap((id) => {
     const node = design.nodes[id]
-    return node?.type === 'text' ? [node.props.style] : []
+    if (node?.type !== 'text') return []
+    const own = design.overrides[`format:${formatId}`]?.[id]?.style as Partial<typeof node.props.style> | undefined
+    return [{ ...node.props.style, ...own }]
   })
   if (styles.length === 0) return null
   const same = <T,>(values: T[]) => (values.every((v) => v === values[0]) ? values[0] ?? null : null)
-  return { family: same(styles.map((s) => s.fontFamily)), weight: same(styles.map((s) => s.fontWeight)) }
+  return { family: same(styles.map((s) => s.fontFamily)), weight: same(styles.map((s) => s.fontWeight)), size: same(styles.map((s) => s.fontSize)) }
 }
 
 /** The face that previews a family: upright and nearest Regular. */
@@ -75,9 +80,9 @@ const weightsOf = (family: FontFamily | undefined) => {
 const nearest = (weights: number[], wanted: number) =>
   weights.reduce((best, w) => (Math.abs(w - wanted) < Math.abs(best - wanted) ? w : best), weights[0] ?? wanted)
 
-function Preview({ brandId, family, className }: { brandId: string; family: FontFamily; className?: string }) {
+function Preview({ brandId, family, className, big = false }: { brandId: string; family: FontFamily; className?: string; big?: boolean }) {
   const face = previewFace(family)
-  if (family.source === 'builtin' || !face) return <span className={cn('truncate text-[13px]', className)}>{family.family}</span>
+  if (family.source === 'builtin' || !face) return <span className={cn('block truncate', big ? 'text-[24px] leading-8 font-semibold tracking-tight' : 'text-[13px]', className)}>{family.family}</span>
   return (
     // The family's name drawn in its own face by the API, at twice the size it shows.
     <img
@@ -85,7 +90,7 @@ function Preview({ brandId, family, className }: { brandId: string; family: Font
       alt={family.family}
       loading="lazy"
       draggable={false}
-      className={cn('h-6 max-w-full object-contain object-left dark:invert rtl:object-right', className)}
+      className={cn(big ? 'h-8' : 'h-6', 'max-w-full object-contain object-left dark:invert rtl:object-right', className)}
     />
   )
 }
@@ -98,7 +103,12 @@ export function FontPanel({ editor, brandId }: { editor: Editor; brandId: string
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
   const listId = useId()
-  const current = selectedFont(design, selected)
+  const [, frameFormat] = editor.selectedFrame()?.split('/') ?? []
+  const current = selectedFont(design, selected, frameFormat && design.formats[frameFormat] ? frameFormat : design.meta.primaryFormatId)
+  const names = selected.flatMap((id) => {
+    const node = design.nodes[id]
+    return node?.type === 'text' ? [node.name] : []
+  })
 
   useEffect(() => {
     if (!open) return
@@ -119,8 +129,9 @@ export function FontPanel({ editor, brandId }: { editor: Editor; brandId: string
 
   return (
     <section aria-labelledby="font-title" className={cn(CARD, 'overflow-visible')} data-testid="font-panel">
-      <CardHeader id="font-title" title={t.editor.fonts.title} />
-      <div ref={box} className="relative flex flex-col gap-2 px-4 pb-3">
+      <CardHeader id="font-title" title={t.editor.fonts.title} note={names.join(', ')} />
+      <div ref={box} className="relative flex flex-col gap-2.5 px-[18px] pb-4">
+        {/* The family's name, large and drawn in it, with its weight and size beside it, as in the mock. */}
         <button
           type="button"
           aria-haspopup="listbox"
@@ -133,21 +144,27 @@ export function FontPanel({ editor, brandId }: { editor: Editor; brandId: string
           }}
           data-testid="font-open"
           data-family={current.family ?? ''}
-          className="flex h-9 cursor-pointer items-center gap-2 rounded-row border border-line bg-raised ps-2.5 pe-2 text-start hover:border-line-strong"
+          className="group -mx-2 flex h-11 cursor-pointer items-center gap-2 rounded-[10px] px-2 text-start hover:bg-hover aria-expanded:bg-hover"
         >
           <span className="min-w-0 flex-1">
-            {family ? <Preview brandId={brandId} family={family} /> : <span className="truncate text-[13px]">{current.family ?? t.editor.fonts.mixed}</span>}
+            {family ? <Preview brandId={brandId} family={family} big /> : <span className="block truncate text-[24px] leading-8 font-semibold tracking-tight">{current.family ?? t.editor.fonts.mixed}</span>}
           </span>
-          <CaretDownIcon size={14} aria-hidden className="shrink-0 text-subtle" />
+          <span className="shrink-0 text-xs font-medium text-muted tabular-nums">
+            {[
+              current.weight === null ? t.editor.fonts.mixed : t.editor.fonts.weights[current.weight as keyof typeof t.editor.fonts.weights] ?? String(current.weight),
+              current.size === null ? t.editor.fonts.mixed : String(Math.round(current.size * 10) / 10),
+            ].join(' · ')}
+          </span>
+          <CaretDownIcon size={12} weight="bold" aria-hidden className="shrink-0 text-subtle transition-transform duration-[var(--chrome-fast)] group-aria-expanded:rotate-180" />
         </button>
-        <label className="flex items-center justify-between gap-2">
+        <label className="flex items-center justify-between gap-3">
           <span className="text-xs text-muted">{t.editor.fonts.weight}</span>
           <select
             value={current.weight ?? ''}
             onChange={(event) => current.family && editor.setFont(current.family, Number(event.target.value))}
             disabled={!current.family || weights.length < 2}
             data-testid="font-weight"
-            className="h-8 min-w-0 flex-1 rounded-row border border-line bg-raised px-2 text-[13px] disabled:opacity-60"
+            className="h-8 min-w-0 flex-1 rounded-row border border-line bg-transparent px-2 text-[13px] hover:border-line-strong disabled:opacity-60"
           >
             {current.weight === null && <option value="">{t.editor.fonts.mixed}</option>}
             {(weights.length > 0 ? weights : current.weight === null ? [] : [current.weight]).map((w) => (

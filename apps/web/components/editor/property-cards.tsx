@@ -1,18 +1,17 @@
 'use client'
 
 // The property cards floating at the stage's top end (#83). With nothing selected they show the
-// design: the Page card (its background), then Formats and Pages. With a selection they show
-// Arrange, the font when text is selected, and the selection's other properties (#60). Each card is only as tall as what it
+// design: the Page card (its background), then Formats and Pages. With a selection they show the
+// font when text is selected, then the selection's look and Arrange, with the numbers last (#60):
+// as in the final mock, what changes how it looks comes first. Several layers show Arrange first. Each card is only as tall as what it
 // holds, and controls are visual first, with numbers behind "Fine-tune".
-import { CheckIcon, PlusIcon } from '@phosphor-icons/react'
 import type { Editor } from '@razzlr/editor'
 import type { Design } from '@razzlr/schema'
 import { useState } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
-import { format } from '../../lib/i18n/index.ts'
 import { ArrangePanel, useSelection } from './arrange-panel.tsx'
-import { CARD, CardHeader } from './card.tsx'
+import { CARD, CardHeader, FineTune } from './card.tsx'
 import { FontPanel } from './font-panel.tsx'
 import { FormatsPanel, useEditorDesign } from './formats-panel.tsx'
 import { PagesPanel } from './pages-panel.tsx'
@@ -42,8 +41,8 @@ function PageCard({ editor, pageId }: { editor: Editor; pageId: string }) {
   }
   return (
     <section aria-labelledby="page-title" className={CARD} data-testid="page-card">
-      <CardHeader id="page-title" title={format(t.editor.page.title, { name })} />
-      <div role="group" aria-label={t.editor.page.background} className="grid grid-cols-8 gap-1.5 px-4 pb-3">
+      <CardHeader id="page-title" title={t.editor.page.title} note={name} />
+      <div role="group" aria-label={t.editor.page.background} className="flex items-center justify-between gap-1 px-[18px] pt-0.5 pb-3.5">
         {SWATCHES.map((hex) => {
           const on = current === hex
           return (
@@ -56,27 +55,18 @@ function PageCard({ editor, pageId }: { editor: Editor; pageId: string }) {
               onClick={() => paint(hex)}
               style={{ backgroundColor: hex }}
               className={cn(
-                'grid aspect-square w-full cursor-pointer place-items-center rounded-full border border-line-strong transition-transform duration-[var(--chrome-fast)] hover:scale-110',
-                on && 'ring-2 ring-ring ring-offset-2 ring-offset-raised',
+                // Round and large, as in the mock; the picked one is ringed in pink with a gap, a
+                // shape and not only a colour, so it reads without colour vision too.
+                'size-7 shrink-0 cursor-pointer rounded-full border border-line-strong transition-transform duration-[var(--chrome-fast)] hover:scale-110',
+                on && 'shadow-[0_0_0_2px_var(--surface),0_0_0_4px_var(--accent)]',
               )}
-            >
-              {/* Not by colour alone: the picked swatch carries a check, dark or light to stand out. */}
-              {on && <CheckIcon size={14} weight="bold" aria-hidden className={hex === '#1A1420' || hex === '#3D6BFF' ? 'text-white' : 'text-[#1A1420]'} />}
-            </button>
+            />
           )
         })}
       </div>
-      <button
-        type="button"
-        aria-expanded={fine}
-        onClick={() => setFine(!fine)}
-        className="flex h-9 w-full cursor-pointer items-center gap-1.5 border-t border-line px-4 text-xs font-medium text-muted transition-colors hover:text-text"
-      >
-        <PlusIcon size={12} aria-hidden className={cn('transition-transform duration-[var(--chrome-fast)]', fine && 'rotate-45')} />
-        {t.editor.page.fineTune}
-      </button>
+      <FineTune open={fine} onToggle={() => setFine(!fine)} label={t.editor.page.fineTune} />
       {fine && (
-        <label className="flex items-center gap-2 px-4 pb-3 text-xs text-muted">
+        <label className="flex items-center gap-2 px-[18px] pb-4 text-xs text-muted">
           {t.editor.page.hex}
           <input
             key={current ?? ''}
@@ -104,9 +94,8 @@ export function PropertyCards({ editor, brandId, onRemoved }: { editor: Editor; 
   if (selected.length > 0) {
     return (
       <>
-        <ArrangePanel editor={editor} />
         <FontPanel editor={editor} brandId={brandId} />
-        <SelectionCards editor={editor} ids={selected} />
+        <SelectionCards editor={editor} ids={selected} arrange={<ArrangePanel editor={editor} />} />
         <ViewCard editor={editor} />
       </>
     )

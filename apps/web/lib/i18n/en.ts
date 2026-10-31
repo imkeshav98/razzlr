@@ -119,6 +119,7 @@ export const en = {
       booleanExclude: 'Exclude',
       group: 'Group',
       withKey: '{label} ({key})',
+      selected: '{n} selected',
     },
     shapes: {
       menu: 'Shapes',
@@ -131,7 +132,7 @@ export const en = {
       arrow: 'Arrow',
     },
     page: {
-      title: 'Page · {name}',
+      title: 'Page',
       background: 'Background',
       fineTune: 'Fine-tune',
       hex: 'Hex',
@@ -139,6 +140,10 @@ export const en = {
     pages: {
       title: 'Pages',
       add: 'Add page',
+      addShort: 'Page',
+      numbered: '{n}. {name}',
+      formatsOne: '1 format',
+      formatsMany: '{n} formats',
       newName: 'Page {n}',
       copyName: '{name} copy',
       show: 'Show {name}',
@@ -206,6 +211,10 @@ export const en = {
       aligns: { inside: 'Inside', center: 'Centre', outside: 'Outside' },
       effect: { dropShadow: 'Drop shadow', innerShadow: 'Inner shadow', glow: 'Glow', layerBlur: 'Layer blur', backgroundBlur: 'Background blur' },
       addEffect: 'Add effect',
+      noEffects: 'None',
+      effectSample: 'Aa',
+      effectShort: { dropShadow: 'Shadow', innerShadow: 'Inner', glow: 'Glow', layerBlur: 'Blur', backgroundBlur: 'Background' },
+      effectPresets: 'Effects to add',
       effectField: { x: 'X', y: 'Y', blur: 'Blur', spread: 'Spread', radius: 'Radius' },
       effectFieldName: '{effect} {n} {field}',
       text: 'Text',
@@ -312,6 +321,8 @@ export const en = {
     formats: {
       title: 'Formats',
       add: 'Add format',
+      addTile: 'Add',
+      manage: 'Manage formats',
       presets: 'Presets',
       custom: 'Custom size',
       width: 'Width',
