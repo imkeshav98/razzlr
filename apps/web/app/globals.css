@@ -301,9 +301,11 @@ body {
   animation: toast-in var(--enter) var(--ease-pop) backwards;
 }
 
-/* The property cards rise in a short stagger as they appear (cardin). */
+/* The property cards rise in a short stagger as they appear (cardin). Translate and opacity only:
+   the frosted cards are layers of their own, and one whose scale was animated can stay drawn at
+   that scale after it ends, which shifts its edges by a fraction of a pixel. */
 @keyframes card-rise {
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  from { opacity: 0; transform: translateY(8px); }
 }
 .card-rise {
   animation: card-rise var(--enter) var(--ease-out) backwards;

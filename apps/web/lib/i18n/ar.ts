@@ -118,6 +118,7 @@ export const ar: Messages = {
       booleanExclude: 'استبعاد',
       group: 'تجميع',
       withKey: '{label} ({key})',
+      selected: 'المحدد: {n}',
     },
     shapes: {
       menu: 'الأشكال',
@@ -130,7 +131,7 @@ export const ar: Messages = {
       arrow: 'سهم',
     },
     page: {
-      title: 'الصفحة · {name}',
+      title: 'الصفحة',
       background: 'الخلفية',
       fineTune: 'ضبط دقيق',
       hex: 'الرمز',
@@ -138,6 +139,10 @@ export const ar: Messages = {
     pages: {
       title: 'الصفحات',
       add: 'إضافة صفحة',
+      addShort: 'صفحة',
+      numbered: '{n}. {name}',
+      formatsOne: 'مقاس واحد',
+      formatsMany: 'المقاسات: {n}',
       newName: 'صفحة {n}',
       copyName: 'نسخة من {name}',
       show: 'اعرض {name}',

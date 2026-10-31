@@ -120,6 +120,7 @@ export const en = {
       booleanExclude: 'Exclude',
       group: 'Group',
       withKey: '{label} ({key})',
+      selected: '{n} selected',
     },
     shapes: {
       menu: 'Shapes',
@@ -132,7 +133,7 @@ export const en = {
       arrow: 'Arrow',
     },
     page: {
-      title: 'Page · {name}',
+      title: 'Page',
       background: 'Background',
       fineTune: 'Fine-tune',
       hex: 'Hex',
@@ -140,6 +141,10 @@ export const en = {
     pages: {
       title: 'Pages',
       add: 'Add page',
+      addShort: 'Page',
+      numbered: '{n}. {name}',
+      formatsOne: '1 format',
+      formatsMany: '{n} formats',
       newName: 'Page {n}',
       copyName: '{name} copy',
       show: 'Show {name}',

@@ -12,7 +12,7 @@ import {
 import type { ShapeTool } from '@razzlr/editor'
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useLocale, useMessages } from '../../lib/i18n/client.tsx'
 import { dirOf } from '../../lib/i18n/index.ts'
@@ -58,6 +58,23 @@ const SAVE: Record<string, { icon: Icon; tone: string; words?: boolean }> = {
 }
 /** Saving stays up at least this long, so a quick edit doesn't flicker the badge. */
 const SAVING_HOLD_MS = 600
+
+/** Lets the open flyout's content set the small grey note in its title row, as Layers does with its page and format. */
+type Note = { owner: object; text: string } | null
+const FlyoutNote = createContext<(change: (now: Note) => Note) => void>(() => undefined)
+
+/**
+ * Shows a note at the end of the open flyout's title row while the caller is mounted. A flyout
+ * fading out clears only its own note, never the next one's.
+ */
+export function useFlyoutNote(text: string | null) {
+  const setNote = useContext(FlyoutNote)
+  const [owner] = useState(() => ({}))
+  useEffect(() => {
+    setNote(() => (text ? { owner, text } : null))
+    return () => setNote((now) => (now?.owner === owner ? null : now))
+  }, [setNote, owner, text])
+}
 
 /** Phones get the capsule as a bottom tab bar, so the blob travels sideways there. */
 function usePhone() {
@@ -156,6 +173,8 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
   const chrome = reduced ? { duration: 0 } : CHROME
   const phone = usePhone()
   const [panel, setPanel] = useState<Panel | null>(null)
+  const [flyoutNote, setNote] = useState<Note>(null)
+  const note = flyoutNote?.text ?? null
   const [ownTool, setTool] = useState<Tool>('select')
   const tool = shownTool ?? ownTool
   const shown = useShownStatus(status)
@@ -296,15 +315,21 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                   exit={{ opacity: 0, x: rtl ? 12 : -12 }}
                   transition={chrome}
                   data-testid="flyout"
-                  className="absolute start-[5.25rem] top-20 z-10 flex max-h-[calc(100%-5.75rem)] w-72 flex-col overflow-hidden rounded-card surface-frost border shadow-panel max-sm:inset-x-3 max-sm:start-3 max-sm:top-auto max-sm:bottom-[9rem] max-sm:w-auto"
+                  className="absolute start-[5.25rem] top-20 z-10 flex max-h-[calc(100%-5.75rem)] w-72 flex-col overflow-hidden rounded-[16px] surface-frost border shadow-panel max-sm:inset-x-3 max-sm:start-3 max-sm:top-auto max-sm:bottom-[9rem] max-sm:w-auto"
                 >
-                  <div className="flex h-12 shrink-0 items-center justify-between border-b border-line ps-4 pe-2">
-                    <h2 className={cn('font-display text-[15px] font-semibold tracking-tight', flyout === 'ai' && 'bg-[image:var(--ai-gradient)] bg-clip-text text-transparent')}>{panelTitle(flyout)}</h2>
-                    <button type="button" aria-label={t.editor.closePanel} onClick={() => setPanel(null)} className="grid size-8 cursor-pointer place-items-center rounded-row text-subtle hover:bg-hover hover:text-text">
-                      <XIcon size={16} aria-hidden />
+                  {/* The title at the start and, as in the mock, a small grey note at the end: the brand, or the page and format. */}
+                  <div className="flex h-14 shrink-0 items-center gap-2 ps-[18px] pe-2">
+                    <h2 className={cn('min-w-0 flex-1 truncate font-display text-[17px] font-bold tracking-tight', flyout === 'ai' && 'bg-[image:var(--ai-gradient)] bg-clip-text text-transparent')}>{panelTitle(flyout)}</h2>
+                    {(note ?? (flyout === 'assets' || flyout === 'brand' ? brandName : null)) && (
+                      <span data-testid="flyout-note" className="min-w-0 max-w-[60%] truncate text-[11px] font-medium text-muted">{note ?? brandName}</span>
+                    )}
+                    <button type="button" aria-label={t.editor.closePanel} onClick={() => setPanel(null)} className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-full text-subtle hover:bg-hover hover:text-text">
+                      <XIcon size={14} aria-hidden />
                     </button>
                   </div>
-                  {panels?.[flyout] ?? <p className="p-4 text-[13px] text-muted">{panelEmpty[flyout]}</p>}
+                  <FlyoutNote.Provider value={setNote}>
+                    {panels?.[flyout] ?? <p className="px-[18px] pb-4 text-[13px] text-muted">{panelEmpty[flyout]}</p>}
+                  </FlyoutNote.Provider>
                 </motion.section>
               )}
             </AnimatePresence>
@@ -362,7 +387,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                 className={cn(
                   // A stack at the top end, below the end island, each card only as tall as its content;
                   // past the room above the zoom pill the stack scrolls. Its gaps let clicks through.
-                  'pointer-events-none absolute end-3 top-20 z-20 flex max-h-[calc(100%-9.5rem)] w-72 flex-col gap-2 overflow-y-auto overscroll-contain [scrollbar-width:none] *:pointer-events-auto',
+                  'pointer-events-none absolute end-3 top-20 z-20 flex max-h-[calc(100%-9.5rem)] w-72 flex-col gap-2.5 overflow-y-auto overscroll-contain [scrollbar-width:none] *:pointer-events-auto',
                   // On phones, a bottom sheet over the dock, opened from the tab bar.
                   'max-sm:inset-x-2 max-sm:top-auto max-sm:bottom-[5rem] max-sm:max-h-[55%] max-sm:w-auto max-sm:not-data-[open]:hidden',
                 )}

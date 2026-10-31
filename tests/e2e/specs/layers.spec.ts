@@ -9,6 +9,9 @@ import { click, openStage, read } from '../support/stage.ts'
 
 test.describe.configure({ timeout: 120_000 })
 
+/** A row's height in the panel, in pixels (LAYER_ROW in components/editor/layers-panel.tsx). */
+const ROW = 36
+
 const rect = (x: number, y: number, width: number, height: number, color: string) =>
   ({ x, y, width, height, shape: { kind: 'rect' as const, cornerRadius: 16 }, fills: [{ type: 'solid' as const, color }] })
 
@@ -69,7 +72,7 @@ test('the panel and the stage select together; drag into a group, rename, lock a
   // Drag Dot onto the middle of Card: it goes inside, on top, and the group grows to hold it.
   const before = await page.evaluate(() => window.razzlr?.boxOf('card'))
   const target = await row(page, 'Card').boundingBox()
-  await row(page, 'Dot').dragTo(row(page, 'Card'), { targetPosition: { x: 60, y: (target?.height ?? 28) / 2 } })
+  await row(page, 'Dot').dragTo(row(page, 'Card'), { targetPosition: { x: 60, y: (target?.height ?? ROW) / 2 } })
   await expect.poll(async () => (await node(page, 'dot')).parentId).toBe('card')
   await expect.poll(() => listed(page)).toEqual(['Box', 'Card', '  Dot', '  Card stripe', '  Card back', 'Backdrop'])
   const after = await page.evaluate(() => window.razzlr?.boxOf('card'))
@@ -209,7 +212,7 @@ test('300 layers: only the rows in view are in the page, and scrolling costs the
   const scroller = page.getByTestId('layers-scroller')
   const rendered = await tree(page).getByRole('treeitem').count()
   expect(rendered).toBeLessThan(60)
-  expect(await tree(page).evaluate((el) => el.getBoundingClientRect().height)).toBe(300 * 28)
+  expect(await tree(page).evaluate((el) => el.getBoundingClientRect().height)).toBe(300 * ROW)
 
   // Every frame's time for a while, in ms, sorted.
   const frameTimes = (ms: number) => page.evaluate((ms) => new Promise<number[]>((resolve) => {
