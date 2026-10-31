@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { BrandAvatar, LibraryShell } from '../components/library-shell.tsx'
 import { getWorkspace, listBrands } from '../lib/api.ts'
-import { openingBrand } from '../lib/home.ts'
+import { needsWelcome, openingBrand } from '../lib/home.ts'
 import { brandWords } from '../lib/i18n/index.ts'
 import { getMessages } from '../lib/i18n/server.ts'
 
@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic'
 export default async function HomePage() {
   const [t, workspace, brands] = await Promise.all([getMessages(), getWorkspace(), listBrands()])
   const words = brandWords(t, workspace.kind)
+  if (needsWelcome(brands)) redirect('/welcome')
   const opening = openingBrand(workspace.kind, brands)
   if (opening) redirect(`/brands/${opening.id}`)
   return (

@@ -1,6 +1,6 @@
 // The API, called from the web app's server only, with every response read through its contract.
 import 'server-only'
-import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignSummary, DesignThumbnail, FontFace, FontFamily, FontLink, FontUploadTicket, SignedLink, SyncToken, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type UpdateAsset } from '@razzlr/schema'
+import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignSummary, DesignThumbnail, FontFace, FontFamily, FontLink, FontUploadTicket, SignedLink, SyncToken, UploadTicket, WorkspaceSummary, type FontType, type WorkspaceKind, type ImageType, type UpdateAsset } from '@razzlr/schema'
 import type { z } from 'zod'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8787'
@@ -25,7 +25,12 @@ async function call<T extends z.ZodType>(schema: T, path: string, init?: { metho
 
 export const getWorkspace = () => call(WorkspaceSummary, '/workspace')
 
+/** Saves who the workspace is for (#109); it changes only words and defaults (ADR-0011). */
+export const setWorkspaceKind = (kind: WorkspaceKind) => call(WorkspaceSummary, '/workspace', { method: 'PATCH', body: { kind } })
+
 export const listBrands = () => call(BrandSummary.array(), '/brands')
+
+export const createBrand = (name: string) => call(BrandSummary, '/brands', { method: 'POST', body: { name } })
 
 export const listDesigns = (brandId: string) => call(DesignSummary.array(), `/brands/${encodeURIComponent(brandId)}/designs`)
 
