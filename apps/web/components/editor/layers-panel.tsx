@@ -15,13 +15,14 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { cn } from '../../lib/cn.ts'
 import { useLocale, useMessages } from '../../lib/i18n/client.tsx'
 import { dirOf, format } from '../../lib/i18n/index.ts'
+import { useFlyoutNote } from './shell.tsx'
 import { useLiveDesign } from './use-live-design.ts'
 
 /** A row's height in pixels: every row is the same, which is what lets only the rows in view render. */
-export const LAYER_ROW = 28
+export const LAYER_ROW = 36
 /** Rows rendered beyond each edge of the view, so a fast scroll never shows a gap. */
 const OVERSCAN = 8
-const INDENT = 14
+const INDENT = 16
 const DRAG_TYPE = 'application/x-razzlr-layer'
 
 type Layer = Design['nodes'][string]
@@ -84,6 +85,8 @@ export function LayersPanel({ editor }: { editor: Editor }) {
   const pageId = framePage && design.pages[framePage] ? framePage : ordered(design.pages)[0]?.[0] ?? ''
   const formatId = frameFormat && design.formats[frameFormat] ? frameFormat : design.meta.primaryFormatId
   const page = design.pages[pageId]
+  // The title row's note says which frame the tree is of, as in the mock: "Page 1 · Square".
+  useFlyoutNote(page ? [page.name, design.formats[formatId]?.name].filter(Boolean).join(' · ') : null)
 
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set())
   // A layer selected on the stage shows in the panel: the groups it is in open.
@@ -299,7 +302,7 @@ export function LayersPanel({ editor }: { editor: Editor }) {
           <div
             ref={scroller}
             onScroll={(event) => follow(event.currentTarget)}
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-1"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1.5 pb-2"
             data-testid="layers-scroller"
           >
             <div
@@ -326,7 +329,7 @@ export function LayersPanel({ editor }: { editor: Editor }) {
             </div>
           </div>
         )}
-      <p className="shrink-0 border-t border-line px-4 py-2 text-[11px] leading-snug text-subtle">{t.editor.layersPanel.hint}</p>
+      <p className="shrink-0 border-t border-line px-[18px] py-2.5 text-[11px] leading-snug text-subtle">{t.editor.layersPanel.hint}</p>
     </div>
   )
 }
@@ -395,11 +398,13 @@ const LayerRow = memo(function LayerRow({ row, i, selected, focusable, renaming,
       onDrop={(event) => {
         if (api.drop(event, row)) event.preventDefault()
       }}
-      style={{ top: i * LAYER_ROW, height: LAYER_ROW, paddingInlineStart: 6 + depth * INDENT }}
+      // A 2 px gap between rows, so each selected row reads as its own pill.
+      style={{ top: i * LAYER_ROW + 1, height: LAYER_ROW - 2, paddingInlineStart: 4 + depth * INDENT }}
       className={cn(
-        'group absolute inset-x-1 flex cursor-default items-center gap-1 rounded-row pe-1 text-[13px] outline-none select-none',
+        'group absolute inset-x-1 flex cursor-default items-center gap-1.5 rounded-[8px] pe-1 text-[13px] font-medium outline-none select-none',
         'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset',
-        selected ? 'bg-accent-soft text-text' : 'hover:bg-hover',
+        // The selected row is tinted pink, its type tile solid pink, as in the mock.
+        selected ? 'bg-accent/20 text-text' : 'hover:bg-hover',
         drop === 'into' && 'ring-2 ring-accent ring-inset',
         hidden && 'text-subtle',
       )}
@@ -416,13 +421,15 @@ const LayerRow = memo(function LayerRow({ row, i, selected, focusable, renaming,
               event.stopPropagation()
               api.toggle(id)
             }}
-            className="grid size-5 shrink-0 cursor-pointer place-items-center rounded-row text-subtle hover:text-text"
+            className="grid size-4 shrink-0 cursor-pointer place-items-center rounded-row text-subtle hover:text-text"
           >
             <CaretRightIcon size={11} weight="bold" aria-hidden className={cn('transition-transform duration-[var(--chrome-fast)] rtl:-scale-x-100', open && 'rotate-90 rtl:-rotate-90')} />
           </button>
         )
-        : <span aria-hidden className="size-5 shrink-0" />}
-      <LayerIcon size={14} aria-hidden className="shrink-0 text-subtle" />
+        : <span aria-hidden className="size-4 shrink-0" />}
+      <span aria-hidden className={cn('grid size-[22px] shrink-0 place-items-center rounded-[5px] transition-colors duration-[var(--chrome-fast)]', selected ? 'bg-accent-solid text-on-accent' : 'bg-text/10 text-muted')}>
+        <LayerIcon size={13} weight={selected ? 'bold' : 'regular'} />
+      </span>
       {renaming
         ? (
           <RenameField
@@ -433,18 +440,18 @@ const LayerRow = memo(function LayerRow({ row, i, selected, focusable, renaming,
         )
         : <span className={cn('min-w-0 flex-1 truncate', hidden && 'line-through decoration-subtle/60')}>{node.name}</span>}
       <RowToggle
-        on={locked}
-        label={format(locked ? t.editor.layersPanel.unlock : t.editor.layersPanel.lock, { name: node.name })}
-        onToggle={() => api.lock(id, !locked)}
-        icon={locked ? LockSimpleIcon : LockSimpleOpenIcon}
-        testId="layer-lock"
-      />
-      <RowToggle
         on={hidden}
         label={format(hidden ? t.editor.layersPanel.show : t.editor.layersPanel.hide, { name: node.name })}
         onToggle={() => api.hide(id, !hidden)}
         icon={hidden ? EyeSlashIcon : EyeIcon}
         testId="layer-hide"
+      />
+      <RowToggle
+        on={locked}
+        label={format(locked ? t.editor.layersPanel.unlock : t.editor.layersPanel.lock, { name: node.name })}
+        onToggle={() => api.lock(id, !locked)}
+        icon={locked ? LockSimpleIcon : LockSimpleOpenIcon}
+        testId="layer-lock"
       />
     </div>
   )
@@ -464,7 +471,7 @@ function RowToggle({ on, label, onToggle, icon: ToggleIcon, testId }: { on: bool
         onToggle()
       }}
       className={cn(
-        'grid size-6 shrink-0 cursor-pointer place-items-center rounded-row text-subtle hover:bg-hover hover:text-text',
+        'grid size-6 shrink-0 cursor-pointer place-items-center rounded-[6px] text-subtle hover:bg-hover hover:text-text',
         !on && 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100',
       )}
     >

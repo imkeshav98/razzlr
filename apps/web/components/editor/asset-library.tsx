@@ -132,8 +132,8 @@ export function AssetLibrary({ editor, brandId }: { editor: Editor; brandId: str
         upload([...e.dataTransfer.files])
       }}
     >
-      <div className="flex shrink-0 flex-col gap-2 border-b border-line p-3">
-        <label className="flex h-9 items-center gap-2 rounded-row border border-line bg-raised px-2.5 focus-within:border-line-strong">
+      <div className="flex shrink-0 flex-col gap-2 px-[18px] pb-3">
+        <label className="flex h-9 items-center gap-2 rounded-[10px] border border-line bg-bg/40 px-2.5 focus-within:border-accent">
           <MagnifyingGlassIcon size={14} aria-hidden className="shrink-0 text-subtle" />
           <input
             type="search"
@@ -144,7 +144,7 @@ export function AssetLibrary({ editor, brandId }: { editor: Editor; brandId: str
             className="h-full min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-subtle"
           />
         </label>
-        <label className="flex h-8 cursor-pointer items-center justify-center gap-2 rounded-row border border-dashed border-line text-[13px] font-medium text-muted hover:bg-hover hover:text-text focus-within:border-line-strong">
+        <label className="flex h-8 cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-dashed border-line-strong text-xs font-semibold text-muted hover:border-accent hover:text-text focus-within:border-accent">
           <UploadSimpleIcon size={14} aria-hidden />
           {dropping ? t.dropHere : t.upload}
           <input
@@ -203,16 +203,16 @@ export function AssetLibrary({ editor, brandId }: { editor: Editor; brandId: str
         />
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-3">
+      <div className="min-h-0 flex-1 overflow-y-auto px-[18px] pt-1 pb-4">
         {assets && assets.length === 0 && (
           <p className="text-[13px] text-muted">{query.trim() ? format(t.none, { query: query.trim() }) : t.empty}</p>
         )}
         {assets && assets.length > 0 && (
-          <ul aria-label={t.images} className="grid grid-cols-2 gap-2">
+          <ul aria-label={t.images} className="grid grid-cols-3 gap-2">
             {assets.map((asset) => {
               const name = asset.name || t.untitled
               return (
-                <li key={asset.id} data-asset={asset.id} className="flex min-w-0 flex-col gap-1">
+                <li key={asset.id} data-asset={asset.id} className="group relative flex min-w-0 flex-col gap-1">
                   <button
                     type="button"
                     draggable
@@ -224,25 +224,24 @@ export function AssetLibrary({ editor, brandId }: { editor: Editor; brandId: str
                       e.dataTransfer.effectAllowed = 'copy'
                     }}
                     className={cn(
-                      'grid aspect-square cursor-grab place-items-center overflow-hidden rounded-row border border-line bg-raised hover:border-line-strong active:cursor-grabbing',
+                      'grid aspect-square cursor-grab place-items-center overflow-hidden rounded-[10px] border border-line bg-bg/40 transition-colors duration-[var(--chrome-fast)] hover:border-line-strong active:cursor-grabbing',
                       editing === asset.id && 'border-accent',
                     )}
                   >
                     <img src={`${base(brandId)}/${encodeURIComponent(asset.id)}/thumbnail`} alt="" draggable={false} loading="lazy" className="size-full object-contain" />
                   </button>
-                  <div className="flex min-w-0 items-center gap-1">
-                    <span className={cn('min-w-0 flex-1 truncate text-xs', !asset.name && 'text-subtle')} title={name}>{name}</span>
-                    <button
-                      type="button"
-                      aria-label={`${t.edit}: ${name}`}
-                      aria-pressed={editing === asset.id}
-                      onClick={() => setEditing(editing === asset.id ? null : asset.id)}
-                      className="grid size-6 shrink-0 cursor-pointer place-items-center rounded-row text-subtle hover:bg-hover hover:text-text aria-pressed:text-accent-text"
-                    >
-                      <PencilSimpleIcon size={13} aria-hidden />
-                    </button>
-                  </div>
-                  {asset.tags.length > 0 && <p className="truncate text-[11px] text-subtle">{asset.tags.join(' · ')}</p>}
+                  {/* Name and tags open from the tile's corner, shown on hover or focus, and while open. */}
+                  <button
+                    type="button"
+                    aria-label={`${t.edit}: ${name}`}
+                    aria-pressed={editing === asset.id}
+                    onClick={() => setEditing(editing === asset.id ? null : asset.id)}
+                    className="absolute end-1 top-1 grid size-6 cursor-pointer place-items-center rounded-full surface-frost border text-muted opacity-0 shadow-panel transition-opacity duration-[var(--chrome-fast)] group-hover:opacity-100 hover:text-text focus-visible:opacity-100 aria-pressed:text-accent-text aria-pressed:opacity-100"
+                  >
+                    <PencilSimpleIcon size={12} aria-hidden />
+                  </button>
+                  <span className={cn('min-w-0 truncate text-[11px] font-medium', asset.name ? 'text-muted' : 'text-subtle')} title={name}>{name}</span>
+                  {asset.tags.length > 0 && <p className="-mt-0.5 truncate text-[10px] text-subtle">{asset.tags.join(' · ')}</p>}
                 </li>
               )
             })}
@@ -281,7 +280,7 @@ function AssetDetails({ asset, brandId, onSaved, onDone }: { asset: AssetSummary
   }
 
   return (
-    <section aria-label={format(t.editing, { name: asset.name || t.untitled })} data-testid="asset-details" className="flex shrink-0 flex-col gap-2 border-b border-line p-3">
+    <section aria-label={format(t.editing, { name: asset.name || t.untitled })} data-testid="asset-details" className="mx-[18px] mb-3 flex shrink-0 flex-col gap-2 rounded-[12px] border border-line bg-bg/40 p-3">
       <label className="flex flex-col gap-1">
         <span className="text-xs text-muted">{t.name}</span>
         <input

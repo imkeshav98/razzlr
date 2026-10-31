@@ -113,15 +113,17 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
     editor.bindSelection(kind, follows(design, selection, kind, token) ? null : brandRef(token))
   }
   const families = [...new Set(catalog.map((f) => f.family))]
-  const heading = 'text-xs font-semibold tracking-wide text-muted'
-  const field = 'h-8 min-w-0 rounded-row border border-line bg-raised px-2 text-[13px]'
-  const iconButton = 'grid size-8 shrink-0 cursor-pointer place-items-center rounded-row text-subtle hover:bg-hover hover:text-text disabled:cursor-default disabled:opacity-40 aria-pressed:bg-accent-soft aria-pressed:text-accent-text'
+  // As the mock's flyouts: small spaced capitals over each part, quiet fields, round swatches.
+  const heading = 'text-[11px] font-bold tracking-[0.08em] text-subtle uppercase'
+  const field = 'h-8 min-w-0 rounded-[8px] border border-line bg-bg/40 px-2 text-[13px] hover:border-line-strong focus:border-accent focus:outline-none'
+  const iconButton = 'grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-subtle hover:bg-hover hover:text-text disabled:cursor-default disabled:opacity-40 aria-pressed:bg-accent-soft aria-pressed:text-accent-text'
+  const addButton = 'flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-[10px] border border-dashed border-line-strong text-xs font-semibold text-muted hover:border-accent hover:text-text'
 
   return (
     <div data-testid="brand-kit" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-      <p className="border-b border-line px-4 py-3 text-xs text-muted">{t.applyHint}</p>
+      <p className="px-[18px] pb-3 text-xs leading-snug text-muted">{t.applyHint}</p>
 
-      <section aria-labelledby="kit-colors" className="flex flex-col gap-2 border-b border-line p-4">
+      <section aria-labelledby="kit-colors" className="flex flex-col gap-2.5 border-t border-line px-[18px] py-4">
         <h3 id="kit-colors" className={heading}>{t.colors}</h3>
         <ul className="flex flex-col gap-1.5">
           {kit.colors.map((c, i) => {
@@ -133,7 +135,7 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
                   value={c.value.slice(0, 7)}
                   aria-label={format(t.pick, { name: c.name })}
                   onChange={(e) => setColor(i, { value: `${e.target.value}${c.value.slice(7)}`.toUpperCase() })}
-                  className="size-8 shrink-0 cursor-pointer rounded-row border border-line bg-raised p-0.5"
+                  className="h-16 w-12 shrink-0 cursor-pointer rounded-[12px] border border-line-strong bg-transparent p-0 [&::-webkit-color-swatch]:rounded-[11px] [&::-webkit-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0 [&::-moz-color-swatch]:rounded-[11px] [&::-moz-color-swatch]:border-0"
                 />
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <input
@@ -182,32 +184,34 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
             const name = format(t.newColor, { n: kit.colors.length + 1 })
             change({ ...kit, colors: [...kit.colors, { token: newToken(kit, name), name, value: '#000000FF' }] })
           }}
-          className="flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-row border border-dashed border-line text-[13px] font-medium text-muted hover:bg-hover hover:text-text"
+          className={addButton}
         >
           <PlusIcon size={13} aria-hidden />
           {t.addColor}
         </button>
       </section>
 
-      <section aria-labelledby="kit-fonts" className="flex flex-col gap-2 border-b border-line p-4">
+      <section aria-labelledby="kit-fonts" className="flex flex-col gap-2.5 border-t border-line px-[18px] py-4">
         <h3 id="kit-fonts" className={heading}>{t.fonts}</h3>
         <ul className="flex flex-col gap-1.5">
           {kit.fonts.map((f, i) => {
             const on = follows(design, selection, 'font', f.token)
             return (
-              <li key={f.token} data-token={f.token} className="flex items-center gap-1.5">
-                <input
-                  key={`name-${f.name}`}
-                  defaultValue={f.name}
-                  aria-label={format(t.fontName, { n: i + 1 })}
-                  maxLength={60}
-                  onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== f.name && setFont(i, { name: e.target.value.trim() })}
-                  onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                  className={cn(field, 'w-20')}
-                />
-                <select value={f.family} aria-label={format(t.fontFamily, { name: f.name })} onChange={(e) => setFont(i, { family: e.target.value })} className={cn(field, 'flex-1')}>
-                  {[...new Set([f.family, ...families])].map((family) => <option key={family} value={family}>{family}</option>)}
-                </select>
+              <li key={f.token} data-token={f.token} className="flex items-start gap-1.5">
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <input
+                    key={`name-${f.name}`}
+                    defaultValue={f.name}
+                    aria-label={format(t.fontName, { n: i + 1 })}
+                    maxLength={60}
+                    onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== f.name && setFont(i, { name: e.target.value.trim() })}
+                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                    className={field}
+                  />
+                  <select value={f.family} aria-label={format(t.fontFamily, { name: f.name })} onChange={(e) => setFont(i, { family: e.target.value })} className={cn(field, 'h-7 text-xs')}>
+                    {[...new Set([f.family, ...families])].map((family) => <option key={family} value={family}>{family}</option>)}
+                  </select>
+                </div>
                 <button
                   type="button"
                   aria-label={format(on ? t.unbind : t.apply, { name: f.name })}
@@ -231,17 +235,17 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
             const name = format(t.newFont, { n: kit.fonts.length + 1 })
             change({ ...kit, fonts: [...kit.fonts, { token: newToken(kit, name), name, family: families[0] ?? 'Noto Sans' }] })
           }}
-          className="flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-row border border-dashed border-line text-[13px] font-medium text-muted hover:bg-hover hover:text-text"
+          className={addButton}
         >
           <PlusIcon size={13} aria-hidden />
           {t.addFont}
         </button>
       </section>
 
-      <section aria-labelledby="kit-logo" className="flex flex-col gap-2 border-b border-line p-4">
+      <section aria-labelledby="kit-logo" className="flex flex-col gap-2.5 border-t border-line px-[18px] py-4">
         <h3 id="kit-logo" className={heading}>{t.logo}</h3>
         <div className="flex items-center gap-2">
-          <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-row border border-line bg-raised">
+          <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-[12px] border border-line bg-bg/40">
             {kit.logoAssetId && <img src={`/brands/${encodeURIComponent(brandId)}/assets/${encodeURIComponent(kit.logoAssetId)}/thumbnail`} alt="" className="size-full object-contain" />}
           </div>
           <select
@@ -256,7 +260,7 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
         </div>
       </section>
 
-      <section aria-labelledby="kit-voice" className="flex flex-col gap-2 p-4">
+      <section aria-labelledby="kit-voice" className="flex flex-col gap-2.5 border-t border-line px-[18px] py-4">
         <h3 id="kit-voice" className={heading}>{t.voice}</h3>
         <textarea
           key={`voice-${kit.voice}`}
@@ -266,10 +270,10 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
           maxLength={2000}
           rows={3}
           onBlur={(e) => e.target.value !== kit.voice && change({ ...kit, voice: e.target.value })}
-          className="resize-y rounded-row border border-line bg-raised px-2 py-1.5 text-[13px] placeholder:text-subtle"
+          className="resize-y rounded-[8px] border border-line bg-bg/40 px-2 py-1.5 text-[13px] placeholder:text-subtle hover:border-line-strong focus:border-accent focus:outline-none"
         />
       </section>
-      {error && <p role="alert" className="px-4 pb-4 text-xs text-danger">{format(t.saveFailed, { reason: error })}</p>}
+      {error && <p role="alert" className="px-[18px] pb-4 text-xs text-danger">{format(t.saveFailed, { reason: error })}</p>}
     </div>
   )
 }
