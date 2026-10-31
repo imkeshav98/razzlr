@@ -8,6 +8,7 @@ import { HomeStage } from '../../../components/home-stage.tsx'
 import { LibraryShell } from '../../../components/library-shell.tsx'
 import { createDesign, designCover, getBrandKit, getWorkspace, listBrands, listDesigns, listTemplates, startFromTemplate } from '../../../lib/api.ts'
 import { showsBrandList } from '../../../lib/home.ts'
+import { panelOf } from '../../../lib/home-panel.ts'
 import { brandWords, format } from '../../../lib/i18n/index.ts'
 import { getLocale, getMessages } from '../../../lib/i18n/server.ts'
 
@@ -16,8 +17,8 @@ export const dynamic = 'force-dynamic'
 /** How many designs the bento shows: the most recently changed. */
 const BENTO_SIZE = 24
 
-export default async function BrandPage({ params }: { params: Promise<{ brandId: string }> }) {
-  const { brandId } = await params
+export default async function BrandPage({ params, searchParams }: { params: Promise<{ brandId: string }>; searchParams: Promise<{ show?: string }> }) {
+  const [{ brandId }, { show }] = await Promise.all([params, searchParams])
   const [t, locale, workspace, brands] = await Promise.all([getMessages(), getLocale(), getWorkspace(), listBrands()])
   const words = brandWords(t, workspace.kind)
   const brand = brands.find((c) => c.id === brandId)
@@ -55,7 +56,7 @@ export default async function BrandPage({ params }: { params: Promise<{ brandId:
         {t.home.noDesigns}
       </div>
     )
-    : <DesignBento t={t} locale={locale} brandId={brand.id} designs={recent} />
+    : <DesignBento t={t} locale={locale} brandId={brand.id} designs={recent} eager={panelOf(show) === 'recent'} />
   const templatesBody = templates.length === 0
     ? <p className="text-sm text-muted">{t.library.noTemplates}</p>
     : (

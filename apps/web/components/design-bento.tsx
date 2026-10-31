@@ -29,7 +29,14 @@ export function spanOf(design: BentoDesign, index: number): 'large' | 'tall' | '
 
 const SPAN = { large: 'col-span-2 row-span-2', tall: 'row-span-2', wide: 'col-span-2', one: '' }
 
-export function DesignBento({ t, locale, brandId, designs }: { t: Messages; locale: string; brandId: string; designs: BentoDesign[] }) {
+export function DesignBento({ t, locale, brandId, designs, eager = true }: {
+  t: Messages
+  locale: string
+  brandId: string
+  designs: BentoDesign[]
+  /** Whether the first pictures load at once; not while the bento waits closed, so none is fetched for nothing. */
+  eager?: boolean
+}) {
   const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' })
   return (
     // Rows as tall as a column is wide, so a single tile is square, the big one too, a story tile
@@ -56,7 +63,7 @@ export function DesignBento({ t, locale, brandId, designs }: { t: Messages; loca
                     alt=""
                     width={design.cover.width}
                     height={design.cover.height}
-                    loading={i < 6 ? 'eager' : 'lazy'}
+                    loading={eager && i < 6 ? 'eager' : 'lazy'}
                     className="absolute inset-0 size-full object-cover transition-transform duration-[var(--chrome)] ease-[var(--ease-out)] group-hover:scale-[1.02]"
                   />
                 )
