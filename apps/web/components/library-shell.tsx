@@ -1,5 +1,5 @@
 // The app outside the editor: an icon rail, a secondary panel of brands and the main column.
-import { SquaresFourIcon } from '@phosphor-icons/react/ssr'
+import { GearSixIcon, SquaresFourIcon } from '@phosphor-icons/react/ssr'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { cn } from '../lib/cn.ts'
@@ -81,6 +81,9 @@ export function LibraryShell({ t, words, brands, activeBrandId, showBrands = tru
         <header className="flex h-14 shrink-0 items-center justify-end gap-2 border-b border-line px-4 md:px-8">
           <LocaleSwitch />
           <ThemeSwitch />
+          <Link href="/settings" aria-label={t.library.settings} title={t.library.settings} className="grid size-9 place-items-center rounded-row text-muted transition-colors duration-[var(--chrome-fast)] hover:bg-hover hover:text-text">
+            <GearSixIcon size={18} aria-hidden />
+          </Link>
           <SignOut />
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-8 md:py-10">{children}</main>
