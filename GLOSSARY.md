@@ -28,6 +28,10 @@ _Avoid_: Link, sync, style reference
 A brand's uploaded images, each with a name and tags it is found by. Placing one on a design makes a graphic whose fill is that image; the original is stored once per workspace, but each brand's asset, name and tags are its own.
 _Avoid_: Media library, uploads, gallery
 
+**Template**:
+A design saved to start others from, for every brand of the workspace (an agency's own) or for one brand (a client's). Starting from one gives a new design with its own copy and fresh ids; the template never changes after.
+_Avoid_: Master, preset, starter
+
 **Reviewer**:
 A guest who views, comments on and approves designs without a paid seat.
 _Avoid_: Client user, approver

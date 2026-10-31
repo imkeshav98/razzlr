@@ -50,6 +50,13 @@
       "when": 1793438254681,
       "tag": "0006_brand-kits",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793440962135,
+      "tag": "0007_templates",
+      "breakpoints": true
     }
   ]
 }

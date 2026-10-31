@@ -1,6 +1,6 @@
 // The API, called from the web app's server only, with every response read through its contract.
 import 'server-only'
-import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignSummary, DesignThumbnail, FontFace, FontFamily, FontLink, FontUploadTicket, SignedLink, SyncToken, UploadTicket, WorkspaceSummary, type FontType, type WorkspaceKind, type ImageType, type UpdateAsset } from '@razzlr/schema'
+import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignCover, DesignSummary, DesignThumbnail, FontFace, FontFamily, FontLink, FontUploadTicket, SignedLink, SyncToken, TemplateSummary, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type SaveTemplate, type UpdateAsset, type WorkspaceKind } from '@razzlr/schema'
 import type { z } from 'zod'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8787'
@@ -36,6 +36,16 @@ export const listDesigns = (brandId: string) => call(DesignSummary.array(), `/br
 
 export const createDesign = (brandId: string, name: string, content?: unknown) =>
   call(DesignSummary, `/brands/${encodeURIComponent(brandId)}/designs`, { method: 'POST', body: content === undefined ? { name } : { name, content } })
+
+/** The size of a design's primary format (#84), read without drawing, or null when it has nothing to show. */
+export async function designCover(brandId: string, designId: string) {
+  try {
+    return await call(DesignCover, `/brands/${encodeURIComponent(brandId)}/designs/${encodeURIComponent(designId)}/cover`)
+  } catch (e) {
+    if (e instanceof ApiFailure && e.status === 404) return null
+    throw e
+  }
+}
 
 /** A design's picture for the home (#84), or null when it has nothing to show yet. */
 export async function designThumbnail(brandId: string, designId: string) {
@@ -133,3 +143,24 @@ export const getBrandKit = (brandId: string) => call(BrandKit, `/brands/${encode
 
 /** Saves the brand's whole kit (#53). */
 export const saveBrandKit = (brandId: string, kit: BrandKit) => call(BrandKit, `/brands/${encodeURIComponent(brandId)}/kit`, { method: 'PUT', body: kit })
+
+/** The templates a brand can start from (#54): the workspace's and its own, newest first. */
+export const listTemplates = (brandId: string) => call(TemplateSummary.array(), `/brands/${encodeURIComponent(brandId)}/templates`)
+
+/** Saves a design as a template, for the whole workspace or the brand alone (#54). */
+export const saveTemplate = (brandId: string, template: SaveTemplate) =>
+  call(TemplateSummary, `/brands/${encodeURIComponent(brandId)}/templates`, { method: 'POST', body: template })
+
+/** A signed URL to a template's thumbnail, or null when this brand can't see the template (#54). */
+export async function templateThumbnailLink(brandId: string, templateId: string) {
+  try {
+    return await call(SignedLink, `/brands/${encodeURIComponent(brandId)}/templates/${encodeURIComponent(templateId)}/thumbnail`)
+  } catch (e) {
+    if (e instanceof ApiFailure && e.status === 404) return null
+    throw e
+  }
+}
+
+/** Starts a design of the brand from a template: its own copy, with fresh ids (#54). */
+export const startFromTemplate = (brandId: string, templateId: string, name?: string) =>
+  call(DesignSummary, `/brands/${encodeURIComponent(brandId)}/templates/${encodeURIComponent(templateId)}/designs`, { method: 'POST', body: name ? { name } : {} })

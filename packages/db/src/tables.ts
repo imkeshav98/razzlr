@@ -94,6 +94,31 @@ export const brandKits = pgTable('brand_kits', {
 ])
 
 /**
+ * A design saved to start others from (#54): its own copy of the document, as it was saved, and a
+ * thumbnail in storage (workspaces/<workspace>/templates/<id>.png). A workspace template (no brand)
+ * is for every brand of the workspace; a brand template for that brand only. Its images are assets
+ * of the brand it was saved from; a design started in another brand gets its own assets of them.
+ */
+export const templates = pgTable('templates', {
+  id: text().primaryKey(),
+  workspaceId: text('workspace_id').notNull().references(() => workspaces.id),
+  /** Null for a workspace template. */
+  brandId: text('brand_id'),
+  /** The brand whose design it was saved from, which owns the assets its images name. */
+  fromBrandId: text('from_brand_id').notNull(),
+  name: text().notNull(),
+  kind: text({ enum: ['single', 'carousel', 'story', 'document'] }).notNull(),
+  content: jsonb().notNull(),
+  width: integer().notNull(),
+  height: integer().notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  index('templates_workspace').on(t.workspaceId),
+  foreignKey({ name: 'templates_brand_in_workspace', columns: [t.brandId, t.workspaceId], foreignColumns: [brands.id, brands.workspaceId] }),
+  foreignKey({ name: 'templates_from_brand_in_workspace', columns: [t.fromBrandId, t.workspaceId], foreignColumns: [brands.id, brands.workspaceId] }),
+])
+
+/**
  * One font file (#50): a family in one weight and style. Google Fonts faces are shared by every
  * workspace and have no workspace or brand (stored at fonts/google/<sha256>); a brand's uploads
  * are its own (workspaces/<workspace>/fonts/<sha256>). A family name is unique per brand, weight
