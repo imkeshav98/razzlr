@@ -263,26 +263,33 @@ function FontList({ id, brandId, catalog, current, onPick, onClose, onUploaded }
       </div>
       <div ref={list} id={id} role="listbox" aria-label={t.editor.fonts.title} className="min-h-0 flex-1 overflow-y-auto py-1">
         {shown.length === 0 && <p className="px-3 py-4 text-xs text-muted">{format(t.editor.fonts.none, { query: query.trim() })}</p>}
-        {shown.map((family, i) => (
-          <div key={`${family.source}:${family.family}`}>
-            {family.source !== shown[i - 1]?.source && (
-              <div role="presentation" className="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wide text-subtle">{label[family.source]}</div>
-            )}
-            <div
-              id={`${id}-${i}`}
-              role="option"
-              aria-selected={family.family === current}
-              data-index={i}
-              data-family={family.family}
-              data-active={i === active ? '' : undefined}
-              onPointerEnter={() => setActive(i)}
-              onClick={() => onPick(family)}
-              className="mx-1 flex h-9 cursor-pointer items-center rounded-row px-2 data-[active]:bg-hover aria-selected:bg-accent-soft"
-            >
-              <Preview brandId={brandId} family={family} />
+        {/* Each source is a group of options, so a screen reader reads the group, then each family by name. */}
+        {GROUPS.map((source) => {
+          const options = shown.flatMap((family, i) => (family.source === source ? [{ family, i }] : []))
+          if (options.length === 0) return null
+          return (
+            <div key={source} role="group" aria-labelledby={`${id}-${source}`}>
+              <div id={`${id}-${source}`} className="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wide text-subtle">{label[source]}</div>
+              {options.map(({ family, i }) => (
+                <div
+                  key={family.family}
+                  id={`${id}-${i}`}
+                  role="option"
+                  aria-label={family.family}
+                  aria-selected={family.family === current}
+                  data-index={i}
+                  data-family={family.family}
+                  data-active={i === active ? '' : undefined}
+                  onPointerEnter={() => setActive(i)}
+                  onClick={() => onPick(family)}
+                  className="mx-1 flex h-9 cursor-pointer items-center rounded-row px-2 data-[active]:bg-hover aria-selected:bg-accent-soft"
+                >
+                  <Preview brandId={brandId} family={family} />
+                </div>
+              ))}
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
       <div className="border-t border-line p-2">
         <label className={cn('flex h-8 cursor-pointer items-center justify-center gap-2 rounded-row text-[13px] font-medium text-muted hover:bg-hover hover:text-text', uploading && 'pointer-events-none opacity-60')}>
