@@ -15,6 +15,7 @@
   "dependencies": {
     "@hocuspocus/provider": "4.8.0",
     "@razzlr/doc": "workspace:*",
+    "@razzlr/export": "workspace:*",
     "@razzlr/fonts": "workspace:*",
     "@razzlr/renderer": "workspace:*",
     "@razzlr/schema": "workspace:*",

@@ -8,7 +8,7 @@ import {
   caretAt, caretPosition, drawPage, layerPictures, paragraphCache, selectionBoxes, render, renderDesign, resourceCache, sceneMemo, textMeasure, type MeasureText, type ResourceCache, type Resources, type Scene, type SceneLayer,
 } from '@razzlr/renderer'
 import {
-  canHold, imageAssetIds, isContainer, LAYER_CLIPBOARD_TYPE, LayerClipboard, LOCK_FLAGS, SCHEMA_VERSION, type Design, type Layer, type LayerTree, type Paint,
+  canHold, imageAssetIds, isContainer, LAYER_CLIPBOARD_TYPE, LayerClipboard, LOCK_FLAGS, SCHEMA_VERSION, type Design, type ExportRequestInput, type Layer, type LayerTree, type Paint,
 } from '@razzlr/schema'
 import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from 'canvaskit-wasm'
 import canvasKitModule from 'canvaskit-wasm/full'
@@ -19,6 +19,7 @@ import { frameAt, frameGrid, intersects, type Frame, type Rect } from './grid.ts
 import { hitTest, type Point } from './hit-test.ts'
 import { align, distribute, type Alignment, type Distribution, type Offset } from './arrange.ts'
 import { coverCrop, cornersOfRect, cropOf, imageRect, panned, scaled } from './crop.ts'
+import { exportClient } from './export-client.ts'
 import { clickedBox, drawnBox, isShapeTool, newShape, newText, type ShapeTool } from './draw-tools.ts'
 import {
   anchorOf, constrain, deleteAnchors, formatPath, hitPath, isSmooth, moveAnchors, moveControl, offsetPath, parsePath, pathBounds, sameRef, segmentsOf, splitSegment,
@@ -963,6 +964,9 @@ function live(
     const at = performance.timeOrigin + performance.now()
     for (const listener of drawListeners) listener(design, at, info)
   }
+
+  // Exports are drawn in a worker of their own (#55), started at the first one.
+  const exporter = exportClient()
 
   // Images that arrive after the design (another tab added them) load in the background; until
   // then the screen draws them clear. Exports never do: they throw until every image is loaded.
@@ -2519,9 +2523,17 @@ function live(
       const frame = defaultFrame(pageId, formatId)
       return renderDesign(ck, session.design(), frame.pageId, frame.formatId, resourceBytes, cache).pixels
     },
+    /**
+     * Exports pages in formats as PNG or JPG, as this tab holds the design now, drawn in the export
+     * worker so the stage stays responsive (#55). One file comes as itself, more as one zip.
+     */
+    exportFiles(request: ExportRequestInput, progress?: (done: number, total: number) => void) {
+      return exporter.run(session.design(), request, resourceBytes, progress)
+    },
     synced: () => provider.synced && provider.unsyncedChanges === 0,
     destroy() {
       listening.abort()
+      exporter.destroy()
       resized.disconnect()
       cancelAnimationFrame(pending)
       drawListeners.clear()

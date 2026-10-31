@@ -8,6 +8,7 @@ import { FocusChip, FormatsPanel, UndoToast } from '../../../../../components/ed
 import { ArrangePanel } from '../../../../../components/editor/arrange-panel.tsx'
 import { PagesPanel } from '../../../../../components/editor/pages-panel.tsx'
 import { ZoomControl } from '../../../../../components/editor/zoom-control.tsx'
+import { ExportMenu } from '../../../../../components/editor/export-menu.tsx'
 
 declare global {
   interface Window { razzlr?: Editor }
@@ -107,6 +108,7 @@ export function EditorStage({ designId, designName, brandId, brandName, formatId
         setShape(picked)
         editor?.setTool(tool === 'hand' || tool === 'pen' || tool === 'text' ? tool : tool === 'shape' ? picked : 'select')
       }}
+      actions={editor ? <ExportMenu editor={editor} /> : undefined}
       inspector={editor ? (
         <>
           <ArrangePanel editor={editor} />
