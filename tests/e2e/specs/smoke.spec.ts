@@ -50,7 +50,10 @@ test('each card saves who Razzlr is for, and the words follow', async ({ page })
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Who is Razzlr for?')
     await page.getByText(card, { exact: true }).click()
     await expect(page.getByRole('radio', { name: new RegExp(card) })).toBeChecked()
-    if (kind === 'company') await shoot(page, 'kinds')
+    if (kind === 'company') {
+      await page.waitForTimeout(300) // the last card's check fades out
+      await shoot(page, 'kinds')
+    }
     await page.getByRole('button', { name: 'Continue' }).click()
     await expect(page).toHaveURL(/\/welcome\?step=brand$/)
     expect(await kindNow()).toBe(kind)
