@@ -521,12 +521,12 @@ function AutoLayoutCard({ target, p }: { target: Target; p: P }) {
   )
 }
 
-/** Where changes go when a design has more than one format: every format, or the one shown. */
+/** Where changes go when a design has more than one format: the one shown (as a canvas drag does), or every format. */
 function ScopeSwitch({ everyFormat, onChange, p }: { everyFormat: boolean; onChange: (every: boolean) => void; p: P }) {
   return (
     <section aria-label={p.applyTo} className={cn(CARD, 'p-1.5')} data-testid="scope-card">
       <div role="radiogroup" aria-label={p.applyTo} className="grid grid-cols-2 gap-1">
-        {([true, false] as const).map((every) => (
+        {([false, true] as const).map((every) => (
           <button
             key={String(every)}
             type="button"
@@ -539,7 +539,7 @@ function ScopeSwitch({ everyFormat, onChange, p }: { everyFormat: boolean; onCha
           </button>
         ))}
       </div>
-      {!everyFormat && <p className="px-1.5 pt-1.5 text-[11px] leading-snug text-subtle">{p.thisFormatHint}</p>}
+      {everyFormat && <p className="px-1.5 pt-1.5 text-[11px] leading-snug text-subtle">{p.everyFormatHint}</p>}
     </section>
   )
 }
@@ -549,7 +549,8 @@ export function SelectionCards({ editor, ids }: { editor: Editor; ids: string[] 
   const t = useMessages()
   const p = t.editor.props
   const { design } = useLiveDesign(editor)
-  const [everyFormat, setEveryFormat] = useState(true)
+  // Like a drag on the canvas, a change goes to the format shown unless every format is asked for.
+  const [everyFormat, setEveryFormat] = useState(false)
   const [framePage, frameFormat] = editor.selectedFrame()?.split('/') ?? []
   const formatId = frameFormat && design.formats[frameFormat] ? frameFormat : design.meta.primaryFormatId
   const pageId = framePage ?? ''

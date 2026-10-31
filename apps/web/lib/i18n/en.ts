@@ -174,7 +174,7 @@ export const en = {
       applyTo: 'Apply changes to',
       everyFormat: 'All formats',
       thisFormat: 'This format',
-      thisFormatHint: 'Changes become this format’s own; the other formats keep theirs.',
+      everyFormatHint: 'Changes go to every format, replacing what each had of its own for them.',
       mixed: 'Mixed',
       scrub: 'Drag to change {name}',
       layout: 'Position and size',
