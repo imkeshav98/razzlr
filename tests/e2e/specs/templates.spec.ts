@@ -58,6 +58,7 @@ test('save a template, start a design from it, edit that design, and the templat
   const name = `Autumn sale template ${run}`
 
   // Save it as a template for this brand only.
+  await page.getByTestId('share-open').click()
   await page.getByTestId('template-open').click()
   const dialog = page.getByTestId('template')
   await expect(dialog).toBeVisible()

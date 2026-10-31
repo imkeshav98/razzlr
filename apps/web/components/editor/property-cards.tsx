@@ -17,6 +17,7 @@ import { FontPanel } from './font-panel.tsx'
 import { FormatsPanel, useEditorDesign } from './formats-panel.tsx'
 import { PagesPanel } from './pages-panel.tsx'
 import { SelectionCards } from './selection-cards.tsx'
+import { ViewCard } from './view-card.tsx'
 
 /** Page backgrounds a click away; the Fine-tune row takes any colour. */
 const SWATCHES = ['#FFFFFF', '#FBF7F2', '#1A1420', '#FF48B0', '#3D6BFF', '#FFD23F', '#3DD68C', '#FF6B3D'] as const
@@ -106,6 +107,7 @@ export function PropertyCards({ editor, brandId, onRemoved }: { editor: Editor; 
         <ArrangePanel editor={editor} />
         <FontPanel editor={editor} brandId={brandId} />
         <SelectionCards editor={editor} ids={selected} />
+        <ViewCard editor={editor} />
       </>
     )
   }
@@ -114,6 +116,7 @@ export function PropertyCards({ editor, brandId, onRemoved }: { editor: Editor; 
       {pageId && <PageCard editor={editor} pageId={pageId} />}
       <FormatsPanel editor={editor} onRemoved={onRemoved} />
       <PagesPanel editor={editor} onRemoved={onRemoved} onShow={setShown} />
+      <ViewCard editor={editor} />
     </>
   )
 }

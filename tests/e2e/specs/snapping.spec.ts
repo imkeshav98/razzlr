@@ -40,7 +40,7 @@ async function release(page: Page, keys: string[] = []) {
 }
 const guides = (page: Page) => page.locator('.stage-overlay .guide').evaluateAll((els) => els.map((el) => (el as HTMLElement).dataset.axis))
 
-test('a drag snaps to another layer with a guide, and not with Ctrl held', async ({ browser }) => {
+test('a drag snaps to another layer with a guide, and not with Ctrl held or Snap off', async ({ browser }) => {
   const { page, errors } = await openStage(browser, design())
   // The dot's top is at 120; dragged up 37 it comes 3 px from the box's top at 80, within reach.
   await hold(page, { x: 820, y: 240 }, { x: 820, y: 203 })
@@ -55,6 +55,18 @@ test('a drag snaps to another layer with a guide, and not with Ctrl held', async
   expect(await guides(page)).toEqual([])
   await release(page, ['Control'])
   expect(await props(page, 'dot')).toMatchObject({ y: 83 })
+
+  // Snap off in the View card: no drag snaps until it is back on.
+  const snap = page.getByTestId('view-card').getByRole('button', { name: 'Snap' })
+  await snap.click()
+  await expect(snap).toHaveAttribute('aria-pressed', 'false')
+  // 2 px up from 83 would snap to the box's top at 80; with Snap off it stops at 81.
+  await hold(page, { x: 820, y: 203 }, { x: 820, y: 201 })
+  expect(await guides(page)).toEqual([])
+  await release(page)
+  expect(await props(page, 'dot')).toMatchObject({ y: 81 })
+  await snap.click()
+  await expect(snap).toHaveAttribute('aria-pressed', 'true')
 
   // Equal spacing: the tag between the box (right edge 380) and the dot (left edge 700), 3 px
   // off centre, snaps to 100 px from each, with both gaps marked.
@@ -101,9 +113,15 @@ test('the inspector aligns and distributes three layers, one undo step each', as
   expect(errors).toEqual([])
 })
 
-test('rulers count design pixels from the frame, mark the selection, and hide with Shift+R', async ({ browser }) => {
+test('rulers are off until asked for, count design pixels from the frame, mark the selection, and hide with Shift+R', async ({ browser }) => {
   const { page, errors } = await openStage(browser, design())
   const top = page.locator('.stage-overlay .ruler[data-axis="x"]')
+  // Off as the editor opens, as in the final mock; the View card's Rulers chip turns them on.
+  await expect(top).toHaveCount(0)
+  const chip = page.getByTestId('view-card').getByRole('button', { name: 'Rulers' })
+  await expect(chip).toHaveAttribute('aria-pressed', 'false')
+  await chip.click()
+  await expect(chip).toHaveAttribute('aria-pressed', 'true')
   await expect(top).toBeVisible()
   // At 80% numbered ticks are 100 design pixels apart.
   const ticks = await top.locator('.ruler-tick').allTextContents()
@@ -114,6 +132,8 @@ test('rulers count design pixels from the frame, mark the selection, and hide wi
   writeOutput('snapping-3-rulers.png', await page.screenshot())
   await press(page, 'toggleRulers')
   await expect(top).toHaveCount(0)
+  // The chip follows the shortcut.
+  await expect(chip).toHaveAttribute('aria-pressed', 'false')
   expect(errors).toEqual([])
 })
 

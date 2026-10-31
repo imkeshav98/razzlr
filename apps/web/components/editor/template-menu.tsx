@@ -3,11 +3,10 @@
 // Save as template (#54): the design as the editor holds it now, named, for every brand of the
 // workspace or this brand alone. The template keeps its own copy; editing this design later
 // leaves it as it was.
-import { BookmarkSimpleIcon } from '@phosphor-icons/react'
 import type { Editor } from '@razzlr/editor'
 import { ApiError, TemplateSummary, type TemplateScope } from '@razzlr/schema'
 import Link from 'next/link'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useState } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
@@ -16,43 +15,8 @@ import { Button } from '../ui/button.tsx'
 const LABEL = 'text-xs font-semibold tracking-wide text-muted'
 const CHOICE = 'flex min-h-8 cursor-pointer items-center gap-2 rounded-row px-2 text-[13px] hover:bg-hover'
 
-export function TemplateMenu({ editor, brandId, brandName, designName, everyBrand }: {
-  editor: Editor
-  brandId: string
-  brandName: string
-  designName: string
-  /** How this workspace says "every brand": "All clients" in an agency (ADR-0011). */
-  everyBrand: string
-}) {
-  const t = useMessages()
-  const [open, setOpen] = useState(false)
-  const box = useRef<HTMLDivElement>(null)
-  const id = useId()
-
-  useEffect(() => {
-    if (!open) return
-    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && setOpen(false)
-    const onPress = (event: PointerEvent) => !box.current?.contains(event.target as Node) && setOpen(false)
-    window.addEventListener('keydown', onKey)
-    window.addEventListener('pointerdown', onPress)
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      window.removeEventListener('pointerdown', onPress)
-    }
-  }, [open])
-
-  return (
-    <div ref={box} className="relative">
-      <Button size="md" variant="ghost" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)} data-testid="template-open">
-        <BookmarkSimpleIcon size={16} aria-hidden />
-        <span className="max-sm:hidden">{t.editor.templates.open}</span>
-      </Button>
-      {open && <TemplateForm id={id} editor={editor} brandId={brandId} brandName={brandName} designName={designName} everyBrand={everyBrand} />}
-    </div>
-  )
-}
-
-function TemplateForm({ id, editor, brandId, brandName, designName, everyBrand }: {
+/** The Save as template form (#54), opened from the Share menu. */
+export function TemplateForm({ id, editor, brandId, brandName, designName, everyBrand }: {
   id: string
   editor: Editor
   brandId: string

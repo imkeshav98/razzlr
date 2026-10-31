@@ -286,7 +286,15 @@ function live(
   let entered: string | null = null
   /** What the drag in progress snapped to, shown as guides and equal gaps (#42). */
   let snapped: { frame: Frame; guides: Guide[]; gaps: Gap[] } | null = null
-  let rulers = true
+  /** The rulers are off until asked for (Shift+R or the View card): the stage is for the ads. */
+  let rulers = false
+  /** Snapping to layers and the frame while dragging; Ctrl (⌘) still turns it off for a drag. */
+  let snapping = true
+  /** Told when the rulers or snapping turn on or off, so the View card follows a shortcut too. */
+  const viewListeners = new Set<() => void>()
+  const viewChanged = () => {
+    for (const listener of viewListeners) listener()
+  }
   /** Told when the selection changes, so panels can follow it. */
   const selectionListeners = new Set<(ids: string[]) => void>()
   /** Told when the tool changes, by a key or after drawing a shape, so the tool dock follows. */
@@ -1546,7 +1554,7 @@ function live(
       return
     }
     // Holding Ctrl (⌘ on a Mac) turns snapping off for as long as it is held.
-    const snap = !(e.ctrlKey || e.metaKey)
+    const snap = snapping && !(e.ctrlKey || e.metaKey)
     if (gesture.kind === 'move') moveTo(gesture, p, e.shiftKey, snap)
     else if (gesture.kind === 'resize') resizeTo(gesture, p, e.shiftKey, e.altKey, snap)
     else rotateTo(gesture, p, e.shiftKey)
@@ -2030,6 +2038,7 @@ function live(
       toggleRulers: () => {
         rulers = !rulers
         drawOverlay()
+        viewChanged()
       },
       toolSelect: () => setTool('select'),
       toolHand: () => setTool('hand'),
@@ -2602,6 +2611,19 @@ function live(
     },
     /** Whether the rulers along the stage's edges show. */
     rulers: () => rulers,
+    /** Whether a drag snaps to layers and the frame. */
+    snapping: () => snapping,
+    /** Turns snapping on or off for every drag. */
+    setSnapping(on: boolean) {
+      if (on === snapping) return
+      snapping = on
+      viewChanged()
+    },
+    /** Calls back whenever the rulers or snapping turn on or off. */
+    onView(listener: () => void) {
+      viewListeners.add(listener)
+      return () => viewListeners.delete(listener)
+    },
     frames: () => frameGrid(session.design(), focused).frames,
     /** The format the focus view shows alone, or null when every format shows. */
     focused: () => focused,
