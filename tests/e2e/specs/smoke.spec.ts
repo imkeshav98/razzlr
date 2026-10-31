@@ -1,7 +1,7 @@
 // The library (#88): an agency workspace calls its brands clients; a solo or company one says brands.
 // Onboarding's cards and settings set that kind (#109). Every test that changes the workspace's
 // kind lives in this file, so they run one after another and never beside a test in another kind.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { writeOutput } from '../support/editor.ts'
 import { API_URL } from '../support/seed.ts'
 

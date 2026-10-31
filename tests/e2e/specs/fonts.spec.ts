@@ -5,7 +5,7 @@
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { expect, test, type Page, type Request } from '@playwright/test'
+import { expect, test, type Page, type Request } from '../support/test.ts'
 import { exportDesign } from '@razzlr/export'
 import { FALLBACK_FAMILIES } from '@razzlr/fonts'
 import { loadFontFiles } from '@razzlr/fonts/node'

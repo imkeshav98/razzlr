@@ -4,7 +4,7 @@
 // can't drag.
 import { crc32, deflateSync } from 'node:zlib'
 import { randomUUID } from 'node:crypto'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { AssetSummary, type DesignInput } from '@razzlr/schema'
 import { screenPoint, writeOutput } from '../support/editor.ts'
 import { API_URL, DEV_BRAND } from '../support/seed.ts'

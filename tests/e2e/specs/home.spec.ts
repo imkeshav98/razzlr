@@ -1,6 +1,6 @@
 // The brand's home (#84): "What are we making for <brand>?" as a brief with Format chips and Make
 // drafts, and recent work as a bento of real pictures, the latest large, stories tall, banners wide.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import type { DesignInput } from '@razzlr/schema'
 import { writeOutput } from '../support/editor.ts'
 import { seed } from '../support/seed.ts'

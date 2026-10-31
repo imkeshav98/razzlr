@@ -2,7 +2,7 @@
 // server, edited by commands and by a real mouse and keyboard. Needs the sync server running:
 // `docker compose up -d --wait` from the repo root. The tests in this file run one at a time,
 // which the restart test relies on: it restarts the server under no other test.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { designOf, exportHashOf, openTabs, placed, restartSyncServer, screenPoint, stageShot, storedAfter, settle, writeOutput } from '../support/editor.ts'
 
 test.describe.configure({ timeout: 120_000 })
