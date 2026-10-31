@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { LibraryShell } from '../../../components/library-shell.tsx'
 import { buttonStyles } from '../../../components/ui/button.tsx'
-import { createDesign, getWorkspace, listBrands, listDesigns } from '../../../lib/api.ts'
+import { createDesign, getWorkspace, listBrands, listDesigns, listTemplates, startFromTemplate } from '../../../lib/api.ts'
 import { brandWords, format } from '../../../lib/i18n/index.ts'
 import { getLocale, getMessages } from '../../../lib/i18n/server.ts'
 
@@ -23,7 +23,7 @@ export default async function BrandPage({ params }: { params: Promise<{ brandId:
   const words = brandWords(t, workspace.kind)
   const brand = brands.find((c) => c.id === brandId)
   if (!brand) notFound()
-  const designs = await listDesigns(brand.id)
+  const [designs, templates] = await Promise.all([listDesigns(brand.id), listTemplates(brand.id)])
   const when = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' })
   const untitled = t.library.untitled
 
@@ -31,6 +31,13 @@ export default async function BrandPage({ params }: { params: Promise<{ brandId:
     'use server'
     const name = String(form.get('name') ?? '').trim() || untitled
     const design = await createDesign(brandId, name)
+    redirect(`/brands/${brandId}/designs/${design.id}`)
+  }
+
+  /** Starts a design from a template (#54): the brand's own copy, with fresh ids. */
+  async function start(templateId: string) {
+    'use server'
+    const design = await startFromTemplate(brandId, templateId)
     redirect(`/brands/${brandId}/designs/${design.id}`)
   }
 
@@ -88,6 +95,37 @@ export default async function BrandPage({ params }: { params: Promise<{ brandId:
             ))}
           </ul>
         )}
+
+      <section id="templates" aria-labelledby="templates-title" className="mt-14 scroll-mt-8">
+        <h2 id="templates-title" className="font-display text-xl font-semibold tracking-tight">{t.library.templates}</h2>
+        <p className="mt-1 text-sm text-muted">{t.library.templatesLead}</p>
+        {templates.length === 0
+          ? <p className="mt-6 text-sm text-muted">{t.library.noTemplates}</p>
+          : (
+            <ul aria-label={t.library.templates} className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+              {templates.map((template, i) => (
+                <li key={template.id} data-template={template.id} className="rise" style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
+                  <form action={start.bind(null, template.id)}>
+                    <button type="submit" aria-label={format(t.library.useTemplate, { name: template.name })} className="group block w-full cursor-pointer rounded-card text-start focus-visible:outline-offset-4">
+                      <div className="canvas-dots relative grid aspect-[4/3] place-items-center overflow-hidden rounded-card border border-line transition-[border-color,transform,box-shadow] duration-[var(--chrome)] ease-[var(--ease-out)] group-hover:-translate-y-0.5 group-hover:border-line-strong group-hover:shadow-panel">
+                        <img
+                          src={`/brands/${brand.id}/templates/${template.id}/thumbnail`}
+                          alt=""
+                          width={template.width}
+                          height={template.height}
+                          loading="lazy"
+                          className="max-h-[76%] max-w-[76%] rounded-[4px] object-contain shadow-[0_10px_28px_-10px_rgb(0_0_0/0.5)] transition-transform duration-[var(--chrome)] ease-[var(--ease-out)] group-hover:scale-[1.03]"
+                        />
+                      </div>
+                      <span className="mt-2.5 block truncate text-sm font-medium text-text">{template.name}</span>
+                      <span className="block text-xs text-subtle">{template.scope === 'workspace' ? words.all : brand.name}</span>
+                    </button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          )}
+      </section>
     </LibraryShell>
   )
 }

@@ -227,3 +227,37 @@ export const brandVariables = (kit: BrandKit): Variables => Object.fromEntries([
   ...kit.colors.map((c) => [brandRef(c.token), c.value]),
   ...kit.fonts.map((f) => [brandRef(f.token), f.family]),
 ])
+
+/**
+ * Who can start from a template (#54): every brand of the workspace (an agency's own templates), or
+ * only the brand it was saved for (a client's).
+ */
+export const TemplateScope = z.enum(['workspace', 'brand'])
+export type TemplateScope = z.infer<typeof TemplateScope>
+
+export const TemplateSummary = z.object({
+  id: RecordId,
+  name: z.string(),
+  scope: TemplateScope,
+  /** The brand a brand template belongs to; null for a workspace template. */
+  brandId: RecordId.nullable(),
+  kind: DesignMeta.shape.kind,
+  /** The primary format's size, for the gallery to keep the thumbnail's shape. */
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  createdAt: z.iso.datetime(),
+})
+export type TemplateSummary = z.infer<typeof TemplateSummary>
+
+/** Saves a design, as the editor holds it now, as a template; the template keeps its own copy. */
+export const SaveTemplate = z.object({
+  name: z.string().trim().min(1).max(120),
+  scope: TemplateScope,
+  /** The design, checked with parseDesign. */
+  content: z.unknown(),
+})
+export type SaveTemplate = z.infer<typeof SaveTemplate>
+
+/** Starts a design of the brand from a template; named after the template when no name is given. */
+export const StartFromTemplate = z.object({ name: z.string().trim().min(1).max(120).optional() })
+export type StartFromTemplate = z.infer<typeof StartFromTemplate>

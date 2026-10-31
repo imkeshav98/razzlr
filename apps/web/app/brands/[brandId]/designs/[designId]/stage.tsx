@@ -12,6 +12,7 @@ import { ExportMenu } from '../../../../../components/editor/export-menu.tsx'
 import { FontPanel } from '../../../../../components/editor/font-panel.tsx'
 import { ASSET_DRAG_TYPE, AssetLibrary, draggedAsset } from '../../../../../components/editor/asset-library.tsx'
 import { BrandKitPanel } from '../../../../../components/editor/brand-kit-panel.tsx'
+import { TemplateMenu } from '../../../../../components/editor/template-menu.tsx'
 import { BrandKit, brandVariables, FontFamily, type Variables } from '@razzlr/schema'
 
 declare global {
@@ -69,11 +70,13 @@ async function keepForOffline() {
   registration.active?.postMessage({ type: 'keep', urls })
 }
 
-export function EditorStage({ designId, designName, brandId, brandName, formatId, syncUrl }: {
+export function EditorStage({ designId, designName, brandId, brandName, everyBrand, formatId, syncUrl }: {
   designId: string
   designName: string
   brandId: string
   brandName: string
+  /** How the workspace says "every brand", for a template's scope (#54). */
+  everyBrand: string
   formatId: string | undefined
   syncUrl: string
 }) {
@@ -151,7 +154,12 @@ export function EditorStage({ designId, designName, brandId, brandName, formatId
         setShape(picked)
         editor?.setTool(tool === 'hand' || tool === 'pen' || tool === 'text' ? tool : tool === 'shape' ? picked : 'select')
       }}
-      actions={editor ? <ExportMenu editor={editor} /> : undefined}
+      actions={editor ? (
+        <>
+          <TemplateMenu editor={editor} brandId={brandId} brandName={brandName} designName={designName} everyBrand={everyBrand} />
+          <ExportMenu editor={editor} />
+        </>
+      ) : undefined}
       panels={editor ? { assets: <AssetLibrary editor={editor} brandId={brandId} />, brand: <BrandKitPanel editor={editor} brandId={brandId} /> } : {}}
       inspector={editor ? (
         <>
