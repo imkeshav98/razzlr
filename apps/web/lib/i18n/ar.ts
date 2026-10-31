@@ -242,6 +242,8 @@ export const ar: Messages = {
       rename: 'اسم {name}',
       hint: 'اسحب لإعادة الترتيب أو للإدخال في مجموعة. الأسهم للتنقل، و Enter لإعادة التسمية، و Alt مع الأسهم لنقل الطبقة.',
     },
+    share: { open: 'مشاركة', title: 'المشاركة والتصدير' },
+    view: { title: 'العرض', snap: 'المحاذاة', rulers: 'المساطر', rulersKey: 'Shift+R' },
     templates: {
       open: 'حفظ كقالب',
       title: 'حفظ كقالب',
@@ -367,6 +369,7 @@ export const ar: Messages = {
     dark: 'داكن',
   },
   language: { label: 'اللغة' },
+  account: { open: 'حسابك', settings: 'الإعدادات' },
   signIn: {
     title: 'سجّل الدخول إلى Razzlr',
     lead: 'سجّل الدخول أو أنشئ حسابًا. أول تسجيل دخول ينشئ مساحة عملك.',

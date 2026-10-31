@@ -17,8 +17,6 @@ import { cn } from '../../lib/cn.ts'
 import { useLocale, useMessages } from '../../lib/i18n/client.tsx'
 import { dirOf } from '../../lib/i18n/index.ts'
 import { BrandMark } from '../brand-mark.tsx'
-import { LocaleSwitch } from '../locale-switch.tsx'
-import { ThemeSwitch } from '../theme-switch.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { ShapeTools } from './shape-menu.tsx'
 
@@ -127,7 +125,7 @@ function measureInsets(stage: DOMRect, tops: (Element | null)[], pieces: (Elemen
   return insets
 }
 
-export function EditorShell({ brandId, brandName, designName, status, tool: shownTool, shape = 'rect', onToolChange, onInsets, fitted = true, inspector, actions, panels, children }: {
+export function EditorShell({ brandId, brandName, designName, status, tool: shownTool, shape = 'rect', onToolChange, onInsets, fitted = true, inspector, actions, account, panels, children }: {
   brandId: string
   brandName: string
   designName: string
@@ -143,8 +141,10 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
   fitted?: boolean
   /** The property cards, once the design is open. */
   inspector?: ReactNode
-  /** Buttons for the design as a whole, such as Export, at the header's end. */
+  /** The design's one action at the header's end: Share, holding Export and Save as template. */
   actions?: ReactNode
+  /** The account avatar after it, with language, theme, settings and sign out. */
+  account?: ReactNode
   /** What a flyout shows once its ticket fills it, such as the asset library (#52); an empty state until then. */
   panels?: Partial<Record<Panel, ReactNode>>
   children: ReactNode
@@ -195,9 +195,9 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
         <div className="h-dvh overflow-hidden bg-bg text-text">
           <div className="relative flex h-full min-h-0">
           {/* No top bar (#110): two islands float over the canvas, the design's name and save state at
-              the start and its actions at the end, with no surface of their own, clear of the rulers (top and
-              left in either direction, so the insets swap in right-to-left). */}
-          <header className="pointer-events-none absolute start-8 end-3 rtl:start-3 rtl:end-8 top-8 z-30 flex items-center justify-between gap-3">
+              the start and Share and the account at the end, with no surface of their own, clear of the rulers
+              when they are on (top and left in either direction, so the insets swap in right-to-left). */}
+          <header className="pointer-events-none absolute start-6 end-4 rtl:start-4 rtl:end-6 top-6 z-30 flex items-center justify-between gap-3">
             <div ref={startIsland} data-testid="island-start" className="pointer-events-auto flex min-w-0 items-center gap-2">
               <Link href="/" aria-label={t.library.home} className="grid size-9 shrink-0 place-items-center rounded-row hover:bg-hover">
                 <BrandMark size={28} />
@@ -231,10 +231,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
             </div>
             <div ref={endIsland} data-testid="island-end" className="pointer-events-auto flex shrink-0 items-center gap-2">
               {actions}
-              <span className="hidden sm:contents">
-                <LocaleSwitch />
-              </span>
-              <ThemeSwitch />
+              {account}
             </div>
           </header>
             <nav
@@ -243,7 +240,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
               data-testid="rail"
               className={cn(
                 // Clipped, so the AI button's moving glow stays inside and never shows on the canvas.
-                'absolute z-20 flex gap-1 overflow-hidden rounded-full surface-frost border p-1.5 shadow-panel',
+                'absolute z-20 flex gap-2 overflow-hidden rounded-full surface-frost border p-2 shadow-panel',
                 // A vertical capsule at the start edge; on phones a tab bar floating at the bottom.
                 'start-3 top-1/2 -translate-y-1/2 flex-col max-sm:start-1/2 max-sm:top-auto max-sm:bottom-3 max-sm:translate-y-0 max-sm:flex-row max-sm:-translate-x-1/2 max-sm:rtl:translate-x-1/2',
               )}
@@ -261,7 +258,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                       data-panel={id}
                       onClick={() => setPanel(open ? null : id)}
                       className={cn(
-                        'relative grid size-10 cursor-pointer place-items-center rounded-full transition-colors duration-[var(--chrome-fast)]',
+                        'relative grid size-11 cursor-pointer place-items-center rounded-full transition-colors duration-[var(--chrome-fast)]',
                         phoneOnly && 'sm:hidden',
                         open ? 'text-on-accent' : 'text-subtle hover:bg-hover hover:text-text',
                         ai && !open && 'text-accent-text',
@@ -280,7 +277,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                         </motion.span>
                       )}
                       {ai && !open && <span aria-hidden className="ai-glow absolute inset-1.5 rounded-full opacity-20 blur-[6px]" />}
-                      <PanelIcon size={20} weight={ai ? 'duotone' : open ? 'fill' : 'regular'} aria-hidden className="relative" />
+                      <PanelIcon size={22} weight={ai ? 'duotone' : open ? 'fill' : 'regular'} aria-hidden className="relative" />
                     </button>
                   </Tooltip>
                 )
@@ -298,7 +295,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                   exit={{ opacity: 0, x: rtl ? 12 : -12 }}
                   transition={chrome}
                   data-testid="flyout"
-                  className="absolute start-[4.75rem] top-20 z-10 flex max-h-[calc(100%-5.75rem)] w-72 flex-col overflow-hidden rounded-card surface-frost border shadow-panel max-sm:inset-x-3 max-sm:start-3 max-sm:top-auto max-sm:bottom-[8.5rem] max-sm:w-auto"
+                  className="absolute start-[5.25rem] top-20 z-10 flex max-h-[calc(100%-5.75rem)] w-72 flex-col overflow-hidden rounded-card surface-frost border shadow-panel max-sm:inset-x-3 max-sm:start-3 max-sm:top-auto max-sm:bottom-[9rem] max-sm:w-auto"
                 >
                   <div className="flex h-12 shrink-0 items-center justify-between border-b border-line ps-4 pe-2">
                     <h2 className={cn('font-display text-[15px] font-semibold tracking-tight', flyout === 'ai' && 'bg-[image:var(--ai-gradient)] bg-clip-text text-transparent')}>{panelTitle(flyout)}</h2>
@@ -313,7 +310,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
 
             <main ref={stage} className="canvas-dots relative min-w-0 flex-1 overflow-hidden">
               {children}
-              <div ref={dock} role="toolbar" aria-label={t.editor.tools} className="absolute inset-x-0 bottom-4 z-10 mx-auto flex w-max max-sm:bottom-[4.75rem] items-center gap-0.5 rounded-card surface-frost border p-1 shadow-panel">
+              <div ref={dock} role="toolbar" aria-label={t.editor.tools} className="absolute inset-x-0 bottom-4 z-10 mx-auto flex w-max max-sm:bottom-[5.25rem] items-center gap-1 rounded-[18px] surface-frost border p-1.5 shadow-panel">
                 {TOOLS.map(({ id, icon: ToolIcon, key }) => {
                   if (id === 'shape') {
                     return (
@@ -342,11 +339,11 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                           onToolChange?.(id, shape)
                         }}
                         className={cn(
-                          'grid size-9 cursor-pointer place-items-center rounded-row transition-colors duration-[var(--chrome-fast)]',
+                          'grid size-10 cursor-pointer place-items-center rounded-[12px] transition-colors duration-[var(--chrome-fast)]',
                           on ? 'bg-accent-solid text-on-accent' : 'text-muted hover:bg-hover hover:text-text',
                         )}
                       >
-                        <ToolIcon size={18} weight={on ? 'fill' : 'regular'} aria-hidden />
+                        <ToolIcon size={20} weight={on ? 'fill' : 'regular'} aria-hidden />
                       </button>
                     </Tooltip>
                   )
@@ -366,7 +363,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                   // past the room above the zoom pill the stack scrolls. Its gaps let clicks through.
                   'pointer-events-none absolute end-3 top-20 z-20 flex max-h-[calc(100%-9.5rem)] w-72 flex-col gap-2 overflow-y-auto overscroll-contain [scrollbar-width:none] *:pointer-events-auto',
                   // On phones, a bottom sheet over the dock, opened from the tab bar.
-                  'max-sm:inset-x-2 max-sm:top-auto max-sm:bottom-[4.75rem] max-sm:max-h-[55%] max-sm:w-auto max-sm:not-data-[open]:hidden',
+                  'max-sm:inset-x-2 max-sm:top-auto max-sm:bottom-[5rem] max-sm:max-h-[55%] max-sm:w-auto max-sm:not-data-[open]:hidden',
                 )}
               >
                 {inspector}

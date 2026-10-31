@@ -244,6 +244,8 @@ export const en = {
       rename: 'Name of {name}',
       hint: 'Drag to reorder or into a group. Arrows move, Enter renames, Alt with arrows moves a layer.',
     },
+    share: { open: 'Share', title: 'Share and export' },
+    view: { title: 'View', snap: 'Snap', rulers: 'Rulers', rulersKey: 'Shift+R' },
     templates: {
       open: 'Save as template',
       title: 'Save as template',
@@ -369,6 +371,7 @@ export const en = {
     dark: 'Dark',
   },
   language: { label: 'Language' },
+  account: { open: 'Your account', settings: 'Settings' },
   signIn: {
     title: 'Sign in to Razzlr',
     lead: 'Sign in or make an account. Your first sign-in makes your workspace.',

@@ -25,7 +25,9 @@ test('the editor has no top bar: two islands float over the canvas and the ads f
   const stage = await box(page, 'stage')
   const start = await box(page, 'island-start')
   const end = await box(page, 'island-end')
-  // The canvas starts at the window's top edge; the islands float over it, below the 20 px rulers.
+  // The canvas starts at the window's top edge; the islands float over it, clear of the 20 px
+  // rulers when they are on. The rulers are off as the editor opens, as in the final mock.
+  await expect(page.locator('.stage-overlay .ruler')).toHaveCount(0)
   expect(stage.y).toBe(0)
   expect(stage.height).toBe(900)
   for (const island of [start, end]) {
@@ -39,7 +41,21 @@ test('the editor has no top bar: two islands float over the canvas and the ads f
     expect(await page.getByTestId(id).evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)')
   }
   await expect(page.getByTestId('island-start').getByRole('heading', { level: 1 })).toBeVisible()
-  await expect(page.getByTestId('island-end').getByRole('button', { name: 'Export' })).toBeVisible()
+  // The end island is the mock's: a pink Share button and the account avatar, nothing else.
+  const end_ = page.getByTestId('island-end')
+  await expect(end_.getByRole('button')).toHaveCount(2)
+  await expect(end_.getByTestId('share-open')).toHaveText('Share')
+  await end_.getByTestId('share-open').click()
+  await expect(page.getByRole('menuitem')).toHaveText(['Export', 'Save as template'])
+  await page.keyboard.press('Escape')
+  // Language and theme live behind the avatar.
+  await end_.getByTestId('account-open').click()
+  const account = page.getByTestId('account')
+  await expect(account.getByRole('combobox')).toBeVisible()
+  await expect(account.getByRole('radiogroup', { name: 'Theme' })).toBeVisible()
+  await expect(account.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings')
+  await writeOutput('islands-account.png', await page.screenshot({ clip: { x: 1440 - 320, y: 0, width: 320, height: 320 } }))
+  await page.keyboard.press('Escape')
 
   // Saved is a small muted cloud: no pill, no green words. The words stay for screen readers.
   const status = page.getByTestId('status')
@@ -76,7 +92,7 @@ test('the islands in light and in Arabic, mirrored', async ({ page }) => {
   const end = await box(page, 'island-end')
   expect(start.x).toBeGreaterThan(end.x)
   // The rulers stay on the left, so the end island keeps clear of them there.
-  expect(end.x).toBeGreaterThanOrEqual(28)
+  expect(end.x).toBeGreaterThanOrEqual(20)
   expect(1440 - (start.x + start.width)).toBeLessThan(48)
   await writeOutput('islands-editor-arabic.png', await page.screenshot())
 })

@@ -1,16 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { SHAPE_TOOLS, startEditor, type Editor, type ShapeTool, type Tool } from '@razzlr/editor'
 import { fetchSyncToken } from './actions.ts'
 import { EditorShell, type ChromeInsets } from '../../../../../components/editor/shell.tsx'
 import { FocusChip, UndoToast } from '../../../../../components/editor/formats-panel.tsx'
 import { PropertyCards } from '../../../../../components/editor/property-cards.tsx'
 import { ZoomControl } from '../../../../../components/editor/zoom-control.tsx'
-import { ExportMenu } from '../../../../../components/editor/export-menu.tsx'
 import { ASSET_DRAG_TYPE, AssetLibrary, draggedAsset } from '../../../../../components/editor/asset-library.tsx'
 import { BrandKitPanel } from '../../../../../components/editor/brand-kit-panel.tsx'
-import { TemplateMenu } from '../../../../../components/editor/template-menu.tsx'
+import { ShareMenu } from '../../../../../components/editor/share-menu.tsx'
 import { LayersPanel } from '../../../../../components/editor/layers-panel.tsx'
 import { BrandKit, brandVariables, FontFamily, type Variables } from '@razzlr/schema'
 
@@ -69,7 +68,7 @@ async function keepForOffline() {
   registration.active?.postMessage({ type: 'keep', urls })
 }
 
-export function EditorStage({ designId, designName, brandId, brandName, everyBrand, formatId, syncUrl }: {
+export function EditorStage({ designId, designName, brandId, brandName, everyBrand, formatId, syncUrl, account }: {
   designId: string
   designName: string
   brandId: string
@@ -78,6 +77,8 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
   everyBrand: string
   formatId: string | undefined
   syncUrl: string
+  /** The account avatar and its menu, at the top end after Share. */
+  account?: ReactNode
 }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const overlay = useRef<HTMLDivElement>(null)
@@ -172,12 +173,8 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
       }}
       onInsets={onInsets}
       fitted={editor !== null && fittedTo === editor}
-      actions={editor ? (
-        <>
-          <TemplateMenu editor={editor} brandId={brandId} brandName={brandName} designName={designName} everyBrand={everyBrand} />
-          <ExportMenu editor={editor} />
-        </>
-      ) : undefined}
+      actions={editor ? <ShareMenu editor={editor} brandId={brandId} brandName={brandName} designName={designName} everyBrand={everyBrand} /> : undefined}
+      account={account}
       panels={editor ? { layers: <LayersPanel editor={editor} />, assets: <AssetLibrary editor={editor} brandId={brandId} />, brand: <BrandKitPanel editor={editor} brandId={brandId} /> } : {}}
       inspector={editor ? <PropertyCards editor={editor} brandId={brandId} onRemoved={setRemoved} /> : undefined}
     >

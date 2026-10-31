@@ -3,15 +3,13 @@
 // Export (#55): pick pages, formats and PNG or JPG, and the editor's export worker draws them on
 // the CPU surface while the stage stays responsive. One file downloads as itself, more as a zip
 // with a folder per format.
-import { DownloadSimpleIcon } from '@phosphor-icons/react'
 import type { Editor } from '@razzlr/editor'
 import type { Design, ExportType } from '@razzlr/schema'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useState } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { Button } from '../ui/button.tsx'
-import { useEditorDesign } from './formats-panel.tsx'
 
 const byOrder = <T extends { order: string }>(items: Record<string, T>) =>
   Object.entries(items).sort(([a, x], [b, y]) => (x.order < y.order ? -1 : x.order > y.order ? 1 : a < b ? -1 : 1))
@@ -30,38 +28,8 @@ const sizeOf = ({ width, height }: { width: number; height: number }) => `${widt
 const LABEL = 'text-xs font-semibold tracking-wide text-muted'
 const CHOICE = 'flex h-8 cursor-pointer items-center gap-2 rounded-row px-2 text-[13px] hover:bg-hover'
 
-export function ExportMenu({ editor }: { editor: Editor }) {
-  const t = useMessages()
-  const { design } = useEditorDesign(editor)
-  const [open, setOpen] = useState(false)
-  const box = useRef<HTMLDivElement>(null)
-  const id = useId()
-
-  // Closes on Escape or a press outside, like the shape menu.
-  useEffect(() => {
-    if (!open) return
-    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && setOpen(false)
-    const onPress = (event: PointerEvent) => !box.current?.contains(event.target as Node) && setOpen(false)
-    window.addEventListener('keydown', onKey)
-    window.addEventListener('pointerdown', onPress)
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      window.removeEventListener('pointerdown', onPress)
-    }
-  }, [open])
-
-  return (
-    <div ref={box} className="relative">
-      <Button size="md" variant="secondary" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)} data-testid="export-open">
-        <DownloadSimpleIcon size={16} aria-hidden />
-        <span className="max-sm:hidden">{t.editor.exports.open}</span>
-      </Button>
-      {open && <ExportForm id={id} editor={editor} design={design} />}
-    </div>
-  )
-}
-
-function ExportForm({ id, editor, design }: { id: string; editor: Editor; design: Design }) {
+/** The export form (#55), opened from the Share menu. */
+export function ExportForm({ id, editor, design }: { id: string; editor: Editor; design: Design }) {
   const t = useMessages()
   const pages = byOrder(design.pages)
   const formats = byOrder(design.formats)

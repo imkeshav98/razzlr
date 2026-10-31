@@ -77,6 +77,7 @@ async function nodeExport(page: Page, assetId: string) {
 test('every format of a page as PNG is one zip whose files are what Node exports, and the stage stays responsive', async ({ browser }) => {
   const asset = await upload(photo)
   const { page, errors } = await openStage(browser, design(asset.id))
+  await page.getByTestId('share-open').click()
   await page.getByTestId('export-open').click()
   const dialog = page.getByTestId('export')
   await expect(dialog).toBeVisible()
@@ -119,6 +120,7 @@ test('every format of a page as PNG is one zip whose files are what Node exports
 test('one format as JPG downloads as itself, at the quality picked, the same bytes as Node', async ({ browser }) => {
   const asset = await upload(photo)
   const { page, errors } = await openStage(browser, design(asset.id))
+  await page.getByTestId('share-open').click()
   await page.getByTestId('export-open').click()
   await page.getByTestId('export-page').selectOption('p2')
   // Only the landscape format.

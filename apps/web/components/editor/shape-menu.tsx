@@ -22,7 +22,7 @@ export const SHAPES: { id: ShapeTool; icon: Icon; key?: string }[] = [
   { id: 'arrow', icon: ArrowUpRightIcon, key: 'Shift+L' },
 ]
 
-const DOCK_BUTTON = 'grid h-9 cursor-pointer place-items-center rounded-row transition-colors duration-[var(--chrome-fast)] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent'
+const DOCK_BUTTON = 'grid h-10 cursor-pointer place-items-center rounded-[12px] transition-colors duration-[var(--chrome-fast)] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent'
 
 export function ShapeTools({ active, shape, onPick }: { active: boolean; shape: ShapeTool; onPick: (shape: ShapeTool) => void }) {
   const t = useMessages()
@@ -41,7 +41,7 @@ export function ShapeTools({ active, shape, onPick }: { active: boolean; shape: 
   }
 
   return (
-    <div role="group" aria-label={t.editor.shapes.menu} className={cn('flex items-center rounded-row transition-colors duration-[var(--chrome-fast)]', active && 'bg-accent-solid text-on-accent')}>
+    <div role="group" aria-label={t.editor.shapes.menu} className={cn('flex items-center rounded-[12px] transition-colors duration-[var(--chrome-fast)]', active && 'bg-accent-solid text-on-accent')}>
       <Tooltip label={current.key ? `${label} · ${current.key}` : label}>
         <button
           type="button"
@@ -50,9 +50,9 @@ export function ShapeTools({ active, shape, onPick }: { active: boolean; shape: 
           data-tool="shape"
           data-shape={current.id}
           onClick={() => onPick(current.id)}
-          className={cn(DOCK_BUTTON, 'w-8 ps-0.5', active ? 'text-on-accent' : 'text-muted hover:bg-hover hover:text-text')}
+          className={cn(DOCK_BUTTON, 'w-9 ps-0.5', active ? 'text-on-accent' : 'text-muted hover:bg-hover hover:text-text')}
         >
-          <current.icon size={18} weight={active ? 'fill' : 'regular'} aria-hidden />
+          <current.icon size={20} weight={active ? 'fill' : 'regular'} aria-hidden />
         </button>
       </Tooltip>
       <Popover.Root open={open} onOpenChange={setOpen}>
