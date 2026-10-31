@@ -453,3 +453,20 @@ body {
   background: color-mix(in oklab, var(--accent) 28%, transparent);
   pointer-events: none;
 }
+
+/* The home's aurora (#84): slow blurred light in the accent colours behind the brief. */
+@keyframes aurora-drift {
+  0%, 100% { transform: translate3d(-5%, -3%, 0) rotate(0deg) scale(1); }
+  50% { transform: translate3d(5%, 4%, 0) rotate(10deg) scale(1.08); }
+}
+.aurora {
+  position: absolute;
+  inset: -35% -10%;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 48% at 28% 42%, color-mix(in oklab, var(--accent) 42%, transparent), transparent 70%),
+    radial-gradient(34% 44% at 72% 52%, color-mix(in oklab, var(--accent-2) 38%, transparent), transparent 70%),
+    radial-gradient(26% 36% at 54% 22%, rgb(255 210 63 / 0.22), transparent 70%);
+  filter: blur(48px);
+  animation: aurora-drift 26s ease-in-out infinite;
+}

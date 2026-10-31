@@ -129,6 +129,10 @@ export type UpdateAsset = z.infer<typeof UpdateAsset>
 export const SignedLink = z.object({ url: z.url(), expiresAt: z.iso.datetime() })
 export type SignedLink = z.infer<typeof SignedLink>
 
+/** A design's picture (#84): a short-lived URL, and the primary format's size so a tile takes its shape first. */
+export const DesignThumbnail = SignedLink.extend({ width: z.number().int().positive(), height: z.number().int().positive() })
+export type DesignThumbnail = z.infer<typeof DesignThumbnail>
+
 /** An asset and a short-lived URL to read its original. */
 export const AssetLink = z.object({
   asset: AssetSummary,

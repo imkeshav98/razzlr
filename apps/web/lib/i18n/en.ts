@@ -21,6 +21,23 @@ export const en = {
     noDesigns: 'No designs yet. Name one above to start.',
     edited: 'Edited {when}',
   },
+  home: {
+    // The brand's home (#84): a brief, its formats, and the brand's recent work as a bento.
+    prompt: 'What are we making for {brand}?',
+    brief: 'Brief',
+    briefPlaceholder: 'A summer sale on the new trainers: bold, playful, 20% off this weekend',
+    formats: 'Formats',
+    brandKit: 'Brand kit',
+    reference: 'Reference ad',
+    referenceSoon: 'Reference ads arrive with AI drafts.',
+    make: 'Make drafts',
+    makeHint: 'Until AI drafts arrive, this opens a blank design in the formats you picked.',
+    pickFormat: 'Pick at least one format.',
+    recent: 'Recent work',
+    count: '{count} designs',
+    noDesigns: 'Nothing made yet. Write a brief above to start.',
+    switchBrand: 'Switch brand',
+  },
   editor: {
     status: 'Connection',
     layers: 'Layers',

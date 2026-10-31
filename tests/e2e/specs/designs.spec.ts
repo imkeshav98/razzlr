@@ -1,4 +1,4 @@
-// Designs per brand (#33): made from the brand's list, opened from the API, kept across reloads.
+// Designs per brand (#33): made from the brand's home (#84), opened from the API, kept across reloads.
 import { expect, test } from '@playwright/test'
 import { writeOutput } from '../support/editor.ts'
 
@@ -10,11 +10,11 @@ test('a design made from the brand list opens in the editor and is there after a
 
   await page.goto('/')
   await page.getByRole('main').getByRole('link', { name: 'Harbour Coffee' }).click()
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Harbour Coffee')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('What are we making for Harbour Coffee?')
   writeOutput('designs-1-brand.png', await page.screenshot())
 
-  await page.getByLabel('Design name').fill(name)
-  await page.getByRole('button', { name: 'New design' }).click()
+  await page.getByLabel('Brief').fill(name)
+  await page.getByRole('button', { name: 'Make drafts' }).click()
   await expect(page).toHaveURL(/\/brands\/dev-brand-coffee\/designs\/[\w-]+$/)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(name)
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
@@ -30,7 +30,7 @@ test('a design made from the brand list opens in the editor and is there after a
   expect(page.url()).toBe(url)
 
   await page.getByRole('link', { name: 'Harbour Coffee' }).click()
-  const listed = page.getByRole('list', { name: 'Designs' }).getByRole('link', { name: new RegExp(name) })
+  const listed = page.getByRole('list', { name: 'Recent work' }).getByRole('link', { name: new RegExp(name) })
   await expect(listed).toBeVisible()
   writeOutput('designs-3-listed.png', await page.screenshot())
   expect(errors).toEqual([])
@@ -38,8 +38,8 @@ test('a design made from the brand list opens in the editor and is there after a
 
 test('a design id from another brand is not found', async ({ page }) => {
   await page.goto('/brands/dev-brand-cycles')
-  await page.getByLabel('Design name').fill('Cycles only')
-  await page.getByRole('button', { name: 'New design' }).click()
+  await page.getByLabel('Brief').fill('Cycles only')
+  await page.getByRole('button', { name: 'Make drafts' }).click()
   await expect(page).toHaveURL(/\/designs\/[\w-]+$/)
   const designId = page.url().split('/').pop()
   const response = await page.goto(`/brands/dev-brand-coffee/designs/${designId}`)

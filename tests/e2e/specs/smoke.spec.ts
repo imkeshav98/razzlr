@@ -19,7 +19,7 @@ test('the web app lists the brands of the development workspace, as clients of a
   writeOutput('workspace-0-agency.png', await page.screenshot())
   await page.getByRole('main').getByRole('link', { name: 'Harbour Coffee' }).click()
   await expect(page).toHaveURL(/\/brands\/dev-brand-coffee$/)
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Harbour Coffee')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('What are we making for Harbour Coffee?')
 })
 
 test('a solo or company workspace says brands everywhere it said clients', async ({ page }) => {

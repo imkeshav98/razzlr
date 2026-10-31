@@ -10,15 +10,15 @@ export const THUMBNAIL_SIZE = 320
 export interface Thumbnail { bytes: Uint8Array; contentType: 'image/png' | 'image/jpeg' }
 
 /**
- * The image scaled down to fit THUMBNAIL_SIZE (never up). A JPEG stays a JPEG; PNG and WebP, which
+ * The image scaled down to fit `size` (never up), THUMBNAIL_SIZE unless given. A JPEG stays a JPEG; PNG and WebP, which
  * can be see-through, become PNG. Throws when CanvasKit can't decode the original.
  */
-export async function makeThumbnail(bytes: Uint8Array, contentType: ImageType): Promise<Thumbnail> {
+export async function makeThumbnail(bytes: Uint8Array, contentType: ImageType, size = THUMBNAIL_SIZE): Promise<Thumbnail> {
   const ck = await loadCanvasKit()
   const image = ck.MakeImageFromEncoded(bytes)
   if (!image) throw new Error('CanvasKit can\'t decode this image')
   try {
-    const scale = Math.min(1, THUMBNAIL_SIZE / Math.max(image.width(), image.height()))
+    const scale = Math.min(1, size / Math.max(image.width(), image.height()))
     const width = Math.max(1, Math.round(image.width() * scale))
     const height = Math.max(1, Math.round(image.height() * scale))
     const surface = ck.MakeSurface(width, height)

@@ -57,7 +57,7 @@ test('in Arabic the chrome mirrors and reads right to left, the design does not'
   await setCookies(page, { locale: 'ar', theme: 'dark' })
   await page.goto('/brands/dev-brand-coffee')
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
-  await expect(page.getByRole('button', { name: 'تصميم جديد' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'اصنع المسودات' })).toBeVisible()
   await page.waitForTimeout(400)
   await shoot(page, 'arabic-designs')
 
