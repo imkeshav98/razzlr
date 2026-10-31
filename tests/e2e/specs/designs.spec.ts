@@ -3,6 +3,8 @@ import { expect, test } from '@playwright/test'
 import { writeOutput } from '../support/editor.ts'
 
 test('a design made from the brand list opens in the editor and is there after a reload', async ({ page }) => {
+  // The home, then the editor opening twice, each of which may take its 30 s on a busy runner.
+  test.setTimeout(90_000)
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.setViewportSize({ width: 1280, height: 900 })
