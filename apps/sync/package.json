@@ -12,6 +12,7 @@
     "@hocuspocus/extension-database": "4.8.0",
     "@hocuspocus/server": "4.8.0",
     "@razzlr/db": "workspace:*",
+    "@razzlr/doc": "workspace:*",
     "@razzlr/sync-token": "workspace:*"
   },
   "devDependencies": {

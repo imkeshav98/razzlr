@@ -12,8 +12,8 @@ declare global {
   interface Window { razzlr?: Editor }
 }
 
-async function assetBytes(clientId: string, assetId: string) {
-  const response = await fetch(`/clients/${encodeURIComponent(clientId)}/assets/${encodeURIComponent(assetId)}`)
+async function assetBytes(brandId: string, assetId: string) {
+  const response = await fetch(`/brands/${encodeURIComponent(brandId)}/assets/${encodeURIComponent(assetId)}`)
   if (!response.ok) throw new Error(`asset ${assetId}: ${response.status}`)
   return new Uint8Array(await response.arrayBuffer())
 }
@@ -26,11 +26,11 @@ async function keepForOffline() {
   registration.active?.postMessage({ type: 'keep', urls })
 }
 
-export function EditorStage({ designId, designName, clientId, clientName, formatId, syncUrl }: {
+export function EditorStage({ designId, designName, brandId, brandName, formatId, syncUrl }: {
   designId: string
   designName: string
-  clientId: string
-  clientName: string
+  brandId: string
+  brandName: string
   formatId: string | undefined
   syncUrl: string
 }) {
@@ -85,7 +85,7 @@ export function EditorStage({ designId, designName, clientId, clientName, format
     const unmounted = new AbortController()
     startEditor({
       canvas: canvas.current, overlay: overlay.current, designId, syncUrl,
-      syncToken: () => fetchSyncToken(clientId, designId), assetBytes: (assetId) => assetBytes(clientId, assetId),
+      syncToken: () => fetchSyncToken(brandId, designId), assetBytes: (assetId) => assetBytes(brandId, assetId),
       ...(formatId ? { formatId } : {}), onStatus: setStatus, onZoom: setZoom, signal: unmounted.signal,
     })
       .then((started) => {
@@ -106,12 +106,12 @@ export function EditorStage({ designId, designName, clientId, clientName, format
       setEditor(null)
       setZoom(null)
     }
-  }, [clientId, designId, formatId, syncUrl])
+  }, [brandId, designId, formatId, syncUrl])
 
   return (
     <EditorShell
-      clientId={clientId}
-      clientName={clientName}
+      brandId={brandId}
+      brandName={brandName}
       designName={designName}
       status={status}
       tool={dockTool}

@@ -1,10 +1,10 @@
 // The API server: migrates the database, then serves. Settings come from the environment only.
 import { serve } from '@hono/node-server'
-import { migrateDatabase, openDatabase, orgs, clients } from '@razzlr/db'
+import { migrateDatabase, openDatabase, workspaces, brands } from '@razzlr/db'
 import { openStorage, storageSettings } from '@razzlr/storage'
 import { syncTokenSecret } from '@razzlr/sync-token'
 import { createApp } from './app.ts'
-import { DEV_CLIENTS, DEV_ORG, devSession } from './session.ts'
+import { DEV_BRANDS, DEV_WORKSPACE, devSession } from './session.ts'
 
 const databaseUrl = process.env.DATABASE_URL
 if (!databaseUrl) throw new Error('DATABASE_URL is not set')
@@ -20,8 +20,8 @@ if (dev && process.env.NODE_ENV === 'production') throw new Error('RAZZLR_DEV_SE
 const { db, close } = openDatabase(databaseUrl)
 await migrateDatabase(db)
 if (dev) {
-  await db.insert(orgs).values(DEV_ORG).onConflictDoNothing()
-  await db.insert(clients).values(DEV_CLIENTS.map((c) => ({ ...c, orgId: DEV_ORG.id }))).onConflictDoNothing()
+  await db.insert(workspaces).values(DEV_WORKSPACE).onConflictDoNothing()
+  await db.insert(brands).values(DEV_BRANDS.map((c) => ({ ...c, workspaceId: DEV_WORKSPACE.id }))).onConflictDoNothing()
 }
 
 const app = createApp({ db, storage, sessionOf: dev ? devSession : () => null, syncSecret })

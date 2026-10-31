@@ -3,9 +3,16 @@
 export const en = {
   app: { name: 'Razzlr' },
   library: {
+    // An agency's brands are its clients (ADR-0011); brandWords picks the set for a workspace.
+    brands: 'Brands',
+    brandsLead: 'Pick a brand to see and make its designs.',
+    noBrands: 'No brands yet.',
+    allBrands: 'All brands',
     clients: 'Clients',
     clientsLead: 'Pick a client to see and make their designs.',
     noClients: 'No clients yet.',
+    allClients: 'All clients',
+    home: 'Home',
     designs: 'Designs',
     newDesign: 'New design',
     designName: 'Design name',
@@ -13,7 +20,6 @@ export const en = {
     untitled: 'Untitled design',
     noDesigns: 'No designs yet. Name one above to start.',
     edited: 'Edited {when}',
-    back: 'All clients',
   },
   editor: {
     status: 'Connection',
@@ -25,7 +31,7 @@ export const en = {
     layersEmpty: 'Layers of this page will show here.',
     assetsEmpty: 'Uploaded images will show here.',
     aiEmpty: 'Ask for a draft, a rewrite or new sizes. Coming soon.',
-    brandEmpty: 'This client’s colours, fonts and logos will show here.',
+    brandEmpty: 'This brand’s colours, fonts and logos will show here.',
     inspector: 'Inspector',
     inspectorEmpty: 'Select a layer to change it.',
     tools: 'Tools',

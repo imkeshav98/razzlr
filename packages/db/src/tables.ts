@@ -1,5 +1,5 @@
-// The database's tables. Every row of agency data has an org, and every design a client of that
-// org; the API scopes every query by them. Change these, then write a migration with
+// The database's tables. Every row has a workspace, and every design and asset a brand of that
+// workspace (ADR-0011); the API scopes every query by them. Change these, then write a migration with
 // `pnpm --filter @razzlr/db migration`.
 import { customType, foreignKey, index, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
 
@@ -12,34 +12,36 @@ const bytea = customType<{ data: Uint8Array; driverData: Buffer }>({
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 const updatedAt = () => timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 
-export const orgs = pgTable('orgs', {
+export const workspaces = pgTable('workspaces', {
   id: text().primaryKey(),
   name: text().notNull(),
+  /** Who the workspace is for; it changes defaults and words only, never what is stored. */
+  kind: text({ enum: ['solo', 'company', 'agency'] }).notNull().default('agency'),
   createdAt: createdAt(),
 })
 
-export const clients = pgTable('clients', {
+export const brands = pgTable('brands', {
   id: text().primaryKey(),
-  orgId: text('org_id').notNull().references(() => orgs.id),
+  workspaceId: text('workspace_id').notNull().references(() => workspaces.id),
   name: text().notNull(),
   createdAt: createdAt(),
 }, (t) => [
-  index('clients_org').on(t.orgId),
-  // Lets designs require that their client belongs to their org.
-  unique('clients_id_org').on(t.id, t.orgId),
+  index('brands_workspace').on(t.workspaceId),
+  // Lets designs require that their brand belongs to their workspace.
+  unique('brands_id_workspace').on(t.id, t.workspaceId),
 ])
 
 export const designs = pgTable('designs', {
   id: text().primaryKey(),
-  orgId: text('org_id').notNull().references(() => orgs.id),
-  clientId: text('client_id').notNull(),
+  workspaceId: text('workspace_id').notNull().references(() => workspaces.id),
+  brandId: text('brand_id').notNull(),
   name: text().notNull(),
   kind: text({ enum: ['single', 'carousel', 'story', 'document'] }).notNull(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 }, (t) => [
-  index('designs_org_client').on(t.orgId, t.clientId),
-  foreignKey({ name: 'designs_client_in_org', columns: [t.clientId, t.orgId], foreignColumns: [clients.id, clients.orgId] }),
+  index('designs_workspace_brand').on(t.workspaceId, t.brandId),
+  foreignKey({ name: 'designs_brand_in_workspace', columns: [t.brandId, t.workspaceId], foreignColumns: [brands.id, brands.workspaceId] }),
 ])
 
 /** Each design's Yjs state (ADR-0003), written by the sync server. */
@@ -50,13 +52,13 @@ export const designStates = pgTable('design_states', {
 })
 
 /**
- * An image a client uploaded. The original is stored once per org under its SHA-256
- * (orgs/<org>/originals/<sha256>); each client that uploads it gets one asset row.
+ * An image a brand uploaded. The original is stored once per workspace under its SHA-256
+ * (workspaces/<workspace>/originals/<sha256>); each brand that uploads it gets one asset row.
  */
 export const assets = pgTable('assets', {
   id: text().primaryKey(),
-  orgId: text('org_id').notNull().references(() => orgs.id),
-  clientId: text('client_id').notNull(),
+  workspaceId: text('workspace_id').notNull().references(() => workspaces.id),
+  brandId: text('brand_id').notNull(),
   sha256: text().notNull(),
   contentType: text('content_type', { enum: ['image/png', 'image/jpeg', 'image/webp'] }).notNull(),
   byteSize: integer('byte_size').notNull(),
@@ -64,6 +66,6 @@ export const assets = pgTable('assets', {
   height: integer().notNull(),
   createdAt: createdAt(),
 }, (t) => [
-  unique('assets_client_sha256').on(t.clientId, t.sha256),
-  foreignKey({ name: 'assets_client_in_org', columns: [t.clientId, t.orgId], foreignColumns: [clients.id, clients.orgId] }),
+  unique('assets_brand_sha256').on(t.brandId, t.sha256),
+  foreignKey({ name: 'assets_brand_in_workspace', columns: [t.brandId, t.workspaceId], foreignColumns: [brands.id, brands.workspaceId] }),
 ])

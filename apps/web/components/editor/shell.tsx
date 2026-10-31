@@ -118,9 +118,9 @@ function measureInsets(stage: DOMRect, pieces: (Element | null)[]): ChromeInsets
   return insets
 }
 
-export function EditorShell({ clientId, clientName, designName, status, tool: shownTool, shape = 'rect', onToolChange, onInsets, inspector, children }: {
-  clientId: string
-  clientName: string
+export function EditorShell({ brandId, brandName, designName, status, tool: shownTool, shape = 'rect', onToolChange, onInsets, inspector, children }: {
+  brandId: string
+  brandName: string
   designName: string
   status: string
   /** The tool in use, when the editor decides it (a key, or drawing a shape ends); the dock keeps its own otherwise. */
@@ -177,11 +177,11 @@ export function EditorShell({ clientId, clientName, designName, status, tool: sh
     <MotionConfig reducedMotion="user">
         <div className="grid h-dvh grid-rows-[48px_minmax(0,1fr)] overflow-hidden bg-bg text-text">
           <header className="flex min-w-0 items-center gap-3 border-b border-line bg-surface ps-2 pe-3">
-            <Link href="/" aria-label={t.library.back} className="grid size-9 place-items-center rounded-row hover:bg-hover">
+            <Link href="/" aria-label={t.library.home} className="grid size-9 place-items-center rounded-row hover:bg-hover">
               <BrandMark size={26} />
             </Link>
             <nav aria-label={t.library.designs} className="flex min-w-0 items-center gap-2 text-[13px]">
-              <Link href={`/clients/${clientId}`} className="truncate text-muted transition-colors hover:text-text">{clientName}</Link>
+              <Link href={`/brands/${brandId}`} className="truncate text-muted transition-colors hover:text-text">{brandName}</Link>
               <span aria-hidden className="text-subtle">/</span>
               <h1 className="truncate font-semibold">{designName}</h1>
             </nav>

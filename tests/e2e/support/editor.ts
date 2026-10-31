@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, type Browser, type Page } from '@playwright/test'
-import { DEV_CLIENT, liveDesign, seed } from './seed.ts'
+import { DEV_BRAND, liveDesign, seed } from './seed.ts'
 
 /** Where the live editing checks leave their screenshots and numbers; CI uploads it. */
 export const OUTPUT = join(import.meta.dirname, '..', 'output')
@@ -26,7 +26,7 @@ export async function openTabs(browser: Browser, count: number, existing?: strin
   return { designId, tabs, errors }
 }
 
-export const editorPath = (designId: string) => `/clients/${DEV_CLIENT}/designs/${designId}`
+export const editorPath = (designId: string) => `/brands/${DEV_BRAND}/designs/${designId}`
 
 /**
  * What the stage shows, with the panel capsule masked: it floats over the canvas (#82) and the AI
@@ -97,4 +97,12 @@ export function storedAfter(designId: string, since: Date) {
   const sql = `select count(*) from design_states where design_id = '${designId.replace(/'/g, "''")}' and updated_at > '${since.toISOString()}'`
   const out = execFileSync('docker', ['compose', 'exec', '-T', 'postgres', 'psql', '-U', 'razzlr', '-d', 'razzlr', '-tAc', sql], { cwd: root, encoding: 'utf8' })
   return out.trim() === '1'
+}
+
+/** How many bytes the sync server last stored for the design (packages/db's design_states). */
+export function storedSize(designId: string) {
+  const root = join(import.meta.dirname, '..', '..', '..')
+  const sql = `select octet_length(state) from design_states where design_id = '${designId.replace(/'/g, "''")}'`
+  const out = execFileSync('docker', ['compose', 'exec', '-T', 'postgres', 'psql', '-U', 'razzlr', '-d', 'razzlr', '-tAc', sql], { cwd: root, encoding: 'utf8' })
+  return Number(out.trim())
 }

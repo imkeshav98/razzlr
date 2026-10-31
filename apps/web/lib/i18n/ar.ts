@@ -4,9 +4,15 @@ import type { Messages } from './en.ts'
 export const ar: Messages = {
   app: { name: 'Razzlr' },
   library: {
+    brands: 'العلامات التجارية',
+    brandsLead: 'اختر علامة تجارية لترى تصاميمها وتنشئ جديدها.',
+    noBrands: 'لا توجد علامات تجارية بعد.',
+    allBrands: 'كل العلامات التجارية',
     clients: 'العملاء',
     clientsLead: 'اختر عميلًا لترى تصاميمه وتنشئ جديدها.',
     noClients: 'لا يوجد عملاء بعد.',
+    allClients: 'كل العملاء',
+    home: 'الرئيسية',
     designs: 'التصاميم',
     newDesign: 'تصميم جديد',
     designName: 'اسم التصميم',
@@ -14,7 +20,6 @@ export const ar: Messages = {
     untitled: 'تصميم بلا عنوان',
     noDesigns: 'لا توجد تصاميم بعد. سمِّ واحدًا في الأعلى لتبدأ.',
     edited: 'عُدّل {when}',
-    back: 'كل العملاء',
   },
   editor: {
     status: 'الاتصال',
@@ -26,7 +31,7 @@ export const ar: Messages = {
     layersEmpty: 'ستظهر طبقات هذه الصفحة هنا.',
     assetsEmpty: 'ستظهر الصور المرفوعة هنا.',
     aiEmpty: 'اطلب مسودة أو إعادة صياغة أو مقاسات جديدة. قريبًا.',
-    brandEmpty: 'ستظهر ألوان هذا العميل وخطوطه وشعاراته هنا.',
+    brandEmpty: 'ستظهر ألوان هذه العلامة التجارية وخطوطها وشعاراتها هنا.',
     inspector: 'الخصائص',
     inspectorEmpty: 'اختر طبقة لتعديلها.',
     tools: 'الأدوات',

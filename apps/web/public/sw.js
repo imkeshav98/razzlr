@@ -3,8 +3,8 @@
 // design itself lives in IndexedDB (see packages/editor); this only lets the page load to read it.
 const CACHE = 'razzlr-editor-v1'
 
-const EDITOR_PAGE = /^\/clients\/[^/]+\/designs\/[^/]+$/
-const ASSET = /^\/clients\/[^/]+\/assets\/[^/]+$/
+const EDITOR_PAGE = /^\/brands\/[^/]+\/designs\/[^/]+$/
+const ASSET = /^\/brands\/[^/]+\/assets\/[^/]+$/
 /** Built files carry their content hash in the name, and vendor files are pinned: one copy is enough. */
 const immutable = (path) => path.startsWith('/_next/static/') || path.startsWith('/vendor/')
 /** Pages and images can change: fetch them when we can, and use the kept copy when we can't. */

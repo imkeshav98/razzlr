@@ -1,4 +1,4 @@
-// Sync tokens: the API signs one for one design after its org and client checks, and the sync
+// Sync tokens: the API signs one for one design after its workspace and brand checks, and the sync
 // server accepts a connection only with a valid, unexpired token for the design it opens.
 // A token is base64url(JSON payload) "." base64url(HMAC-SHA256 of that text), keyed by a secret
 // both servers read from SYNC_TOKEN_SECRET.
@@ -6,7 +6,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 
 export interface SyncTokenPayload {
   designId: string
-  orgId: string
+  workspaceId: string
   userId: string
   /** Expiry, in milliseconds since the epoch. */
   expiresAt: number

@@ -85,7 +85,7 @@ test('Enter crops a photo: a drag moves it, a corner scales it, each one undo st
 
   // The export of the cropped design is Node's, pixel for pixel.
   const ck = await loadCanvasKit()
-  const stored = new Uint8Array(await (await page.request.get(`/clients/dev-client-coffee/assets/${asset.id}`)).body())
+  const stored = new Uint8Array(await (await page.request.get(`/brands/dev-brand-coffee/assets/${asset.id}`)).body())
   const node = renderDesign(ck, JSON.parse(await designOf(page)), 'p1', 'sq', {
     fonts: loadFontFiles().map((f) => ({ family: f.family, bytes: f.bytes })), fallbackFamilies: [...FALLBACK_FAMILIES], images: { [asset.id]: stored },
   })

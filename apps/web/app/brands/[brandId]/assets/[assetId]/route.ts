@@ -1,11 +1,11 @@
-// An image asset's original bytes, for the editor (#35). The API checks org and client and hands
+// An image asset's original bytes, for the editor (#35). The API checks workspace and brand and hands
 // back a short-lived signed URL; the bytes pass through here, so the browser needs no storage
 // address or credentials.
 import { assetLink } from '../../../../../lib/api.ts'
 
-export async function GET(_request: Request, { params }: { params: Promise<{ clientId: string; assetId: string }> }) {
-  const { clientId, assetId } = await params
-  const link = await assetLink(clientId, assetId)
+export async function GET(_request: Request, { params }: { params: Promise<{ brandId: string; assetId: string }> }) {
+  const { brandId, assetId } = await params
+  const link = await assetLink(brandId, assetId)
   if (!link) return new Response('No such asset', { status: 404 })
   const stored = await fetch(link.url, { cache: 'no-store' })
   if (!stored.ok) return new Response('Storage did not answer', { status: 502 })

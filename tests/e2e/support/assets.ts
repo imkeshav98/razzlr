@@ -4,13 +4,13 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect } from '@playwright/test'
 import { AssetSummary, UploadTicket } from '@razzlr/schema'
-import { API_URL, DEV_CLIENT } from './seed.ts'
+import { API_URL, DEV_BRAND } from './seed.ts'
 
 /** A stand-in photo from the pixel fixtures, 1920 × 1200. */
 export const photo = new Uint8Array(readFileSync(join(import.meta.dirname, '..', '..', 'pixels', 'assets', 'sneaker.jpg')))
 
 export async function api(path: string, body?: unknown) {
-  const response = await fetch(`${API_URL}/clients/${DEV_CLIENT}${path}`, body === undefined ? {} : {
+  const response = await fetch(`${API_URL}/brands/${DEV_BRAND}${path}`, body === undefined ? {} : {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
   })
   if (!response.ok) throw new Error(`${path}: ${response.status} ${await response.text()}`)

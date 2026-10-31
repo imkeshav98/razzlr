@@ -3,23 +3,39 @@
 import { z } from 'zod'
 import { DesignMeta } from './design.ts'
 
-/** Server-made ids of orgs, clients and designs. Design ids double as Yjs document names. */
+/** Server-made ids of workspaces, brands and designs. Design ids double as Yjs document names. */
 export const RecordId = z.string().regex(/^[\w-]{1,64}$/, 'ids are 1–64 letters, digits, _ and -')
 
-export const ClientSummary = z.object({
+/** Who a workspace is for (ADR-0011). It changes defaults and words only: an agency's brands are its clients. */
+export const WorkspaceKind = z.enum(['solo', 'company', 'agency'])
+export type WorkspaceKind = z.infer<typeof WorkspaceKind>
+
+export const WorkspaceSummary = z.object({
+  id: RecordId,
+  name: z.string(),
+  kind: WorkspaceKind,
+})
+export type WorkspaceSummary = z.infer<typeof WorkspaceSummary>
+
+export const UpdateWorkspace = z.object({
+  kind: WorkspaceKind,
+})
+export type UpdateWorkspace = z.infer<typeof UpdateWorkspace>
+
+export const BrandSummary = z.object({
   id: RecordId,
   name: z.string(),
 })
-export type ClientSummary = z.infer<typeof ClientSummary>
+export type BrandSummary = z.infer<typeof BrandSummary>
 
-export const CreateClient = z.object({
+export const CreateBrand = z.object({
   name: z.string().trim().min(1).max(120),
 })
-export type CreateClient = z.infer<typeof CreateClient>
+export type CreateBrand = z.infer<typeof CreateBrand>
 
 export const DesignSummary = z.object({
   id: RecordId,
-  clientId: RecordId,
+  brandId: RecordId,
   name: z.string(),
   kind: DesignMeta.shape.kind,
   createdAt: z.iso.datetime(),
@@ -61,7 +77,7 @@ const Sha256 = z.string().regex(/^[0-9a-f]{64}$/, 'a SHA-256 is 64 lowercase hex
 
 export const AssetSummary = z.object({
   id: RecordId,
-  clientId: RecordId,
+  brandId: RecordId,
   sha256: Sha256,
   contentType: ImageType,
   byteSize: z.number().int().positive(),

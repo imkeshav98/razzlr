@@ -9,7 +9,7 @@ import { loadCanvasKit } from '@razzlr/renderer/node'
 import { AssetLink, type DesignInput } from '@razzlr/schema'
 import { api, photo, upload } from '../support/assets.ts'
 import { editorPath, exportHashOf, writeOutput } from '../support/editor.ts'
-import { DEV_CLIENT, seed } from '../support/seed.ts'
+import { DEV_BRAND, seed } from '../support/seed.ts'
 
 const adWith = (assetId: string): DesignInput => ({
   meta: { schemaVersion: 2, designId: 'replaced-by-the-api', name: 'Sneaker ad', kind: 'single', primaryFormatId: 'sq' },
@@ -57,11 +57,11 @@ test('an uploaded image exports with the same pixels in the browser and in Node'
   expect(browserHash).toBe(nodeHash)
 })
 
-test('the editor cannot read another client’s image', async ({ page }) => {
+test('the editor cannot read another brand’s image', async ({ page }) => {
   const asset = await upload(photo)
-  const response = await page.request.get(`/clients/dev-client-cycles/assets/${asset.id}`)
+  const response = await page.request.get(`/brands/dev-brand-cycles/assets/${asset.id}`)
   expect(response.status()).toBe(404)
-  const own = await page.request.get(`/clients/${DEV_CLIENT}/assets/${asset.id}`)
+  const own = await page.request.get(`/brands/${DEV_BRAND}/assets/${asset.id}`)
   expect(own.status()).toBe(200)
   expect(new Uint8Array(await own.body())).toEqual(photo)
 })
