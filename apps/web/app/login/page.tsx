@@ -27,13 +27,17 @@ export async function generateMetadata() {
   return { title: (await getMessages()).signIn.title }
 }
 
-// The mock's split screen (screen 34): the form on the start half, a showcase of fanned-out ads on
-// the end half. Phones get the form alone.
+// The mock's sign-in (screen 34) on one dark page: the form on the start half, and fanned-out ads
+// over an aurora toward the end, the glow fading into the form's side. Phones get the form over a
+// faint glow.
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string; unavailable?: string }> }) {
   const [t, query] = await Promise.all([getMessages(), searchParams])
   const notice = query.unavailable ? t.signIn.unavailable : query.error ? t.signIn.failed : null
   return (
-    <main className="grid min-h-dvh bg-bg md:grid-cols-2">
+    <main data-theme="dark" className="relative isolate grid min-h-dvh overflow-hidden bg-bg text-text md:grid-cols-2">
+      <aside aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+        <AdFan sample={t.signIn.sample} />
+      </aside>
       <section className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-[7vw]">
         <form action={start} className="flex w-full max-w-[37rem] flex-col gap-[clamp(1rem,1.2vw,1.375rem)]">
           <BrandMark size={46} />
@@ -47,15 +51,12 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               {notice}
             </p>
           )}
-          <button type="submit" data-testid="sign-in" className={cn(buttonStyles({ variant: 'primary', size: 'lg' }), 'mt-1 h-11 w-full rounded-[10px] text-[15px] font-bold')}>
+          <button type="submit" data-testid="sign-in" className={cn(buttonStyles({ variant: 'primary', size: 'lg' }), 'mt-1 h-11 w-full max-w-[22rem] rounded-[10px] text-[15px] font-bold')}>
             {t.signIn.signIn}
           </button>
           <p className="text-xs text-muted">{t.signIn.lead}</p>
         </form>
       </section>
-      <aside aria-hidden data-theme="dark" className="relative hidden md:grid">
-        <AdFan sample={t.signIn.sample} />
-      </aside>
     </main>
   )
 }

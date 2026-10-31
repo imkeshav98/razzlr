@@ -7,7 +7,7 @@ const VARIANTS = ['teal', 'sunset', 'violet'] as const
 export function AdFan({ sample }: { sample: Messages['signIn']['sample'] }) {
   return (
     <div className="signin-showcase" data-testid="sign-in-showcase">
-      <div className="signin-aurora"><div /></div>
+      <div className="signin-glow"><div className="signin-aurora"><div /></div></div>
       <div className="ad-fan">
         {VARIANTS.map((variant) => (
           <div key={variant} className="sample-ad" data-variant={variant}>
