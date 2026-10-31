@@ -607,3 +607,161 @@ body {
   filter: blur(48px);
   animation: aurora-drift 26s ease-in-out infinite;
 }
+
+/* Sign in (mock screen 34): the end half's showcase, three copies of a sample ad fanned out over
+   a slow aurora. Always drawn on the dark palette (the panel sets data-theme=dark). The aurora is a
+   blurred conic circle squashed into a wide ellipse; it turns by transform, so it never repaints. */
+.signin-showcase {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--canvas);
+}
+.signin-aurora {
+  position: absolute;
+  inset-inline: -20%;
+  inset-block-start: 10%;
+  aspect-ratio: 70 / 34;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.45;
+}
+.signin-aurora > div {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  aspect-ratio: 1;
+  translate: 0 -50%;
+  scale: 1 0.486;
+  border-radius: 50%;
+  background: conic-gradient(var(--ai-1), var(--ai-2), var(--ai-3), var(--ai-1));
+  filter: blur(72px);
+}
+@keyframes signin-aurora-turn {
+  to { transform: rotate(1turn); }
+}
+@keyframes ad-fan {
+  0%, 10%, 100% { transform: none; }
+  35%, 85% { transform: translateX(var(--fan-x)) rotate(var(--fan-r)); }
+}
+.ad-fan {
+  --card: clamp(11rem, 15vw, 17rem);
+  position: relative;
+  width: calc(var(--card) * 2);
+  height: calc(var(--card) * 2);
+}
+.sample-ad {
+  --a1: #ff8a3d;
+  --a2: #ff3d6e;
+  --badge: #ffe14d;
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: var(--card);
+  height: var(--card);
+  border-radius: 0.2em;
+  background: linear-gradient(160deg, var(--a1), var(--a2));
+  box-shadow: 0 1.6vw 3vw rgb(0 0 0 / 0.4);
+  color: #fff;
+  font-size: calc(var(--card) / 21);
+  transform: translateX(var(--fan-x)) rotate(var(--fan-r));
+}
+.sample-ad[data-variant='teal'] { --a1: #0f6e66; --a2: #7be0b4; --badge: #fff07a; --fan-x: calc(var(--card) * -0.53); --fan-r: -14deg; }
+.sample-ad[data-variant='sunset'] { --fan-x: 0px; --fan-r: 0deg; z-index: 1; }
+.sample-ad[data-variant='violet'] { --a1: #5b2bd6; --a2: #ff6fb0; --fan-x: calc(var(--card) * 0.53); --fan-r: 14deg; }
+[dir='rtl'] .sample-ad[data-variant='teal'] { --fan-x: calc(var(--card) * 0.53); --fan-r: 14deg; }
+[dir='rtl'] .sample-ad[data-variant='violet'] { --fan-x: calc(var(--card) * -0.53); --fan-r: -14deg; }
+.sample-ad > span {
+  position: absolute;
+  inset-inline-start: 7%;
+}
+.sample-ad-brand {
+  inset-block-start: 6%;
+  font: 800 0.75em var(--font-sans);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+.sample-ad-headline {
+  inset-block-start: 15%;
+  width: 58%;
+  font: 800 2.6em / 0.95 var(--font-display);
+  letter-spacing: -0.02em;
+  /* The riso misprint: cobalt and pink a hair off register. */
+  text-shadow: 0.065em 0.055em 0 rgb(61 107 255 / 0.75), -0.055em -0.03em 0 rgb(255 72 176 / 0.75);
+}
+.sample-ad-price {
+  inset-block-end: 9%;
+  display: grid;
+  place-items: center;
+  width: 5.2em;
+  height: 5.2em;
+  border-radius: 50%;
+  background: var(--badge);
+  color: #2a140a;
+  font: 800 1.3em var(--font-display);
+  rotate: -10deg;
+}
+.sample-ad-cta {
+  inset-block-end: 9%;
+  margin-inline-start: 6.6em;
+  padding: 0.4em 1em;
+  border-radius: 99px;
+  background: rgb(0 0 0 / 0.25);
+  font: 700 0.9em var(--font-sans);
+}
+/* The iced drink: a straw, and a glass with two ice cubes. */
+.sample-ad .sample-ad-cup {
+  inset-inline-start: auto;
+  inset-inline-end: 8%;
+  inset-block-end: 8%;
+  width: 36%;
+  height: 58%;
+}
+.sample-ad-cup > i:first-child {
+  position: absolute;
+  inset-inline-start: 58%;
+  inset-block-start: -8%;
+  width: 7%;
+  height: 46%;
+  border-radius: 0.3em;
+  background: #fff;
+  rotate: 14deg;
+}
+.sample-ad-cup > i:last-child {
+  position: absolute;
+  inset: 8% 14% 0;
+  border-radius: 0.6em 0.6em 1.2em 1.2em;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.35), rgb(255 255 255 / 0.12) 18%, #5a2e17 19%, #2a140a);
+  box-shadow: inset 0 0 0 0.18em rgb(255 255 255 / 0.45);
+}
+.sample-ad-cup > i:last-child::before,
+.sample-ad-cup > i:last-child::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: 16%;
+  inset-block-start: 26%;
+  width: 32%;
+  height: 16%;
+  border-radius: 0.25em;
+  background: rgb(255 255 255 / 0.55);
+  rotate: -12deg;
+}
+.sample-ad-cup > i:last-child::after {
+  inset-inline-start: 52%;
+  inset-block-start: 40%;
+  width: 26%;
+  rotate: 18deg;
+}
+/* Motion only for those who have not asked for less: the aurora turns, and the ads gather and fan
+   out again. Without it the fan simply stands open. */
+@media (prefers-reduced-motion: no-preference) {
+  .signin-aurora > div {
+    animation: signin-aurora-turn 14s linear infinite;
+  }
+  .sample-ad {
+    animation: ad-fan 7s cubic-bezier(0.2, 1, 0.3, 1) infinite;
+  }
+}

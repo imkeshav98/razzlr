@@ -3,11 +3,14 @@
 import { randomBytes } from 'node:crypto'
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { WarningCircleIcon } from '@phosphor-icons/react/ssr'
 import { BrandMark } from '../../components/brand-mark.tsx'
 import { buttonStyles } from '../../components/ui/button.tsx'
 import { signInLink } from '../../lib/api.ts'
+import { cn } from '../../lib/cn.ts'
 import { getMessages } from '../../lib/i18n/server.ts'
 import { cookieOptions, STATE_COOKIE, STATE_SECONDS } from '../../lib/sign-in.ts'
+import { AdFan } from './ad-fan.tsx'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,18 +23,39 @@ async function start() {
   redirect(url)
 }
 
+export async function generateMetadata() {
+  return { title: (await getMessages()).signIn.title }
+}
+
+// The mock's split screen (screen 34): the form on the start half, a showcase of fanned-out ads on
+// the end half. Phones get the form alone.
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string; unavailable?: string }> }) {
   const [t, query] = await Promise.all([getMessages(), searchParams])
   const notice = query.unavailable ? t.signIn.unavailable : query.error ? t.signIn.failed : null
   return (
-    <main className="grid min-h-dvh place-items-center bg-bg px-4">
-      <form action={start} className="flex w-full max-w-sm flex-col items-center gap-4 rounded-card border border-line bg-surface p-8 text-center shadow-panel">
-        <BrandMark size={40} />
-        <h1 className="font-display text-2xl font-semibold tracking-tight">{t.signIn.title}</h1>
-        <p className="text-sm text-muted">{t.signIn.lead}</p>
-        {notice && <p role="alert" data-testid="sign-in-notice" className="text-sm text-danger">{notice}</p>}
-        <button type="submit" data-testid="sign-in" className={buttonStyles({ variant: 'primary', size: 'lg', className: 'w-full' })}>{t.signIn.signIn}</button>
-      </form>
+    <main className="grid min-h-dvh bg-bg md:grid-cols-2">
+      <section className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-[7vw]">
+        <form action={start} className="flex w-full max-w-[37rem] flex-col gap-[clamp(1rem,1.2vw,1.375rem)]">
+          <BrandMark size={46} />
+          <h1 className="font-display text-[clamp(2.5rem,3vw,3.5rem)] leading-[1.05] font-extrabold tracking-[-0.02em]">
+            {t.signIn.headline} <br />
+            {t.signIn.headlineEnd}
+          </h1>
+          {notice && (
+            <p role="alert" data-testid="sign-in-notice" className="flex items-center gap-2 rounded-[10px] border border-danger/30 bg-danger/10 px-3 py-2.5 text-sm text-danger">
+              <WarningCircleIcon aria-hidden size={18} weight="bold" className="shrink-0" />
+              {notice}
+            </p>
+          )}
+          <button type="submit" data-testid="sign-in" className={cn(buttonStyles({ variant: 'primary', size: 'lg' }), 'mt-1 h-11 w-full rounded-[10px] text-[15px] font-bold')}>
+            {t.signIn.signIn}
+          </button>
+          <p className="text-xs text-muted">{t.signIn.lead}</p>
+        </form>
+      </section>
+      <aside aria-hidden data-theme="dark" className="relative hidden md:grid">
+        <AdFan sample={t.signIn.sample} />
+      </aside>
     </main>
   )
 }
