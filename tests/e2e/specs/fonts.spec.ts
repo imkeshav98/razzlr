@@ -149,8 +149,11 @@ test('the font picker shows families as pictures of their names, searches, picks
   const inter = list.locator('[data-family="Inter"] img')
   await expect(inter).toHaveAttribute('alt', 'Inter')
   await expect.poll(() => inter.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth)).toBeGreaterThan(40)
-  await expect(list.getByText('Google Fonts')).toBeVisible()
-  await expect(list.getByText('Brand fonts')).toBeVisible()
+  // A screen reader finds each family by name in its group.
+  const listbox = page.getByRole('listbox', { name: 'Font' })
+  await expect(listbox.getByRole('group', { name: 'Google Fonts' }).getByRole('option', { name: 'Inter' })).toBeVisible()
+  await expect(listbox.getByRole('group', { name: 'Brand fonts' }).getByRole('option', { name: 'Righteous' })).toBeVisible()
+  await expect(listbox.getByRole('group', { name: 'Built in' }).getByRole('option', { name: 'Noto Sans', exact: true })).toHaveAttribute('aria-selected', 'true')
   writeOutput('fonts-2-list.png', await page.screenshot())
   // Opening the list loads no font files, only pictures.
   expect(requests.seen).toEqual([])
