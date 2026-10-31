@@ -1,6 +1,6 @@
 // Formats from presets (#38): add a story from the presets, see it start from the primary
 // format's layout, rename it, show it alone, remove it and undo, all through the inspector.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { designOf, openTabs, writeOutput } from '../support/editor.ts'
 
 interface Design {

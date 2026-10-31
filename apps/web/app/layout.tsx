@@ -9,7 +9,7 @@ import { getLocale } from '../lib/i18n/server.ts'
 import { themeOf, themeScript } from '../lib/theme.ts'
 import './globals.css'
 
-export const metadata: Metadata = { title: 'Razzlr' }
+export const metadata: Metadata = { title: 'Dazbee' }
 export const viewport: Viewport = { themeColor: '#0e0c11', colorScheme: 'dark light' }
 
 export default async function RootLayout({ children }: { children: ReactNode }) {

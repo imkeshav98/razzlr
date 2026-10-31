@@ -3,7 +3,7 @@
 // Inside a turned group a drag and the arrow keys move a layer along the page as it is drawn.
 import { boundsOf, centreOf, turn } from '@razzlr/doc'
 import type { DesignInput } from '@razzlr/schema'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { screenPoint, writeOutput } from '../support/editor.ts'
 import { liveDesign } from '../support/seed.ts'
 import { click, drag, dragScreen, handle, openStage, order, press, read, selection, zoomOf, type Design } from '../support/stage.ts'

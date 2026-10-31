@@ -45,6 +45,7 @@ export const ar: Messages = {
   },
   welcome: {
     step: 'الخطوة {n} من 2',
+    place: 'لنبدأ',
     title: 'لمن Razzlr؟',
     lead: 'يغيّر بضع كلمات وإعدادات فقط. يمكنك تغييره لاحقًا من الإعدادات.',
     kinds: {
@@ -384,10 +385,13 @@ export const ar: Messages = {
   account: { open: 'حسابك', settings: 'الإعدادات' },
   signIn: {
     title: 'سجّل الدخول إلى Razzlr',
+    headline: 'اصنع كل مقاس،',
+    headlineEnd: 'لكل عميل.',
     lead: 'سجّل الدخول أو أنشئ حسابًا. أول تسجيل دخول ينشئ مساحة عملك.',
     signIn: 'تسجيل الدخول',
     signOut: 'تسجيل الخروج',
     failed: 'لم ينجح تسجيل الدخول. حاول مرة أخرى.',
     unavailable: 'تسجيل الدخول غير مُعدّ على هذا الخادم بعد.',
+    sample: { brand: 'هاربور كوفي', headline: 'القهوة الباردة عادت', price: '₹149', cta: 'اطلب الآن' },
   },
 }

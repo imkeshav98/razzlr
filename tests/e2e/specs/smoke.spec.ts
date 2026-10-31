@@ -1,7 +1,7 @@
 // The library (#88): an agency workspace calls its brands clients; a solo or company one says brands.
 // Onboarding's cards and settings set that kind (#109). Every test that changes the workspace's
 // kind lives in this file, so they run one after another and never beside a test in another kind.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { writeOutput } from '../support/editor.ts'
 import { API_URL } from '../support/seed.ts'
 
@@ -17,7 +17,11 @@ test.afterEach(async () => {
 
 test('the web app lists the brands of the development workspace, as clients of an agency', async ({ page }) => {
   await page.goto('/')
-  await expect(page).toHaveTitle('Razzlr')
+  await expect(page).toHaveTitle('Dazbee')
+  for (const link of ['link[rel="icon"][type="image/svg+xml"]', 'link[rel="apple-touch-icon"]', 'link[rel="manifest"]']) {
+    const href = await page.locator(link).first().getAttribute('href')
+    expect((await page.request.get(href ?? '')).ok(), link).toBe(true)
+  }
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Clients')
   await expect(page.getByRole('main').getByRole('link', { name: 'Harbour Coffee' })).toBeVisible()
   await expect(page.getByRole('main').getByRole('link', { name: 'Northline Cycles' })).toBeVisible()

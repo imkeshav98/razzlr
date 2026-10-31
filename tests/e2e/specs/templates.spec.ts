@@ -2,7 +2,7 @@
 // thumbnail on the brand page, start a design from it (same pixels, no shared ids), edit that
 // design, and the template is unchanged: a second design started from it is the original again.
 import { randomUUID } from 'node:crypto'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { TemplateSummary, type DesignInput } from '@razzlr/schema'
 import { exportHashOf, placed, writeOutput } from '../support/editor.ts'
 import { API_URL, DEV_BRAND } from '../support/seed.ts'

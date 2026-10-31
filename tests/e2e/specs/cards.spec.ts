@@ -2,7 +2,7 @@
 // float at the top end, each as tall as its content. The stage fits the ads between the capsule
 // and the cards. With nothing selected the Page card paints the page; a selection shows Arrange.
 // On phones the cards are a bottom sheet opened from the tab bar.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { designOf, editorPath, screenPoint, writeOutput } from '../support/editor.ts'
 import { liveDesign, seed } from '../support/seed.ts'
 

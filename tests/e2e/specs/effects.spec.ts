@@ -10,7 +10,7 @@ import { loadFontFiles } from '@razzlr/fonts/node'
 import { renderDesign } from '@razzlr/renderer'
 import { loadCanvasKit } from '@razzlr/renderer/node'
 import type { DesignInput } from '@razzlr/schema'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { editorPath, exportHashOf, writeOutput } from '../support/editor.ts'
 import { seed } from '../support/seed.ts'
 

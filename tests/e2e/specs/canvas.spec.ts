@@ -1,6 +1,6 @@
 // The infinite canvas (#36): every page in every format, per-format drags, shared text, pan, zoom
 // and the frame budget. Needs the API and the sync server: `docker compose up -d --wait`.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import type { DesignInput } from '@razzlr/schema'
 import { designOf, editorPath, placed, screenPoint, settle, stageShot, writeOutput } from '../support/editor.ts'
 import { seed } from '../support/seed.ts'

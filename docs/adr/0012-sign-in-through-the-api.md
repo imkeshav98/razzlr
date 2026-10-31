@@ -4,7 +4,7 @@ Sign-in is WorkOS AuthKit (#58). The web app's /login asks the API for WorkOS's 
 
 The API then signs a session token, base64url(JSON) "." HMAC-SHA256 with `SESSION_SECRET`, the same shape as sync tokens, for the user, the workspace and the WorkOS session, good for seven days. The web app keeps it in an httpOnly cookie and sends it to the API as `Authorization: Bearer`. The API honours a token only while its person is still a member of its workspace, so removing a membership ends their sessions there. Signing out deletes the cookie and sends the person to WorkOS's logout for their WorkOS session.
 
-Roles live in `memberships`, not in WorkOS: WorkOS knows a person belongs to an organization, and Razzlr decides what an Owner, Admin, Editor or Reviewer may do. Locally and in CI the development session (`RAZZLR_DEV_SESSION=on`) still answers for a request without a valid token; sign-in is on when `WORKOS_API_KEY`, `WORKOS_CLIENT_ID` and `WORKOS_REDIRECT_URI` are set, from the environment only.
+Roles live in `memberships`, not in WorkOS: WorkOS knows a person belongs to an organization, and Dazbee decides what an Owner, Admin, Editor or Reviewer may do. Locally and in CI the development session (`RAZZLR_DEV_SESSION=on`) still answers for a request without a valid token; sign-in is on when `WORKOS_API_KEY`, `WORKOS_CLIENT_ID` and `WORKOS_REDIRECT_URI` are set, from the environment only.
 
 ## Considered
 

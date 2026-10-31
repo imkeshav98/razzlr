@@ -94,6 +94,31 @@ function BrandSwitcher({ t, words, brands, active, showAll }: { t: Messages; wor
   )
 }
 
+/**
+ * The top bar of every page outside the editor: the mark at the start, a crumb, and the account
+ * avatar at the end. Onboarding uses it too, with no brand to switch to yet.
+ */
+export async function TopBar({ t, workspace, children }: {
+  t: Messages
+  /** The workspace's name, for the account avatar. */
+  workspace: string
+  /** The crumb. */
+  children: ReactNode
+}) {
+  const jar = await cookies()
+  return (
+    <header className="relative z-30 flex h-[4.5rem] items-center gap-2 px-6">
+      <Link href="/" aria-label={t.app.name} className="grid size-9 shrink-0 place-items-center rounded-row hover:bg-hover">
+        <BrandMark size={28} />
+      </Link>
+      <div className="flex min-w-0 items-center gap-1 text-[13px]">{children}</div>
+      <span className="ms-auto">
+        <AccountMenu name={workspace} signedIn={jar.has(SESSION_COOKIE)} />
+      </span>
+    </header>
+  )
+}
+
 export async function LibraryShell({ t, words, workspace, brands, activeBrandId, showBrands = true, place = 'home', glow = false, children }: {
   t: Messages
   /** "Clients" in an agency workspace, "Brands" otherwise. */
@@ -110,7 +135,6 @@ export async function LibraryShell({ t, words, workspace, brands, activeBrandId,
   glow?: boolean
   children: ReactNode
 }) {
-  const jar = await cookies()
   const active = brands.find((brand) => brand.id === activeBrandId)
   const placeName = { home: t.library.home, brands: words.title, settings: t.library.settings }[place]
   return (
@@ -135,21 +159,13 @@ export async function LibraryShell({ t, words, workspace, brands, activeBrandId,
         <CapsuleLink href="/settings" label={t.library.settings} icon={GearSixIcon} current={place === 'settings'} />
       </nav>
 
-      <header className="relative z-30 flex h-[4.5rem] items-center gap-2 px-6">
-        <Link href="/" aria-label={t.app.name} className="grid size-9 shrink-0 place-items-center rounded-row hover:bg-hover">
-          <BrandMark size={28} />
-        </Link>
-        <div className="flex min-w-0 items-center gap-1 text-[13px]">
-          {showBrands || active
-            ? <BrandSwitcher t={t} words={words} brands={brands} active={active} showAll={showBrands} />
-            : null}
-          {(showBrands || active) && <span aria-hidden className="text-subtle">/</span>}
-          <span className="truncate px-1.5 font-semibold text-text">{placeName}</span>
-        </div>
-        <span className="ms-auto">
-          <AccountMenu name={workspace} signedIn={jar.has(SESSION_COOKIE)} />
-        </span>
-      </header>
+      <TopBar t={t} workspace={workspace}>
+        {showBrands || active
+          ? <BrandSwitcher t={t} words={words} brands={brands} active={active} showAll={showBrands} />
+          : null}
+        {(showBrands || active) && <span aria-hidden className="text-subtle">/</span>}
+        <span className="truncate px-1.5 font-semibold text-text">{placeName}</span>
+      </TopBar>
 
       <main className="mx-auto w-full min-w-0 max-w-[110rem] px-4 pb-28 md:ps-44 md:pe-16 md:pb-12">{children}</main>
     </div>

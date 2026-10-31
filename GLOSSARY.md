@@ -1,4 +1,4 @@
-# Razzlr
+# Dazbee
 
 The design editor and AI ad flow for solo marketers, companies and agencies. This glossary covers the document model the editor, renderer and AI jobs share, and the workspace records around it.
 

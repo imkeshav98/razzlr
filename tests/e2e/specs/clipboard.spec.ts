@@ -1,7 +1,7 @@
 // Copy and paste across designs (#49), with real keys: a group with a photo, text and a shape
 // copied in one design and pasted into another draws the same pixels there; pasting twice gives
 // two copies; each paste is one undo step; Mod+Shift+V puts it where the pointer is.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import type { DesignInput } from '@razzlr/schema'
 import { photo, upload } from '../support/assets.ts'
 import { editorPath, exportHashOf, screenPoint, writeOutput } from '../support/editor.ts'

@@ -1,6 +1,6 @@
 // The brand's home (#84): "What are we making for <brand>?" as a brief with Format chips and Make
 // drafts, and recent work as a bento of real pictures, the latest large, stories tall, banners wide.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import type { DesignInput } from '@razzlr/schema'
 import { writeOutput } from '../support/editor.ts'
 import { seed } from '../support/seed.ts'
@@ -31,6 +31,15 @@ test('recent work is a bento of real pictures: the latest large, a story tall, a
   await page.context().addCookies([{ name: 'theme', value: 'dark', url: 'http://localhost:3100' }])
   await page.goto('/brands/dev-brand-coffee')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('What are we making for Harbour Coffee?')
+
+  // As in the final mock: one line, the brand's name in the AI gradient, the editor's top bar
+  // (the brand switcher in the crumb, the account avatar), no list of brands beside the page.
+  const heading = await page.getByRole('heading', { level: 1 }).boundingBox()
+  expect(heading?.height).toBeLessThan(70)
+  expect(await page.getByRole('heading', { level: 1 }).getByText('Harbour Coffee').evaluate((el) => getComputedStyle(el).backgroundImage)).toContain('linear-gradient')
+  await expect(page.getByTestId('brand-switcher')).toContainText('Harbour Coffee')
+  await expect(page.getByTestId('account-open')).toBeVisible()
+  await expect(page.getByRole('complementary')).toHaveCount(0)
 
   const bento = page.getByRole('list', { name: 'Recent' })
   const tile = (name: string) => bento.getByTestId('bento-tile').filter({ has: page.getByRole('link', { name: new RegExp(name) }) })
