@@ -5,7 +5,7 @@ import { cn } from '../../lib/cn.ts'
 export const buttonStyles = cva(
   'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-row font-medium whitespace-nowrap select-none ' +
   'transition-[background-color,color,box-shadow,transform] duration-[var(--chrome-fast)] ease-[var(--ease-out)] ' +
-  'active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50',
+  'active:scale-[0.97] motion-reduce:active:scale-100 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
