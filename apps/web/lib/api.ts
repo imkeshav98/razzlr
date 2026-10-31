@@ -1,6 +1,8 @@
 // The API, called from the web app's server only, with every response read through its contract.
 import 'server-only'
-import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignSummary, FontFace, FontFamily, FontLink, FontUploadTicket, SignedLink, SyncToken, TemplateSummary, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type SaveTemplate, type UpdateAsset } from '@razzlr/schema'
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
+import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignSummary, FontFace, FontFamily, FontLink, FontUploadTicket, SignedIn, SignedLink, SignedOut, SignInLink, SyncToken, TemplateSummary, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type SaveTemplate, type UpdateAsset } from '@razzlr/schema'
 import type { z } from 'zod'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8787'
@@ -13,15 +15,44 @@ export class ApiFailure extends Error {
   }
 }
 
-async function call<T extends z.ZodType>(schema: T, path: string, init?: { method: string; body: unknown }): Promise<z.infer<T>> {
+/** The httpOnly cookie that keeps the API's session token (#58). */
+export const SESSION_COOKIE = 'razzlr_session'
+
+/**
+ * Calls the API as the signed-in person. Without a session the API answers 401, and the person is
+ * sent to sign in; routes that must answer instead pass `signIn: false`.
+ */
+async function call<T extends z.ZodType>(schema: T, path: string, init?: { method: string; body?: unknown }, { signIn = true } = {}): Promise<z.infer<T>> {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value
+  const headers: Record<string, string> = {}
+  if (token) headers.authorization = `Bearer ${token}`
+  if (init?.body !== undefined) headers['content-type'] = 'application/json'
   const response = await fetch(`${API_URL}${path}`, {
     cache: 'no-store',
-    ...(init ? { method: init.method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(init.body) } : {}),
+    headers,
+    ...(init ? { method: init.method, ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }) } : {}),
   })
+  if (response.status === 401 && signIn) redirect('/login')
   const json: unknown = await response.json()
   if (!response.ok) throw new ApiFailure(response.status, ApiError.safeParse(json).data?.error ?? `The API answered ${response.status}`)
   return schema.parse(json)
 }
+
+/** WorkOS's sign-in page for this state, or null when sign-in is not set up (#58). */
+export async function signInLink(state: string) {
+  try {
+    return (await call(SignInLink, `/auth/sign-in-url?state=${encodeURIComponent(state)}`, undefined, { signIn: false })).url
+  } catch (e) {
+    if (e instanceof ApiFailure && e.status === 404) return null
+    throw e
+  }
+}
+
+/** Swaps the code WorkOS sent back for a session (#58). */
+export const completeSignIn = (code: string) => call(SignedIn, '/auth/callback', { method: 'POST', body: { code } }, { signIn: false })
+
+/** Where to end the person's WorkOS session as they sign out, if anywhere (#58). */
+export const signOutLink = async () => (await call(SignedOut, '/auth/sign-out', { method: 'POST' }, { signIn: false })).logoutUrl
 
 export const getWorkspace = () => call(WorkspaceSummary, '/workspace')
 

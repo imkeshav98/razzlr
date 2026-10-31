@@ -2,7 +2,7 @@
 // workspace (ADR-0011); the API scopes every query by them. Change these, then write a migration with
 // `pnpm --filter @razzlr/db migration`.
 import { sql } from 'drizzle-orm'
-import { check, customType, foreignKey, index, integer, jsonb, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core'
+import { check, customType, foreignKey, index, integer, jsonb, pgTable, primaryKey, text, timestamp, unique } from 'drizzle-orm/pg-core'
 
 const bytea = customType<{ data: Uint8Array; driverData: Buffer }>({
   dataType: () => 'bytea',
@@ -18,8 +18,33 @@ export const workspaces = pgTable('workspaces', {
   name: text().notNull(),
   /** Who the workspace is for; it changes defaults and words only, never what is stored. */
   kind: text({ enum: ['solo', 'company', 'agency'] }).notNull().default('agency'),
+  /** Its WorkOS organization (#58); null for a workspace made before sign-in, such as the development one. */
+  workosOrganizationId: text('workos_organization_id').unique(),
   createdAt: createdAt(),
 })
+
+/** A person who signed in with WorkOS (#58), known by their WorkOS user id. */
+export const users = pgTable('users', {
+  id: text().primaryKey(),
+  workosUserId: text('workos_user_id').notNull().unique(),
+  email: text().notNull(),
+  name: text().notNull().default(''),
+  createdAt: createdAt(),
+})
+
+/**
+ * A person's place in a workspace (#58, ADR-0011): one per workspace they belong to, with their role.
+ * A session is always for one of these; removing it ends that person's sessions there.
+ */
+export const memberships = pgTable('memberships', {
+  workspaceId: text('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: text({ enum: ['owner', 'admin', 'editor', 'reviewer'] }).notNull(),
+  createdAt: createdAt(),
+}, (t) => [
+  primaryKey({ columns: [t.workspaceId, t.userId] }),
+  index('memberships_user').on(t.userId),
+])
 
 export const brands = pgTable('brands', {
   id: text().primaryKey(),

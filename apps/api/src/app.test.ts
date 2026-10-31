@@ -2,7 +2,7 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { brands, fontFaces, migrateDatabase, openDatabase, workspaces, readDesignState } from '@razzlr/db'
+import { brands, fontFaces, memberships, users, openDatabase, workspaces, readDesignState } from '@razzlr/db'
 import { readDesign } from '@razzlr/doc'
 import { ApiError, AssetLink, AssetSummary, BrandKit, brandVariables, SignedLink, BrandSummary, DesignSummary, FontFace, FontFamily, FontLink, FontUploadTicket, SyncToken, TemplateSummary, UploadTicket, WorkspaceSummary, parseDesign } from '@razzlr/schema'
 import { openStorage, storageSettings } from '@razzlr/storage'
@@ -16,7 +16,7 @@ import { fontFiles, importGoogleFamily } from './fonts.ts'
 import { readImageHeader } from './images.ts'
 import { renderFirstPage } from './render.ts'
 import { png } from './images.test.ts'
-import type { Session } from './session.ts'
+import { signSessionToken, tokenSession, type Session } from './session.ts'
 
 const DATABASE_URL = process.env.DATABASE_URL ?? 'postgres://razzlr:razzlr-local@127.0.0.1:55432/razzlr'
 const { db, close } = openDatabase(DATABASE_URL)
@@ -29,10 +29,16 @@ const brand = { id: `brand-a-${run}`, workspaceId: workspace.id, name: 'Brand A'
 const sibling = { id: `brand-a2-${run}`, workspaceId: workspace.id, name: 'Brand A2' }
 const otherBrand = { id: `brand-b-${run}`, workspaceId: other.id, name: 'Brand B' }
 
+// Real sessions (#58): a person in each workspace, signed in with a session token.
+const personA = { id: `user-a-${run}`, workosUserId: `workos-a-${run}`, email: `a-${run}@example.com` }
+const personB = { id: `user-b-${run}`, workosUserId: `workos-b-${run}`, email: `b-${run}@example.com` }
 const sessions: Record<string, Session> = {
-  a: { userId: 'user-a', workspaceId: workspace.id },
-  b: { userId: 'user-b', workspaceId: other.id },
+  a: { userId: personA.id, workspaceId: workspace.id },
+  b: { userId: personB.id, workspaceId: other.id },
 }
+const sessionSecret = 'test-session-secret-'.padEnd(32, 'x')
+const tokens = Object.fromEntries(Object.entries(sessions).map(([as, session]) => [as, signSessionToken(sessionSecret, { ...session, workosSessionId: null }).token]))
+const authorization = (as: string) => ({ authorization: `Bearer ${tokens[as]}` })
 /** A stand-in Google family, served by a fake Google from the Noto files, removed after the run. */
 const googleFamily = { family: `Test Sans ${run}`, category: 'sans-serif', weights: [400, 700], italic: false } as const
 
@@ -45,20 +51,24 @@ const storage = openStorage(storageSettings({
   STORAGE_REGION: 'us-east-1',
   ...process.env,
 }))
-const app = createApp({ db, storage, sessionOf: (request) => sessions[request.headers.get('x-test-session') ?? ''] ?? null, syncSecret })
+const app = createApp({ db, storage, sessionOf: tokenSession(db, sessionSecret), syncSecret })
 
 async function call(as: string | null, method: string, path: string, body?: unknown) {
   const headers: Record<string, string> = { 'content-type': 'application/json' }
-  if (as) headers['x-test-session'] = as
+  if (as) Object.assign(headers, authorization(as))
   const response = await app.request(path, { method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }) })
   return { status: response.status, json: await response.json() as unknown }
 }
 
 beforeAll(async () => {
-  await migrateDatabase(db)
   await storage.ensureBucket()
   await db.insert(workspaces).values([workspace, other])
   await db.insert(brands).values([brand, sibling, otherBrand])
+  await db.insert(users).values([personA, personB])
+  await db.insert(memberships).values([
+    { workspaceId: workspace.id, userId: personA.id, role: 'owner' },
+    { workspaceId: other.id, userId: personB.id, role: 'editor' },
+  ])
 })
 afterAll(async () => {
   await db.delete(fontFaces).where(eq(fontFaces.family, googleFamily.family))
@@ -174,7 +184,7 @@ describe('refusals', () => {
     const broken = await call('a', 'POST', `/brands/${brand.id}/designs`, { name: 'Broken', content: { meta: {} } })
     expect(broken.status).toBe(400)
     expect(ApiError.parse(broken.json).error).toMatch(/^The design is not valid: /)
-    const notJson = await app.request(`/brands/${brand.id}/designs`, { method: 'POST', headers: { 'x-test-session': 'a' }, body: '{' })
+    const notJson = await app.request(`/brands/${brand.id}/designs`, { method: 'POST', headers: authorization('a'), body: '{' })
     expect(notJson.status).toBe(400)
   })
 })
@@ -186,7 +196,7 @@ describe('sync tokens', () => {
     expect(status).toBe(200)
     const { token, expiresAt } = SyncToken.parse(json)
     expect(Date.parse(expiresAt)).toBeGreaterThan(Date.now())
-    expect(verifySyncToken(syncSecret, token, design.id)).toMatchObject({ ok: true, payload: { designId: design.id, workspaceId: workspace.id, userId: 'user-a' } })
+    expect(verifySyncToken(syncSecret, token, design.id)).toMatchObject({ ok: true, payload: { designId: design.id, workspaceId: workspace.id, userId: personA.id } })
     expect(verifySyncToken(syncSecret, token, 'another-design')).toEqual({ ok: false, reason: 'token for another design' })
   })
 

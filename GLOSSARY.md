@@ -8,6 +8,14 @@ The design editor and AI ad flow for solo marketers, companies and agencies. Thi
 Whoever signs up and pays: its seats, brands, AI credits and billing. A person can belong to several. See ADR-0011.
 _Avoid_: Org, account, team, tenant
 
+**Member**:
+A person in a workspace, with one role there: Owner, Admin, Editor or Reviewer. Whoever signs up first is its Owner. See ADR-0012.
+_Avoid_: Seat (that is billing), user (a user is the person, a member their place in one workspace)
+
+**Session**:
+A signed-in person in one of their workspaces: what every API route checks the workspace and brand against. It ends when they sign out, after seven days, or when they stop being a member there.
+_Avoid_: Login, auth
+
 **Workspace kind**:
 Who a workspace is for: solo, company or agency, asked at onboarding. It changes defaults and words only, never what is stored: an agency workspace calls its brands "Clients".
 _Avoid_: Plan, tier (those are billing)

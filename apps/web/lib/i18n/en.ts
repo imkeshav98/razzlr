@@ -323,6 +323,14 @@ export const en = {
     dark: 'Dark',
   },
   language: { label: 'Language' },
+  signIn: {
+    title: 'Sign in to Razzlr',
+    lead: 'Sign in or make an account. Your first sign-in makes your workspace.',
+    signIn: 'Sign in',
+    signOut: 'Sign out',
+    failed: 'That sign-in did not work. Try again.',
+    unavailable: 'Sign-in is not set up on this server yet.',
+  },
 }
 
 export type Messages = typeof en

@@ -1,7 +1,7 @@
 // The API's routes. /workspace and every route below /brands need a session, and reads and writes only that
 // session's workspace; a brand or design of another workspace is answered as if it didn't exist.
 import type { Db } from '@razzlr/db'
-import { BrandKit, CreateBrand, CreateDesign, SaveTemplate, StartFromTemplate, RecordAsset, RecordFont, StartFontUpload, StartUpload, UpdateAsset, UpdateWorkspace, type ApiError, type AssetLink, type SignedLink, type SyncToken } from '@razzlr/schema'
+import { BrandKit, CompleteSignIn, CreateBrand, CreateDesign, SaveTemplate, StartFromTemplate, RecordAsset, RecordFont, StartFontUpload, StartUpload, UpdateAsset, UpdateWorkspace, type ApiError, type AssetLink, type SignedIn, type SignedLink, type SignedOut, type SignInLink, type SyncToken } from '@razzlr/schema'
 import type { Storage } from '@razzlr/storage'
 import { signSyncToken } from '@razzlr/sync-token'
 import { Hono, type MiddlewareHandler } from 'hono'
@@ -11,16 +11,52 @@ import { findTemplate, listTemplates, saveTemplate, startFromTemplate, templateT
 import { ensureThumbnail, findAsset, InvalidUpload, listAssets, originalKey, recordAsset, SIGNED_URL_SECONDS, startUpload, updateAsset } from './assets.ts'
 import { fontLink, InvalidFont, listFonts, recordFont, startFontUpload } from './fonts.ts'
 import { createBrand, createDesign, findBrand, findDesign, findWorkspace, InvalidContent, listBrands, listDesigns, setWorkspaceKind } from './designs.ts'
-import type { Session, SessionOf } from './session.ts'
+import { bearerToken, readSessionToken, type Session, type SessionOf } from './session.ts'
+import { completeSignIn, type SignedInPerson, type SignInProvider } from './sign-in.ts'
 
 type Env = { Variables: { session: Session } }
 
 const error = (message: string): ApiError => ({ error: message })
 
-export function createApp({ db, storage, sessionOf, syncSecret }: { db: Db; storage: Storage; sessionOf: SessionOf; syncSecret: string }) {
+/** Sign-in with WorkOS, when it is set up: the provider, and the secret session tokens are signed with. */
+export interface SignInSettings {
+  provider: SignInProvider
+  secret: string
+}
+
+export function createApp({ db, storage, sessionOf, syncSecret, signIn = null }: { db: Db; storage: Storage; sessionOf: SessionOf; syncSecret: string; signIn?: SignInSettings | null }) {
   const app = new Hono<Env>()
 
   app.get('/health', (c) => c.json({ ok: true }))
+
+  // Sign-in (#58). The web app's /login asks for the link, its /callback hands back the code.
+  app.get('/auth/sign-in-url', (c) => {
+    if (!signIn) return c.json(error('Sign-in is not set up'), 404)
+    const state = c.req.query('state') ?? ''
+    if (!/^[\w-]{16,128}$/.test(state)) return c.json(error('state: 16–128 letters, digits, _ and -'), 400)
+    return c.json({ url: signIn.provider.signInUrl(state) } satisfies SignInLink)
+  })
+
+  app.post('/auth/callback', async (c) => {
+    if (!signIn) return c.json(error('Sign-in is not set up'), 404)
+    const input = await body(c.req.raw, CompleteSignIn)
+    if (input instanceof Response) return input
+    let person: SignedInPerson
+    try {
+      person = await signIn.provider.authenticate(input.code)
+    } catch {
+      return c.json(error('That sign-in did not work; try again'), 400)
+    }
+    return c.json(await completeSignIn(db, signIn.provider, signIn.secret, person) satisfies SignedIn)
+  })
+
+  // Signing out forgets the token in the web app; this says where to end the WorkOS session too.
+  app.post('/auth/sign-out', (c) => {
+    const token = bearerToken(c.req.raw)
+    const payload = signIn && token ? readSessionToken(signIn.secret, token) : null
+    const logoutUrl = payload?.workosSessionId ? signIn?.provider.signOutUrl(payload.workosSessionId) ?? null : null
+    return c.json({ logoutUrl } satisfies SignedOut)
+  })
 
   const requireSession: MiddlewareHandler<Env> = async (c, next) => {
     const session = await sessionOf(c.req.raw)

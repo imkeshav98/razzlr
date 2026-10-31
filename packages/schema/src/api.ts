@@ -261,3 +261,21 @@ export type SaveTemplate = z.infer<typeof SaveTemplate>
 /** Starts a design of the brand from a template; named after the template when no name is given. */
 export const StartFromTemplate = z.object({ name: z.string().trim().min(1).max(120).optional() })
 export type StartFromTemplate = z.infer<typeof StartFromTemplate>
+
+// Sign-in (#58). The web app asks the API for WorkOS's sign-in page, hands back the code WorkOS
+// returns, and keeps the session token it gets in an httpOnly cookie, sending it as a bearer token.
+
+/** Where to send the person to sign in with WorkOS. */
+export const SignInLink = z.object({ url: z.url() })
+export type SignInLink = z.infer<typeof SignInLink>
+
+export const CompleteSignIn = z.object({ code: z.string().min(1).max(512) })
+export type CompleteSignIn = z.infer<typeof CompleteSignIn>
+
+/** A session: the token to send as `Authorization: Bearer <token>`, and the workspace it is for. */
+export const SignedIn = z.object({ token: z.string().min(1), expiresAt: z.number().int(), workspaceId: RecordId })
+export type SignedIn = z.infer<typeof SignedIn>
+
+/** Where to send the person to end their WorkOS session too, when they had one. */
+export const SignedOut = z.object({ logoutUrl: z.url().nullable() })
+export type SignedOut = z.infer<typeof SignedOut>
