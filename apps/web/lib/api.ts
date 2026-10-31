@@ -1,6 +1,6 @@
 // The API, called from the web app's server only, with every response read through its contract.
 import 'server-only'
-import { ApiError, AssetLink, ClientSummary, DesignSummary, SyncToken } from '@razzlr/schema'
+import { ApiError, AssetLink, BrandSummary, DesignSummary, SyncToken, WorkspaceSummary } from '@razzlr/schema'
 import type { z } from 'zod'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8787'
@@ -23,35 +23,37 @@ async function call<T extends z.ZodType>(schema: T, path: string, init?: { metho
   return schema.parse(json)
 }
 
-export const listClients = () => call(ClientSummary.array(), '/clients')
+export const getWorkspace = () => call(WorkspaceSummary, '/workspace')
 
-export const listDesigns = (clientId: string) => call(DesignSummary.array(), `/clients/${encodeURIComponent(clientId)}/designs`)
+export const listBrands = () => call(BrandSummary.array(), '/brands')
 
-export const createDesign = (clientId: string, name: string) =>
-  call(DesignSummary, `/clients/${encodeURIComponent(clientId)}/designs`, { method: 'POST', body: { name } })
+export const listDesigns = (brandId: string) => call(DesignSummary.array(), `/brands/${encodeURIComponent(brandId)}/designs`)
 
-/** The client and design, or null when the API has no such design for this session. */
-export async function findDesign(clientId: string, designId: string) {
+export const createDesign = (brandId: string, name: string) =>
+  call(DesignSummary, `/brands/${encodeURIComponent(brandId)}/designs`, { method: 'POST', body: { name } })
+
+/** The brand and design, or null when the API has no such design for this session. */
+export async function findDesign(brandId: string, designId: string) {
   try {
-    const [design, clients] = await Promise.all([
-      call(DesignSummary, `/clients/${encodeURIComponent(clientId)}/designs/${encodeURIComponent(designId)}`),
-      listClients(),
+    const [design, brands] = await Promise.all([
+      call(DesignSummary, `/brands/${encodeURIComponent(brandId)}/designs/${encodeURIComponent(designId)}`),
+      listBrands(),
     ])
-    const client = clients.find((c) => c.id === clientId)
-    return client ? { client, design } : null
+    const brand = brands.find((c) => c.id === brandId)
+    return brand ? { brand, design } : null
   } catch (e) {
     if (e instanceof ApiFailure && e.status === 404) return null
     throw e
   }
 }
 
-export const syncToken = (clientId: string, designId: string) =>
-  call(SyncToken, `/clients/${encodeURIComponent(clientId)}/designs/${encodeURIComponent(designId)}/sync-token`, { method: 'POST', body: {} })
+export const syncToken = (brandId: string, designId: string) =>
+  call(SyncToken, `/brands/${encodeURIComponent(brandId)}/designs/${encodeURIComponent(designId)}/sync-token`, { method: 'POST', body: {} })
 
 /** An asset and a signed URL to its original, or null when the API has no such asset for this session. */
-export async function assetLink(clientId: string, assetId: string) {
+export async function assetLink(brandId: string, assetId: string) {
   try {
-    return await call(AssetLink, `/clients/${encodeURIComponent(clientId)}/assets/${encodeURIComponent(assetId)}`)
+    return await call(AssetLink, `/brands/${encodeURIComponent(brandId)}/assets/${encodeURIComponent(assetId)}`)
   } catch (e) {
     if (e instanceof ApiFailure && e.status === 404) return null
     throw e

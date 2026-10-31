@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-/** One package in the pnpm workspace (not an Org; see GLOSSARY.md). */
+/** One package in the pnpm workspace (not a Workspace; see GLOSSARY.md). */
 export interface WorkspacePackage {
   name: string
   /** Path relative to the repo root, e.g. `apps/web` or `packages/schema`. */

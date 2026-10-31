@@ -1,8 +1,8 @@
 import { DesignSummary, type DesignInput } from '@razzlr/schema'
 
 export const API_URL = process.env.API_URL ?? 'http://localhost:8787'
-/** A client of the development org the API seeds (apps/api/src/session.ts). */
-export const DEV_CLIENT = 'dev-client-coffee'
+/** A brand of the development workspace the API seeds (apps/api/src/session.ts). */
+export const DEV_BRAND = 'dev-brand-coffee'
 
 /** A design for the live editing checks: shapes to drag, and English and Arabic text to type into. */
 export const liveDesign = (): DesignInput => ({
@@ -30,9 +30,9 @@ export const liveDesign = (): DesignInput => ({
   overrides: {},
 })
 
-/** Creates a design for the development client through the API, starting from `content`, and returns its id. */
+/** Creates a design for the development brand through the API, starting from `content`, and returns its id. */
 export async function seed(content: DesignInput, name = content.meta.name): Promise<string> {
-  const response = await fetch(`${API_URL}/clients/${DEV_CLIENT}/designs`, {
+  const response = await fetch(`${API_URL}/brands/${DEV_BRAND}/designs`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ name, content }),

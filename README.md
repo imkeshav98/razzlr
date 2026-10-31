@@ -1,6 +1,6 @@
 # Razzlr
 
-Ads, social posts and everyday creative for agencies: an AI brief-to-editable-ad flow, a multi-format design editor, and the agency workflow around it. Start with [CLAUDE.md](CLAUDE.md), [GLOSSARY.md](GLOSSARY.md) and [docs/adr](docs/adr).
+Ads, social posts and everyday creative for solo marketers, companies and agencies: an AI brief-to-editable-ad flow, a multi-format design editor, and the team workflow around it. Start with [CLAUDE.md](CLAUDE.md), [GLOSSARY.md](GLOSSARY.md) and [docs/adr](docs/adr).
 
 ## Develop
 
