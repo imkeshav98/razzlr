@@ -46,8 +46,13 @@ services:
       API_PORT: "8787"
       # A local-only key; deployed servers get their own from the environment.
       SYNC_TOKEN_SECRET: ${SYNC_TOKEN_SECRET:-local-only-sync-token-secret-0000}
-      # Local and CI only: every request is the development user (apps/api/src/session.ts).
+      # Local and CI only: a request without a session token is the development user (apps/api/src/session.ts).
       RAZZLR_DEV_SESSION: "on"
+      # Sign-in (#58) is on when these three are set, from a git-ignored .env next to this file.
+      WORKOS_API_KEY: ${WORKOS_API_KEY:-}
+      WORKOS_CLIENT_ID: ${WORKOS_CLIENT_ID:-}
+      WORKOS_REDIRECT_URI: ${WORKOS_REDIRECT_URI:-}
+      SESSION_SECRET: ${SESSION_SECRET:-local-only-session-secret-0000000}
       STORAGE_ENDPOINT: http://storage:9000
       STORAGE_BUCKET: razzlr
       STORAGE_ACCESS_KEY_ID: razzlr
