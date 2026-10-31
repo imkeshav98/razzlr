@@ -112,3 +112,62 @@ export const AssetLink = z.object({
   expiresAt: z.iso.datetime(),
 })
 export type AssetLink = z.infer<typeof AssetLink>
+
+/** Font files we accept: TrueType and OpenType outlines, which CanvasKit reads itself (#50). */
+export const FontType = z.enum(['font/ttf', 'font/otf'])
+export type FontType = z.infer<typeof FontType>
+
+/** Largest font file we accept, in bytes; a CJK family's face can be 20 MB. */
+export const MAX_FONT_BYTES = 30 * 1024 * 1024
+
+/** Where a family comes from: shipped with the app, copied from Google Fonts into our storage, or uploaded by a brand. */
+export const FontSource = z.enum(['builtin', 'google', 'upload'])
+export type FontSource = z.infer<typeof FontSource>
+
+/** One font file: a family in one weight and style. */
+export const FontFace = z.object({
+  id: RecordId,
+  family: z.string().min(1),
+  weight: z.number().int().min(1).max(1000),
+  style: z.enum(['normal', 'italic']),
+  source: FontSource,
+  byteSize: z.number().int().positive(),
+})
+export type FontFace = z.infer<typeof FontFace>
+
+/** A family in the catalog, its faces lightest first and upright before italic. */
+export const FontFamily = z.object({
+  family: z.string().min(1),
+  source: FontSource,
+  /** Google's category, such as sans-serif or display; null for uploads. */
+  category: z.string().nullable(),
+  faces: FontFace.array().min(1),
+})
+export type FontFamily = z.infer<typeof FontFamily>
+
+/** Asks to upload a font file; the API answers with the face when the brand already has those bytes. */
+export const StartFontUpload = z.object({
+  sha256: Sha256,
+  byteSize: z.number().int().positive().max(MAX_FONT_BYTES),
+  contentType: FontType,
+})
+export type StartFontUpload = z.infer<typeof StartFontUpload>
+
+export const FontUploadTicket = z.union([
+  z.object({ face: FontFace, upload: z.null() }),
+  /** PUT the bytes to url with these headers, then record the font with its sha256. */
+  z.object({ face: z.null(), upload: z.object({ url: z.url(), headers: z.record(z.string(), z.string()), expiresAt: z.iso.datetime() }) }),
+])
+export type FontUploadTicket = z.infer<typeof FontUploadTicket>
+
+export const RecordFont = z.object({ sha256: Sha256 })
+export type RecordFont = z.infer<typeof RecordFont>
+
+/** A face and short-lived URLs to read its file and its preview, the family's name drawn in it as a PNG. */
+export const FontLink = z.object({
+  face: FontFace,
+  url: z.url(),
+  previewUrl: z.url(),
+  expiresAt: z.iso.datetime(),
+})
+export type FontLink = z.infer<typeof FontLink>

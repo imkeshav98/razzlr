@@ -9,6 +9,8 @@ import { ArrangePanel } from '../../../../../components/editor/arrange-panel.tsx
 import { PagesPanel } from '../../../../../components/editor/pages-panel.tsx'
 import { ZoomControl } from '../../../../../components/editor/zoom-control.tsx'
 import { ExportMenu } from '../../../../../components/editor/export-menu.tsx'
+import { FontPanel } from '../../../../../components/editor/font-panel.tsx'
+import { FontFamily } from '@razzlr/schema'
 
 declare global {
   interface Window { razzlr?: Editor }
@@ -18,6 +20,33 @@ async function assetBytes(brandId: string, assetId: string) {
   const response = await fetch(`/brands/${encodeURIComponent(brandId)}/assets/${encodeURIComponent(assetId)}`)
   if (!response.ok) throw new Error(`asset ${assetId}: ${response.status}`)
   return new Uint8Array(await response.arrayBuffer())
+}
+
+/**
+ * The files of the families the editor asks for (#50), from the brand's catalog: fetched once, and
+ * again when a family isn't in it yet, as after an upload.
+ */
+function fontLoader(brandId: string) {
+  const brand = `/brands/${encodeURIComponent(brandId)}/fonts`
+  let catalog: Promise<FontFamily[]> | null = null
+  const fetchCatalog = async () => {
+    const response = await fetch(brand)
+    if (!response.ok) throw new Error(`fonts: ${response.status}`)
+    return FontFamily.array().parse(await response.json())
+  }
+  return async (families: string[]) => {
+    let known = await (catalog ??= fetchCatalog()).catch((error: unknown) => {
+      catalog = null
+      throw error
+    })
+    if (families.some((family) => !known.some((f) => f.family === family))) known = await (catalog = fetchCatalog())
+    const faces = known.filter((f) => families.includes(f.family)).flatMap((f) => f.faces)
+    return Promise.all(faces.map(async (face) => {
+      const response = await fetch(`${brand}/${encodeURIComponent(face.id)}`)
+      if (!response.ok) throw new Error(`font ${face.family} ${face.weight}: ${response.status}`)
+      return { family: face.family, bytes: new Uint8Array(await response.arrayBuffer()) }
+    }))
+  }
 }
 
 /** Asks the offline worker to keep this page and everything it has loaded so far. */
@@ -73,7 +102,7 @@ export function EditorStage({ designId, designName, brandId, brandName, formatId
     const unmounted = new AbortController()
     startEditor({
       canvas: canvas.current, overlay: overlay.current, designId, syncUrl,
-      syncToken: () => fetchSyncToken(brandId, designId), assetBytes: (assetId) => assetBytes(brandId, assetId),
+      syncToken: () => fetchSyncToken(brandId, designId), assetBytes: (assetId) => assetBytes(brandId, assetId), fontFiles: fontLoader(brandId),
       ...(formatId ? { formatId } : {}), onStatus: setStatus, onZoom: setZoom, signal: unmounted.signal,
     })
       .then((started) => {
@@ -112,6 +141,7 @@ export function EditorStage({ designId, designName, brandId, brandName, formatId
       inspector={editor ? (
         <>
           <ArrangePanel editor={editor} />
+          <FontPanel editor={editor} brandId={brandId} />
           <PagesPanel editor={editor} onRemoved={setRemoved} />
           <FormatsPanel editor={editor} onRemoved={setRemoved} />
         </>

@@ -26,6 +26,12 @@ importers:
       '@razzlr/doc':
         specifier: workspace:*
         version: link:../../packages/doc
+      '@razzlr/fonts':
+        specifier: workspace:*
+        version: link:../../packages/fonts
+      '@razzlr/renderer':
+        specifier: workspace:*
+        version: link:../../packages/renderer
       '@razzlr/schema':
         specifier: workspace:*
         version: link:../../packages/schema

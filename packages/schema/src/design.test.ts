@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FORMAT_PRESETS, FORMAT_SHAPES, formatSizeProblem, imageAssetIds, parseDesign, parseDesignIncrementally, shapeOf } from './index.ts'
+import { FORMAT_PRESETS, FORMAT_SHAPES, fontFamilies, formatSizeProblem, imageAssetIds, parseDesign, parseDesignIncrementally, shapeOf } from './index.ts'
 
 /**
  * Parses with the full parser, checking on the way that the incremental one agrees exactly,
@@ -201,6 +201,25 @@ describe('imageAssetIds', () => {
     })
     if (!parsed.success) throw new Error(parsed.errors.join('\n'))
     expect(imageAssetIds(parsed.design)).toEqual(['page-bg', 'photo', 'story-photo'])
+  })
+})
+
+describe('fontFamilies', () => {
+  it('finds the families of base styles, runs and format overrides, once each', () => {
+    const text = (fontFamily: string, runs: unknown[] = []) => ({ x: 0, y: 0, width: 10, height: 10, text: 'Sale now', style: { fontFamily, fontSize: 20, color: '#000000FF' }, runs })
+    const parsed = parseDesign({
+      meta: { schemaVersion: 2, designId: 'd', name: 'D', kind: 'single', primaryFormatId: 'sq' },
+      formats: { sq: { name: 'Square', width: 100, height: 100, order: 'a0' }, st: { name: 'Story', width: 100, height: 200, order: 'a1' } },
+      pages: { p1: { name: 'P', order: 'a0' } },
+      nodes: {
+        a: { type: 'text', parentId: 'p1', index: 'a0', name: 'A', props: text('Inter', [{ start: 0, end: 4, style: { fontFamily: 'Lobster' } }, { start: 5, end: 8, style: { fontWeight: 700 } }]) },
+        b: { type: 'text', parentId: 'p1', index: 'a1', name: 'B', props: text('Inter') },
+        g: { type: 'graphic', parentId: 'p1', index: 'a2', name: 'G', props: { x: 0, y: 0, width: 10, height: 10, shape: { kind: 'rect' } } },
+      },
+      overrides: { 'format:st': { b: { style: { fontFamily: 'Bebas Neue', fontSize: 30, color: '#000000FF' } } } },
+    })
+    if (!parsed.success) throw new Error(parsed.errors.join('\n'))
+    expect(fontFamilies(parsed.design)).toEqual(['Bebas Neue', 'Inter', 'Lobster'])
   })
 })
 

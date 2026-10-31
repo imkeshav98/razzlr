@@ -8,7 +8,7 @@ import {
   caretAt, caretPosition, drawPage, layerPictures, paragraphCache, selectionBoxes, render, renderDesign, resourceCache, sceneMemo, textMeasure, type MeasureText, type ResourceCache, type Resources, type Scene, type SceneLayer,
 } from '@razzlr/renderer'
 import {
-  canHold, imageAssetIds, isContainer, LAYER_CLIPBOARD_TYPE, LayerClipboard, LOCK_FLAGS, SCHEMA_VERSION, type Design, type ExportRequestInput, type Layer, type LayerTree, type Paint,
+  canHold, fontFamilies, imageAssetIds, isContainer, LAYER_CLIPBOARD_TYPE, LayerClipboard, LOCK_FLAGS, SCHEMA_VERSION, type Design, type ExportRequestInput, type Layer, type LayerTree, type Paint,
 } from '@razzlr/schema'
 import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from 'canvaskit-wasm'
 import canvasKitModule from 'canvaskit-wasm/full'
@@ -46,6 +46,12 @@ export interface EditorOptions {
   syncToken: () => Promise<string>
   /** The stored bytes of an image asset (#35); designs with image fills need it. */
   assetBytes?: (assetId: string) => Promise<Uint8Array>
+  /**
+   * The font files of the named families, from our storage (#50): the editor asks for the families
+   * the design uses that it doesn't ship, when it opens and whenever text names a new one. A family
+   * the catalog doesn't have is left out, and its text draws in the fallback fonts.
+   */
+  fontFiles?: (families: string[]) => Promise<{ family: string; bytes: Uint8Array }[]>
   /** The format to show first, zoomed to fit on the first page; every frame when left out. */
   formatId?: string
   /**
@@ -132,11 +138,11 @@ export async function startEditor(options: EditorOptions) {
   const status = options.onStatus ?? (() => {})
   status('Loading renderer')
   const ck: CanvasKit = await CanvasKitInit({ locateFile: (file: string) => `/vendor/${file}` })
+  // The fonts we ship, the fallbacks among them, load first; the design's own families once it is here.
   const fontBytes = await Promise.all(FONT_FACES.map(async (f) => ({ family: f.family, bytes: await bytes(`/vendor/fonts/${f.file}`) })))
   const resourceBytes = { fonts: fontBytes, fallbackFamilies: [...FALLBACK_FAMILIES], images: {} }
   // One cache for the screen and exports: fonts and images are decoded once for the editor's life.
   const cache = resourceCache(ck)
-  cache.resources(resourceBytes)
   status('Connecting')
   const doc = new Y.Doc()
   // The design kept in this browser (#37): a crash, a closed tab or a reload without a connection
@@ -159,11 +165,18 @@ export async function startEditor(options: EditorOptions) {
     })
     // The first frame and any export need every image the design names, so they load first;
     // offline, a kept design opens without them and they load when they can.
-    const images = await loadImages(imageAssetIds(readDesign(doc)), options).catch((error: unknown) => {
-      if (kept) return {}
-      throw error
-    })
-    return live(ck, cache, { ...resourceBytes, images }, doc, provider, local, options)
+    const opened = readDesign(doc)
+    const [images, fonts] = await Promise.all([
+      loadImages(imageAssetIds(opened), options).catch((error: unknown) => {
+        if (kept) return {}
+        throw error
+      }),
+      loadFonts(fontFamilies(opened), options).catch((error: unknown) => {
+        if (kept) return []
+        throw error
+      }),
+    ])
+    return live(ck, cache, { ...resourceBytes, fonts: [...resourceBytes.fonts, ...fonts], images }, doc, provider, local, options)
   } catch (error) {
     provider.destroy()
     await local.destroy()
@@ -180,6 +193,14 @@ async function loadImages(ids: string[], options: EditorOptions): Promise<Record
   return Object.fromEntries(await Promise.all(ids.map(async (id) => [id, await assetBytes(id)] as const)))
 }
 
+
+/** The families we ship are loaded already; the rest come from the catalog, when the editor was given a way. */
+const SHIPPED_FAMILIES = new Set(FONT_FACES.map((f) => f.family))
+async function loadFonts(families: string[], options: EditorOptions): Promise<{ family: string; bytes: Uint8Array }[]> {
+  const wanted = families.filter((family) => !SHIPPED_FAMILIES.has(family))
+  if (wanted.length === 0 || !options.fontFiles) return []
+  return options.fontFiles(wanted)
+}
 
 /** The editor once the design has arrived: everything it makes is freed by `destroy`. */
 function live(
@@ -976,7 +997,36 @@ function live(
   const loading = new Set<string>()
   /** The last resources with placeholders, kept while the same images are missing so pictures stay. */
   let placeholders: { for: Resources; missing: string; resources: Resources } | null = null
+  // Families text names after the design opened (a pick in the font menu, another tab) load in the
+  // background (#50); until then that text draws in the fallback fonts. Exports wait for them.
+  const fontsAsked = new Set([...SHIPPED_FAMILIES, ...resourceBytes.fonts.map((f) => f.family)])
+  let fontsLoading: Promise<void> = Promise.resolve()
+  function loadNewFonts(current: Design) {
+    if (!options.fontFiles) return
+    const fresh = fontFamilies(current).filter((family) => !fontsAsked.has(family))
+    if (fresh.length === 0) return
+    for (const family of fresh) fontsAsked.add(family)
+    const loading = loadFonts(fresh, options).then((fonts) => {
+      if (listening.signal.aborted || fonts.length === 0) return
+      resourceBytes = { ...resourceBytes, fonts: [...resourceBytes.fonts, ...fonts] }
+      resources = cache.resources(resourceBytes)
+      // Auto layout measures text in its font, so every frame's scene is made again, not only its picture.
+      for (const entry of frames.values()) entry.picture?.delete()
+      frames.clear()
+      redraw()
+    }, (error: unknown) => {
+      // Offline, a family waits for the connection; the next redraw asks for it again.
+      if (connection !== WebSocketStatus.Connected) {
+        for (const family of fresh) fontsAsked.delete(family)
+        return
+      }
+      status(`Error: a font did not load (${error instanceof Error ? error.message : String(error)})`)
+    })
+    fontsLoading = Promise.all([fontsLoading, loading]).then(() => undefined)
+  }
+
   function screenResources(current: Design): Resources {
+    loadNewFonts(current)
     const missing = imageAssetIds(current).filter((id) => !resources.images.has(id))
     if (missing.length === 0) return resources
     const fresh = missing.filter((id) => !loading.has(id))
@@ -2527,8 +2577,29 @@ function live(
      * Exports pages in formats as PNG or JPG, as this tab holds the design now, drawn in the export
      * worker so the stage stays responsive (#55). One file comes as itself, more as one zip.
      */
-    exportFiles(request: ExportRequestInput, progress?: (done: number, total: number) => void) {
+    async exportFiles(request: ExportRequestInput, progress?: (done: number, total: number) => void) {
+      // A family picked a moment ago is drawn in its own font, never the fallback.
+      await fontsLoading
       return exporter.run(session.design(), request, resourceBytes, progress)
+    },
+    /** The families whose files the editor has, shipped ones included (#50). */
+    loadedFamilies: () => [...new Set(resourceBytes.fonts.map((f) => f.family))],
+    /**
+     * Sets the font of the selected text layers, as one undo step (#50): the family, and the weight
+     * when one is given. Their files load in the background, and the text redraws when they are here.
+     */
+    setFont(fontFamily: string, fontWeight?: number) {
+      const current = session.design()
+      const ids = (selection?.ids ?? []).filter((id) => current.nodes[id]?.type === 'text')
+      if (ids.length === 0) return
+      session.gesture(() => {
+        for (const id of ids) {
+          const node = current.nodes[id]
+          if (node?.type !== 'text') continue
+          const style = { ...node.props.style, fontFamily, ...(fontWeight === undefined ? {} : { fontWeight }) }
+          runQuietly(() => session.run('node.update', { ids: [id], patch: { style } }))
+        }
+      })
     },
     synced: () => provider.synced && provider.unsyncedChanges === 0,
     destroy() {
