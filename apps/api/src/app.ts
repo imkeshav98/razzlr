@@ -1,12 +1,13 @@
 // The API's routes. /workspace and every route below /brands need a session, and reads and writes only that
 // session's workspace; a brand or design of another workspace is answered as if it didn't exist.
 import type { Db } from '@razzlr/db'
-import { BrandKit, CreateBrand, CreateDesign, RecordAsset, RecordFont, StartFontUpload, StartUpload, UpdateAsset, UpdateWorkspace, type ApiError, type AssetLink, type SignedLink, type SyncToken } from '@razzlr/schema'
+import { BrandKit, CreateBrand, CreateDesign, SaveTemplate, StartFromTemplate, RecordAsset, RecordFont, StartFontUpload, StartUpload, UpdateAsset, UpdateWorkspace, type ApiError, type AssetLink, type SignedLink, type SyncToken } from '@razzlr/schema'
 import type { Storage } from '@razzlr/storage'
 import { signSyncToken } from '@razzlr/sync-token'
 import { Hono, type MiddlewareHandler } from 'hono'
 import type { z } from 'zod'
 import { getBrandKit, InvalidKit, saveBrandKit } from './brand-kits.ts'
+import { findTemplate, listTemplates, saveTemplate, startFromTemplate, templateThumbnailKey } from './templates.ts'
 import { ensureThumbnail, findAsset, InvalidUpload, listAssets, originalKey, recordAsset, SIGNED_URL_SECONDS, startUpload, updateAsset } from './assets.ts'
 import { fontLink, InvalidFont, listFonts, recordFont, startFontUpload } from './fonts.ts'
 import { createBrand, createDesign, findBrand, findDesign, findWorkspace, InvalidContent, listBrands, listDesigns, setWorkspaceKind } from './designs.ts'
@@ -157,6 +158,46 @@ export function createApp({ db, storage, sessionOf, syncSecret }: { db: Db; stor
     if (!asset) return c.json(error('No such asset'), 404)
     const url = await storage.signedGet(await ensureThumbnail(storage, workspaceId, asset), SIGNED_URL_SECONDS)
     return c.json({ url, expiresAt: new Date(Date.now() + SIGNED_URL_SECONDS * 1000).toISOString() } satisfies SignedLink)
+  })
+
+  // Templates (#54): the workspace's and the brand's, a design saved to start others from.
+  app.get('/brands/:brandId/templates', async (c) => {
+    const { workspaceId } = c.var.session
+    const brand = await findBrand(db, workspaceId, c.req.param('brandId'))
+    if (!brand) return c.json(error('No such brand'), 404)
+    return c.json(await listTemplates(db, workspaceId, brand.id))
+  })
+
+  app.post('/brands/:brandId/templates', async (c) => {
+    const { workspaceId } = c.var.session
+    const brand = await findBrand(db, workspaceId, c.req.param('brandId'))
+    if (!brand) return c.json(error('No such brand'), 404)
+    const input = await body(c.req.raw, SaveTemplate)
+    if (input instanceof Response) return input
+    try {
+      return c.json(await saveTemplate(db, storage, workspaceId, brand.id, input), 201)
+    } catch (e) {
+      if (e instanceof InvalidContent) return c.json(error(`The design is not valid: ${e.message}`), 400)
+      throw e
+    }
+  })
+
+  app.get('/brands/:brandId/templates/:templateId/thumbnail', async (c) => {
+    const { workspaceId } = c.var.session
+    const template = await findTemplate(db, workspaceId, c.req.param('brandId'), c.req.param('templateId'))
+    if (!template) return c.json(error('No such template'), 404)
+    const url = await storage.signedGet(templateThumbnailKey(workspaceId, template.id), SIGNED_URL_SECONDS)
+    return c.json({ url, expiresAt: new Date(Date.now() + SIGNED_URL_SECONDS * 1000).toISOString() } satisfies SignedLink)
+  })
+
+  app.post('/brands/:brandId/templates/:templateId/designs', async (c) => {
+    const { workspaceId } = c.var.session
+    const brand = await findBrand(db, workspaceId, c.req.param('brandId'))
+    if (!brand) return c.json(error('No such brand'), 404)
+    const input = await body(c.req.raw, StartFromTemplate)
+    if (input instanceof Response) return input
+    const design = await startFromTemplate(db, workspaceId, brand.id, c.req.param('templateId'), input.name)
+    return design ? c.json(design, 201) : c.json(error('No such template'), 404)
   })
 
   // Brand kits (#53): the colours and fonts designs bind to, the logo and the tone of voice.
