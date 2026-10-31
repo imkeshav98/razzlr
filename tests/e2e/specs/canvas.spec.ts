@@ -163,9 +163,37 @@ test('a drag in the second format moves the layer there only; undo and override.
   await page.keyboard.press('Escape')
   // Off the stage, so no hover outline is drawn over the layer.
   await page.mouse.move(0, 0)
-  await expect.poll(async () => (await stageShot(page)).equals(before), { timeout: 10_000 }).toBe(true)
+  await expect.poll(async () => (await stageShot(page)).equals(before), { timeout: 10_000 }).toBe(true).catch(async (error: unknown) => {
+    // Both pictures go beside the run's other output, and the box where they differ to the log.
+    const after = await stageShot(page)
+    writeOutput('canvas-reset-before.png', before)
+    writeOutput('canvas-reset-after.png', after)
+    console.log('the stage differs within', await differenceBox(page, before, after))
+    throw error
+  })
   expect(errors).toEqual([])
 })
+
+/** The box, in screenshot pixels, around every pixel that differs between two PNGs; decoded in the page. */
+const differenceBox = (page: Page, a: Buffer, b: Buffer) =>
+  page.evaluate(async ([a, b]) => {
+    const pixels = async (base64: string) => {
+      const image = await createImageBitmap(await (await fetch(`data:image/png;base64,${base64}`)).blob())
+      const canvas = new OffscreenCanvas(image.width, image.height)
+      const ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D
+      ctx.drawImage(image, 0, 0)
+      return ctx.getImageData(0, 0, image.width, image.height)
+    }
+    const [x, y] = [await pixels(a), await pixels(b)]
+    let box = { left: Infinity, top: Infinity, right: -1, bottom: -1, count: 0 }
+    for (let i = 0; i < x.data.length; i += 4) {
+      if (x.data[i] === y.data[i] && x.data[i + 1] === y.data[i + 1] && x.data[i + 2] === y.data[i + 2] && x.data[i + 3] === y.data[i + 3]) continue
+      const px = (i / 4) % x.width
+      const py = Math.floor(i / 4 / x.width)
+      box = { left: Math.min(box.left, px), top: Math.min(box.top, py), right: Math.max(box.right, px), bottom: Math.max(box.bottom, py), count: box.count + 1 }
+    }
+    return box
+  }, [a.toString('base64'), b.toString('base64')] as const)
 
 test('typing into the headline in one format changes it in every format', async ({ page }) => {
   const { errors } = await open(page, fiveFormats(10))
