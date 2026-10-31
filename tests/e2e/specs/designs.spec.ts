@@ -38,7 +38,8 @@ test('a design made from the brand list opens in the editor and is there after a
   expect(errors).toEqual([])
 })
 
-test('a design id from another brand is not found', async ({ page }) => {
+test('a design id from another brand is not found', async ({ page, allowProblems }) => {
+  allowProblems(/\/brands\/dev-brand-coffee\/designs\//)
   await page.goto('/brands/dev-brand-cycles')
   await page.getByLabel('Brief').fill('Cycles only')
   await page.getByRole('button', { name: 'Make drafts' }).click()
