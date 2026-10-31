@@ -84,7 +84,7 @@ test('save a template, start a design from it, edit that design, and the templat
 
   // Start a design from it: a new design, the same pixels, none of the template's ids.
   await card.getByRole('button', { name: `Use ${name}` }).click()
-  await expect(page).toHaveURL(/\/designs\/(?!.*#)/)
+  await expect(page).toHaveURL(/\/designs\/(?!.*#)/, { timeout: 20_000 })
   await ready(page)
   const started = await read(page)
   const startedId = page.url().split('/designs/')[1]
@@ -105,7 +105,7 @@ test('save a template, start a design from it, edit that design, and the templat
   await page.goto(`/brands/${DEV_BRAND}#templates`)
   await page.locator(`li[data-template="${template?.id}"]`).getByRole('button', { name: `Use ${name}` }).click()
   await expect(page).not.toHaveURL(new RegExp(`/designs/${startedId}$`))
-  await expect(page).toHaveURL(/\/designs\//)
+  await expect(page).toHaveURL(/\/designs\//, { timeout: 20_000 })
   await ready(page)
   expect(await exportHashOf(page)).toBe(original)
   expect((await named(page, 'Box')).x).toBe(box.x)

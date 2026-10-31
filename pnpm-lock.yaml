@@ -41,6 +41,9 @@ importers:
       '@razzlr/sync-token':
         specifier: workspace:*
         version: link:../../packages/sync-token
+      '@workos-inc/node':
+        specifier: 11.0.0
+        version: 11.0.0
       drizzle-orm:
         specifier: ^0.45.0
         version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
@@ -130,6 +133,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.4.1
         version: 1.4.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@razzlr/doc':
+        specifier: workspace:*
+        version: link:../../packages/doc
       '@razzlr/editor':
         specifier: workspace:*
         version: link:../../packages/editor
@@ -1967,6 +1973,10 @@ packages:
 
   '@webgpu/types@0.1.21':
     resolution: {integrity: sha512-pUrWq3V5PiSGFLeLxoGqReTZmiiXwY3jRkIG5sLLKjyqNxrwm/04b4nw7LSmGWJcKk59XOM/YRTUwOzo4MMlow==}
+
+  '@workos-inc/node@11.0.0':
+    resolution: {integrity: sha512-swUT6CbkuVQXMOtUpI70LZ8usjSg8OXcKMjKdoYLeqCApRI0Oo97l+nZ0lKzZ5GxjxgcVZGGVK025h7z9WyCJg==}
+    engines: {node: '>=22.11.0'}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -4573,6 +4583,8 @@ snapshots:
       tinyrainbow: 2.0.0
 
   '@webgpu/types@0.1.21': {}
+
+  '@workos-inc/node@11.0.0': {}
 
   acorn-jsx@5.3.2(acorn@8.19.0):
     dependencies:

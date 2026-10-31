@@ -11,6 +11,7 @@ import { ExportMenu } from '../../../../../components/editor/export-menu.tsx'
 import { ASSET_DRAG_TYPE, AssetLibrary, draggedAsset } from '../../../../../components/editor/asset-library.tsx'
 import { BrandKitPanel } from '../../../../../components/editor/brand-kit-panel.tsx'
 import { TemplateMenu } from '../../../../../components/editor/template-menu.tsx'
+import { LayersPanel } from '../../../../../components/editor/layers-panel.tsx'
 import { BrandKit, brandVariables, FontFamily, type Variables } from '@razzlr/schema'
 
 declare global {
@@ -177,7 +178,7 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
           <ExportMenu editor={editor} />
         </>
       ) : undefined}
-      panels={editor ? { assets: <AssetLibrary editor={editor} brandId={brandId} />, brand: <BrandKitPanel editor={editor} brandId={brandId} /> } : {}}
+      panels={editor ? { layers: <LayersPanel editor={editor} />, assets: <AssetLibrary editor={editor} brandId={brandId} />, brand: <BrandKitPanel editor={editor} brandId={brandId} /> } : {}}
       inspector={editor ? <PropertyCards editor={editor} brandId={brandId} onRemoved={setRemoved} /> : undefined}
     >
       {/* The design is a picture, so it never mirrors: the stage stays left to right in Arabic too. */}

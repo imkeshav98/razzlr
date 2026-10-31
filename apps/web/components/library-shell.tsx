@@ -9,6 +9,7 @@ import type { BrandWords, Messages } from '../lib/i18n/index.ts'
 import type { BrandSummary } from '@razzlr/schema'
 import { BrandMark } from './brand-mark.tsx'
 import { LocaleSwitch } from './locale-switch.tsx'
+import { SignOut } from './sign-out.tsx'
 import { ThemeSwitch } from './theme-switch.tsx'
 
 const initials = (name: string) => name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase()
@@ -84,6 +85,7 @@ export function LibraryShell({ t, words, brands, activeBrandId, showBrands = tru
           <span className="ms-auto flex items-center gap-2">
             <LocaleSwitch />
             <ThemeSwitch />
+            <SignOut />
           </span>
         </header>
 

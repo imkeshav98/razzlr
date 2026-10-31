@@ -8,6 +8,14 @@ The design editor and AI ad flow for solo marketers, companies and agencies. Thi
 Whoever signs up and pays: its seats, brands, AI credits and billing. A person can belong to several. See ADR-0011.
 _Avoid_: Org, account, team, tenant
 
+**Member**:
+A person in a workspace, with one role there: Owner, Admin, Editor or Reviewer. Whoever signs up first is its Owner. See ADR-0012.
+_Avoid_: Seat (that is billing), user (a user is the person, a member their place in one workspace)
+
+**Session**:
+A signed-in person in one of their workspaces: what every API route checks the workspace and brand against. It ends when they sign out, after seven days, or when they stop being a member there.
+_Avoid_: Login, auth
+
 **Workspace kind**:
 Who a workspace is for: solo, company or agency, asked at onboarding. It changes defaults and words only, never what is stored: an agency workspace calls its brands "Clients".
 _Avoid_: Plan, tier (those are billing)
@@ -63,6 +71,14 @@ The format whose layout seeds any format that has no stored value yet.
 **Layer**:
 One element in a page's tree, stored in the flat `nodes` map with a parent id and fractional index. There are seven layer types: frame, group, graphic, boolean, text, instance, lottie.
 _Avoid_: Element, object, block, item
+
+**Layers panel**:
+The page's layers as a tree, topmost first: select, reorder, move into and out of groups, rename, lock and hide them. It selects in step with the stage.
+_Avoid_: Outline, layer list
+
+**Property cards**:
+The cards at the stage's top end that edit the selection, or the design when nothing is selected. A value the selected layers don't share shows as mixed. With more than one format, a change goes to every format (the base, with that property's overrides cleared) or to this format only (an override).
+_Avoid_: Inspector (in code), properties panel
 
 **Graphic**:
 A layer made of a shape plus fills, strokes and effects. Photos and video are fills on a graphic, not layers of their own.
