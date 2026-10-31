@@ -14,9 +14,12 @@ import { fontFiles } from './fonts.ts'
 
 let shipped: { family: string; bytes: Uint8Array }[] | undefined
 
-/** What drawing the design for this brand needs. An image the brand has no asset for is left out. */
-export async function resourcesFor(db: Db, storage: Storage, workspaceId: string, brandId: string, design: Design): Promise<ResourceBytes> {
-  shipped ??= loadFontFiles().map(({ family, bytes }) => ({ family, bytes }))
+/**
+ * What drawing the design for this brand needs beyond the fonts we ship: the brand's catalog
+ * families, the originals of its images and its brand kit's values. An image the brand has no
+ * asset for is left out. A drawing worker that holds the shipped fonts itself needs only this.
+ */
+export async function brandResourcesFor(db: Db, storage: Storage, workspaceId: string, brandId: string, design: Design): Promise<ResourceBytes> {
   const variables = brandVariables(await getBrandKit(db, workspaceId, brandId))
   const [fonts, images] = await Promise.all([
     fontFiles(db, storage, workspaceId, brandId, fontFamilies(design, variables)),
@@ -26,7 +29,14 @@ export async function resourcesFor(db: Db, storage: Storage, workspaceId: string
       return bytes ? [[id, bytes] as const] : []
     })),
   ])
-  return { fonts: [...shipped, ...fonts], fallbackFamilies: [...FALLBACK_FAMILIES], images: Object.fromEntries(images.flat()), variables }
+  return { fonts, fallbackFamilies: [...FALLBACK_FAMILIES], images: Object.fromEntries(images.flat()), variables }
+}
+
+/** What drawing the design for this brand needs, the shipped fonts included. */
+export async function resourcesFor(db: Db, storage: Storage, workspaceId: string, brandId: string, design: Design): Promise<ResourceBytes> {
+  shipped ??= loadFontFiles().map(({ family, bytes }) => ({ family, bytes }))
+  const resources = await brandResourcesFor(db, storage, workspaceId, brandId, design)
+  return { ...resources, fonts: [...shipped, ...resources.fonts] }
 }
 
 /** The first page in the primary format, as an export draws it. */
