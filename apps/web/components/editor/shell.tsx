@@ -92,7 +92,7 @@ function useShownStatus(status: string) {
   return shown
 }
 
-export function EditorShell({ brandId, brandName, designName, status, tool: shownTool, shape = 'rect', onToolChange, inspector, children }: {
+export function EditorShell({ brandId, brandName, designName, status, tool: shownTool, shape = 'rect', onToolChange, inspector, actions, children }: {
   brandId: string
   brandName: string
   designName: string
@@ -104,6 +104,8 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
   onToolChange?: (tool: Tool, shape: ShapeTool) => void
   /** The inspector's contents once the design is open; an empty state until then. */
   inspector?: ReactNode
+  /** Buttons for the design as a whole, such as Export, at the header's end. */
+  actions?: ReactNode
   children: ReactNode
 }) {
   const t = useMessages()
@@ -134,6 +136,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
               <h1 className="truncate font-semibold">{designName}</h1>
             </nav>
             <div className="ms-auto flex items-center gap-2">
+              {actions}
               <span
                 role="status"
                 aria-atomic="true"
