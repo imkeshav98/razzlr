@@ -735,13 +735,15 @@ function descendants(design: Design, parentId: string): string[] {
   return childrenOf(design, parentId).flatMap(([id]) => [id, ...descendants(design, id)])
 }
 
-/** Renames a page. */
+/** Renames a page, or sets its background fills (the Page card, #83). */
 export const pageUpdate = defineCommand({
   name: 'page.update',
-  input: z.object({ id: PageId, name: z.string() }),
+  input: z.object({ id: PageId, name: z.string().optional(), fills: Paint.array().optional() }),
   check: ({ design }, { id }) => (design.pages[id] ? undefined : `no page "${id}"`),
-  apply: ({ r }, { id, name }) => {
-    r.pages.get(id)?.set('name', name)
+  apply: ({ r }, { id, name, fills }) => {
+    const page = r.pages.get(id)
+    if (name !== undefined) page?.set('name', name)
+    if (fills !== undefined) page?.set('fills', fills)
   },
 })
 

@@ -12,6 +12,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type Keyboard
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
+import { CARD, CardHeader } from './card.tsx'
 import { useEditorDesign } from './formats-panel.tsx'
 
 /** The fonts we ship, as catalog families; they have no stored preview. */
@@ -117,10 +118,8 @@ export function FontPanel({ editor, brandId }: { editor: Editor; brandId: string
   }
 
   return (
-    <section aria-labelledby="font-title" className="border-b border-line" data-testid="font-panel">
-      <div className="flex h-10 items-center ps-4 pe-2">
-        <h3 id="font-title" className="text-xs font-semibold tracking-wide text-muted">{t.editor.fonts.title}</h3>
-      </div>
+    <section aria-labelledby="font-title" className={cn(CARD, 'overflow-visible')} data-testid="font-panel">
+      <CardHeader id="font-title" title={t.editor.fonts.title} />
       <div ref={box} className="relative flex flex-col gap-2 px-4 pb-3">
         <button
           type="button"

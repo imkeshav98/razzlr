@@ -23,14 +23,22 @@ export function zoomAt(c: Camera, at: Point, zoom: number): Camera {
   return { zoom: next, x: at.x - world.x * next, y: at.y - world.y * next }
 }
 
-/** The camera that shows the whole rect, centred, with `padding` screen pixels around it. */
-export function fit(rect: Rect, viewport: Viewport, padding = 48): Camera {
-  const room = { width: Math.max(1, viewport.width - 2 * padding), height: Math.max(1, viewport.height - 2 * padding) }
+/** Screen pixels at each edge of the stage that floating chrome covers (#83). */
+export interface Insets { top: number; right: number; bottom: number; left: number }
+export const NO_INSETS: Insets = { top: 0, right: 0, bottom: 0, left: 0 }
+
+/**
+ * The camera that shows the whole rect, centred in the part of the viewport the insets leave
+ * clear, with `padding` screen pixels around it.
+ */
+export function fit(rect: Rect, viewport: Viewport, padding = 48, insets: Insets = NO_INSETS): Camera {
+  const clear = { width: viewport.width - insets.left - insets.right, height: viewport.height - insets.top - insets.bottom }
+  const room = { width: Math.max(1, clear.width - 2 * padding), height: Math.max(1, clear.height - 2 * padding) }
   const zoom = clampZoom(Math.min(MAX_FIT_ZOOM, room.width / Math.max(1, rect.width), room.height / Math.max(1, rect.height)))
   return {
     zoom,
-    x: viewport.width / 2 - (rect.x + rect.width / 2) * zoom,
-    y: viewport.height / 2 - (rect.y + rect.height / 2) * zoom,
+    x: insets.left + clear.width / 2 - (rect.x + rect.width / 2) * zoom,
+    y: insets.top + clear.height / 2 - (rect.y + rect.height / 2) * zoom,
   }
 }
 

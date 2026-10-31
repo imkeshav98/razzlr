@@ -61,4 +61,19 @@ describe('camera', () => {
     expect((topLeft.x + bottomRight.x) / 2).toBeCloseTo(640)
     for (const frame of frameGrid(design).frames) expect(intersects(frame, visibleRect(camera, viewport))).toBe(true)
   })
+
+  it('fits between the floating chrome, centred in the clear part of the stage', () => {
+    const { bounds } = frameGrid(design)
+    const viewport = { width: 1440, height: 850 }
+    const insets = { top: 0, right: 320, bottom: 72, left: 76 }
+    const camera = fit(bounds, viewport, 48, insets)
+    const topLeft = toScreen(camera, bounds)
+    const bottomRight = toScreen(camera, { x: bounds.x + bounds.width, y: bounds.y + bounds.height })
+    expect(topLeft.x).toBeGreaterThanOrEqual(76 + 48 - 1e-9)
+    expect(bottomRight.x).toBeLessThanOrEqual(1440 - 320 - 48 + 1e-9)
+    expect(bottomRight.y).toBeLessThanOrEqual(850 - 72 - 48 + 1e-9)
+    // Centred between the capsule and the cards, not on the whole stage.
+    expect((topLeft.x + bottomRight.x) / 2).toBeCloseTo(76 + (1440 - 76 - 320) / 2)
+    expect(fit(bounds, viewport, 48, { top: 0, right: 0, bottom: 0, left: 0 })).toEqual(fit(bounds, viewport, 48))
+  })
 })
