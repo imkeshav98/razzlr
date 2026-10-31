@@ -53,8 +53,8 @@ export function BriefComposer({ t, brandName, kitColors, action }: {
         <Prompt template={h.prompt} brandName={brandName} />
       </h1>
       {/* A gradient edge: the gradient behind, the composer inset by its width. */}
-      <div className="mx-auto mt-6 max-w-3xl rounded-[22px] bg-[image:var(--ai-gradient)] p-[1.5px] shadow-[0_24px_60px_-28px_rgb(255_72_176/0.55)] md:mt-7">
-        <form action={action} className="rounded-[20.5px] bg-surface/95 p-3 backdrop-blur md:px-5 md:py-4">
+      <div className="ai-edge relative mx-auto mt-6 max-w-3xl rounded-[22px] p-[1.5px] shadow-[0_24px_60px_-28px_rgb(255_72_176/0.55)] md:mt-7">
+        <form action={action} className="rounded-[20.5px] bg-surface p-3 md:px-5 md:py-4">
           <label htmlFor="brief" className="sr-only">{h.brief}</label>
           <textarea
             id="brief"

@@ -164,45 +164,56 @@ body {
   .ai-sheen {
     display: none;
   }
+  /* The AI gradient stands still. */
+  .ai-glow::before,
+  .ai-edge::before {
+    animation: none !important;
+  }
 }
 
-/* The AI glow: a slow drift of the gradient behind AI controls only. The gradient is a layer twice
-   the control's width that slides, so the drift is a compositor transform, never a repaint: a
-   repaint every frame also repainted whatever blurs behind the control, like the home's aurora,
-   which made software-rendered pages (CI) slow to draw. The element needs a position, as all do. */
-@keyframes ai-drift {
-  from { transform: translateX(0); }
+/* The AI gradient in motion, as in the final mock: pink, cobalt, yellow and back to pink at 110deg,
+   each repeat three controls wide, sliding one repeat every 5 s with no seam. It slides as a layer
+   six controls wide (two repeats) moved by transform, so the slide is a compositor transform, never
+   a repaint: a repaint every frame also repainted whatever blurs behind the control, like the home's
+   aurora, which made software-rendered pages (CI) slow to draw. .ai-glow fills AI controls (Make
+   drafts); .ai-edge is the brief composer's gradient edge. The element needs a position. */
+@keyframes ai-slide {
   to { transform: translateX(-50%); }
 }
-@keyframes ai-drift-rtl {
-  from { transform: translateX(0); }
+@keyframes ai-slide-rtl {
   to { transform: translateX(50%); }
 }
-.ai-glow {
+.ai-glow,
+.ai-edge {
   isolation: isolate;
   overflow: hidden;
 }
 .ai-glow::before,
-.ai-glow::after {
+.ai-glow::after,
+.ai-edge::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
 }
-.ai-glow::before {
+.ai-glow::before,
+.ai-edge::before {
   inset-inline-end: auto;
-  width: 200%;
-  background-image: var(--ai-gradient);
-  animation: ai-drift 6s ease-in-out infinite alternate;
+  width: 600%;
+  background-image: linear-gradient(110deg, var(--ai-1), var(--ai-2), var(--ai-3), var(--ai-1));
+  background-size: 50% 100%;
+  animation: ai-slide 5s linear infinite;
 }
-[dir='rtl'] .ai-glow::before {
-  animation-name: ai-drift-rtl;
+[dir='rtl'] .ai-glow::before,
+[dir='rtl'] .ai-edge::before {
+  animation-name: ai-slide-rtl;
 }
-/* A fine halftone over the gradient, like a riso print's dot screen. */
+/* The riso halftone overprinted on AI controls: a white dot screen, blended as overlay. */
 .ai-glow::after {
-  background-image: radial-gradient(circle, rgb(255 255 255 / 0.3) 22%, transparent 24%);
-  background-size: 5px 5px;
+  background-image: radial-gradient(circle, rgb(255 255 255 / 0.35) 22%, transparent 24%);
+  background-size: 0.5vw 0.5vw;
+  mix-blend-mode: overlay;
 }
 /* The sheen on AI buttons (Make drafts): a band of light that sweeps across now and then. It is a
    child span, as both pseudo-elements are taken, and it moves by transform only, for the reason
@@ -591,21 +602,33 @@ body {
   pointer-events: none;
 }
 
-/* The home's aurora (#84): slow blurred light in the accent colours behind the brief. */
-@keyframes aurora-drift {
-  0%, 100% { transform: translate3d(-5%, -3%, 0) rotate(0deg) scale(1); }
-  50% { transform: translate3d(5%, 4%, 0) rotate(10deg) scale(1.08); }
+/* The home's aurora (#84), as in the final mock: a blurred conic blob of the AI colours, 70 wide by
+   34 high (in viewport widths), centred just above the headline, at 45%, turning once in 14 s. The
+   blob is a circle squashed into the ellipse; the circle turns by transform, so it never repaints. */
+@keyframes aurora-turn {
+  to { transform: rotate(1turn); }
 }
 .aurora {
   position: absolute;
-  inset: -35% -10%;
+  inset-inline: 15%;
+  inset-block-start: -28vw;
+  aspect-ratio: 1;
+  scale: 1 0.486;
+  opacity: 0.45;
   pointer-events: none;
-  background:
-    radial-gradient(38% 48% at 28% 42%, color-mix(in oklab, var(--accent) 42%, transparent), transparent 70%),
-    radial-gradient(34% 44% at 72% 52%, color-mix(in oklab, var(--accent-2) 38%, transparent), transparent 70%),
-    radial-gradient(26% 36% at 54% 22%, rgb(255 210 63 / 0.22), transparent 70%);
-  filter: blur(48px);
-  animation: aurora-drift 26s ease-in-out infinite;
+}
+.aurora::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(var(--ai-1), var(--ai-2), var(--ai-3), var(--ai-1));
+  filter: blur(6vw);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .aurora::before {
+    animation: aurora-turn 14s linear infinite;
+  }
 }
 
 /* Sign in (mock screen 34): behind the whole page, three copies of a sample ad fanned out over a
