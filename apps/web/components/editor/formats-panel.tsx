@@ -74,8 +74,6 @@ export function FormatsPanel({ editor, onRemoved }: { editor: Editor; onRemoved:
   const { design, focused } = useEditorDesign(editor)
   const formats = ordered(design)
   const [renaming, setRenaming] = useState<string | null>(null)
-  // The strip of tiles, as in the mock; the chevron opens the list that renames, reorders and removes.
-  const [managing, setManaging] = useState(false)
   const run = editor.session.run.bind(editor.session)
   const background = backgroundOf(design)
 
@@ -88,143 +86,114 @@ export function FormatsPanel({ editor, onRemoved }: { editor: Editor; onRemoved:
   return (
     <section aria-labelledby="formats-title" className={CARD}>
       <CardHeader id="formats-title" title={t.editor.formats.title} count={formats.length}>
-        <Tooltip label={t.editor.formats.manage}>
-          <button type="button" aria-label={t.editor.formats.manage} aria-expanded={managing} onClick={() => setManaging(!managing)} className={ICON_BUTTON}>
-            <CaretDownIcon size={14} weight="bold" aria-hidden className={cn('transition-transform duration-[var(--chrome-fast)]', managing && 'rotate-180')} />
-          </button>
-        </Tooltip>
+        <AddFormat editor={editor} />
       </CardHeader>
-      {!managing && (
-        <div className="flex items-end gap-3 overflow-x-auto px-[18px] pb-4 [scrollbar-width:none]">
-          <ul aria-label={t.editor.formats.title} className="flex items-end gap-3" data-testid="formats">
-            {formats.map(([id, f]) => {
-              const primary = design.meta.primaryFormatId === id
-              const on = focused === id
-              return (
-                <li key={id} data-format={id} data-focused={on ? '' : undefined} className="shrink-0">
-                  <Tooltip label={on ? t.editor.formats.exitFocus : t.editor.formats.focus}>
-                    <button
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() => editor.focus(on ? null : id)}
-                      className="group flex cursor-pointer flex-col items-center gap-1.5 text-[11px] font-semibold text-muted hover:text-text aria-pressed:text-text"
-                    >
-                      <span
-                        aria-hidden
-                        className="relative rounded-[4px] border border-line-strong bg-hover transition-shadow duration-[var(--chrome-fast)] group-hover:shadow-[0_0_0_2px_var(--line-strong)] group-aria-pressed:shadow-[0_0_0_2px_var(--accent)]"
-                        style={{ ...tileSize(f), backgroundColor: background }}
-                      >
-                        {primary && <StarIcon size={10} weight="fill" className="absolute -end-1 -top-1 text-accent-text drop-shadow" />}
-                      </span>
-                      <span className="max-w-16 truncate">{f.name}</span>
-                      {primary && <span className="sr-only">{t.editor.formats.primary}</span>}
-                    </button>
-                  </Tooltip>
-                </li>
-              )
-            })}
-          </ul>
-          <AddFormat editor={editor} tile />
-        </div>
-      )}
-      {managing && (
-        <>
-          <ul aria-label={t.editor.formats.title} className="px-2.5 pb-1" data-testid="formats">
-            {formats.map(([id, f], i) => {
-              const primary = design.meta.primaryFormatId === id
-              return (
-                <li
-                  key={id}
-                  data-format={id}
-                  data-focused={focused === id ? '' : undefined}
-                  className="group flex h-[var(--row)] items-center gap-1 rounded-row ps-1 pe-2 hover:bg-hover data-[focused]:bg-accent-soft"
+      {/* The formats as a picture, as in the final mock: each a tile in its proportions, filled with
+          the first page's background, ringed while shown alone, starred if primary. The list below
+          does the work. */}
+      <div aria-hidden className="flex items-end gap-3 overflow-x-auto px-[18px] pb-3 [scrollbar-width:none]" data-testid="format-tiles">
+        {formats.map(([id, f]) => (
+          <span key={id} className="flex shrink-0 flex-col items-center gap-1.5 text-[11px] font-semibold text-muted">
+            <span
+              className={cn('relative rounded-[4px] border border-line-strong bg-hover', focused === id && 'shadow-[0_0_0_2px_var(--accent)]')}
+              style={{ ...tileSize(f), backgroundColor: background }}
+            >
+              {design.meta.primaryFormatId === id && <StarIcon size={10} weight="fill" className="absolute -end-1 -top-1 text-accent-text drop-shadow" />}
+            </span>
+            <span className="max-w-16 truncate">{f.name}</span>
+          </span>
+        ))}
+      </div>
+      <ul aria-label={t.editor.formats.title} className="px-2.5 pb-2" data-testid="formats">
+        {formats.map(([id, f], i) => {
+          const primary = design.meta.primaryFormatId === id
+          return (
+            <li
+              key={id}
+              data-format={id}
+              data-focused={focused === id ? '' : undefined}
+              className="group flex h-[var(--row)] items-center gap-1 rounded-row ps-1 pe-2 hover:bg-hover data-[focused]:bg-accent-soft"
+            >
+              <Tooltip label={primary ? t.editor.formats.primary : t.editor.formats.makePrimary}>
+                <button
+                  type="button"
+                  aria-label={primary ? t.editor.formats.primary : t.editor.formats.makePrimary}
+                  aria-pressed={primary}
+                  onClick={() => primary || run('format.setPrimary', { id })}
+                  className={cn(ICON_BUTTON, primary ? 'text-accent-text' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100')}
                 >
-                  <Tooltip label={primary ? t.editor.formats.primary : t.editor.formats.makePrimary}>
-                    <button
-                      type="button"
-                      aria-label={primary ? t.editor.formats.primary : t.editor.formats.makePrimary}
-                      aria-pressed={primary}
-                      onClick={() => primary || run('format.setPrimary', { id })}
-                      className={cn(ICON_BUTTON, primary ? 'text-accent-text' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100')}
-                    >
-                      <StarIcon size={14} weight={primary ? 'fill' : 'regular'} aria-hidden />
-                    </button>
-                  </Tooltip>
-                  <Proportion width={f.width} height={f.height} className="text-subtle" />
-                  {renaming === id ? (
-                    <input
-                      aria-label={t.editor.formats.rename}
-                      defaultValue={f.name}
-                      autoFocus
-                      onFocus={(e) => e.currentTarget.select()}
-                      onBlur={(e) => rename(id, e.currentTarget.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') rename(id, e.currentTarget.value)
-                        if (e.key === 'Escape') setRenaming(null)
-                        e.stopPropagation()
-                      }}
-                      className="h-6 min-w-0 flex-1 rounded-[6px] border border-accent bg-surface px-1.5 text-[13px] outline-none"
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      onDoubleClick={() => setRenaming(id)}
-                      onKeyDown={(e) => e.key === 'Enter' && setRenaming(id)}
-                      aria-label={`${t.editor.formats.rename}: ${f.name}`}
-                      className="min-w-0 flex-1 cursor-default truncate text-start text-[13px]"
-                    >
-                      {f.name}
-                    </button>
-                  )}
-                  <span className="shrink-0 font-mono text-[11px] text-subtle tabular-nums group-hover:hidden group-focus-within:hidden">
-                    {sizeOf(f)}
-                  </span>
-                  <span className="hidden shrink-0 items-center group-hover:flex group-focus-within:flex">
-                    <Tooltip label={focused === id ? t.editor.formats.exitFocus : t.editor.formats.focus}>
-                      <button type="button" aria-label={t.editor.formats.focus} aria-pressed={focused === id} onClick={() => editor.focus(focused === id ? null : id)} className={ICON_BUTTON}>
-                        <ArrowsInSimpleIcon size={14} aria-hidden />
-                      </button>
-                    </Tooltip>
-                    <Tooltip label={t.editor.formats.moveUp}>
-                      <button type="button" aria-label={t.editor.formats.moveUp} disabled={i === 0} onClick={() => run('format.update', { id, before: formats[i - 1]?.[0] ?? null })} className={ICON_BUTTON}>
-                        <CaretUpIcon size={14} aria-hidden />
-                      </button>
-                    </Tooltip>
-                    <Tooltip label={t.editor.formats.moveDown}>
-                      <button type="button" aria-label={t.editor.formats.moveDown} disabled={i === formats.length - 1} onClick={() => run('format.update', { id, before: formats[i + 2]?.[0] ?? null })} className={ICON_BUTTON}>
-                        <CaretDownIcon size={14} aria-hidden />
-                      </button>
-                    </Tooltip>
-                    <Tooltip label={t.editor.formats.remove}>
-                      <button
-                        type="button"
-                        aria-label={t.editor.formats.remove}
-                        disabled={primary || formats.length === 1}
-                        onClick={() => {
-                          run('format.remove', { id })
-                          onRemoved(format(t.editor.formats.removed, { name: f.name }))
-                        }}
-                        className={cn(ICON_BUTTON, 'hover:text-danger')}
-                      >
-                        <TrashIcon size={14} aria-hidden />
-                      </button>
-                    </Tooltip>
-                  </span>
-                </li>
-              )
-            })}
-          </ul>
-          <div className="px-[18px] pb-4 pt-1">
-            <AddFormat editor={editor} />
-          </div>
-        </>
-      )}
+                  <StarIcon size={14} weight={primary ? 'fill' : 'regular'} aria-hidden />
+                </button>
+              </Tooltip>
+              <Proportion width={f.width} height={f.height} className="text-subtle" />
+              {renaming === id ? (
+                <input
+                  aria-label={t.editor.formats.rename}
+                  defaultValue={f.name}
+                  autoFocus
+                  onFocus={(e) => e.currentTarget.select()}
+                  onBlur={(e) => rename(id, e.currentTarget.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') rename(id, e.currentTarget.value)
+                    if (e.key === 'Escape') setRenaming(null)
+                    e.stopPropagation()
+                  }}
+                  className="h-6 min-w-0 flex-1 rounded-[6px] border border-accent bg-surface px-1.5 text-[13px] outline-none"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onDoubleClick={() => setRenaming(id)}
+                  onKeyDown={(e) => e.key === 'Enter' && setRenaming(id)}
+                  aria-label={`${t.editor.formats.rename}: ${f.name}`}
+                  className="min-w-0 flex-1 cursor-default truncate text-start text-[13px]"
+                >
+                  {f.name}
+                </button>
+              )}
+              <span className="shrink-0 font-mono text-[11px] text-subtle tabular-nums group-hover:hidden group-focus-within:hidden">
+                {sizeOf(f)}
+              </span>
+              <span className="hidden shrink-0 items-center group-hover:flex group-focus-within:flex">
+                <Tooltip label={focused === id ? t.editor.formats.exitFocus : t.editor.formats.focus}>
+                  <button type="button" aria-label={t.editor.formats.focus} aria-pressed={focused === id} onClick={() => editor.focus(focused === id ? null : id)} className={ICON_BUTTON}>
+                    <ArrowsInSimpleIcon size={14} aria-hidden />
+                  </button>
+                </Tooltip>
+                <Tooltip label={t.editor.formats.moveUp}>
+                  <button type="button" aria-label={t.editor.formats.moveUp} disabled={i === 0} onClick={() => run('format.update', { id, before: formats[i - 1]?.[0] ?? null })} className={ICON_BUTTON}>
+                    <CaretUpIcon size={14} aria-hidden />
+                  </button>
+                </Tooltip>
+                <Tooltip label={t.editor.formats.moveDown}>
+                  <button type="button" aria-label={t.editor.formats.moveDown} disabled={i === formats.length - 1} onClick={() => run('format.update', { id, before: formats[i + 2]?.[0] ?? null })} className={ICON_BUTTON}>
+                    <CaretDownIcon size={14} aria-hidden />
+                  </button>
+                </Tooltip>
+                <Tooltip label={t.editor.formats.remove}>
+                  <button
+                    type="button"
+                    aria-label={t.editor.formats.remove}
+                    disabled={primary || formats.length === 1}
+                    onClick={() => {
+                      run('format.remove', { id })
+                      onRemoved(format(t.editor.formats.removed, { name: f.name }))
+                    }}
+                    className={cn(ICON_BUTTON, 'hover:text-danger')}
+                  >
+                    <TrashIcon size={14} aria-hidden />
+                  </button>
+                </Tooltip>
+              </span>
+            </li>
+          )
+        })}
+      </ul>
     </section>
   )
 }
 
-/** The way to add a format: the strip's dashed Add tile, or a chip under the list. */
-function AddFormat({ editor, tile = false }: { editor: Editor; tile?: boolean }) {
+function AddFormat({ editor }: { editor: Editor }) {
   const t = useMessages()
   const [open, setOpen] = useState(false)
   const [width, setWidth] = useState('')
@@ -253,21 +222,9 @@ function AddFormat({ editor, tile = false }: { editor: Editor; tile?: boolean })
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Tooltip label={t.editor.formats.add}>
         <Popover.Trigger asChild>
-          {tile
-            ? (
-              <button type="button" aria-label={t.editor.formats.add} className="group flex shrink-0 cursor-pointer flex-col items-center gap-1.5 text-[11px] font-semibold text-muted hover:text-text">
-                <span aria-hidden className="grid size-11 place-items-center rounded-[6px] border border-dashed border-line-strong transition-colors duration-[var(--chrome-fast)] group-hover:border-accent group-hover:text-accent-text">
-                  <PlusIcon size={16} />
-                </span>
-                {t.editor.formats.addTile}
-              </button>
-            )
-            : (
-              <button type="button" aria-label={t.editor.formats.add} className={CHIP}>
-                <PlusIcon size={12} aria-hidden />
-                {t.editor.formats.addTile}
-              </button>
-            )}
+          <button type="button" aria-label={t.editor.formats.add} className={ICON_BUTTON}>
+            <PlusIcon size={16} aria-hidden />
+          </button>
         </Popover.Trigger>
       </Tooltip>
       <Popover.Portal>

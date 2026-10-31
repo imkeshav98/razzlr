@@ -51,19 +51,18 @@ function useSelection(editor: Editor) {
 }
 
 /**
- * The style of the selected text layers in the format they are shown in: their family, weight and
- * size, or null where they differ.
+ * The base style of the selected text layers: their family and weight, or null where they differ;
+ * and the size they are shown at in the format shown, for the card's note.
  */
 function selectedFont(design: Design, ids: string[], formatId: string) {
-  const styles = ids.flatMap((id) => {
+  const texts = ids.flatMap((id) => {
     const node = design.nodes[id]
-    if (node?.type !== 'text') return []
-    const own = design.overrides[`format:${formatId}`]?.[id]?.style as Partial<typeof node.props.style> | undefined
-    return [{ ...node.props.style, ...own }]
+    return node?.type === 'text' ? [{ id, style: node.props.style }] : []
   })
-  if (styles.length === 0) return null
+  if (texts.length === 0) return null
   const same = <T,>(values: T[]) => (values.every((v) => v === values[0]) ? values[0] ?? null : null)
-  return { family: same(styles.map((s) => s.fontFamily)), weight: same(styles.map((s) => s.fontWeight)), size: same(styles.map((s) => s.fontSize)) }
+  const sizes = texts.map(({ id, style }) => (design.overrides[`format:${formatId}`]?.[id]?.style as Partial<typeof style> | undefined)?.fontSize ?? style.fontSize)
+  return { family: same(texts.map(({ style }) => style.fontFamily)), weight: same(texts.map(({ style }) => style.fontWeight)), size: same(sizes) }
 }
 
 /** The face that previews a family: upright and nearest Regular. */

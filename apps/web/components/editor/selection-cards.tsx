@@ -8,11 +8,11 @@
 import { MinusIcon, PlusIcon } from '@phosphor-icons/react'
 import type { Editor } from '@razzlr/editor'
 import { BlendMode, ContainerBlendMode, type Design, type Effect, type Paint } from '@razzlr/schema'
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useId, useRef, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
-import { useLocale, useMessages } from '../../lib/i18n/client.tsx'
-import { dirOf, format, type Messages } from '../../lib/i18n/index.ts'
-import { CARD, CardHeader, FineTune } from './card.tsx'
+import { useMessages } from '../../lib/i18n/client.tsx'
+import { format, type Messages } from '../../lib/i18n/index.ts'
+import { CARD, CardHeader } from './card.tsx'
 import { ICON_BUTTON } from './formats-panel.tsx'
 import { useLiveDesign } from './use-live-design.ts'
 
@@ -206,54 +206,12 @@ function Choice<T extends string>({ name, value, options, labels, onSet }: { nam
   )
 }
 
-function Card({ id, title, note, action, children, after }: { id: string; title: string; note?: string; action?: ReactNode; children: ReactNode; after?: ReactNode }) {
+function Card({ id, title, note, action, children }: { id: string; title: string; note?: string; action?: ReactNode; children: ReactNode }) {
   return (
     <section aria-labelledby={id} className={CARD} data-testid={id}>
       <CardHeader id={`${id}-title`} title={title} note={note}>{action}</CardHeader>
       <div className="flex flex-col gap-2.5 px-[18px] pb-4 empty:hidden">{children}</div>
-      {after}
     </section>
-  )
-}
-
-const SLIDER = cn(
-  'h-1.5 w-full min-w-0 cursor-pointer appearance-none rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface',
-  '[&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-[0_0_0_1px_rgb(0_0_0/0.12),0_1px_4px_rgb(0_0_0/0.45)]',
-  '[&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-white',
-)
-
-/**
- * A number as a pink slider, as in the mock, beside its field: a drag, however long, is one undo
- * step, like a scrub; the arrow keys step it.
- */
-function Slider({ name, value, min, max, editor, onSet }: { name: string; value: number | 'mixed' | undefined; min: number; max: number; editor: Editor; onSet: (value: number) => void }) {
-  const rtl = dirOf(useLocale()) === 'rtl'
-  const gesture = useRef<(() => void) | null>(null)
-  const stop = () => {
-    gesture.current?.()
-    gesture.current = null
-  }
-  useEffect(() => stop, [])
-  const shown = typeof value === 'number' ? clamp(value, min, max) : (min + max) / 2
-  const fill = ((shown - min) / (max - min)) * 100
-  return (
-    <input
-      type="range"
-      aria-label={name}
-      min={min}
-      max={max}
-      step={1}
-      value={shown}
-      onPointerDown={() => {
-        if (gesture.current) return
-        gesture.current = editor.beginGesture()
-        window.addEventListener('pointerup', stop, { once: true })
-      }}
-      onChange={(event) => onSet(Number(event.target.value))}
-      onKeyDown={(event) => event.stopPropagation()}
-      style={{ background: `linear-gradient(to ${rtl ? 'left' : 'right'}, var(--accent) ${fill}%, var(--line-strong) ${fill}%)` }}
-      className={SLIDER}
-    />
   )
 }
 
@@ -407,111 +365,64 @@ const NEW_EFFECT: Record<Effect['type'], Effect> = {
   backgroundBlur: { type: 'backgroundBlur', radius: 16 },
 }
 
-/** How each effect looks on its tile: an "Aa" drawn with it, as the mock's presets are. */
-const EFFECT_LOOK: Record<Effect['type'] | 'none', string> = {
-  none: '',
-  dropShadow: '[text-shadow:3px_3px_0_rgb(0_0_0/0.6)]',
-  innerShadow: 'text-muted [text-shadow:0_-1.5px_0_rgb(0_0_0/0.7)]',
-  glow: 'text-white [text-shadow:0_0_8px_var(--accent),0_0_16px_var(--accent)]',
-  layerBlur: 'blur-[1.5px]',
-  backgroundBlur: 'opacity-70 blur-[0.6px]',
-}
-
-function EffectsCard({ target, p, fineTune }: { target: Target; p: P; fineTune: string }) {
-  const [fine, setFine] = useState(false)
+function EffectsCard({ target, p }: { target: Target; p: P }) {
   const lists = target.props.map((pr) => (pr.effects ?? []) as Effect[])
   const list = shared(lists)
   const write = (next: Effect[]) => set(target, () => ({ effects: next }))
-  const has = (type: Effect['type']) => list !== 'mixed' && list.some((effect) => effect.type === type)
-  const tile = (key: Effect['type'] | 'none', label: string, short: string, on: boolean, onClick: () => void) => (
-    <button
-      key={key}
-      type="button"
-      aria-label={label}
-      aria-pressed={on}
-      title={label}
-      onClick={onClick}
-      data-effect={key}
-      className={cn(
-        'flex h-[58px] min-w-0 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-[10px] border bg-bg/40 transition-colors duration-[var(--chrome-fast)]',
-        on ? 'border-accent bg-accent-soft' : 'border-line hover:border-line-strong',
-      )}
-    >
-      <span aria-hidden className={cn('font-display text-[19px] leading-6 font-extrabold text-text', EFFECT_LOOK[key])}>{p.effectSample}</span>
-      <span aria-hidden className={cn('w-full truncate px-1 text-center text-[10px] font-semibold', on ? 'text-text' : 'text-muted')}>{short}</span>
-    </button>
-  )
   return (
     <Card
       id="effects-card"
       title={p.effects}
-      after={(
-        <>
-          <FineTune open={fine} onToggle={() => setFine(!fine)} label={fineTune} />
-          {fine && (
-            <div className="flex flex-col gap-2.5 px-[18px] pb-4">
-              <select
-                aria-label={p.addEffect}
-                value=""
-                onChange={(event) => write([...(list === 'mixed' ? [] : list), NEW_EFFECT[event.target.value as Effect['type']]])}
-                className="h-7 w-full rounded-row border border-line bg-surface px-1.5 text-[12px] text-muted"
-              >
-                <option value="" disabled>{p.addEffect}</option>
-                {Object.keys(NEW_EFFECT).map((type) => <option key={type} value={type}>{p.effect[type as Effect['type']]}</option>)}
-              </select>
-              {list !== 'mixed' && list.map((effect, i) => {
-                const change = (next: Effect) => write(list.map((x, j) => (j === i ? next : x)))
-                const effectName = p.effect[effect.type]
-                return (
-                  <div key={i} className="flex flex-col gap-1.5 border-t border-line pt-2.5" data-item={`effects-${i}`}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-text">{effectName}</span>
-                      <RemoveButton label={format(p.remove, { name: effectName.toLowerCase(), n: i + 1 })} onClick={() => write(list.filter((_, j) => j !== i))} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {EFFECT_FIELDS[effect.type].map((field) => {
-                        const value = (effect as unknown as Record<string, number>)[field] ?? 0
-                        const min = field === 'x' || field === 'y' || (field === 'spread' && effect.type === 'dropShadow') ? undefined : 0
-                        return (
-                          <NumberField
-                            key={field}
-                            label={p.effectField[field].charAt(0)}
-                            name={format(p.effectFieldName, { effect: effectName, n: i + 1, field: p.effectField[field] })}
-                            value={value}
-                            min={min}
-                            editor={target.editor}
-                            onSet={(v) => change({ ...effect, [field]: v } as Effect)}
-                            onShift={(by) => change({ ...effect, [field]: tidy(clamp(value + by, min)) } as Effect)}
-                          />
-                        )
-                      })}
-                    </div>
-                    {'color' in effect && <ColorField name={effectName} value={effect.color} onSet={(color) => change({ ...effect, color })} />}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </>
+      action={(
+        <select
+          aria-label={p.addEffect}
+          value=""
+          onChange={(event) => write([...(list === 'mixed' ? [] : list), NEW_EFFECT[event.target.value as Effect['type']]])}
+          className="h-7 w-28 cursor-pointer rounded-full border border-line bg-bg/40 px-2 text-[12px] font-semibold text-muted hover:border-line-strong focus:border-accent focus:outline-none"
+        >
+          <option value="" disabled>{p.addEffect}</option>
+          {Object.keys(NEW_EFFECT).map((type) => <option key={type} value={type}>{p.effect[type as Effect['type']]}</option>)}
+        </select>
       )}
     >
-      {list === 'mixed' && (
-        <div className="flex items-center justify-between gap-2 text-xs text-muted">
-          {p.mixedList}
-          <button type="button" onClick={() => write([])} className="cursor-pointer font-medium text-accent-text hover:underline">{p.useOne}</button>
-        </div>
-      )}
-      {/* The effects as the mock's preset tiles: each adds that effect at its usual look, or takes it off again. */}
-      <div role="group" aria-label={p.effectPresets} className="grid grid-cols-3 gap-1.5">
-        {tile('none', p.noEffects, p.noEffects, list !== 'mixed' && list.length === 0, () => write([]))}
-        {(Object.keys(NEW_EFFECT) as Effect['type'][]).map((type) => tile(
-          type,
-          p.effect[type],
-          p.effectShort[type],
-          has(type),
-          () => write(has(type) && list !== 'mixed' ? list.filter((effect) => effect.type !== type) : [...(list === 'mixed' ? [] : list), NEW_EFFECT[type]]),
-        ))}
-      </div>
+      {list === 'mixed'
+        ? (
+          <div className="flex items-center justify-between gap-2 text-xs text-muted">
+            {p.mixedList}
+            <button type="button" onClick={() => write([])} className="cursor-pointer font-medium text-accent-text hover:underline">{p.useOne}</button>
+          </div>
+        )
+        : list.map((effect, i) => {
+          const change = (next: Effect) => write(list.map((x, j) => (j === i ? next : x)))
+          const effectName = p.effect[effect.type]
+          return (
+            <div key={i} className="flex flex-col gap-1.5 border-t border-line pt-2.5 first:border-t-0 first:pt-0" data-item={`effects-${i}`}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-text">{effectName}</span>
+                <RemoveButton label={format(p.remove, { name: effectName.toLowerCase(), n: i + 1 })} onClick={() => write(list.filter((_, j) => j !== i))} />
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {EFFECT_FIELDS[effect.type].map((field) => {
+                  const value = (effect as unknown as Record<string, number>)[field] ?? 0
+                  const min = field === 'x' || field === 'y' || (field === 'spread' && effect.type === 'dropShadow') ? undefined : 0
+                  return (
+                    <NumberField
+                      key={field}
+                      label={p.effectField[field].charAt(0)}
+                      name={format(p.effectFieldName, { effect: effectName, n: i + 1, field: p.effectField[field] })}
+                      value={value}
+                      min={min}
+                      editor={target.editor}
+                      onSet={(v) => change({ ...effect, [field]: v } as Effect)}
+                      onShift={(by) => change({ ...effect, [field]: tidy(clamp(value + by, min)) } as Effect)}
+                    />
+                  )
+                })}
+              </div>
+              {'color' in effect && <ColorField name={effectName} value={effect.color} onSet={(color) => change({ ...effect, color })} />}
+            </div>
+          )
+        })}
     </Card>
   )
 }
@@ -529,13 +440,8 @@ function TextCard({ target, p }: { target: Target; p: P }) {
     })
   return (
     <Card id="text-card" title={p.text} note={target.names.join(', ')}>
-      <div className="flex items-center gap-3">
-        <Slider name={p.fontSize} value={style('fontSize') as number | 'mixed'} min={8} max={300} editor={target.editor} onSet={(v) => setStyle('fontSize', v)} />
-        <div className="w-20 shrink-0">
-          <NumberField label="Aa" name={p.fontSize} value={style('fontSize') as number | 'mixed'} min={1} editor={target.editor} onSet={(v) => setStyle('fontSize', v)} onShift={(by) => shiftStyle('fontSize', by, 1)} />
-        </div>
-      </div>
       <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+        <NumberField label="Aa" name={p.fontSize} value={style('fontSize') as number | 'mixed'} min={1} editor={target.editor} onSet={(v) => setStyle('fontSize', v)} onShift={(by) => shiftStyle('fontSize', by, 1)} />
         <NumberField
           label="↕"
           name={p.lineHeight}
@@ -689,7 +595,7 @@ export function SelectionCards({ editor, ids, arrange }: { editor: Editor; ids: 
           render={(stroke, i, change) => <StrokeRow stroke={stroke} i={i} p={p} editor={editor} onSet={change} />}
         />
       )}
-      <EffectsCard target={target} p={p} fineTune={t.editor.page.fineTune} />
+      <EffectsCard target={target} p={p} />
       {!several && arrange}
       <LayoutCard target={target} p={p} />
       <AppearanceCard target={target} p={p} />

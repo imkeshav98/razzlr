@@ -89,12 +89,8 @@ test('one layer: position, size, turn, opacity, blend, fill, stroke and effects'
   await stroke.getByRole('combobox', { name: 'Stroke 1 position' }).selectOption('inside')
   await expect.poll(async () => (await props(page, 'box')).strokes).toMatchObject([{ width: 6, align: 'inside' }])
 
-  // The effects show as preset tiles, as in the final mock; their numbers are behind Fine-tune.
   const effects = page.getByTestId('effects-card')
-  await expect(effects.getByRole('button', { name: 'None' })).toHaveAttribute('aria-pressed', 'true')
-  await effects.getByRole('button', { name: 'Fine-tune' }).click()
   await effects.getByRole('combobox', { name: 'Add effect' }).selectOption('dropShadow')
-  await expect(effects.getByRole('button', { name: 'Drop shadow', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await expect.poll(async () => (await props(page, 'box')).effects).toMatchObject([{ type: 'dropShadow', blur: 24 }])
   await enter(effects.getByRole('textbox', { name: 'Drop shadow 1 Blur' }), '40')
   await expect.poll(async () => (await props(page, 'box')).effects).toMatchObject([{ type: 'dropShadow', blur: 40 }])
