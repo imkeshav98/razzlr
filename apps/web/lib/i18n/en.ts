@@ -47,6 +47,7 @@ export const en = {
   welcome: {
     // Onboarding (#109): who Razzlr is for, then the first brand from a website.
     step: 'Step {n} of 2',
+    place: 'Get started',
     title: 'Who is Razzlr for?',
     lead: 'It changes only a few words and defaults. You can change it later in settings.',
     kinds: {

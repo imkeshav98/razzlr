@@ -45,6 +45,7 @@ export const ar: Messages = {
   },
   welcome: {
     step: 'الخطوة {n} من 2',
+    place: 'لنبدأ',
     title: 'لمن Razzlr؟',
     lead: 'يغيّر بضع كلمات وإعدادات فقط. يمكنك تغييره لاحقًا من الإعدادات.',
     kinds: {
