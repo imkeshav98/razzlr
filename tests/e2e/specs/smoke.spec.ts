@@ -48,12 +48,12 @@ test('a solo or company workspace says brands everywhere it said clients', async
   writeOutput('workspace-2-company-phone.png', await page.screenshot())
 })
 
-test('each card saves who Razzlr is for, and the words follow', async ({ page }) => {
+test('each card saves who Dazbee is for, and the words follow', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.context().addCookies([{ name: 'theme', value: 'dark', url: 'http://localhost:3100' }])
   for (const [card, kind, words] of [['Just me', 'solo', 'Brands'], ['My company', 'company', 'Brands'], ['My clients', 'agency', 'Clients']] as const) {
     await page.goto('/welcome')
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Who is Razzlr for?')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Who is Dazbee for?')
     await page.getByText(card, { exact: true }).click()
     await expect(page.getByRole('radio', { name: new RegExp(card) })).toBeChecked()
     if (kind === 'company') {
@@ -69,7 +69,7 @@ test('each card saves who Razzlr is for, and the words follow', async ({ page })
   }
 })
 
-test('settings changes who Razzlr is for later', async ({ page }) => {
+test('settings changes who Dazbee is for later', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/')
   await page.getByRole('link', { name: 'Settings' }).click()

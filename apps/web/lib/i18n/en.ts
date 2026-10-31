@@ -1,7 +1,7 @@
 // English, the source catalog. Every string the UI shows lives in a catalog; components never hold
 // literal text (eslint react/jsx-no-literals).
 export const en = {
-  app: { name: 'Razzlr' },
+  app: { name: 'Dazbee' },
   library: {
     // An agency's brands are its clients (ADR-0011); brandWords picks the set for a workspace.
     brands: 'Brands',
@@ -49,10 +49,10 @@ export const en = {
     close: 'Close',
   },
   welcome: {
-    // Onboarding (#109): who Razzlr is for, then the first brand from a website.
+    // Onboarding (#109): who Dazbee is for, then the first brand from a website.
     step: 'Step {n} of 2',
     place: 'Get started',
-    title: 'Who is Razzlr for?',
+    title: 'Who is Dazbee for?',
     lead: 'It changes only a few words and defaults. You can change it later in settings.',
     kinds: {
       solo: { title: 'Just me', body: 'One business, yours. Ads for your own brand.' },
@@ -73,7 +73,7 @@ export const en = {
   },
   settings: {
     title: 'Settings',
-    kind: 'Who Razzlr is for',
+    kind: 'Who Dazbee is for',
     save: 'Save',
     saved: 'Saved',
   },
@@ -384,7 +384,7 @@ export const en = {
   language: { label: 'Language' },
   account: { open: 'Your account', settings: 'Settings' },
   signIn: {
-    title: 'Sign in to Razzlr',
+    title: 'Sign in to Dazbee',
     /** The sign-in page's headline, in two lines. */
     headline: 'Make every size,',
     headlineEnd: 'for every client.',

@@ -10,7 +10,7 @@ const SESSION_COOKIE = 'razzlr_session'
 test('the sign-in page offers one button, and says when sign-in is not set up', async ({ page }) => {
   await page.goto('/login')
   await expect(page.getByRole('heading', { name: 'Make every size, for every client.' })).toBeVisible()
-  await expect(page).toHaveTitle('Sign in to Razzlr')
+  await expect(page).toHaveTitle('Sign in to Dazbee')
   await expect(page.getByTestId('sign-in-notice')).toHaveCount(0)
   await page.getByTestId('sign-in').click()
   await expect(page).toHaveURL(/\/login\?unavailable=1$/)
