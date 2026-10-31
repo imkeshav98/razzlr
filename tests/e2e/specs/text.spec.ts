@@ -1,7 +1,7 @@
 // Rich text editing (#47) with real pointer and keyboard input: a double-clicked word made bold;
 // a range across an Arabic and Latin boundary whose boxes sit where the caret and word selection
 // say; the text tool, line breaks, copy, cut and paste; each typing session one undo step.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import type { DesignInput } from '@razzlr/schema'
 import { exportHashOf, writeOutput } from '../support/editor.ts'
 import { openStage, press, read, selection } from '../support/stage.ts'

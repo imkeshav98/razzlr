@@ -1,7 +1,7 @@
 // Brand kits (#53) in Chromium: set up a kit with a colour, apply it to a layer, change the colour
 // and see the layer change, with the design itself untouched; another design bound to the same
 // colour opens in the new one, and one undo lets the layer go of the brand again.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { BrandKit, EMPTY_BRAND_KIT, type DesignInput } from '@razzlr/schema'
 import { editorPath, writeOutput } from '../support/editor.ts'
 import { API_URL, DEV_BRAND, seed } from '../support/seed.ts'

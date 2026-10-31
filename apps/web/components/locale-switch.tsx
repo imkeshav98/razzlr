@@ -19,6 +19,7 @@ export function LocaleSwitch() {
       <TranslateIcon size={15} aria-hidden />
       <span className="sr-only">{t.label}</span>
       <select
+        name="locale"
         value={locale}
         onChange={(e) => choose(e.target.value as Locale)}
         className="cursor-pointer appearance-none bg-transparent pe-1 text-[13px] text-inherit outline-none"

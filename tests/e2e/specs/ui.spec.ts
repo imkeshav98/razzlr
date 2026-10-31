@@ -1,6 +1,6 @@
 // The UI foundation (#51): themes change only tokens, Arabic mirrors the chrome but not the design,
 // reduced motion turns chrome animation off. Screenshots go to output/ for the PR.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { writeOutput, editorPath } from '../support/editor.ts'
 import { liveDesign, seed } from '../support/seed.ts'
 

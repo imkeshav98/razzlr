@@ -3,7 +3,7 @@
 // buttons align and distribute three layers in one undo step each, the rulers mark the selection,
 // and a drag among 300 layers keeps each pointer move's work inside a 60 Hz frame.
 import type { DesignInput } from '@razzlr/schema'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { screenPoint, writeOutput } from '../support/editor.ts'
 import { liveDesign } from '../support/seed.ts'
 import { click, openStage, press, props, selection } from '../support/stage.ts'
