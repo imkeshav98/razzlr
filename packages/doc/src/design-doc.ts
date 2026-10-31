@@ -14,7 +14,8 @@ import { repair } from './repair.ts'
  *                                                race to create the same nested map
  *
  * Deleted layers keep their Y.Map with `deleted: true`. Removing the map would make undo restore
- * it without the edits another tab made to it in the meantime, leaving required keys unset.
+ * it without the edits another tab made to it in the meantime, leaving required keys unset. Once
+ * nobody is connected, compaction (compact.ts) drops them.
  */
 export const DELETED = 'deleted'
 export type DesignDoc = Y.Doc

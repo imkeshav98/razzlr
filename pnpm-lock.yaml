@@ -75,6 +75,9 @@ importers:
       '@razzlr/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@razzlr/doc':
+        specifier: workspace:*
+        version: link:../../packages/doc
       '@razzlr/sync-token':
         specifier: workspace:*
         version: link:../../packages/sync-token
