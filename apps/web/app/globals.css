@@ -210,11 +210,11 @@ body {
 [dir='rtl'] .ai-edge::before {
   animation-name: ai-slide-rtl;
 }
-/* The riso halftone overprinted on AI controls: a white dot screen, blended as overlay. */
+/* The riso halftone overprinted on AI controls: a still white dot screen. Plain alpha, not a blend
+   mode: a blend over the sliding layer would be redone on every frame. */
 .ai-glow::after {
-  background-image: radial-gradient(circle, rgb(255 255 255 / 0.35) 22%, transparent 24%);
+  background-image: radial-gradient(circle, rgb(255 255 255 / 0.3) 22%, transparent 24%);
   background-size: 0.5vw 0.5vw;
-  mix-blend-mode: overlay;
 }
 /* The sheen on AI buttons (Make drafts): a band of light that sweeps across now and then. It is a
    child span, as both pseudo-elements are taken, and it moves by transform only, for the reason
