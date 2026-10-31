@@ -1,7 +1,7 @@
 // The properties cards (#60) in Chromium, with real input: change each property of one layer and of
 // several, see mixed values, write a change to the format shown only, as a canvas drag does (and an
 // every-format one as the base, with the override gone), and scrub a number as one undo step.
-import { expect, test, type Locator, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '../support/test.ts'
 import type { DesignInput } from '@razzlr/schema'
 import { writeOutput } from '../support/editor.ts'
 import { openStage } from '../support/stage.ts'

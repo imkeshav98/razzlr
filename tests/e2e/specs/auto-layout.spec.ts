@@ -1,7 +1,7 @@
 // Auto layout (#46), with real pointer and keyboard input: typing into a button's label grows the
 // button and pushes what follows it along the row; and Shift+A turns a frame laid out by hand into
 // auto layout without moving anything, after which deleting a child closes the gap.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import type { DesignInput } from '@razzlr/schema'
 import { exportHashOf, writeOutput } from '../support/editor.ts'
 import { click, openStage, press, read, selection } from '../support/stage.ts'

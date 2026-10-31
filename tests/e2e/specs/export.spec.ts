@@ -3,7 +3,7 @@
 // same design; one format as JPG downloads as itself; and the main thread is never blocked for
 // more than 50 ms while the export worker draws five formats.
 import { readFileSync } from 'node:fs'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { exportDesign, readZip } from '@razzlr/export'
 import { FALLBACK_FAMILIES } from '@razzlr/fonts'
 import { loadFontFiles } from '@razzlr/fonts/node'

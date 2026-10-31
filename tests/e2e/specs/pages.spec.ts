@@ -1,6 +1,6 @@
 // Pages (#39): duplicate a page with its layers and overrides, reorder it, rename it, delete it and
 // bring it back with undo, all from the inspector, with the stage following.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { designOf, openTabs, settle, writeOutput } from '../support/editor.ts'
 
 interface Design {

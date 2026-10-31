@@ -2,7 +2,7 @@
 // moves the image inside its shape and a corner drag scales it, each one undo step, and the
 // cropped export matches Node's pixel for pixel; and two layers made a mask in one key press.
 import { createHash } from 'node:crypto'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { FALLBACK_FAMILIES } from '@razzlr/fonts'
 import { loadFontFiles } from '@razzlr/fonts/node'
 import { renderDesign } from '@razzlr/renderer'

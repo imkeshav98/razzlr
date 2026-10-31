@@ -2,7 +2,7 @@
 // does not match the sign-in this browser started, and signing out. CI's API has no WorkOS
 // settings, so it says sign-in is not set up; signing in against WorkOS test mode is its own run.
 import { join } from 'node:path'
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../support/test.ts'
 import { OUTPUT } from '../support/editor.ts'
 
 const SESSION_COOKIE = 'razzlr_session'

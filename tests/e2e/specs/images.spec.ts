@@ -1,7 +1,7 @@
 // Image uploads (#35): an image uploaded through a signed URL renders the same in the editor's
 // export and in Node, both from the bytes stored for its asset id.
 import { createHash } from 'node:crypto'
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../support/test.ts'
 import { FALLBACK_FAMILIES } from '@razzlr/fonts'
 import { loadFontFiles } from '@razzlr/fonts/node'
 import { renderDesign } from '@razzlr/renderer'

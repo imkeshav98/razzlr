@@ -1,7 +1,7 @@
 // Floating islands (#110): the editor has no top bar. The design's name and save state float at
 // the start, its actions at the end, below the rulers and over the canvas, and the ads fit below
 // them. Outside the editor, navigation is the same floating capsule, a tab bar on phones.
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from '../support/test.ts'
 import { editorPath, screenPoint, writeOutput } from '../support/editor.ts'
 import { liveDesign, seed } from '../support/seed.ts'
 
