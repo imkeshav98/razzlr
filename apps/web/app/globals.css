@@ -498,25 +498,54 @@ body {
   animation: aurora-drift 26s ease-in-out infinite;
 }
 
-/* Sign in (mock screen 34): the end half's showcase, three copies of a sample ad fanned out over
-   a slow aurora. Always drawn on the dark palette (the panel sets data-theme=dark). The aurora is a
-   blurred conic circle squashed into a wide ellipse; it turns by transform, so it never repaints. */
+/* Sign in (mock screen 34): behind the whole page, three copies of a sample ad fanned out over a
+   slow aurora in the end half. The page has one background; the glow fades out toward the form
+   through a wide radial mask, so there is no seam. The aurora is a blurred conic circle squashed
+   into a wide ellipse; it turns by transform, so it never repaints. */
 .signin-showcase {
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: grid;
+  grid-template-columns: 1fr 1fr;
   place-items: center;
   overflow: hidden;
   isolation: isolate;
-  background: var(--canvas);
+}
+.signin-showcase > .ad-fan {
+  grid-column: 2;
+}
+.signin-glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  mask-image: radial-gradient(ellipse 62% 80% at 76% 50%, black 25%, transparent 100%);
+}
+[dir='rtl'] .signin-glow {
+  mask-image: radial-gradient(ellipse 62% 80% at 24% 50%, black 25%, transparent 100%);
 }
 .signin-aurora {
   position: absolute;
-  inset-inline: -20%;
-  inset-block-start: 10%;
+  inset-inline-start: 40%;
+  inset-inline-end: -14%;
+  inset-block-start: 50%;
+  translate: 0 -50%;
   aspect-ratio: 70 / 34;
-  z-index: -1;
-  pointer-events: none;
   opacity: 0.45;
+}
+/* Phones: the form alone, over a faint glow at the top. */
+@media (width < 48rem) {
+  .signin-showcase > .ad-fan {
+    display: none;
+  }
+  .signin-glow,
+  [dir='rtl'] .signin-glow {
+    mask-image: radial-gradient(ellipse 90% 45% at 50% 18%, black 20%, transparent 100%);
+  }
+  .signin-aurora {
+    inset-inline: -30%;
+    inset-block-start: 18%;
+    opacity: 0.22;
+  }
 }
 .signin-aurora > div {
   position: absolute;
