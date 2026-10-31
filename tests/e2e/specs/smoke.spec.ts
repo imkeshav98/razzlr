@@ -32,12 +32,14 @@ test('a solo or company workspace says brands everywhere it said clients', async
     expect((await setKind(kind)).ok).toBe(true)
     await page.goto('/')
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Brands')
-    await expect(page.getByRole('complementary', { name: 'Brands' })).toBeVisible()
+    await expect(page.getByTestId('brand-switcher')).toContainText('Brands')
     await expect(page.getByText('Pick a brand to see and make its designs.')).toBeVisible()
   }
   writeOutput('workspace-1-company.png', await page.screenshot())
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/brands/dev-brand-cycles')
+  // The crumb's brand switches brand, and goes back to them all.
+  await page.getByTestId('brand-switcher').getByLabel('Switch brand').click()
   await expect(page.getByRole('link', { name: 'All brands' })).toBeVisible()
   writeOutput('workspace-2-company-phone.png', await page.screenshot())
 })
@@ -59,7 +61,7 @@ test('each card saves who Razzlr is for, and the words follow', async ({ page })
     expect(await kindNow()).toBe(kind)
     await expect(page.getByText(`Your first ${kind === 'agency' ? 'client' : 'brand'} takes its name from it.`, { exact: false })).toBeVisible()
     await page.goto('/settings')
-    await expect(page.getByRole('complementary', { name: words })).toBeVisible()
+    await expect(page.getByTestId('brand-switcher')).toContainText(words)
   }
 })
 
@@ -73,6 +75,6 @@ test('settings changes who Razzlr is for later', async ({ page }) => {
   await page.getByRole('button', { name: 'Save' }).click()
   await expect(page.getByRole('status')).toHaveText('Saved')
   expect(await kindNow()).toBe('company')
-  await expect(page.getByRole('complementary', { name: 'Brands' })).toBeVisible()
+  await expect(page.getByTestId('brand-switcher')).toContainText('Brands')
   await shoot(page, 'settings')
 })

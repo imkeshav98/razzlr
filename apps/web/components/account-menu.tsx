@@ -6,14 +6,11 @@ import { GearSixIcon, SignOutIcon } from '@phosphor-icons/react'
 import Link from 'next/link'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useMessages } from '../lib/i18n/client.tsx'
+import { initialsOf } from '../lib/initials.ts'
 import { LocaleSwitch } from './locale-switch.tsx'
 import { ThemeSwitch } from './theme-switch.tsx'
 
 const ROW = 'flex h-10 w-full cursor-pointer items-center gap-3 rounded-row px-3 text-start text-[13px] font-medium hover:bg-hover focus-visible:bg-hover focus-visible:outline-none'
-
-/** The first letter of each of the first two words: "Harbour Coffee" is HC, "Keshav" is K. */
-export const initialsOf = (name: string) =>
-  name.trim().split(/\s+/).slice(0, 2).map((word) => [...word][0]?.toUpperCase() ?? '').join('') || '?'
 
 export function AccountMenu({ name, signedIn }: {
   /** The workspace's name, shown as the avatar's initials and at the menu's top. */
