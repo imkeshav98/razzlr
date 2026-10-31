@@ -42,6 +42,9 @@ export function DesignBento({ t, locale, brandId, designs }: { t: Messages; loca
           <li key={design.id} data-span={span} data-testid="bento-tile" className={cn('rise min-w-0', SPAN[span])} style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
             <Link
               href={`/brands/${brandId}/designs/${design.id}`}
+              // Not prefetched: up to 24 editor pages, each a design read, for the one that gets opened.
+              // In CI those prefetches also held up the router's next navigation (#84).
+              prefetch={false}
               className="group relative block size-full overflow-hidden rounded-[18px] border border-line canvas-dots shadow-panel transition-[border-color,transform] duration-[var(--chrome)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-line-strong focus-visible:outline-offset-4"
             >
               {design.cover
