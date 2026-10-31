@@ -129,8 +129,12 @@ export type UpdateAsset = z.infer<typeof UpdateAsset>
 export const SignedLink = z.object({ url: z.url(), expiresAt: z.iso.datetime() })
 export type SignedLink = z.infer<typeof SignedLink>
 
-/** A design's picture (#84): a short-lived URL, and the primary format's size so a tile takes its shape first. */
-export const DesignThumbnail = SignedLink.extend({ width: z.number().int().positive(), height: z.number().int().positive() })
+/** The size of a design's primary format (#84), so a tile takes its shape before its picture loads. */
+export const DesignCover = z.object({ width: z.number().int().positive(), height: z.number().int().positive() })
+export type DesignCover = z.infer<typeof DesignCover>
+
+/** A design's picture (#84): a short-lived URL, and the primary format's size. */
+export const DesignThumbnail = SignedLink.extend(DesignCover.shape)
 export type DesignThumbnail = z.infer<typeof DesignThumbnail>
 
 /** An asset and a short-lived URL to read its original. */

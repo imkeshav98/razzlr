@@ -1,6 +1,6 @@
 // The API, called from the web app's server only, with every response read through its contract.
 import 'server-only'
-import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignSummary, DesignThumbnail, FontFace, FontFamily, FontLink, FontUploadTicket, SignedLink, SyncToken, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type UpdateAsset } from '@razzlr/schema'
+import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignCover, DesignSummary, DesignThumbnail, FontFace, FontFamily, FontLink, FontUploadTicket, SignedLink, SyncToken, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type UpdateAsset } from '@razzlr/schema'
 import type { z } from 'zod'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8787'
@@ -31,6 +31,16 @@ export const listDesigns = (brandId: string) => call(DesignSummary.array(), `/br
 
 export const createDesign = (brandId: string, name: string, content?: unknown) =>
   call(DesignSummary, `/brands/${encodeURIComponent(brandId)}/designs`, { method: 'POST', body: content === undefined ? { name } : { name, content } })
+
+/** The size of a design's primary format (#84), read without drawing, or null when it has nothing to show. */
+export async function designCover(brandId: string, designId: string) {
+  try {
+    return await call(DesignCover, `/brands/${encodeURIComponent(brandId)}/designs/${encodeURIComponent(designId)}/cover`)
+  } catch (e) {
+    if (e instanceof ApiFailure && e.status === 404) return null
+    throw e
+  }
+}
 
 /** A design's picture for the home (#84), or null when it has nothing to show yet. */
 export async function designThumbnail(brandId: string, designId: string) {

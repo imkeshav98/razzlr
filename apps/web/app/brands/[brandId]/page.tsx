@@ -6,7 +6,7 @@ import { notFound, redirect } from 'next/navigation'
 import { BriefComposer, briefDesign } from '../../../components/brief-composer.tsx'
 import { DesignBento, type BentoDesign } from '../../../components/design-bento.tsx'
 import { LibraryShell } from '../../../components/library-shell.tsx'
-import { createDesign, designThumbnail, getBrandKit, getWorkspace, listBrands, listDesigns } from '../../../lib/api.ts'
+import { createDesign, designCover, getBrandKit, getWorkspace, listBrands, listDesigns } from '../../../lib/api.ts'
 import { showsBrandList } from '../../../lib/home.ts'
 import { brandWords, format } from '../../../lib/i18n/index.ts'
 import { getLocale, getMessages } from '../../../lib/i18n/server.ts'
@@ -24,9 +24,9 @@ export default async function BrandPage({ params }: { params: Promise<{ brandId:
   if (!brand) notFound()
   const [designs, kit] = await Promise.all([listDesigns(brand.id), getBrandKit(brand.id)])
   const recent: BentoDesign[] = await Promise.all(designs.slice(0, BENTO_SIZE).map(async (design) => {
-    // A picture that fails to draw leaves its tile plain; the rest of the page still comes.
-    const cover = await designThumbnail(brand.id, design.id).catch(() => null)
-    return { ...design, cover: cover && { width: cover.width, height: cover.height } }
+    // Only the sizes here: each picture is drawn when the browser asks for it, not before the page comes.
+    const cover = await designCover(brand.id, design.id).catch(() => null)
+    return { ...design, cover }
   }))
   const untitled = t.library.untitled
   const presetName = t.editor.formats.preset
