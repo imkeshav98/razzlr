@@ -164,6 +164,9 @@ async function bytes(url: string) {
   return new Uint8Array(await res.arrayBuffer())
 }
 
+/** Text properties that change how big its words are, so an auto-sized box fits them again. */
+const SIZES_TEXT = new Set(['text', 'runs', 'style', 'boxMode', 'width', 'list', 'paragraphSpacing', 'maxLines', 'shrinkToFit', 'direction'])
+
 export async function startEditor(options: EditorOptions) {
   const { designId, syncUrl } = options
   const status = options.onStatus ?? (() => {})
@@ -1106,6 +1109,8 @@ function live(
   // background (#50); until then that text draws in the fallback fonts. Exports wait for them.
   const fontsAsked = new Set([...SHIPPED_FAMILIES, ...resourceBytes.fonts.map((f) => f.family)])
   let fontsLoading: Promise<void> = Promise.resolve()
+  /** Each family asked for after the design opened, settled when its files are here or failed to come. */
+  const familyLoads = new Map<string, Promise<void>>()
   /** Images a design named after it opened (one placed from the asset library, #52); exports wait for them too. */
   let imagesLoading: Promise<void> = Promise.resolve()
   function loadNewFonts(current: Design) {
@@ -1133,6 +1138,7 @@ function live(
       }
       status(`Error: a font did not load (${error instanceof Error ? error.message : String(error)})`)
     })
+    for (const family of fresh) familyLoads.set(family, loading)
     fontsLoading = Promise.all([fontsLoading, loading]).then(() => undefined)
   }
 
@@ -3040,7 +3046,9 @@ function live(
           }
         }
         // Text that grows the size of its words fits them again, in the formats the change reached.
-        for (const id of writes.keys()) fitText(id, everyFormat ? undefined : frame.formatId)
+        for (const [id, patch] of writes) {
+          if (Object.keys(patch).some((key) => SIZES_TEXT.has(key))) fitText(id, everyFormat ? undefined : frame.formatId)
+        }
         hug([...writes.keys()])
       }))
     },
@@ -3173,6 +3181,17 @@ function live(
       await Promise.all([fontsLoading, imagesLoading])
       return exporter.run(session.design(), request, resourceBytes, progress)
     },
+    /**
+     * Gives layers back the values every format has, in one format (`scope`, `format:<id>`): the
+     * properties in `paths`, or all of them. Text that grows the size of its words fits them again
+     * there, in the same undo step.
+     */
+    resetOwn(ids: string[], scope: `format:${string}`, paths?: string[]) {
+      return runQuietly(() => session.gesture(() => {
+        session.run('override.reset', { ids, scope, ...(paths ? { paths } : {}) })
+        for (const id of ids) fitText(id, scope.slice('format:'.length))
+      }))
+    },
     /** The families whose files the editor has, shipped ones included (#50). */
     loadedFamilies: () => [...new Set(resourceBytes.fonts.map((f) => f.family))],
     /**
@@ -3184,7 +3203,7 @@ function live(
       const ids = (selection?.ids ?? []).filter((id) => session.design().nodes[id]?.type === 'text')
       if (ids.length === 0) return
       loadFamilies([fontFamily])
-      await fontsLoading
+      await familyLoads.get(fontFamily)
       if (listening.signal.aborted) return
       const current = session.design()
       session.gesture(() => {

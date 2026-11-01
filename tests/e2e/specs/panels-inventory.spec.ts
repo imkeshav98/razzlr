@@ -594,8 +594,10 @@ test.describe('text', () => {
       await expect.poll(async () => (await props(page, 'headline')).boxMode).toBe('autoHeight')
       await expect.poll(async () => (await size())[1]).toBeLessThan(260)
     }, { draws: false })
+    const kept = await size()
     await step(page, () => choose(field, 'fixed'), async () => {
       await expect.poll(async () => (await props(page, 'headline')).boxMode).toBe('fixed')
+      expect(await size()).toEqual(kept)
     }, { draws: false })
     await reloads(page)
   })
