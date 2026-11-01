@@ -40,6 +40,8 @@
      panel at 52%, and its text stays readable over a white ad (#138). A tint rather than a
      brightness() in the backdrop filter, which would cost a pass on every frame. */
   --glass: rgb(20 16 24 / 0.83);
+  /* Faint text on glass: 4.9:1 even with a white ad behind it. */
+  --frost-subtle: #b3a6be;
   --glass-line: rgb(255 255 255 / 0.1);
   --ai-3: #ffd23f;
 }
@@ -72,6 +74,8 @@
   --shadow: 0 1px 2px rgb(60 30 60 / 0.06), 0 12px 32px -16px rgb(60 30 60 / 0.22);
   /* White over 23% of what lies behind, so dark text stays readable over a black ad (#138). */
   --glass: rgb(255 255 255 / 0.77);
+  /* Faint text on glass: 4.6:1 even with a black ad behind it. */
+  --frost-subtle: #574c61;
   --glass-line: rgb(26 20 32 / 0.08);
   --ai-3: #ffc21a;
 }
@@ -304,8 +308,12 @@ body {
   }
 }
 
-/* Frosted surfaces (#81) for chrome that floats over the canvas: dock, zoom, flyouts, menus. */
+/*
+ * Frosted surfaces (#81) for chrome that floats over the canvas: dock, zoom, flyouts, menus. Faint
+ * text on them stays readable whatever the ad behind it shows.
+ */
 .surface-frost {
+  --text-subtle: var(--frost-subtle);
   background-color: var(--glass);
   background-image: var(--grain);
   border-color: var(--glass-line);

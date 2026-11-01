@@ -40,7 +40,7 @@ export default async function HomePage() {
   }
 
   return (
-    <LibraryShell t={t} words={words} workspace={workspace.name} brands={brands} place="brands">
+    <LibraryShell t={t} words={words} workspace={workspace} brands={brands} place="brands">
       <h1 className="font-display text-4xl font-bold tracking-tight">{words.title}</h1>
       <p className="mt-2 text-muted">{words.lead}</p>
       <ul aria-label={words.title} className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

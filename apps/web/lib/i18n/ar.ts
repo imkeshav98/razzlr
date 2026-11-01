@@ -29,7 +29,7 @@ export const ar: Messages = {
     noDesigns: 'لا توجد تصاميم بعد. سمِّ واحدًا في الأعلى لتبدأ.',
     edited: 'عُدّل {when}',
     templates: 'القوالب',
-    templatesLead: 'ابدأ تصميمًا من قالب: تحصل على نسختك الخاصة لتعدّلها.',
+    templatesMeta: 'مصمّمة لهذه العلامة',
     noTemplates: 'لا توجد قوالب بعد. احفظ تصميمًا كقالب من المحرّر.',
     useTemplate: 'استخدم {name}',
   },
@@ -500,7 +500,7 @@ export const ar: Messages = {
     dark: 'داكن',
   },
   language: { label: 'اللغة' },
-  account: { open: 'حسابك', settings: 'الإعدادات' },
+  account: { open: 'حسابك', settings: 'الإعدادات', kinds: { solo: 'مساحة عمل شخصية', company: 'مساحة عمل شركة', agency: 'مساحة عمل وكالة' } },
   signIn: {
     title: 'سجّل الدخول إلى Dazbee',
     headline: 'اصنع كل مقاس،',

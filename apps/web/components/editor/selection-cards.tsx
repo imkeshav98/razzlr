@@ -141,8 +141,17 @@ function NumberField({ label, name, value, step = 1, min, max, scale = 1, placeh
   )
 }
 
-/** A colour: a swatch that opens the system picker, the hex, and its opacity as a percentage. */
-function ColorField({ name, value, onSet }: { name: string; value: string | 'mixed' | undefined; onSet: (color: string) => void }) {
+/** A colour as #RRGGBBAA: one part changed, the other as the document holds it now. */
+const withHex = (hex: string) => (now: string | undefined) => `${hex}${now?.slice(7, 9) || 'FF'}`
+const withOpacity = (alpha: number) => (now: string | undefined) =>
+  `${now?.slice(0, 7) || '#000000'}${Math.round(clamp(alpha, 0, 1) * 255).toString(16).padStart(2, '0').toUpperCase()}`
+
+/**
+ * A colour: a swatch that opens the system picker, the hex, and its opacity as a percentage. A
+ * change gives `onSet` the colour to build from the one the document holds then, so a hex and an
+ * opacity committed one after the other each keep the other's change.
+ */
+function ColorField({ name, value, onSet }: { name: string; value: string | 'mixed' | undefined; onSet: (to: (now: string | undefined) => string) => void }) {
   const t = useMessages()
   const p = t.editor.props
   const hex = value && value !== 'mixed' ? value.slice(0, 7).toUpperCase() : ''
@@ -151,9 +160,8 @@ function ColorField({ name, value, onSet }: { name: string; value: string | 'mix
   const commitHex = (text: string) => {
     setDraft(null)
     const h = (text.startsWith('#') ? text : `#${text}`).toUpperCase()
-    if (/^#[0-9A-F]{6}$/.test(h) && h !== hex) onSet(`${h}${value && value !== 'mixed' ? value.slice(7, 9) || 'FF' : 'FF'}`)
+    if (/^#[0-9A-F]{6}$/.test(h) && h !== hex) onSet(withHex(h))
   }
-  const withAlpha = (a: number) => `${hex || '#000000'}${Math.round(clamp(a, 0, 1) * 255).toString(16).padStart(2, '0').toUpperCase()}`
   return (
     <div className="flex min-w-0 flex-1 items-center gap-1">
       <input
@@ -161,7 +169,7 @@ function ColorField({ name, value, onSet }: { name: string; value: string | 'mix
         type="color"
         aria-label={format(p.colourOf, { name })}
         value={hex || '#000000'}
-        onChange={(event) => onSet(`${event.target.value.toUpperCase()}${value && value !== 'mixed' ? value.slice(7, 9) || 'FF' : 'FF'}`)}
+        onChange={(event) => onSet(withHex(event.target.value.toUpperCase()))}
         className="size-7 shrink-0 cursor-pointer rounded-row border border-line bg-surface p-0.5"
       />
       <input
@@ -187,7 +195,7 @@ function ColorField({ name, value, onSet }: { name: string; value: string | 'mix
         placeholder={value === 'mixed' ? '–' : ''}
         onBlur={(event) => {
           const n = Number.parseFloat(event.target.value)
-          if (Number.isFinite(n) && hex && Math.round(n) !== Math.round((alpha ?? 1) * 100)) onSet(withAlpha(n / 100))
+          if (Number.isFinite(n) && hex && Math.round(n) !== Math.round((alpha ?? 1) * 100)) onSet(withOpacity(n / 100))
         }}
         onKeyDown={(event) => {
           if (event.key === 'Enter') event.currentTarget.blur()
@@ -438,9 +446,9 @@ function ListCard<T>({ id, title, p, target, field, fresh, render }: {
   )
 }
 
-function PaintRow({ paint, name, p, onSet }: { paint: Paint; name: string; p: P; onSet: (paint: Paint) => void }) {
+function PaintRow({ paint, name, p, onSet }: { paint: Paint; name: string; p: P; onSet: (to: (now: Paint) => Paint) => void }) {
   if (paint.type !== 'solid') return <span className="min-w-0 flex-1 truncate text-xs text-muted">{p.paint[paint.type]}</span>
-  return <ColorField name={name} value={paint.color} onSet={(color) => onSet({ type: 'solid', color })} />
+  return <ColorField name={name} value={paint.color} onSet={(to) => onSet((now) => ({ type: 'solid', color: to(now.type === 'solid' ? now.color : undefined) }))} />
 }
 
 type Stroke = {
@@ -500,7 +508,7 @@ function StrokeRow({ stroke, i, p, editor, onSet }: { stroke: Stroke; i: number;
   const n = { n: i + 1 }
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
-      <PaintRow paint={stroke.paint} name={format(p.colour, n)} p={p} onSet={(paint) => onSet((now) => ({ ...now, paint }))} />
+      <PaintRow paint={stroke.paint} name={format(p.colour, n)} p={p} onSet={(to) => onSet((now) => ({ ...now, paint: to(now.paint) }))} />
       <div className="grid grid-cols-2 gap-1">
         <NumberField label="W" name={format(p.strokeWidth, n)} value={stroke.width} min={0.5} step={0.5} editor={editor} onSet={(width) => onSet((now) => ({ ...now, width }))} onShift={(by) => onSet((now) => ({ ...now, width: tidy(clamp(now.width + by, 0.5)) }))} />
         <Choice name={format(p.strokeAlign, n)} value={stroke.align} options={['inside', 'center', 'outside'] as const} labels={p.aligns} onSet={(align) => onSet((now) => ({ ...now, align }))} />
@@ -587,7 +595,7 @@ function EffectsCard({ target, p }: { target: Target; p: P }) {
                   )
                 })}
               </div>
-              {'color' in effect && <ColorField name={effectName} value={effect.color} onSet={(color) => change((now) => ({ ...now, color }) as Effect)} />}
+              {'color' in effect && <ColorField name={effectName} value={effect.color} onSet={(to) => change((now) => ({ ...now, color: to('color' in now ? now.color : undefined) }) as Effect)} />}
             </div>
           )
         })}
@@ -624,7 +632,7 @@ function TextCard({ target, p }: { target: Target; p: P }) {
         <NumberField label="↔" name={p.letterSpacing} value={(style('letterSpacing') ?? 0) as number | 'mixed'} step={0.1} editor={target.editor} onSet={(v) => setStyle('letterSpacing', v)} onShift={(by) => shiftStyle('letterSpacing', by)} />
         <Choice name={p.textCase} value={(style('textCase') ?? 'none') as string} options={['none', 'upper', 'lower', 'title']} labels={p.textCases} onSet={(v) => setStyle('textCase', v)} />
       </div>
-      <ColorField name={p.textColour} value={style('color') as string | 'mixed'} onSet={(color) => setStyle('color', color)} />
+      <ColorField name={p.textColour} value={style('color') as string | 'mixed'} onSet={(to) => set(target, (now) => ({ style: { ...(now.style as Style), color: to((now.style as Style).color) } }))} />
       <div className="grid grid-cols-2 gap-x-3">
         <Choice
           name={p.textAlign}
@@ -767,7 +775,7 @@ function ParagraphCard({ target, p }: { target: Target; p: P }) {
               })}
             />
           </div>
-          <ColorField name={p.outline} value={outline.color} onSet={(color) => setStyle((now) => ({ outline: { ...(now.outline as object), color } }))} />
+          <ColorField name={p.outline} value={outline.color} onSet={(to) => setStyle((now) => ({ outline: { ...(now.outline as object), color: to((now.outline as { color?: string } | undefined)?.color) } }))} />
         </div>
       )}
     </Card>
@@ -1089,7 +1097,7 @@ export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Edit
           target={target}
           field="fills"
           fresh={NEW_FILL}
-          render={(paint, i, change) => <PaintRow paint={paint} name={format(p.colour, { n: i + 1 })} p={p} onSet={(next) => change(() => next)} />}
+          render={(paint, i, change) => <PaintRow paint={paint} name={format(p.colour, { n: i + 1 })} p={p} onSet={change} />}
         />
       )}
       {all('graphic', 'boolean') && (

@@ -3,6 +3,7 @@
 // The round avatar at the top end, as in the final mock. Language, theme, settings and signing out
 // live behind it, so the top bar keeps to the work and one action.
 import { GearSixIcon, SignOutIcon } from '@phosphor-icons/react'
+import type { WorkspaceKind } from '@razzlr/schema'
 import Link from 'next/link'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useMessages } from '../lib/i18n/client.tsx'
@@ -12,9 +13,11 @@ import { ThemeSwitch } from './theme-switch.tsx'
 
 const ROW = 'flex h-10 w-full cursor-pointer items-center gap-3 rounded-row px-3 text-start text-[13px] font-medium transition-colors duration-[var(--chrome-fast)] hover:bg-hover focus-visible:bg-hover focus-visible:outline-none'
 
-export function AccountMenu({ name, signedIn }: {
+export function AccountMenu({ name, kind, signedIn }: {
   /** The workspace's name, shown as the avatar's initials and at the menu's top. */
   name: string
+  /** Who the workspace is for, named under its name. */
+  kind: WorkspaceKind
   /** Whether there is a session to end, so Sign out shows (#58). */
   signedIn: boolean
 }) {
@@ -53,7 +56,10 @@ export function AccountMenu({ name, signedIn }: {
           {/* As in the final mock: the avatar beside the workspace's name. */}
           <div className="flex items-center gap-3 px-3 pt-2 pb-1.5">
             <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-[image:var(--ai-gradient)] text-[13px] font-bold text-white">{initialsOf(name)}</span>
-            <p className="min-w-0 truncate font-display text-sm font-semibold">{name}</p>
+            <p className="flex min-w-0 flex-col">
+              <span className="truncate font-display text-sm font-semibold">{name}</span>
+              <span className="truncate text-[11px] text-muted">{t.account.kinds[kind]}</span>
+            </p>
           </div>
           <div className="flex items-center justify-between gap-2 px-3 py-1.5">
             <span className="text-[13px] text-muted">{t.language.label}</span>
