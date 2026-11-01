@@ -1,3 +1,4 @@
+import type { Design } from '@razzlr/schema'
 import { z } from 'zod'
 import * as Y from 'yjs'
 import { CommandError } from './command.ts'
@@ -76,7 +77,7 @@ export function openSession(doc: DesignDoc) {
     // A document saved at an older schema version is brought up to this one before it is changed;
     // a session opened before the document arrived from the server meets it here.
     migrateDoc(doc)
-    const ctx = { doc, r, design: view.read() }
+    const ctx = { doc, r, design: batched ?? view.read() }
     const reason = command.check?.(ctx, parsed.data as never)
     if (reason) throw new CommandError(name, reason)
     let result: unknown
@@ -116,8 +117,30 @@ export function openSession(doc: DesignDoc) {
     }
   }
 
+  /**
+   * Runs the commands in `steps` as one change to the document: other tabs, the sync server and
+   * the copy kept on this device get one update instead of one per command. Every command in it
+   * still checks and reads the design as it was before the batch.
+   */
+  let batched: Design | null = null
+  function batch<T>(steps: () => T): T {
+    if (batched) return steps()
+    // Read once, before the transaction: inside it the view would read the whole design again for every command.
+    batched = view.read()
+    try {
+      let result: T | undefined
+      doc.transact(() => {
+        result = steps()
+      }, origin)
+      return result as T
+    } finally {
+      batched = null
+    }
+  }
+
   return {
     run,
+    batch,
     beginGesture,
     gesture,
     undo: () => stepThen(undoManager.undoStack, () => undoManager.undo()),
