@@ -134,7 +134,7 @@ export async function LibraryShell({ t, words, workspace, brands, activeBrandId,
 
       <LibraryCapsule
         label={t.app.name}
-        current={place === 'designs' ? 'recent' : place === 'templates' || place === 'kit' || place === 'settings' ? place : 'home'}
+        current={place === 'designs' ? 'recent' : place === 'templates' || place === 'kit' ? place : place === 'settings' ? null : 'home'}
         links={[
           { entry: 'home', href: brandHome ?? '/', label: active ? t.library.home : words.title },
           ...(brandHome
@@ -144,7 +144,6 @@ export async function LibraryShell({ t, words, workspace, brands, activeBrandId,
               { entry: 'kit' as const, href: `${brandHome}/kit`, label: t.home.brandKit },
             ]
             : []),
-          { entry: 'settings', href: '/settings', label: t.library.settings },
         ]}
       />
 

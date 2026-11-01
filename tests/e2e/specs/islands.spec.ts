@@ -121,9 +121,12 @@ test('the library navigates with the capsule, and on a phone with a tab bar', as
   await capsule.getByRole('link', { name: 'Templates' }).click()
   await expect(page).toHaveURL(/\/brands\/dev-brand-coffee\/templates$/)
   await expect(capsule.getByRole('link', { name: 'Templates' })).toHaveAttribute('aria-current', 'page')
-  await capsule.getByRole('link', { name: 'Settings' }).click()
+  // Settings is in the account menu, not the capsule, as in the final mock.
+  await expect(capsule.getByRole('link', { name: 'Settings' })).toHaveCount(0)
+  await page.getByTestId('account-open').click()
+  await page.getByTestId('settings-link').click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Settings')
-  await expect(capsule.getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page')
+  await expect(capsule.locator('[data-lit]')).toHaveCount(0)
 
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
   const phone = await context.newPage()

@@ -1,19 +1,20 @@
 'use client'
 
-// The library's floating capsule: Home, Recent, Templates, Brand kit and Settings, each a page, with
-// the editor capsule's pink blob under the lit entry. Each page renders its own capsule, so the tab remembers the last lit entry (sessionStorage)
+// The library's floating capsule: Home, Recent, Templates and Brand kit, each a page, with the
+// editor capsule's pink blob under the lit entry; Settings is in the account menu, as in the final
+// mock. Each page renders its own capsule, so the tab remembers the last lit entry (sessionStorage)
 // and the blob slides from there when the next page opens.
-import { ClockIcon, GearSixIcon, HouseIcon, PaletteIcon, SquaresFourIcon, type Icon } from '@phosphor-icons/react'
+import { ClockIcon, HouseIcon, PaletteIcon, SquaresFourIcon, type Icon } from '@phosphor-icons/react'
 import { animate, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
 import { useCallback, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
 import { cn } from '../lib/cn.ts'
 
-export type CapsuleEntry = 'home' | 'recent' | 'templates' | 'kit' | 'settings'
+export type CapsuleEntry = 'home' | 'recent' | 'templates' | 'kit'
 
 export type CapsuleLink = { entry: CapsuleEntry; href: string; label: string; badge?: number | undefined }
 
-const ICONS: Record<CapsuleEntry, Icon> = { home: HouseIcon, recent: ClockIcon, templates: SquaresFourIcon, kit: PaletteIcon, settings: GearSixIcon }
+const ICONS: Record<CapsuleEntry, Icon> = { home: HouseIcon, recent: ClockIcon, templates: SquaresFourIcon, kit: PaletteIcon }
 
 const LIT_KEY = 'dazbee.library-capsule'
 
@@ -43,8 +44,8 @@ export function LibraryCapsule({ label, links, current }: {
   /** The capsule's accessible name. */
   label: string
   links: CapsuleLink[]
-  /** The entry for the page shown, which the server lights. */
-  current: CapsuleEntry
+  /** The entry for the page shown, which the server lights; null on a page with none, as Settings. */
+  current: CapsuleEntry | null
 }) {
   const reduced = useReducedMotion()
   // A click that leaves the page lights its entry at once, before the next page comes.
@@ -74,7 +75,7 @@ export function LibraryCapsule({ label, links, current }: {
     const from = last.current ?? readLit()
     if (from && from !== lit) slideFrom(rectOf(from))
     last.current = lit
-    saveLit(lit)
+    if (lit) saveLit(lit)
   }, [lit, slideFrom])
 
   const onClick = (entry: CapsuleEntry) => (event: MouseEvent) => {
