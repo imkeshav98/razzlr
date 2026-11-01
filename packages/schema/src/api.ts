@@ -34,6 +34,8 @@ export type BrandSummary = z.infer<typeof BrandSummary>
 
 export const CreateBrand = z.object({
   name: z.string().trim().min(1).max(120),
+  /** The brand's website, kept for reading its kit from it later. */
+  website: z.url({ protocol: /^https?$/ }).max(2048).optional(),
 })
 export type CreateBrand = z.infer<typeof CreateBrand>
 

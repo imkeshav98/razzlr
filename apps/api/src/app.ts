@@ -101,7 +101,7 @@ export function createApp({ db, storage, sessionOf, syncSecret, signIn = null }:
   app.post('/brands', async (c) => {
     const input = await body(c.req.raw, CreateBrand)
     if (input instanceof Response) return input
-    return c.json(await createBrand(db, c.var.session.workspaceId, input.name), 201)
+    return c.json(await createBrand(db, c.var.session.workspaceId, input.name, input.website), 201)
   })
 
   app.get('/brands/:brandId/designs', async (c) => {

@@ -43,7 +43,7 @@ export default async function HomePage() {
           </li>
         ))}
         <li className="rise min-w-0" style={{ animationDelay: `${Math.min(cards.length, 12) * 40}ms` }}>
-          <NewBrandCard action={addBrand} words={{ add: words.add, name: words.name, create: t.library.create, cancel: t.library.cancel }} />
+          <NewBrandCard action={addBrand} words={{ add: words.add, start: t.library.start, placeholder: t.library.startPlaceholder, callIt: t.library.callIt, change: t.library.change, name: words.name, create: t.library.create, cancel: t.library.cancel }} />
         </li>
       </ul>
     </LibraryShell>
