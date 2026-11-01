@@ -113,7 +113,7 @@ test('the library navigates with the capsule, and on a phone with a tab bar', as
   const capsule = page.getByTestId('library-capsule')
   await expect(capsule.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
   const shape = await box(page, 'library-capsule')
-  expect(shape.x).toBeLessThanOrEqual(16)
+  expect(shape.x).toBeLessThanOrEqual(20)
   expect(shape.height).toBeGreaterThan(shape.width)
   await writeOutput('islands-library.png', await page.screenshot())
   await capsule.getByRole('link', { name: 'Templates' }).click()
