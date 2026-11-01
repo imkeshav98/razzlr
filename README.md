@@ -15,6 +15,8 @@ pnpm test        # Vitest
 pnpm build && pnpm e2e   # Playwright (run `pnpm --filter @razzlr/e2e exec playwright install chromium` once)
 ```
 
+Off CI, `pnpm e2e` starts its own API (8797), sync server (1244) and web app (3110) over a `razzlr_e2e` database and a `razzlr-e2e` bucket, next to docker compose's Postgres and storage, so a run never writes into the workspace of your local site.
+
 ## Layout
 
 ```

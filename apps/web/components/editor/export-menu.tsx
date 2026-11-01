@@ -74,6 +74,7 @@ export function ExportForm({ id, editor, design }: { id: string; editor: Editor;
       <label className="flex flex-col gap-1.5">
         <span className={LABEL}>{t.editor.exports.pages}</span>
         <select
+          name="page"
           value={page}
           onChange={(event) => setPage(event.target.value)}
           data-testid="export-page"
@@ -88,6 +89,7 @@ export function ExportForm({ id, editor, design }: { id: string; editor: Editor;
         <legend className={cn(LABEL, 'mb-1.5')}>{t.editor.exports.formats}</legend>
         <label className={CHOICE}>
           <input
+            name="all-formats"
             type="checkbox"
             checked={allPicked}
             onChange={() => setPicked(allPicked ? new Set() : new Set(formats.map(([formatId]) => formatId)))}
@@ -96,7 +98,7 @@ export function ExportForm({ id, editor, design }: { id: string; editor: Editor;
         </label>
         {formats.map(([formatId, f]) => (
           <label key={formatId} className={CHOICE}>
-            <input type="checkbox" checked={picked.has(formatId)} onChange={() => toggle(formatId)} data-format={formatId} />
+            <input name="format" type="checkbox" checked={picked.has(formatId)} onChange={() => toggle(formatId)} data-format={formatId} />
             <span className="min-w-0 flex-1 truncate">{f.name}</span>
             <span className="font-mono text-xs text-subtle tabular-nums">{sizeOf(f)}</span>
           </label>
@@ -128,7 +130,7 @@ export function ExportForm({ id, editor, design }: { id: string; editor: Editor;
             {t.editor.exports.quality}
             <span className="font-mono font-normal tabular-nums">{quality}</span>
           </span>
-          <input type="range" min={1} max={100} value={quality} onChange={(event) => setQuality(Number(event.target.value))} data-testid="export-quality" />
+          <input name="quality" type="range" min={1} max={100} value={quality} onChange={(event) => setQuality(Number(event.target.value))} data-testid="export-quality" />
         </label>
       )}
 

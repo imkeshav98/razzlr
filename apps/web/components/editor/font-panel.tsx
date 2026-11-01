@@ -79,7 +79,8 @@ const weightsOf = (family: FontFamily | undefined) => {
 const nearest = (weights: number[], wanted: number) =>
   weights.reduce((best, w) => (Math.abs(w - wanted) < Math.abs(best - wanted) ? w : best), weights[0] ?? wanted)
 
-function Preview({ brandId, family, className, big = false }: { brandId: string; family: FontFamily; className?: string; big?: boolean }) {
+/** A family's name drawn in its own face. */
+export function FontPreview({ brandId, family, className, big = false }: { brandId: string; family: FontFamily; className?: string; big?: boolean }) {
   const face = previewFace(family)
   if (family.source === 'builtin' || !face) return <span className={cn('block truncate', big ? 'text-[24px] leading-8 font-semibold tracking-tight' : 'text-[13px]', className)}>{family.family}</span>
   return (
@@ -146,7 +147,7 @@ export function FontPanel({ editor, brandId }: { editor: Editor; brandId: string
           className="group -mx-2 flex h-11 cursor-pointer items-center gap-2 rounded-[10px] px-2 text-start hover:bg-hover aria-expanded:bg-hover"
         >
           <span className="min-w-0 flex-1">
-            {family ? <Preview brandId={brandId} family={family} big /> : <span className="block truncate text-[24px] leading-8 font-semibold tracking-tight">{current.family ?? t.editor.fonts.mixed}</span>}
+            {family ? <FontPreview brandId={brandId} family={family} big /> : <span className="block truncate text-[24px] leading-8 font-semibold tracking-tight">{current.family ?? t.editor.fonts.mixed}</span>}
           </span>
           <span className="shrink-0 text-xs font-medium text-muted tabular-nums">
             {[
@@ -159,6 +160,7 @@ export function FontPanel({ editor, brandId }: { editor: Editor; brandId: string
         <label className="flex items-center justify-between gap-3">
           <span className="text-xs text-muted">{t.editor.fonts.weight}</span>
           <select
+            name="font-weight"
             value={current.weight ?? ''}
             onChange={(event) => current.family && editor.setFont(current.family, Number(event.target.value))}
             disabled={!current.family || weights.length < 2}
@@ -257,6 +259,7 @@ function FontList({ id, brandId, catalog, current, onPick, onClose, onUploaded }
       <div className="flex items-center gap-2 border-b border-line px-3">
         <MagnifyingGlassIcon size={14} aria-hidden className="shrink-0 text-subtle" />
         <input
+          name="font-search"
           // The list opens to be searched.
           autoFocus
           type="search"
@@ -299,7 +302,7 @@ function FontList({ id, brandId, catalog, current, onPick, onClose, onUploaded }
                   onClick={() => onPick(family)}
                   className="mx-1 flex h-9 cursor-pointer items-center rounded-row px-2 data-[active]:bg-hover aria-selected:bg-accent-soft"
                 >
-                  <Preview brandId={brandId} family={family} />
+                  <FontPreview brandId={brandId} family={family} />
                 </div>
               ))}
             </div>
@@ -311,6 +314,7 @@ function FontList({ id, brandId, catalog, current, onPick, onClose, onUploaded }
           <UploadSimpleIcon size={14} aria-hidden />
           {uploading ? t.editor.fonts.uploading : t.editor.fonts.upload}
           <input
+            name="font-file"
             type="file"
             accept=".ttf,.otf,font/ttf,font/otf"
             className="sr-only"
