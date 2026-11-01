@@ -1,10 +1,11 @@
 // A brand's home (#84), as in the final mock: "What are we making for <brand>?" as a brief under a
-// slow aurora. The brand's recent work (a bento of real pictures of each design) and its templates
-// open under the brief from the capsule.
+// slow aurora. The brand's recent work (a bento of real pictures of each design), its templates and
+// its brand kit (#200) open under the brief from the capsule.
 import { revalidatePath } from 'next/cache'
 import { notFound, redirect } from 'next/navigation'
 import { BriefComposer } from '../../../components/brief-composer.tsx'
 import { BENTO_GRID, DesignBento, SPAN, spanOfSize, TILE, TILE_SHADE, type BentoDesign } from '../../../components/design-bento.tsx'
+import { HomeKit } from '../../../components/home-kit.tsx'
 import { HomeStage } from '../../../components/home-stage.tsx'
 import { TileMenu } from '../../../components/tile-menu.tsx'
 import { LibraryShell } from '../../../components/library-shell.tsx'
@@ -137,6 +138,7 @@ export default async function BrandPage({ params, searchParams }: { params: Prom
         panels={{
           recent: { title: t.home.recent, meta: designs.length > 0 ? format(t.home.count, { count: designs.length }) : undefined, body: recentBody },
           templates: { title: t.library.templates, meta: t.library.templatesMeta, body: templatesBody },
+          kit: { title: t.home.brandKit, lead: format(t.home.kit.panelLead, { brand: brand.name }), body: <HomeKit brandId={brand.id} kit={kit} /> },
         }}
       />
     </LibraryShell>

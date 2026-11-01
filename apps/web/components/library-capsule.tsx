@@ -1,24 +1,24 @@
 'use client'
 
-// The library's floating capsule: Home, Recent, Templates and Settings, with the editor capsule's
-// pink blob under the lit entry. On a brand's home, Recent and Templates open their panel under the
-// brief (?show=recent, ?show=templates) without leaving the page; clicking the lit one again closes
-// it. Each page renders its own capsule, so the tab remembers the last lit entry (sessionStorage)
+// The library's floating capsule: Home, Recent, Templates, Brand kit and Settings, with the editor
+// capsule's pink blob under the lit entry. On a brand's home, Recent, Templates and Brand kit open
+// their panel under the brief (?show=recent, ?show=templates, ?show=kit) without leaving the page;
+// clicking the lit one again closes it. Each page renders its own capsule, so the tab remembers the last lit entry (sessionStorage)
 // and the blob slides from there when the next page opens.
-import { ClockIcon, GearSixIcon, HouseIcon, SquaresFourIcon, type Icon } from '@phosphor-icons/react'
+import { ClockIcon, GearSixIcon, HouseIcon, PaletteIcon, SquaresFourIcon, type Icon } from '@phosphor-icons/react'
 import { animate, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useCallback, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
 import { cn } from '../lib/cn.ts'
-import { panelOf, type HomePanel } from '../lib/home-panel.ts'
+import { isHomePanel, panelOf, type HomePanel } from '../lib/home-panel.ts'
 import { showHomePanel, useHomePanel } from '../lib/use-home-panel.ts'
 
 export type CapsuleEntry = 'home' | HomePanel | 'settings'
 
 export type CapsuleLink = { entry: CapsuleEntry; href: string; label: string; badge?: number | undefined }
 
-const ICONS: Record<CapsuleEntry, Icon> = { home: HouseIcon, recent: ClockIcon, templates: SquaresFourIcon, settings: GearSixIcon }
+const ICONS: Record<CapsuleEntry, Icon> = { home: HouseIcon, recent: ClockIcon, templates: SquaresFourIcon, kit: PaletteIcon, settings: GearSixIcon }
 
 const LIT_KEY = 'dazbee.library-capsule'
 
@@ -89,7 +89,7 @@ export function LibraryCapsule({ label, links, current, home }: {
   const onClick = (entry: CapsuleEntry) => (event: MouseEvent) => {
     // A new tab or window keeps this page as it is.
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
-    if (home && (entry === 'recent' || entry === 'templates')) {
+    if (home && isHomePanel(entry)) {
       event.preventDefault()
       showHomePanel(home, entry === panel ? null : entry)
       return
@@ -116,7 +116,7 @@ export function LibraryCapsule({ label, links, current, home }: {
       {links.map(({ entry, href, label: name, badge }) => {
         const LinkIcon = ICONS[entry]
         const on = entry === lit
-        const opens = entry === 'recent' || entry === 'templates'
+        const opens = isHomePanel(entry)
         return (
           <Link
             key={entry}

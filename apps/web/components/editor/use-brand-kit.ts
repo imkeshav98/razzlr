@@ -1,9 +1,9 @@
 'use client'
 
-// The brand's kit as the editor shows it, shared by the Brand flyout and the Page card: a change
-// made in the flyout shows in the Page card's colours at once. Fetched once per brand, and again
-// each time the flyout opens; a fetch waits for a save still on its way, so it never brings back
-// the kit from before that save.
+// The brand's kit as the app shows it, shared by the editor's Brand flyout and Page card and by the
+// brand home's brief and Brand kit panel: a change made in one shows in the others at once. Fetched
+// once per brand, and again each time the flyout or panel opens; a fetch waits for a save still on
+// its way, so it never brings back the kit from before that save.
 import { BrandKit, EMPTY_BRAND_KIT } from '@dazbee/schema'
 import { useCallback, useEffect, useSyncExternalStore } from 'react'
 
@@ -33,14 +33,21 @@ export function saveKit(brandId: string, kit: BrandKit) {
 /** Fetches the kit; offline, when the brand has none yet, or when it can't be read, it stays as it is or is the empty kit. */
 export async function loadKit(brandId: string) {
   await saving.get(brandId)
+  const before = kits.get(brandId)
   const response = await fetch(kitUrl(brandId)).catch(() => null)
   const kit = response?.ok ? BrandKit.safeParse(await response.json().catch(() => null)) : null
+  // A change made while the fetch was out is newer than what it brings.
+  if (kits.get(brandId) !== before) return
   if (kit?.success) showKit(brandId, kit.data)
   else if (!kits.has(brandId)) showKit(brandId, EMPTY_BRAND_KIT)
 }
 
-/** The brand's kit, or null until it first arrives. */
-export function useBrandKit(brandId: string) {
+/**
+ * The brand's kit, or null until it first arrives. A kit the page already has (`first`) is taken
+ * as the brand's until a change or a fetch replaces it, so it is not fetched again.
+ */
+export function useBrandKit(brandId: string, first?: BrandKit) {
+  if (first && !kits.has(brandId)) kits.set(brandId, first)
   const subscribe = useCallback((listener: () => void) => {
     const set = listeners.get(brandId) ?? new Set()
     listeners.set(brandId, set.add(listener))

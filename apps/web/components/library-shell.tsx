@@ -142,6 +142,7 @@ export async function LibraryShell({ t, words, workspace, brands, activeBrandId,
             ? [
               { entry: 'recent' as const, href: homePanelHref(`/brands/${active.id}`, 'recent'), label: t.home.recent, badge: recentCount },
               { entry: 'templates' as const, href: homePanelHref(`/brands/${active.id}`, 'templates'), label: t.library.templates },
+              { entry: 'kit' as const, href: homePanelHref(`/brands/${active.id}`, 'kit'), label: t.home.brandKit },
             ]
             : []),
           { entry: 'settings', href: '/settings', label: t.library.settings },
