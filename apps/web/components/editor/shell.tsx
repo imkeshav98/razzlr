@@ -197,14 +197,17 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
   useLayoutEffect(() => {
     const measure = () => {
       if (!stage.current) return
-      const insets = measureInsets(stage.current.getBoundingClientRect(), [startIsland.current, endIsland.current], [rail.current, cards.current, dock.current])
+      const box = stage.current.getBoundingClientRect()
+      // On a phone the zoom pill sits under the end island, so the ads start below it.
+      const zoom = box.width < 640 ? stage.current.querySelector('[data-zoom]') : null
+      const insets = measureInsets(box, [startIsland.current, endIsland.current, zoom], [rail.current, cards.current, dock.current])
       const key = JSON.stringify([insets, hasCards])
       if (key === reported.current) return
       reported.current = key
       report.current?.(insets, hasCards)
     }
     const watch = new ResizeObserver(measure)
-    for (const el of [stage.current, startIsland.current, endIsland.current, rail.current, cards.current, dock.current]) if (el) watch.observe(el)
+    for (const el of [stage.current, startIsland.current, endIsland.current, rail.current, cards.current, dock.current, stage.current?.querySelector('[data-zoom]')]) if (el) watch.observe(el)
     measure()
     return () => watch.disconnect()
   }, [hasCards])
@@ -214,10 +217,12 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
         <div className="h-dvh overflow-hidden bg-bg text-text">
           <div className="relative flex h-full min-h-0">
           {/* No top bar (#110): two islands float over the canvas, the design's name and save state at
-              the start and Share and the account at the end, with no surface of their own, clear of the rulers
-              when they are on (top and left in either direction, so the insets swap in right-to-left). */}
+              the start and Share and the account at the end, clear of the rulers when they are on (top and
+              left in either direction, so the insets swap in right-to-left). The start island sits on a
+              small frosted pill, so its words read over an ad zoomed in under it; the end island's
+              buttons are solid and need none. */}
           <header className="pointer-events-none absolute start-6 end-4 rtl:start-4 rtl:end-6 top-6 z-30 flex items-center justify-between gap-3">
-            <div ref={startIsland} data-testid="island-start" className="pointer-events-auto flex min-w-0 items-center gap-2">
+            <div ref={startIsland} data-testid="island-start" className="pointer-events-auto flex min-w-0 items-center gap-2 rounded-full border surface-frost py-0.5 ps-0.5 pe-3 shadow-panel">
               <Link href="/" aria-label={t.library.home} className="grid size-9 shrink-0 place-items-center rounded-row hover:bg-hover">
                 <BrandMark size={28} />
               </Link>
@@ -336,7 +341,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
 
             <main ref={stage} className="canvas-dots relative min-w-0 flex-1 overflow-hidden">
               {children}
-              <div ref={dock} role="toolbar" aria-label={t.editor.tools} className="absolute inset-x-0 bottom-4 z-10 mx-auto flex w-max max-sm:bottom-[5.25rem] items-center gap-1 rounded-[18px] surface-frost border p-1.5 shadow-panel">
+              <div ref={dock} role="toolbar" aria-label={t.editor.tools} className={cn('absolute inset-x-0 bottom-4 z-10 mx-auto flex w-max max-sm:bottom-[5.25rem] items-center gap-1 rounded-[18px] surface-frost border p-1.5 shadow-panel', panel === 'properties' && 'max-sm:hidden')}>
                 {TOOLS.map(({ id, icon: ToolIcon, key }) => {
                   if (id === 'shape') {
                     return (
@@ -388,8 +393,9 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                   // A stack at the top end, below the end island, each card only as tall as its content;
                   // past the room above the zoom pill the stack scrolls. Its gaps let clicks through.
                   'pointer-events-none absolute end-3 top-20 z-20 flex max-h-[calc(100%-9.5rem)] w-72 flex-col gap-2.5 overflow-y-auto overscroll-contain [scrollbar-width:none] *:pointer-events-auto',
-                  // On phones, a bottom sheet over the dock, opened from the tab bar.
-                  'max-sm:inset-x-2 max-sm:top-auto max-sm:bottom-[5rem] max-sm:max-h-[55%] max-sm:w-auto max-sm:not-data-[open]:hidden',
+                  // On phones, one sheet with a grab handle above the tab bar, opened from it; the dock
+                  // steps aside while it is open (see .editor-cards).
+                  'editor-cards max-sm:pointer-events-auto max-sm:inset-x-2 max-sm:top-auto max-sm:bottom-[5rem] max-sm:max-h-[55%] max-sm:w-auto max-sm:gap-0 max-sm:not-data-[open]:hidden',
                 )}
               >
                 {inspector}

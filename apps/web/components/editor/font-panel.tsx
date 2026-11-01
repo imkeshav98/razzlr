@@ -159,6 +159,7 @@ export function FontPanel({ editor, brandId }: { editor: Editor; brandId: string
         <label className="flex items-center justify-between gap-3">
           <span className="text-xs text-muted">{t.editor.fonts.weight}</span>
           <select
+            name="font-weight"
             value={current.weight ?? ''}
             onChange={(event) => current.family && editor.setFont(current.family, Number(event.target.value))}
             disabled={!current.family || weights.length < 2}
@@ -257,6 +258,7 @@ function FontList({ id, brandId, catalog, current, onPick, onClose, onUploaded }
       <div className="flex items-center gap-2 border-b border-line px-3">
         <MagnifyingGlassIcon size={14} aria-hidden className="shrink-0 text-subtle" />
         <input
+          name="font-search"
           // The list opens to be searched.
           autoFocus
           type="search"
@@ -311,6 +313,7 @@ function FontList({ id, brandId, catalog, current, onPick, onClose, onUploaded }
           <UploadSimpleIcon size={14} aria-hidden />
           {uploading ? t.editor.fonts.uploading : t.editor.fonts.upload}
           <input
+            name="font-file"
             type="file"
             accept=".ttf,.otf,font/ttf,font/otf"
             className="sr-only"

@@ -62,21 +62,21 @@ export function HomeStage({ home, brief, hint, closeLabel, panels }: {
             <div aria-hidden className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line-strong md:hidden" />
             <div className="mb-4 flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 id="home-panel-title" className="font-display text-lg font-semibold tracking-tight">{open.title}</h2>
+                <h2 id="home-panel-title" className="flex flex-wrap items-baseline gap-x-2.5 font-display text-lg font-bold tracking-tight">
+                  {open.title}
+                  {open.meta && <span className="font-sans text-[13px] font-medium tracking-normal text-muted tabular-nums">{open.meta}</span>}
+                </h2>
                 {open.lead && <p className="mt-1 text-sm text-muted">{open.lead}</p>}
               </div>
-              <div className="flex shrink-0 items-center gap-2">
-                {open.meta && <span className="text-[13px] text-muted tabular-nums">{open.meta}</span>}
-                <button
-                  type="button"
-                  onClick={close}
-                  aria-label={closeLabel}
-                  title={closeLabel}
-                  className="grid size-8 cursor-pointer place-items-center rounded-row text-subtle transition-colors duration-[var(--chrome-fast)] hover:bg-hover hover:text-text"
-                >
-                  <XIcon size={16} weight="bold" aria-hidden />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={close}
+                aria-label={closeLabel}
+                title={closeLabel}
+                className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full border border-line text-subtle transition-colors duration-[var(--chrome-fast)] hover:border-line-strong hover:bg-hover hover:text-text"
+              >
+                <XIcon size={15} weight="bold" aria-hidden />
+              </button>
             </div>
             {open.body}
           </section>
