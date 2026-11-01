@@ -140,6 +140,9 @@ export const ar: Messages = {
     zoomFitKey: 'Shift+1',
     zoomInKey: 'Ctrl+=',
     zoomOutKey: 'Ctrl+-',
+    notices: {
+      placedByLayout: 'التخطيط التلقائي يحدد مكان هذه الطبقة. اسحبها على طول الصف أو العمود، أو اجعلها تبقى في مكانها لتحريكها بحرية.',
+    },
     imageTool: {
       title: 'ضع صورة',
       upload: 'ارفع من الجهاز',

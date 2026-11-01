@@ -149,6 +149,9 @@ export const en = {
     zoomFitKey: 'Shift+1',
     zoomInKey: 'Ctrl+=',
     zoomOutKey: 'Ctrl+-',
+    notices: {
+      placedByLayout: 'Auto layout places this layer. Drag it along the row or column, or set it to keep where it is to move it freely.',
+    },
     imageTool: {
       title: 'Place an image',
       upload: 'Upload from computer',

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { SHAPE_TOOLS, startEditor, type Editor, type ShapeTool, type Tool } from '@dazbee/editor'
 import { fetchSyncToken, renameFromEditor } from './actions.ts'
 import { EditorShell, type ChromeInsets } from '../../../../../components/editor/shell.tsx'
-import { FocusChip, UndoToast } from '../../../../../components/editor/formats-panel.tsx'
+import { FocusChip, NoticeToast, UndoToast } from '../../../../../components/editor/formats-panel.tsx'
+import { useMessages } from '../../../../../lib/i18n/client.tsx'
 import { PropertyCards } from '../../../../../components/editor/property-cards.tsx'
 import { ZoomControl } from '../../../../../components/editor/zoom-control.tsx'
 import { ASSET_DRAG_TYPE, AssetLibrary, draggedAsset } from '../../../../../components/editor/asset-library.tsx'
@@ -107,6 +108,17 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
   const [zoom] = useState(() => valueStore<number | null>(null))
   const [editor, setEditor] = useState<Editor | null>(null)
   const [removed, setRemoved] = useState<string | null>(null)
+  // Why a gesture did nothing: auto layout decides where a layer in its flow goes.
+  const notices = useMessages().editor.notices
+  const [notice, setNotice] = useState<string | null>(null)
+  const dismissNotice = useCallback(() => setNotice(null), [])
+  useEffect(() => {
+    if (!editor) return
+    const stop = editor.onNotice((n) => setNotice(notices[n]))
+    return () => {
+      stop()
+    }
+  }, [editor, notices])
   // The dock follows the editor's tool: a key picks one, and drawing a shape goes back to select.
   const [tool, setEditorTool] = useState<Tool>('select')
   const [shape, setShape] = useState<ShapeTool>('rect')
@@ -252,6 +264,7 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
         </div>
         <div className="pointer-events-none absolute start-4 bottom-4 z-10">
           {editor && removed && <UndoToast key={removed} editor={editor} message={removed} onDone={dismissRemoved} />}
+          {!removed && notice && <NoticeToast message={notice} onDone={dismissNotice} />}
         </div>
       </div>
       <StageZoom editor={editor} store={zoom} />

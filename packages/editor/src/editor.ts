@@ -95,6 +95,9 @@ const PEN_STROKE = { paint: { type: 'solid', color: '#1F2329FF' }, width: 2, cap
 /** A path layer being drawn or edited: the box it had when that began, which its points are relative to, and how far the box has moved since. */
 interface Reshaping { id: string; start: Box; applied: Point }
 
+/** Something the editor tells the person, for the page to show: a gesture that auto layout decides instead. */
+export type Notice = 'placedByLayout'
+
 /** Where the design's edits are, once it is open. */
 export type SaveState = 'Saved' | 'Saving' | 'Offline'
 export const SAVE_STATES: readonly string[] = ['Saved', 'Saving', 'Offline'] satisfies SaveState[]
@@ -319,6 +322,11 @@ function live(
   }
   /** Told when the selection changes, so panels can follow it. */
   const selectionListeners = new Set<(ids: string[]) => void>()
+  /** Told when a gesture has nothing to do because auto layout decides it, so the page can say why. */
+  const noticeListeners = new Set<(notice: Notice) => void>()
+  const notify = (notice: Notice) => {
+    for (const listener of noticeListeners) listener(notice)
+  }
   /** Told when the tool changes, by a key or after drawing a shape, so the tool dock follows. */
   const toolListeners = new Set<(tool: Tool) => void>()
   /** The image the image tool places with the next click or drag; picked after the tool is. */
@@ -449,16 +457,16 @@ function live(
     if (!extend) editing.anchor = editing.caret
   }
   /**
-   * Keeps the box of text that grows the size of its words in every format (#47), and the groups
-   * around it fitted, in the step the edit is in.
+   * Keeps the box of text that grows the size of its words in every format (#47), or in `only` that
+   * one, and the groups around it fitted, in the step the edit is in.
    */
-  function fitText(id: string) {
+  function fitText(id: string, only?: string) {
     const now = session.design()
     const node = now.nodes[id]
     if (node?.type !== 'text') return
     const measure = measureText()
     const sizes: Record<string, { width: number; height: number }> = {}
-    for (const formatId of Object.keys(now.formats)) {
+    for (const formatId of only ? [only] : Object.keys(now.formats)) {
       const props = { ...node.props, ...now.overrides[`format:${formatId}`]?.[id] } as typeof node.props
       if (props.boxMode === 'fixed') continue
       const size = measure(props, props.boxMode === 'autoWidth' ? null : props.width)
@@ -498,6 +506,19 @@ function live(
     }
     return false
   }
+  /** A layer's value of one property as a frame's format has it: the base with the format's override. */
+  const propIn = (frame: Frame, id: string, key: string, from: Design) =>
+    ({ ...from.nodes[id]?.props, ...from.overrides[scope(frame)]?.[id] } as Record<string, unknown>)[key]
+  /** Whether a frame lays out what it holds with auto layout in a frame's format. */
+  const layoutIn = (frame: Frame, id: string, from: Design) => from.nodes[id]?.type === 'frame' && propIn(frame, id, 'layout', from) !== undefined
+  /** Whether a layer is in an auto layout frame's flow in a frame's format, so the frame places it. */
+  const inFlow = (frame: Frame, id: string, from: Design) => layoutIn(frame, from.nodes[id]?.parentId ?? '', from) && !propIn(frame, id, 'absolute', from)
+  /** Whether auto layout places a layer that is inside `root`, with whatever between them it is part of. */
+  function placedInside(frame: Frame, id: string, root: string, from: Design) {
+    for (let up: string | undefined = id; up && up !== root && from.nodes[up]; up = from.nodes[up]?.parentId) if (inFlow(frame, up, from)) return true
+    return false
+  }
+
   /** The groups and frames a layer is inside, outermost first, as boxes in a frame. */
   function containersOf(frame: Frame, parentId: string | undefined, from: Design = session.design()): Box[] {
     const boxes: Box[] = []
@@ -708,6 +729,41 @@ function live(
     return el
   }
 
+  /**
+   * A drag in a flow: the layers following the pointer, and inside the frame a line where they would
+   * go; outside it, the frame outlined, since a drop there takes them out.
+   */
+  function reorderParts() {
+    const g = gesture
+    if (g?.kind !== 'reorder' || !g.moved) return []
+    const now = session.design()
+    const parts: HTMLElement[] = []
+    const dx = g.to.x - g.from.x
+    const dy = g.to.y - g.from.y
+    for (const id of g.roots) {
+      const b = g.boxes.get(id)
+      if (b) parts.push(outline('reorder-ghost', g.frame, drawnFrom({ ...b, x: b.x + dx, y: b.y + dy }, g.around)))
+    }
+    const holder = boxIn(g.frame, g.parentId, now)
+    if (!holder) return parts
+    if (g.outside) {
+      parts.push(outline('reorder-leave', g.frame, drawnFrom(holder, g.around.slice(0, -1))))
+      return parts
+    }
+    const row = (propIn(g.frame, g.parentId, 'layout', now) as { direction?: string } | undefined)?.direction !== 'column'
+    const siblings = flowSiblings(g.frame, g.parentId, g.roots, now).map((id) => boxIn(g.frame, id, now)).filter((b): b is Box => b !== null)
+    const prev = siblings[g.slot - 1]
+    const next = siblings[g.slot]
+    const along = prev && next ? (row ? (prev.x + prev.width + next.x) / 2 : (prev.y + prev.height + next.y) / 2)
+      : next ? (row ? next.x - 2 : next.y - 2) : prev ? (row ? prev.x + prev.width + 2 : prev.y + prev.height + 2) : (row ? holder.x : holder.y)
+    const thick = 2 / camera.zoom
+    const line = row
+      ? { x: along - thick / 2, y: holder.y, width: thick, height: holder.height, rotation: 0 }
+      : { x: holder.x, y: along - thick / 2, width: holder.width, height: thick, rotation: 0 }
+    parts.push(outline('reorder-line', g.frame, drawnFrom(line, g.around)))
+    return parts
+  }
+
   /** Each selected layer's outline, then the box with its handles and the size under it. */
   function selectionParts() {
     const outer = selectionBox()
@@ -799,7 +855,7 @@ function live(
     const dropFrame = dropTarget && frameOf(dropTarget.frame)
     const dropBox = dropFrame && dropTarget && drawnBoxOf(dropFrame, dropTarget.id, design)
     if (dropFrame && dropBox) parts.push(outline('drop-target', dropFrame, dropBox))
-    parts.push(...(pathEditing || cropping ? [] : selectionParts()), ...pathParts(), ...cropParts())
+    parts.push(...(pathEditing || cropping ? [] : selectionParts()), ...pathParts(), ...cropParts(), ...reorderParts())
     if (gesture?.kind === 'textBox' || gesture?.kind === 'imageBox') {
       // The box the text tool (#47) or the image tool is drawing, drawn as a marquee is.
       const box = document.createElement('div')
@@ -1185,7 +1241,11 @@ function live(
   /** What a drag on the stage is doing, from pointer down to up. */
   type Gesture =
     | { kind: 'move'; frame: Frame; around: Box[]; from: Point; roots: string[]; boxes: Map<string, Box>; targets: Targets | null; end: () => void }
-    | { kind: 'resize'; frame: Frame; around: Box[]; handle: Handle; outer: Box; grab: Point; roots: string[]; boxes: Map<string, Box>; targets: Targets | null; end: () => void }
+    | { kind: 'resize'; frame: Frame; around: Box[]; handle: Handle; outer: Box; grab: Point; roots: string[]; boxes: Map<string, Box>; targets: Targets | null; switched: boolean; end: () => void }
+    | {
+      kind: 'reorder'; frame: Frame; around: Box[]; parentId: string; roots: string[]; boxes: Map<string, Box>; from: Point; to: Point
+      moved: boolean; slot: number; outside: boolean; end: () => void
+    }
     | { kind: 'rotate'; frame: Frame; around: Box[]; outer: Box; from: number; roots: string[]; boxes: Map<string, Box>; end: () => void }
     | { kind: 'marquee'; from: Point; to: Point; base: string[]; baseFrame: string | null }
     | { kind: 'textSelect'; frame: Frame; around: Box[] }
@@ -1204,16 +1264,20 @@ function live(
   let spaceHeld = false
   const panning = () => tool === 'hand' || spaceHeld
 
-  /** The boxes a transform changes: each root and every layer under it, as they are now. */
+  /**
+   * The boxes a transform changes: each root and every layer under it, as they are now. A layer
+   * auto layout places inside a root is left out: its frame puts it where it goes.
+   */
   function startBoxes(frame: Frame, ids: string[]) {
     const now = session.design()
     const boxes = new Map<string, Box>()
-    const add = (id: string) => {
+    const add = (id: string, root: string) => {
+      if (id !== root && placedInside(frame, id, root, now)) return
       const box = boxIn(frame, id, now)
       if (box) boxes.set(id, box)
-      for (const [child] of childrenOf(now, id)) add(child)
+      for (const [child] of childrenOf(now, id)) add(child, root)
     }
-    for (const id of ids) add(id)
+    for (const id of ids) add(id, id)
     return boxes
   }
   /** What each gesture has written so far, by its start boxes: `<id>|<property>`. */
@@ -1316,18 +1380,145 @@ function live(
     }
     const next = new Map<string, Box>()
     const now = session.design()
+    if (!g.switched) {
+      g.switched = true
+      switchSizing(g.frame, g.roots, g.handle, now)
+    }
     for (const root of g.roots) {
       const was = g.boxes.get(root)
       if (!was) continue
       const box = g.roots.length === 1 ? outer : scaleWithin(was, g.outer, outer)
-      next.set(root, box)
-      // Layers inside a group or frame keep their place in it.
-      for (const id of under(root, now)) {
-        const inner = g.boxes.get(id)
-        if (inner) next.set(id, carry(inner, was, box))
+      // Auto layout places a layer in its flow: a resize gives it a size, never a place.
+      next.set(root, inFlow(g.frame, root, now) ? { ...box, x: was.x, y: was.y, rotation: was.rotation } : box)
+      const type = now.nodes[root]?.type
+      if (type === 'group' || type === 'boolean') {
+        // Layers inside a group or boolean keep their place in it, scaled with it.
+        for (const id of under(root, now)) {
+          const inner = g.boxes.get(id)
+          if (inner) next.set(id, carry(inner, was, box))
+        }
+      } else if (type === 'frame') {
+        // A frame changes its own size only: what it holds stays as it is, where it is on screen;
+        // with several layers it moves along with its frame.
+        const shift = g.roots.length === 1 ? keptOnScreen(was, box) : { x: box.x - was.x, y: box.y - was.y }
+        for (const id of under(root, now)) {
+          const inner = g.boxes.get(id)
+          if (inner) next.set(id, { ...inner, x: inner.x + shift.x, y: inner.y + shift.y })
+        }
       }
     }
     writeBoxes(g.frame, g.boxes, new Map([...next].map(([id, b]) => [id, { ...b, x: round(b.x), y: round(b.y), width: round(b.width), height: round(b.height) }])))
+    // Text that grows with its words takes the height its new width gives it.
+    for (const root of g.roots) if (now.nodes[root]?.type === 'text') fitText(root, g.frame.formatId)
+  }
+
+  /**
+   * How far a frame's layers move so they stay where they are drawn when the frame, turned, changes
+   * from `was` to `box`: it turns them about its centre, which has moved.
+   */
+  function keptOnScreen(was: Box, box: Box): Point {
+    if (box.rotation === 0) return { x: 0, y: 0 }
+    const v = { x: centreOf(was).x - centreOf(box).x, y: centreOf(was).y - centreOf(box).y }
+    const w = turn(v, { x: 0, y: 0 }, -box.rotation)
+    return { x: w.x - v.x, y: w.y - v.y }
+  }
+
+  /**
+   * At the start of a resize, the axes it drags stop following their content, as in Figma: an auto
+   * layout frame or a layer in a flow becomes fixed there (from hug or fill), and text that grows
+   * with its words gets a fixed box there, wrapping inside a width given to it.
+   */
+  function switchSizing(frame: Frame, ids: string[], handle: Handle, from: Design) {
+    const across = handle.includes('e') || handle.includes('w')
+    const down = handle.includes('n') || handle.includes('s')
+    for (const id of ids) {
+      const node = from.nodes[id]
+      if (!node) continue
+      const patch: Record<string, unknown> = {}
+      const boxMode = propIn(frame, id, 'boxMode', from)
+      if (node.type === 'text' && boxMode !== 'fixed') {
+        const next = down ? 'fixed' : boxMode === 'autoWidth' && across ? 'autoHeight' : boxMode
+        if (next !== boxMode) patch.boxMode = next
+      }
+      const sizing = propIn(frame, id, 'sizing', from) as { width: string; height: string } | undefined
+      // Text without sizing of its own follows its box mode, changed above.
+      if ((inFlow(frame, id, from) || layoutIn(frame, id, from)) && (sizing || node.type !== 'text')) {
+        const was = sizing ?? { width: 'fixed', height: 'fixed' }
+        const next = { width: across ? 'fixed' : was.width, height: down ? 'fixed' : was.height }
+        if (next.width !== was.width || next.height !== was.height) patch.sizing = next
+      }
+      if (Object.keys(patch).length > 0) runQuietly(() => session.run('node.update', { ids: [id], scope: scope(frame), patch }))
+    }
+  }
+
+  /** The flow siblings of layers in an auto layout frame, without them, in the frame's order. */
+  function flowSiblings(frame: Frame, parentId: string, moving: string[], from: Design) {
+    return childrenOf(from, parentId).map(([id]) => id).filter((id) => !moving.includes(id) && inFlow(frame, id, from))
+  }
+  /** Where in a flow a point puts layers being moved: before the sibling at that index, or at the end. */
+  function slotAt(g: Extract<Gesture, { kind: 'reorder' }>, p: Point) {
+    const now = session.design()
+    const row = (propIn(g.frame, g.parentId, 'layout', now) as { direction?: string } | undefined)?.direction !== 'column'
+    const siblings = flowSiblings(g.frame, g.parentId, g.roots, now)
+    return siblings.filter((id) => {
+      const b = boxIn(g.frame, id, now)
+      return b && (row ? b.x + b.width / 2 : b.y + b.height / 2) < (row ? p.x : p.y)
+    }).length
+  }
+  /** Follows a drag of layers in a flow: where they would go in it, or out of it. */
+  function reorderTo(g: Extract<Gesture, { kind: 'reorder' }>, p: Point) {
+    if (!g.moved && Math.hypot(p.x - g.from.x, p.y - g.from.y) * camera.zoom < CLICK_SLOP) return
+    g.moved = true
+    g.to = p
+    const holder = boxIn(g.frame, g.parentId)
+    g.outside = !holder || p.x < holder.x || p.y < holder.y || p.x > holder.x + holder.width || p.y > holder.y + holder.height
+    g.slot = slotAt(g, p)
+  }
+  /**
+   * Drops layers dragged in a flow, one undo step: inside their frame, into the place the line
+   * showed; outside it, out of the frame into what holds it, where they were dropped in this
+   * format and where the flow had them in the others.
+   */
+  function finishReorder(g: Extract<Gesture, { kind: 'reorder' }>) {
+    if (!g.moved) return
+    const now = session.design()
+    if (!g.outside) {
+      const siblings = flowSiblings(g.frame, g.parentId, g.roots, now)
+      const before = siblings[g.slot]
+      for (const id of g.roots) runQuietly(() => session.run('node.move', { id, parentId: g.parentId, ...(before ? { before } : {}) }))
+      return
+    }
+    const holder = now.nodes[g.parentId]
+    if (!holder) return
+    const outer = holder.parentId
+    const after = childrenOf(now, outer).map(([id]) => id)
+    const before = after[after.indexOf(g.parentId) + 1]
+    const dx = g.to.x - g.from.x
+    const dy = g.to.y - g.from.y
+    // Each format's box as its flow placed it, before the layers leave it.
+    const others = grid.frames.filter((f) => f.pageId === g.frame.pageId && f.key !== g.frame.key)
+    const placed = new Map(others.map((f) => [f, new Map(g.roots.map((id) => [id, boxIn(f, id, now)]))]))
+    const aroundOut = g.around.slice(0, -1)
+    for (const id of g.roots) {
+      const box = g.boxes.get(id)
+      if (!box) continue
+      runQuietly(() => session.run('node.move', { id, parentId: outer, ...(before ? { before } : {}) }))
+      const drawn = drawnFrom({ ...box, x: box.x + dx, y: box.y + dy }, g.around)
+      runQuietly(() => session.run('node.update', { ids: [id], scope: scope(g.frame), patch: { ...undrawn(drawn, aroundOut) } }))
+      for (const [f, boxes] of placed) {
+        const there = boxes.get(id)
+        const holderThere = boxIn(f, g.parentId, now)
+        if (!there || !holderThere) continue
+        const aroundThere = [...containersOf(f, outer, now), holderThere]
+        runQuietly(() => session.run('node.update', { ids: [id], scope: scope(f), patch: { ...undrawn(drawnFrom(there, aroundThere), aroundThere.slice(0, -1)) } }))
+      }
+    }
+  }
+  /** A box as drawn on the page, as layers inside containers keep it: the inverse of drawnFrom. */
+  function undrawn(drawn: Box, around: Box[]): Box {
+    const c = localTo(centreOf(drawn), around)
+    const rotation = normalAngle(around.reduce((r, b) => r - b.rotation, drawn.rotation))
+    return { x: round(c.x - drawn.width / 2), y: round(c.y - drawn.height / 2), width: round(drawn.width), height: round(drawn.height), rotation: round(rotation) }
   }
 
   function rotateTo(g: Extract<Gesture, { kind: 'rotate' }>, p: Point, snap: boolean) {
@@ -1485,7 +1676,7 @@ function live(
       const world = toWorld(camera, screen)
       const { around } = outer
       const grab = localTo({ x: world.x - outer.frame.x, y: world.y - outer.frame.y }, around)
-      if (grabbed.kind === 'resize') gesture = { kind: 'resize', frame: outer.frame, around, handle: grabbed.handle, outer: outer.box, grab, roots: ids, boxes, targets: targetsFor(outer.frame, ids, around), end }
+      if (grabbed.kind === 'resize') gesture = { kind: 'resize', frame: outer.frame, around, handle: grabbed.handle, outer: outer.box, grab, roots: ids, boxes, targets: targetsFor(outer.frame, ids, around), switched: false, end }
       else gesture = { kind: 'rotate', frame: outer.frame, around, outer: outer.box, from: angleOf(grab, centreOf(outer.box)), roots: ids, boxes, end }
       drawOverlay()
       return
@@ -1528,6 +1719,16 @@ function live(
     if (!at || !frame) return
     canvas.setPointerCapture(e.pointerId)
     const ids = roots()
+    const now = session.design()
+    const parents = new Set(ids.map((id) => now.nodes[id]?.parentId))
+    const [flowParent] = parents
+    if (flowParent && parents.size === 1 && ids.every((id) => inFlow(frame, id, now))) {
+      // Auto layout places these: a drag moves them along the flow, or out of the frame.
+      const from = localTo(at.p, around)
+      gesture = { kind: 'reorder', frame, around, parentId: flowParent, roots: ids, boxes: startBoxes(frame, ids), from, to: from, moved: false, slot: 0, outside: false, end: session.beginGesture() }
+      drawOverlay()
+      return
+    }
     gesture = { kind: 'move', frame, around, from: localTo(at.p, around), roots: ids, boxes: startBoxes(frame, ids), targets: targetsFor(frame, ids, around), end: session.beginGesture() }
     drawOverlay()
   }, on)
@@ -1613,6 +1814,11 @@ function live(
     }
     // Holding Ctrl (⌘ on a Mac) turns snapping off for as long as it is held.
     const snap = snapping && !(e.ctrlKey || e.metaKey)
+    if (gesture.kind === 'reorder') {
+      reorderTo(gesture, p)
+      drawOverlay()
+      return
+    }
     if (gesture.kind === 'move') moveTo(gesture, p, e.shiftKey, snap)
     else if (gesture.kind === 'resize') resizeTo(gesture, p, e.shiftKey, e.altKey, snap)
     else rotateTo(gesture, p, e.shiftKey)
@@ -1993,6 +2199,7 @@ function live(
       gesture = null
       return
     }
+    if (gesture?.kind === 'reorder') finishReorder(gesture)
     if (gesture && gesture.kind !== 'marquee') {
       hug(gesture.roots)
       gesture.end()
@@ -2105,6 +2312,10 @@ function live(
     if (!frame || !format) return false
     const now = session.design()
     const ids = roots(now)
+    if (ids.some((id) => inFlow(frame, id, now))) {
+      notify('placedByLayout')
+      return true
+    }
     const boxes = startBoxes(frame, ids)
     // One layer lines up with what holds it: its group or frame, or the format.
     const parent = now.nodes[ids[0] ?? '']?.parentId
@@ -2133,6 +2344,11 @@ function live(
     const frame = selection && frameOf(selection.frame)
     if (!frame) return
     const ids = roots()
+    const now = session.design()
+    if (ids.some((id) => inFlow(frame, id, now))) {
+      nudgeInFlow(frame, ids, dx, dy, now)
+      return
+    }
     const boxes = startBoxes(frame, ids)
     // Arrows move along the page as drawn, also inside a turned group.
     const around = selectionBox()?.around ?? []
@@ -2141,6 +2357,32 @@ function live(
       writeBoxes(frame, boxes, new Map([...boxes].map(([id, b]) => [id, { ...b, x: round(b.x + step.x), y: round(b.y + step.y) }])))
       hug(ids)
     })
+  }
+
+  /**
+   * The arrow keys on layers in a flow: along it they move them one place earlier or later, one
+   * undo step; across it, or for layers in different flows, auto layout decides, and the page says so.
+   */
+  function nudgeInFlow(frame: Frame, ids: string[], dx: number, dy: number, now: Design) {
+    const parents = new Set(ids.map((id) => now.nodes[id]?.parentId))
+    const [parentId] = parents
+    const row = parentId && (propIn(frame, parentId, 'layout', now) as { direction?: string } | undefined)?.direction !== 'column'
+    const along = row ? dx : dy
+    if (!parentId || parents.size > 1 || !ids.every((id) => inFlow(frame, id, now)) || along === 0 || (row ? dy : dx) !== 0) {
+      notify('placedByLayout')
+      return
+    }
+    const flow = childrenOf(now, parentId).map(([id]) => id).filter((id) => inFlow(frame, id, now))
+    const places = ids.map((id) => flow.indexOf(id)).sort((a, b) => a - b)
+    const first = places[0] ?? 0
+    const last = places.at(-1) ?? 0
+    // Earlier: before the layer ahead of the first; later: past the layer after the last.
+    const before = along < 0 ? flow[first - 1] : flow[last + 2]
+    if (along < 0 ? first === 0 : last === flow.length - 1) return
+    const moving = flow.filter((id) => ids.includes(id))
+    runQuietly(() => session.gesture(() => {
+      for (const id of moving) session.run('node.move', { id, parentId, ...(before ? { before } : {}) })
+    }))
   }
 
   /** The top-level layers of the selection's page, or the first page's, that can be picked. */
@@ -2755,6 +2997,11 @@ function live(
       return runQuietly(() => session.run('node.update', { ids, scope: scope(frame), patch: { visible: !hidden } }))
     },
     /** Calls back with the selected layers whenever the selection changes. */
+    /** Calls back with what the editor tells the person, such as a nudge auto layout decides. */
+    onNotice(listener: (notice: Notice) => void) {
+      noticeListeners.add(listener)
+      return () => noticeListeners.delete(listener)
+    },
     onSelection(listener: (ids: string[]) => void) {
       selectionListeners.add(listener)
       return () => selectionListeners.delete(listener)
@@ -2989,6 +3236,7 @@ function live(
       cancelAnimationFrame(pending)
       drawListeners.clear()
       selectionListeners.clear()
+      noticeListeners.clear()
       toolListeners.clear()
       doc.off('update', redraw)
       for (const entry of frames.values()) entry.picture?.delete()

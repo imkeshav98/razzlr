@@ -985,3 +985,24 @@ body {
 @utility checker {
   background: repeating-conic-gradient(color-mix(in srgb, var(--text) 14%, transparent) 0 25%, transparent 0 50%) 0 0 / 8px 8px;
 }
+
+/* A drag in an auto layout flow: the layers following the pointer, the line where they would go,
+   and the frame outlined when a drop would take them out of it. */
+.stage-overlay .reorder-ghost,
+.stage-overlay .reorder-line,
+.stage-overlay .reorder-leave {
+  position: absolute;
+  transform-origin: center;
+}
+.stage-overlay .reorder-ghost {
+  outline: 1.5px dashed var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.stage-overlay .reorder-line {
+  background: var(--accent);
+  border-radius: 1px;
+}
+.stage-overlay .reorder-leave {
+  outline: 1.5px dashed var(--accent);
+  opacity: 0.7;
+}
