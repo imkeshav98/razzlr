@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { test as base, type Page } from '@playwright/test'
 import { FONT_FACES } from '@razzlr/fonts'
 import { FONT_FILES_DIR } from '@razzlr/fonts/node'
+import type { ExportType } from '@razzlr/schema'
 import { build } from 'esbuild'
 import { ASSETS_DIR, type Pixels } from '../../src/pixels.ts'
 
@@ -12,8 +13,8 @@ const ORIGIN = 'http://parity.test'
 export type Surface = 'cpu' | 'webgl'
 export interface Harness {
   render(json: unknown, pageId: string, formatId: string, surface: Surface, assetIds: string[]): Promise<Pixels>
-  /** The file the browser's export makes, PNG or JPG at quality 85 (#55). */
-  exportFile(json: unknown, pageId: string, formatId: string, type: 'png' | 'jpg', assetIds: string[]): Promise<Uint8Array>
+  /** The file the browser's export makes: PNG, JPG at quality 85, PDF or SVG (#55, #56). */
+  exportFile(json: unknown, pageId: string, formatId: string, type: ExportType, assetIds: string[]): Promise<Uint8Array>
 }
 
 async function files() {
