@@ -161,6 +161,7 @@ export const ar: Messages = {
     page: {
       title: 'الصفحة',
       background: 'الخلفية',
+      brandColors: 'ألوان العلامة',
       fineTune: 'ضبط دقيق',
       hex: 'الرمز',
     },
@@ -202,6 +203,12 @@ export const ar: Messages = {
       remove: 'أزل {name}',
       noLogo: 'بلا شعار',
       saveFailed: 'تعذّر حفظ هوية العلامة: {reason}',
+      pickHint: 'حدد طبقات، ثم اختر لونًا أو خطًا. ستتبع العلامة من بعدها.',
+      edit: 'تعديل',
+      editKit: 'عدّل هوية العلامة',
+      done: 'تم',
+      noColors: 'لا ألوان بعد. أضفها من تعديل.',
+      noFonts: 'لا خطوط بعد. أضفها من تعديل.',
     },
     props: {
       applyTo: 'طبّق التغييرات على',

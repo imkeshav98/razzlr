@@ -168,6 +168,7 @@ export const en = {
     page: {
       title: 'Page',
       background: 'Background',
+      brandColors: 'Brand colours',
       fineTune: 'Fine-tune',
       hex: 'Hex',
     },
@@ -209,6 +210,12 @@ export const en = {
       remove: 'Remove {name}',
       noLogo: 'No logo',
       saveFailed: 'Couldn’t save the brand kit: {reason}',
+      pickHint: 'Select layers, then pick a colour or font. They follow the brand from then on.',
+      edit: 'Edit',
+      editKit: 'Edit brand kit',
+      done: 'Done',
+      noColors: 'No colours yet. Add them with Edit.',
+      noFonts: 'No fonts yet. Add them with Edit.',
     },
     props: {
       applyTo: 'Apply changes to',
