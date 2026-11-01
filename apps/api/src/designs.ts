@@ -2,7 +2,7 @@
 import { randomUUID } from 'node:crypto'
 import { brands, designs, designStates, workspaces, type Db } from '@razzlr/db'
 import { loadDesign } from '@razzlr/doc'
-import { parseDesign, SCHEMA_VERSION, type BrandSummary, type DesignInput, type DesignSummary, type WorkspaceKind, type WorkspaceSummary } from '@razzlr/schema'
+import { parseDesign, SCHEMA_VERSION, type BrandSummary, type DesignInput, type DesignSummary, type UpdateWorkspace, type WorkspaceSummary } from '@razzlr/schema'
 import { and, asc, desc, eq } from 'drizzle-orm'
 import * as Y from 'yjs'
 
@@ -13,8 +13,8 @@ export async function findWorkspace(db: Db, workspaceId: string): Promise<Worksp
   return row ?? null
 }
 
-export async function setWorkspaceKind(db: Db, workspaceId: string, kind: WorkspaceKind): Promise<WorkspaceSummary | null> {
-  const [row] = await db.update(workspaces).set({ kind }).where(eq(workspaces.id, workspaceId)).returning(workspaceSummary)
+export async function updateWorkspace(db: Db, workspaceId: string, { kind, name }: UpdateWorkspace): Promise<WorkspaceSummary | null> {
+  const [row] = await db.update(workspaces).set({ ...(kind ? { kind } : {}), ...(name ? { name } : {}) }).where(eq(workspaces.id, workspaceId)).returning(workspaceSummary)
   return row ?? null
 }
 

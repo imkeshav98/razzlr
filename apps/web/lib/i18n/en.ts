@@ -102,6 +102,8 @@ export const en = {
   },
   settings: {
     title: 'Settings',
+    workspace: 'Workspace',
+    workspaceName: 'Workspace name',
     kind: 'Who Dazbee is for',
     kindLead: 'It changes only a few words and defaults, never your work.',
     save: 'Save',

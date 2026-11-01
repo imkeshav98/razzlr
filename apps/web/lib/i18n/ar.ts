@@ -95,6 +95,8 @@ export const ar: Messages = {
   },
   settings: {
     title: 'الإعدادات',
+    workspace: 'مساحة العمل',
+    workspaceName: 'اسم مساحة العمل',
     kind: 'لمن Dazbee',
     kindLead: 'يغيّر بضع كلمات وإعدادات فقط، ولا يغيّر عملك.',
     save: 'حفظ',
