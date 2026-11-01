@@ -54,6 +54,20 @@ export async function findDesign(db: Db, workspaceId: string, brandId: string, d
   return row ? toSummary(row) : null
 }
 
+/** Renames a design of the brand; null when there is no such design. */
+export async function renameDesign(db: Db, workspaceId: string, brandId: string, designId: string, name: string): Promise<DesignSummary | null> {
+  const [row] = await db.update(designs).set({ name })
+    .where(and(eq(designs.id, designId), eq(designs.workspaceId, workspaceId), eq(designs.brandId, brandId))).returning(summary)
+  return row ? toSummary(row) : null
+}
+
+/** Deletes a design of the brand and its stored state; false when there is no such design. */
+export async function deleteDesign(db: Db, workspaceId: string, brandId: string, designId: string): Promise<boolean> {
+  const rows = await db.delete(designs)
+    .where(and(eq(designs.id, designId), eq(designs.workspaceId, workspaceId), eq(designs.brandId, brandId))).returning({ id: designs.id })
+  return rows.length > 0
+}
+
 /** One blank 1080×1080 page: what a design starts as when nothing else is given. */
 export const blankDesign = (designId: string, name: string): DesignInput => ({
   meta: { schemaVersion: SCHEMA_VERSION, designId, name, kind: 'single', primaryFormatId: 'sq' },
