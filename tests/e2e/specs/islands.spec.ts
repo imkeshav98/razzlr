@@ -46,12 +46,13 @@ test('the editor has no top bar: two islands float over the canvas and the ads f
   await expect(end_.getByRole('button')).toHaveCount(2)
   await expect(end_.getByTestId('share-open')).toHaveText('Share')
   await end_.getByTestId('share-open').click()
-  await expect(page.getByRole('menuitem')).toHaveText(['Export', 'Save as template'])
+  // Each item has its name and, under it, what it does.
+  await expect(page.getByRole('menuitem')).toHaveText([/^Export/, /^Save as template/])
   await page.keyboard.press('Escape')
   // Language and theme live behind the avatar.
   await end_.getByTestId('account-open').click()
   const account = page.getByTestId('account')
-  await expect(account.getByRole('combobox')).toBeVisible()
+  await expect(account.getByRole('radiogroup', { name: 'Language' })).toBeVisible()
   await expect(account.getByRole('radiogroup', { name: 'Theme' })).toBeVisible()
   await expect(account.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings')
   await writeOutput('islands-account.png', await page.screenshot({ clip: { x: 1440 - 320, y: 0, width: 320, height: 320 } }))

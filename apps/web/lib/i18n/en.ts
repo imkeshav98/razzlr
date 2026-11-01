@@ -285,7 +285,7 @@ export const en = {
       rename: 'Name of {name}',
       hint: 'Drag to reorder or into a group. Arrows move, Enter renames, Alt with arrows moves a layer.',
     },
-    share: { open: 'Share', title: 'Share and export' },
+    share: { open: 'Share', title: 'Share and export', exportHint: 'PNG or JPG, any page and format', templateHint: 'For {brand} or {all}' },
     view: { title: 'View', snap: 'Snap', rulers: 'Rulers', rulersKey: 'Shift+R' },
     templates: {
       open: 'Save as template',
