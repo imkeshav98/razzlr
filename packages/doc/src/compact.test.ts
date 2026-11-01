@@ -30,6 +30,7 @@ function edited(deletes: number) {
 }
 
 describe('compact', () => {
+  // 3,000 commands: under 1 s here, but over vitest's default 5 s on a CI runner busy with other packages' tests.
   it('drops 1,000 deleted layers and their overrides, and the design reads the same', () => {
     const { doc } = edited(1000)
     const design = readDesign(doc)
@@ -45,7 +46,7 @@ describe('compact', () => {
     const loaded = new Y.Doc()
     Y.applyUpdate(loaded, Y.encodeStateAsUpdate(doc))
     expect(loaded.getMap('nodes').size).toBe(Object.keys(design.nodes).length)
-  })
+  }, 30_000)
 
   it('writes nothing when nothing was deleted', () => {
     const { doc } = edited(0)
