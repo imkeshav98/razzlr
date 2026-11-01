@@ -16,6 +16,7 @@ import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { Button } from '../ui/button.tsx'
+import { overlayScroll } from '../ui/overlay-scroll.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { CARD, CardHeader } from './card.tsx'
 import { useLiveDesign } from './use-live-design.ts'
@@ -235,7 +236,7 @@ function AddFormat({ editor }: { editor: Editor }) {
           onKeyDown={(e) => e.stopPropagation()}
           className="z-50 flex max-h-[min(560px,var(--radix-popover-content-available-height))] w-72 flex-col overflow-hidden rounded-card surface-frost border shadow-panel pop-in"
         >
-          <div className="min-h-0 flex-1 overflow-y-auto py-1" role="group" aria-label={t.editor.formats.presets}>
+          <div ref={overlayScroll} className="min-h-0 flex-1 overflow-y-auto py-1" role="group" aria-label={t.editor.formats.presets}>
             {FORMAT_SHAPES.map((shape) => {
               const presets = FORMAT_PRESETS.filter((p) => shapeOf(p.width, p.height) === shape)
               return (

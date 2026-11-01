@@ -12,6 +12,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type Keyboard
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
+import { useOverlayScroll } from '../ui/overlay-scroll.ts'
 import { CARD, CardHeader } from './card.tsx'
 import { useEditorDesign } from './formats-panel.tsx'
 
@@ -210,6 +211,7 @@ function FontList({ id, brandId, catalog, current, onPick, onClose, onUploaded }
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const list = useRef<HTMLDivElement>(null)
+  const listRef = useOverlayScroll(list)
 
   const shown = useMemo(() => {
     const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
@@ -279,7 +281,7 @@ function FontList({ id, brandId, catalog, current, onPick, onClose, onUploaded }
           className="h-9 min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-subtle"
         />
       </div>
-      <div ref={list} id={id} role="listbox" aria-label={t.editor.fonts.title} className="min-h-0 flex-1 overflow-y-auto py-1">
+      <div ref={listRef} id={id} role="listbox" aria-label={t.editor.fonts.title} className="min-h-0 flex-1 overflow-y-auto py-1">
         {shown.length === 0 && <p className="px-3 py-4 text-xs text-muted">{format(t.editor.fonts.none, { query: query.trim() })}</p>}
         {/* Each source is a group of options, so a screen reader reads the group, then each family by name. */}
         {GROUPS.map((source) => {

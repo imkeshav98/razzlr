@@ -15,6 +15,7 @@ import { cn } from '../lib/cn.ts'
 import { useMessages } from '../lib/i18n/client.tsx'
 import { format } from '../lib/i18n/index.ts'
 import { ASSET_ACCEPT, sendAsset } from '../lib/upload-asset.ts'
+import { overlayScroll } from './ui/overlay-scroll.ts'
 import { Tooltip } from './ui/tooltip.tsx'
 
 /** A design a brief can start from, with its picture's size when it has one. */
@@ -243,7 +244,7 @@ export function BriefForm({ brandId, brandName, kit, references, action }: {
                   {references.length === 0
                     ? <p className="px-2 pb-2 text-xs text-muted">{h.noReferences}</p>
                     : (
-                      <ul aria-label={h.pickReference} className="grid max-h-72 grid-cols-3 gap-1.5 overflow-y-auto p-0.5 [scrollbar-width:thin]" data-testid="brief-references">
+                      <ul ref={overlayScroll} aria-label={h.pickReference} className="grid max-h-72 grid-cols-3 gap-1.5 overflow-y-auto p-0.5" data-testid="brief-references">
                         {references.map((design) => (
                           <li key={design.id}>
                             <button

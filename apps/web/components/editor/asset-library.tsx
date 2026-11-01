@@ -12,6 +12,7 @@ import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { ASSET_ACCEPT as ACCEPT, sendAsset as send } from '../../lib/upload-asset.ts'
+import { overlayScroll } from '../ui/overlay-scroll.ts'
 
 /** What an asset dragged from the library carries, for the stage to place it. */
 export const ASSET_DRAG_TYPE = 'application/x-razzlr-asset'
@@ -178,7 +179,7 @@ export function AssetLibrary({ editor, brandId }: { editor: Editor; brandId: str
         />
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-[18px] pt-1 pb-4">
+      <div ref={overlayScroll} className="min-h-0 flex-1 overflow-y-auto px-[18px] pt-1 pb-4">
         {assets && assets.length === 0 && (
           <p className="text-[13px] text-muted">{query.trim() ? format(t.none, { query: query.trim() }) : t.empty}</p>
         )}
