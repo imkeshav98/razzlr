@@ -151,8 +151,15 @@ export async function LibraryShell({ t, words, workspace, brands, activeBrandId,
         {showBrands || active
           ? <BrandSwitcher t={t} words={words} brands={brands} active={active} showAll={showBrands} />
           : null}
-        {(showBrands || active) && <span aria-hidden className="text-subtle">/</span>}
-        <span className="truncate px-1.5 font-semibold text-text">{placeName}</span>
+        {/* On the Brands page the switcher already names it, so the crumb says it once. */}
+        {place === 'brands' && !active
+          ? null
+          : (
+            <>
+              {(showBrands || active) && <span aria-hidden className="text-subtle">/</span>}
+              <span className="truncate px-1.5 font-semibold text-text">{placeName}</span>
+            </>
+          )}
       </TopBar>
 
       <main className="mx-auto w-full min-w-0 max-w-[110rem] px-4 pb-28 md:ps-44 md:pe-16 md:pb-12">{children}</main>
