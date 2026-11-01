@@ -1221,6 +1221,7 @@ export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Edit
               target={target}
               field="strokes"
               fresh={NEW_STROKE}
+              topFirst
               summaryOf={(list) => list.filter((stroke) => stroke.paint.visible !== false).map((stroke) => `${stroke.width} px`).join(', ') || p.none}
               render={(stroke, n, change) => <StrokeRow stroke={stroke} place={n} brandId={brandId} p={p} editor={editor} onSet={change} />}
             />
