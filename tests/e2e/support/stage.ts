@@ -70,3 +70,12 @@ export async function handle(page: Page, which: string) {
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 }
 export const zoomOf = (page: Page) => page.evaluate(() => window.razzlr?.camera().zoom ?? 1)
+
+/**
+ * Opens every folded row of the Details card and the effects' Fine-tune, as a person clicks them,
+ * so a check can reach every number.
+ */
+export async function unfoldAll(page: Page) {
+  const closed = page.locator('[data-testid="details-card"] [data-fold][aria-expanded="false"], [data-testid="effects-card"] button[aria-expanded="false"]')
+  while (await closed.count() > 0) await closed.first().click()
+}
