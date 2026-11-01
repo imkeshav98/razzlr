@@ -34,7 +34,7 @@ test('? and the keyboard button list every shortcut', async ({ browser }) => {
   // Typing ? into a field types it.
   const card = page.getByTestId('page-card')
   await card.getByRole('button', { name: 'Fine-tune' }).click()
-  const hex = card.getByRole('textbox')
+  const hex = card.getByRole('textbox', { name: 'Hex', exact: true })
   await hex.fill('')
   await hex.press('Shift+Slash')
   await expect(hex).toHaveValue('?')
