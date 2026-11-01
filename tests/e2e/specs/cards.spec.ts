@@ -16,7 +16,7 @@ const pageFill = async (page: Page) => (JSON.parse(await designOf(page)) as { pa
 
 async function open(page: Page) {
   const designId = await seed(liveDesign())
-  await page.context().addCookies([{ name: 'theme', value: 'dark', url: 'http://localhost:3100' }])
+  await page.context().addCookies([{ name: 'theme', value: 'dark', url: test.info().project.use.baseURL ?? '' }])
   await page.goto(editorPath(designId))
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
 }

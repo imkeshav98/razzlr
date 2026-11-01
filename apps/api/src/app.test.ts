@@ -89,6 +89,15 @@ describe('the workspace', () => {
     expect(refused.status).toBe(400)
     await call('b', 'PATCH', '/workspace', { kind: 'solo' })
   })
+
+  it('renames the session’s workspace only, trimmed, and refuses an empty name or an empty change', async () => {
+    const renamed = await call('b', 'PATCH', '/workspace', { name: '  Northwind Studio ' })
+    expect(WorkspaceSummary.parse(renamed.json)).toEqual({ ...other, name: 'Northwind Studio' })
+    expect(WorkspaceSummary.parse((await call('a', 'GET', '/workspace')).json).name).toBe(workspace.name)
+    expect((await call('b', 'PATCH', '/workspace', { name: '   ' })).status).toBe(400)
+    expect((await call('b', 'PATCH', '/workspace', {})).status).toBe(400)
+    await call('b', 'PATCH', '/workspace', { name: other.name })
+  })
 })
 
 describe('designs per brand', () => {

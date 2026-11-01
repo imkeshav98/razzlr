@@ -15,6 +15,11 @@ export default [
     plugins: { react },
     rules: {
       'react/jsx-no-literals': ['error', { noStrings: true, ignoreProps: true, allowedStrings: ['/', '·'] }],
+      // Chrome flags form fields with neither an id nor a name, and autofill can't tell them apart.
+      'no-restricted-syntax': ['error', {
+        selector: 'JSXOpeningElement[name.name=/^(input|select|textarea)$/]:not(:has(JSXAttribute[name.name=/^(id|name)$/])):not(:has(JSXSpreadAttribute))',
+        message: 'Give every input, select and textarea a name (or an id).',
+      }],
     },
   },
 ]

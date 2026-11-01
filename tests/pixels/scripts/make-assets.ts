@@ -3,7 +3,7 @@
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { loadCanvasKit } from '@razzlr/renderer/node'
-import type { Canvas, CanvasKit } from 'canvaskit-wasm'
+import type { Canvas, CanvasKit } from '@razzlr/canvaskit'
 
 const ck: CanvasKit = await loadCanvasKit()
 const ASSETS_DIR = join(import.meta.dirname, '..', 'assets')

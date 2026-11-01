@@ -5,7 +5,7 @@
 // brief (?show=recent, ?show=templates) without leaving the page; clicking the lit one again closes
 // it. Each page renders its own capsule, so the tab remembers the last lit entry (sessionStorage)
 // and the blob slides from there when the next page opens.
-import { CardsThreeIcon, ClockCounterClockwiseIcon, GearSixIcon, HouseIcon, type Icon } from '@phosphor-icons/react'
+import { ClockIcon, GearSixIcon, HouseIcon, SquaresFourIcon, type Icon } from '@phosphor-icons/react'
 import { animate, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -18,7 +18,7 @@ export type CapsuleEntry = 'home' | HomePanel | 'settings'
 
 export type CapsuleLink = { entry: CapsuleEntry; href: string; label: string; badge?: number | undefined }
 
-const ICONS: Record<CapsuleEntry, Icon> = { home: HouseIcon, recent: ClockCounterClockwiseIcon, templates: CardsThreeIcon, settings: GearSixIcon }
+const ICONS: Record<CapsuleEntry, Icon> = { home: HouseIcon, recent: ClockIcon, templates: SquaresFourIcon, settings: GearSixIcon }
 
 const LIT_KEY = 'razzlr.library-capsule'
 
@@ -108,9 +108,9 @@ export function LibraryCapsule({ label, links, current, home }: {
       aria-label={label}
       data-testid="library-capsule"
       className={cn(
-        'fixed z-40 flex gap-2 rounded-full surface-frost border p-2 shadow-panel',
+        'fixed z-40 flex gap-2 rounded-full surface-frost border p-2 shadow-panel md:p-2.5',
         // A vertical capsule at the start edge, as in the editor; on phones a tab bar at the bottom.
-        'start-4 top-1/2 -translate-y-1/2 flex-col max-md:start-1/2 max-md:top-auto max-md:bottom-3 max-md:translate-y-0 max-md:flex-row max-md:-translate-x-1/2 max-md:rtl:translate-x-1/2',
+        'start-5 top-1/2 -translate-y-1/2 flex-col max-md:start-1/2 max-md:top-auto max-md:bottom-3 max-md:translate-y-0 max-md:flex-row max-md:-translate-x-1/2 max-md:rtl:translate-x-1/2',
       )}
     >
       {links.map(({ entry, href, label: name, badge }) => {
@@ -130,7 +130,7 @@ export function LibraryCapsule({ label, links, current, home }: {
             data-lit={on || undefined}
             onClick={onClick(entry)}
             className={cn(
-              'relative grid size-11 place-items-center rounded-full transition-colors duration-[var(--chrome-fast)]',
+              'relative grid size-11 place-items-center rounded-full transition-colors duration-[var(--chrome-fast)] md:size-13',
               on ? 'text-on-accent' : 'text-subtle hover:bg-hover hover:text-text',
             )}
           >
@@ -141,7 +141,7 @@ export function LibraryCapsule({ label, links, current, home }: {
             )}
             <LinkIcon size={22} weight={on ? 'fill' : 'regular'} aria-hidden className="relative" />
             {badge !== undefined && badge > 0 && !on && (
-              <span aria-hidden className="absolute -end-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent-2 px-1 text-[10px] font-bold text-white tabular-nums">
+              <span aria-hidden className="absolute -end-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent-solid px-1 text-[10px] font-bold text-on-accent tabular-nums">
                 {badge > 99 ? '99+' : badge}
               </span>
             )}

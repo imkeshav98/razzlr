@@ -80,6 +80,7 @@ function PageCard({ editor, brandId, pageId }: { editor: Editor; brandId: string
         <label className="flex items-center gap-2 px-[18px] pb-4 text-xs text-muted">
           {t.editor.page.hex}
           <input
+            name="page-colour"
             key={current ?? ''}
             defaultValue={current ?? ''}
             placeholder="#FFFFFF"
