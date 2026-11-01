@@ -3,11 +3,11 @@
 // images it was sent between exports, so each is decoded once.
 import { exportDesign, type ExportedFile } from '@razzlr/export'
 import { resourceCache, type ResourceBytes } from '@razzlr/renderer'
-import canvasKitModule from 'canvaskit-wasm/full'
+import canvasKitModule from '@razzlr/canvaskit'
 import type { ExportReply, ExportJob } from './export-client.ts'
 
 // CommonJS whose types claim an ES default export; the bundler hands over the init function itself.
-const CanvasKitInit = canvasKitModule as unknown as typeof import('canvaskit-wasm').default
+const CanvasKitInit = canvasKitModule as unknown as typeof import('@razzlr/canvaskit').default
 
 /** What this file uses of a dedicated worker's global scope, which the DOM types don't describe. */
 const scope = self as unknown as {

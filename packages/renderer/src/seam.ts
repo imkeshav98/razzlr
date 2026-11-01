@@ -1,5 +1,5 @@
 import { parseDesign } from '@razzlr/schema'
-import type { CanvasKit, Surface } from 'canvaskit-wasm'
+import type { CanvasKit, Surface } from '@razzlr/canvaskit'
 import { drawScene } from './draw.ts'
 import { resourceCache, type ResourceBytes, type ResourceCache } from './resources.ts'
 import { render, type Scene } from './scene.ts'
