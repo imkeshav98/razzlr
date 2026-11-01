@@ -4,7 +4,7 @@
 import { expect, test, type Page } from '../support/test.ts'
 import type { DesignInput } from '@razzlr/schema'
 import { writeOutput } from '../support/editor.ts'
-import { openStage } from '../support/stage.ts'
+import { openStage, unfoldAll } from '../support/stage.ts'
 
 test.describe.configure({ timeout: 120_000 })
 
@@ -34,6 +34,7 @@ const propsOf = (page: Page, id: string) => page.evaluate((id) => window.razzlr?
 const select = async (page: Page, ids: string[]) => {
   await page.evaluate((ids) => window.razzlr?.select(ids), ids)
   await expect(page.getByTestId('layout-card')).toBeVisible()
+  await unfoldAll(page)
 }
 
 test('a child of an auto layout fills, hugs or keeps its size, and can leave the flow', async ({ browser }) => {

@@ -4,7 +4,7 @@
 import { expect, test, type Locator, type Page } from '../support/test.ts'
 import type { DesignInput } from '@razzlr/schema'
 import { writeOutput } from '../support/editor.ts'
-import { openStage } from '../support/stage.ts'
+import { openStage, unfoldAll } from '../support/stage.ts'
 
 test.describe.configure({ timeout: 120_000 })
 
@@ -35,6 +35,7 @@ const enter = async (field: Locator, value: string) => {
 test('the Box and paragraphs card sets the box, lines, lists, decoration, fit and outline', async ({ browser }) => {
   const { page, errors } = await openStage(browser, design())
   await page.evaluate(() => window.razzlr?.select(['copy']))
+  await unfoldAll(page)
   const card = page.getByTestId('paragraph-card')
   await expect(card).toBeVisible()
 

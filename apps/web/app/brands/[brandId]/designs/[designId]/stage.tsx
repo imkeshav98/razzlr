@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { SHAPE_TOOLS, startEditor, type Editor, type ShapeTool, type Tool } from '@razzlr/editor'
 import { fetchSyncToken } from './actions.ts'
 import { EditorShell, type ChromeInsets } from '../../../../../components/editor/shell.tsx'
@@ -12,6 +12,7 @@ import { BrandKitPanel } from '../../../../../components/editor/brand-kit-panel.
 import { ShareMenu } from '../../../../../components/editor/share-menu.tsx'
 import { LayersPanel } from '../../../../../components/editor/layers-panel.tsx'
 import { BrandKit, brandVariables, FontFamily, type Variables } from '@razzlr/schema'
+import { useValue, valueStore, type ValueStore } from '../../../../../lib/value-store.ts'
 
 declare global {
   interface Window { razzlr?: Editor }
@@ -68,29 +69,9 @@ async function keepForOffline() {
   registration.active?.postMessage({ type: 'keep', urls })
 }
 
-/** The camera's zoom, held outside React state so a zoom step redraws the zoom pill alone. */
-function zoomStore() {
-  let zoom: number | null = null
-  const listeners = new Set<() => void>()
-  return {
-    get: () => zoom,
-    set(next: number | null) {
-      if (next === zoom) return
-      zoom = next
-      for (const listener of listeners) listener()
-    },
-    subscribe(listener: () => void) {
-      listeners.add(listener)
-      return () => {
-        listeners.delete(listener)
-      }
-    },
-  }
-}
-
 /** The zoom pill, reading the zoom from the store. */
-function StageZoom({ editor, store }: { editor: Editor | null; store: ReturnType<typeof zoomStore> }) {
-  const zoom = useSyncExternalStore(store.subscribe, store.get, () => null)
+function StageZoom({ editor, store }: { editor: Editor | null; store: ValueStore<number | null> }) {
+  const zoom = useValue(store)
   return (
     <ZoomControl
       zoom={editor ? zoom : null}
@@ -115,8 +96,10 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
 }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const overlay = useRef<HTMLDivElement>(null)
-  const [status, setStatus] = useState('Starting')
-  const [zoom] = useState(zoomStore)
+  // The save state and zoom change on every edit and zoom step; held outside this component's state,
+  // they re-render the status and the zoom pill alone, not the whole editor.
+  const [status] = useState(() => valueStore('Starting'))
+  const [zoom] = useState(() => valueStore<number | null>(null))
   const [editor, setEditor] = useState<Editor | null>(null)
   const [removed, setRemoved] = useState<string | null>(null)
   // The dock follows the editor's tool: a key picks one, and drawing a shape goes back to select.
@@ -176,7 +159,7 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
       .then((variables) => startEditor({
         canvas: stage, overlay: layer, designId, syncUrl,
         syncToken: () => fetchSyncToken(brandId, designId), assetBytes: (assetId) => assetBytes(brandId, assetId), fontFiles: fontLoader(brandId),
-        ...(variables ? { variables } : {}), ...(formatId ? { formatId } : {}), onStatus: setStatus, onZoom: zoom.set, signal: unmounted.signal,
+        ...(variables ? { variables } : {}), ...(formatId ? { formatId } : {}), onStatus: status.set, onZoom: zoom.set, signal: unmounted.signal,
       }))
       .then((started) => {
         if (unmounted.signal.aborted) return started.destroy()
@@ -187,7 +170,7 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
         void keepForOffline()
       })
       .catch((error: unknown) => {
-        if (!unmounted.signal.aborted) setStatus(`Error: ${error instanceof Error ? error.message : String(error)}`)
+        if (!unmounted.signal.aborted) status.set(`Error: ${error instanceof Error ? error.message : String(error)}`)
       })
     return () => {
       unmounted.abort()
@@ -196,7 +179,7 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
       setEditor(null)
       zoom.set(null)
     }
-  }, [brandId, designId, formatId, syncUrl, zoom])
+  }, [brandId, designId, formatId, syncUrl, status, zoom])
 
   return (
     <EditorShell

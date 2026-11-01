@@ -18,6 +18,7 @@ import { format } from '../../lib/i18n/index.ts'
 import { Button } from '../ui/button.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { CARD, CardHeader } from './card.tsx'
+import { useLiveDesign } from './use-live-design.ts'
 
 /** A small pill button, as the mock's chips under a list. */
 export const CHIP = 'inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border border-line px-3 text-xs font-semibold text-muted transition-colors duration-[var(--chrome-fast)] hover:border-line-strong hover:text-text disabled:pointer-events-none disabled:opacity-40'
@@ -26,13 +27,10 @@ export const ICON_BUTTON = 'grid size-7 shrink-0 cursor-pointer place-items-cent
 
 /** The design as the editor holds it, kept current: every redraw hands over the latest one. */
 export function useEditorDesign(editor: Editor) {
-  const [design, setDesign] = useState(() => editor.design())
+  const { design } = useLiveDesign(editor)
   const [focused, setFocused] = useState(() => editor.focused())
   useEffect(() => {
-    const stop = editor.onDraw((drawn) => {
-      setDesign(drawn)
-      setFocused(editor.focused())
-    })
+    const stop = editor.onDraw(() => setFocused(editor.focused()))
     return () => {
       stop()
     }

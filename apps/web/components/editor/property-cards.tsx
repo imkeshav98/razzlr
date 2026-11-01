@@ -11,7 +11,7 @@ import { useState } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { ArrangePanel, useSelection } from './arrange-panel.tsx'
-import { CARD, CardHeader, FineTune } from './card.tsx'
+import { CARD, CardHeader, FineTune, PICKED_RING, SWATCHES } from './card.tsx'
 import { FontPanel } from './font-panel.tsx'
 import { FormatsPanel, useEditorDesign } from './formats-panel.tsx'
 import { PagesPanel } from './pages-panel.tsx'
@@ -19,8 +19,6 @@ import { SelectionCards } from './selection-cards.tsx'
 import { useBrandKit } from './use-brand-kit.ts'
 import { ViewCard } from './view-card.tsx'
 
-/** Page backgrounds a click away, after the brand's own colours; the Fine-tune row takes any colour. */
-const SWATCHES = ['#FFFFFF', '#FBF7F2', '#1A1420', '#FF48B0', '#3D6BFF', '#FFD23F', '#3DD68C', '#FF6B3D'] as const
 
 const solidOf = (design: Design, pageId: string) => {
   const fill = design.pages[pageId]?.fills[0]
@@ -41,10 +39,9 @@ function Swatch({ hex, label, on, onPick }: { hex: string; label: string; on: bo
       onClick={onPick}
       style={{ backgroundColor: hex }}
       className={cn(
-        // Round and large, as in the mock; the picked one is ringed in pink with a gap, a
-        // shape and not only a colour, so it reads without colour vision too.
+        // Round and large, as in the mock.
         'size-7 shrink-0 cursor-pointer rounded-full border border-line-strong transition-transform duration-[var(--chrome-fast)] hover:scale-110',
-        on && 'shadow-[0_0_0_2px_var(--surface),0_0_0_4px_var(--accent)]',
+        on && PICKED_RING,
       )}
     />
   )
