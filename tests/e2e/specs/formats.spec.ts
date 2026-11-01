@@ -54,11 +54,11 @@ test('a format added from presets starts from the primary layout, and is renamed
   await row.hover()
   await row.getByRole('button', { name: 'Show alone' }).click()
   await expect(page.getByTestId('focus-chip')).toContainText('Showing Reel alone')
-  expect(await page.evaluate(() => window.razzlr?.frames().map((f) => f.formatId))).toEqual([story])
+  expect(await page.evaluate(() => window.dazbee?.frames().map((f) => f.formatId))).toEqual([story])
   writeOutput('formats-2-focus.png', await page.screenshot())
   await page.getByTestId('focus-chip').getByRole('button', { name: 'Show all formats' }).click()
   await expect(page.getByTestId('focus-chip')).toBeHidden()
-  expect(await page.evaluate(() => window.razzlr?.frames().length)).toBe(2)
+  expect(await page.evaluate(() => window.dazbee?.frames().length)).toBe(2)
 
   // Remove, then undo from the toast: the format and its layout come back whole.
   await row.hover()

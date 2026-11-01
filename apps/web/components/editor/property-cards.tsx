@@ -5,8 +5,8 @@
 // font when text is selected, then the selection's look and Arrange, with the numbers last (#60):
 // as in the final mock, what changes how it looks comes first. Several layers show Arrange first. Each card is only as tall as what it
 // holds, and controls are visual first, with numbers behind "Fine-tune".
-import type { Editor } from '@razzlr/editor'
-import type { Design } from '@razzlr/schema'
+import type { Editor } from '@dazbee/editor'
+import type { Design } from '@dazbee/schema'
 import { useState } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'

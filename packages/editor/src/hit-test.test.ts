@@ -1,4 +1,4 @@
-import type { SceneLayer } from '@razzlr/renderer'
+import type { SceneLayer } from '@dazbee/renderer'
 import { describe, expect, it } from 'vitest'
 import { hitTest } from './hit-test.ts'
 

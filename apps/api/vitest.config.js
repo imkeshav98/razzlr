@@ -1,4 +1,4 @@
-import preset from '@razzlr/config/vitest'
+import preset from '@dazbee/config/vitest'
 import { defineConfig } from 'vitest/config'
 
 // The seam tests share one database: it is migrated once, before any of them run.

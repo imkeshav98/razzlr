@@ -2,7 +2,7 @@
 // has of its own for the selected layers, and each one, or all of them, goes back to following the
 // other formats in one undo step.
 import { expect, test, type Locator, type Page } from '../support/test.ts'
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { writeOutput } from '../support/editor.ts'
 import { openStage, unfoldAll } from '../support/stage.ts'
 
@@ -21,7 +21,7 @@ const design = (): DesignInput => ({
   overrides: {},
 })
 
-const squareOwn = (page: Page) => page.evaluate(() => JSON.parse(JSON.stringify(window.razzlr?.design().overrides['format:sq']?.box ?? {}))) as Promise<Record<string, unknown>>
+const squareOwn = (page: Page) => page.evaluate(() => JSON.parse(JSON.stringify(window.dazbee?.design().overrides['format:sq']?.box ?? {}))) as Promise<Record<string, unknown>>
 const enter = async (field: Locator, value: string) => {
   await field.fill(value)
   await field.press('Enter')
@@ -29,7 +29,7 @@ const enter = async (field: Locator, value: string) => {
 
 test('the scope card lists what this format has of its own and resets it', async ({ browser }) => {
   const { page, errors } = await openStage(browser, design())
-  await page.evaluate(() => window.razzlr?.select(['box']))
+  await page.evaluate(() => window.dazbee?.select(['box']))
   await unfoldAll(page)
   const scope = page.getByTestId('scope-card')
   await expect(scope.getByTestId('own-changes')).toHaveCount(0)
@@ -47,7 +47,7 @@ test('the scope card lists what this format has of its own and resets it', async
   // One group back to the base, then all of it; one undo brings the group back.
   await own.getByRole('button', { name: 'Reset Fill to follow the other formats' }).click()
   await expect.poll(async () => Object.keys(await squareOwn(page)).sort()).toEqual(['width', 'x'])
-  await page.evaluate(() => window.razzlr?.perform('undo'))
+  await page.evaluate(() => window.dazbee?.perform('undo'))
   await expect.poll(async () => Object.keys(await squareOwn(page)).sort()).toEqual(['fills', 'width', 'x'])
   await own.getByRole('button', { name: 'Reset all' }).click()
   await expect.poll(() => squareOwn(page)).toEqual({})

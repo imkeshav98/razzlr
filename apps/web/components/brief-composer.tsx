@@ -1,7 +1,7 @@
 // The brand home's brief (#84), as in the final mock: one line asking what we are making, the
 // brand's name in the AI colours, and a composer with a gradient edge around the brief's form
 // (#136). Until AI drafts arrive (phase 2), Make drafts opens a blank design in the formats picked.
-import type { BrandKit } from '@razzlr/schema'
+import type { BrandKit } from '@dazbee/schema'
 import type { Messages } from '../lib/i18n/index.ts'
 import { BriefForm, type BriefReference } from './brief-form.tsx'
 

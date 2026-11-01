@@ -2,8 +2,8 @@
 // button, lists every shortcut of the editor's table in its groups, never opens while typing, and
 // closes with Esc.
 import { expect, test } from '../support/test.ts'
-import { SHORTCUTS } from '@razzlr/editor'
-import type { DesignInput } from '@razzlr/schema'
+import { SHORTCUTS } from '@dazbee/editor'
+import type { DesignInput } from '@dazbee/schema'
 import { writeOutput } from '../support/editor.ts'
 import { openStage } from '../support/stage.ts'
 

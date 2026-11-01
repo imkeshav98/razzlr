@@ -6,8 +6,8 @@
 // changes. Edit turns the flyout into the kit's form (names, values, families, logo and tone of
 // voice); each change there is saved as it is made.
 import { CheckIcon, PaintBucketIcon, PencilSimpleIcon, PlusIcon, TextAaIcon, XIcon } from '@phosphor-icons/react'
-import type { Editor } from '@razzlr/editor'
-import { AssetSummary, brandRef, brandVariables, type BrandColor, type BrandFont, type BrandKit, type Design } from '@razzlr/schema'
+import type { Editor } from '@dazbee/editor'
+import { AssetSummary, brandRef, brandVariables, type BrandColor, type BrandFont, type BrandKit, type Design } from '@dazbee/schema'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'

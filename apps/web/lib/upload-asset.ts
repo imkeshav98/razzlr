@@ -1,6 +1,6 @@
 // Sends an image to the brand's asset library (#52) through the web app, which uploads it to
 // storage and records it, telling how much has gone. Used by the editor's library and the brief.
-import { AssetSummary } from '@razzlr/schema'
+import { AssetSummary } from '@dazbee/schema'
 
 /** The image types the library takes; the web app checks the bytes again. */
 export const ASSET_ACCEPT = 'image/png,image/jpeg,image/webp'

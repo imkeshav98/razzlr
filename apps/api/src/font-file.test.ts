@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { FONT_FILES_DIR } from '@razzlr/fonts/node'
+import { FONT_FILES_DIR } from '@dazbee/fonts/node'
 import { describe, expect, it } from 'vitest'
 import { readImageHeader } from './images.ts'
 import { fontPreview, readFontInfo } from './font-file.ts'

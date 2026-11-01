@@ -2,7 +2,7 @@
 // bearer token; a development session can stand in locally and in CI, and every route checks
 // workspace and brand against whichever it is.
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import { memberships, type Db } from '@razzlr/db'
+import { memberships, type Db } from '@dazbee/db'
 import { and, eq } from 'drizzle-orm'
 
 export interface Session {

@@ -4,7 +4,7 @@
 
 const SOFTWARE = /swiftshader|llvmpipe|softpipe|software|basic render/i
 /** Kept for the browser session only, so a browser that drew in software once probes again next time. */
-const KEY = 'razzlr.render'
+const KEY = 'dazbee.render'
 
 /** Reads the WebGL renderer's name; a browser without WebGL draws in software too. */
 function probe(): 'software' | 'gpu' {

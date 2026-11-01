@@ -44,19 +44,19 @@ export const designOf = (page: Page) =>
       Array.isArray(v) ? v.map(sort)
         : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => (a < b ? -1 : 1)).map(([k, x]) => [k, sort(x)]))
           : v
-    return JSON.stringify(sort(window.razzlr?.design()))
+    return JSON.stringify(sort(window.dazbee?.design()))
   })
 
 /** SHA-256 of the tab's export render (CPU surface), so megabytes of pixels need not cross to Node. */
 export const exportHashOf = (page: Page) =>
   page.evaluate(async () => {
-    const pixels = window.razzlr?.exportPixels()
+    const pixels = window.dazbee?.exportPixels()
     if (!pixels) throw new Error('no editor')
     const digest = await crypto.subtle.digest('SHA-256', pixels.slice())
     return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
   })
 
-export const synced = (page: Page) => page.evaluate(() => window.razzlr?.synced() ?? false)
+export const synced = (page: Page) => page.evaluate(() => window.dazbee?.synced() ?? false)
 
 /** Waits until every tab has sent all its changes and all tabs hold the same design. */
 export async function settle(tabs: Page[]) {
@@ -72,7 +72,7 @@ export async function settle(tabs: Page[]) {
  * page in the primary format by default.
  */
 export async function screenPoint(page: Page, x: number, y: number, frame?: { pageId: string; formatId: string }) {
-  const point = await page.evaluate(({ x, y, frame }) => window.razzlr?.screenPoint(x, y, frame?.pageId, frame?.formatId), { x, y, frame })
+  const point = await page.evaluate(({ x, y, frame }) => window.dazbee?.screenPoint(x, y, frame?.pageId, frame?.formatId), { x, y, frame })
   if (!point) throw new Error('no editor')
   return point
 }

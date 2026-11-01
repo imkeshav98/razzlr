@@ -1,9 +1,9 @@
 // Exports (#55, #56): one function per file type. PNG and JPG are drawn on the CPU surface
 // (ADR-0005) and PDF and SVG on Skia's PDF and SVG canvases, by the render seam, so the browser's
 // export worker and Node make the same bytes from the same design.
-import { renderDesign, renderVector, type ResourceBytes, type ResourceCache } from '@razzlr/renderer'
-import { ExportRequest, parseDesign, type Design, type ExportType } from '@razzlr/schema'
-import type { CanvasKit } from '@razzlr/canvaskit'
+import { renderDesign, renderVector, type ResourceBytes, type ResourceCache } from '@dazbee/renderer'
+import { ExportRequest, parseDesign, type Design, type ExportType } from '@dazbee/schema'
+import type { CanvasKit } from '@dazbee/canvaskit'
 import { zip } from './zip.ts'
 
 export interface ExportedFile {

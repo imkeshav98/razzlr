@@ -2,10 +2,10 @@
 // drawn on a small CPU surface like an export (ADR-0005), on a thread of its own, with the fonts
 // and images we store. Like an asset's thumbnail (ADR-0010) it is an image we make and store, once
 // per version of the design: the key carries the design's updatedAt, so an edit makes a new one.
-import { readDesignState, type Db } from '@razzlr/db'
-import { migrateDoc, readDesign } from '@razzlr/doc'
-import type { Design, DesignSummary } from '@razzlr/schema'
-import type { Storage } from '@razzlr/storage'
+import { readDesignState, type Db } from '@dazbee/db'
+import { migrateDoc, readDesign } from '@dazbee/doc'
+import type { Design, DesignSummary } from '@dazbee/schema'
+import type { Storage } from '@dazbee/storage'
 import { Worker } from 'node:worker_threads'
 import * as Y from 'yjs'
 import type { DrawJob, DrawResult } from './draw-worker.ts'

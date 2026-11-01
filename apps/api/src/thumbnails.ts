@@ -1,8 +1,8 @@
 // The small copy of an image the asset library shows (#52). ADR-0010: resized copies are images we
 // make and store as their own objects, never resized on the fly. CanvasKit decodes the original, as
 // it does for every render.
-import { loadCanvasKit } from '@razzlr/renderer/node'
-import type { ImageType } from '@razzlr/schema'
+import { loadCanvasKit } from '@dazbee/renderer/node'
+import type { ImageType } from '@dazbee/schema'
 
 /** The longest side of a thumbnail, in pixels: two library columns on a 2× screen. */
 export const THUMBNAIL_SIZE = 320

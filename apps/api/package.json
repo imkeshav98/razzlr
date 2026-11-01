@@ -1,5 +1,5 @@
 {
-  "name": "@razzlr/api",
+  "name": "@dazbee/api",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,13 +11,13 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.0",
-    "@razzlr/db": "workspace:*",
-    "@razzlr/doc": "workspace:*",
-    "@razzlr/fonts": "workspace:*",
-    "@razzlr/renderer": "workspace:*",
-    "@razzlr/schema": "workspace:*",
-    "@razzlr/storage": "workspace:*",
-    "@razzlr/sync-token": "workspace:*",
+    "@dazbee/db": "workspace:*",
+    "@dazbee/doc": "workspace:*",
+    "@dazbee/fonts": "workspace:*",
+    "@dazbee/renderer": "workspace:*",
+    "@dazbee/schema": "workspace:*",
+    "@dazbee/storage": "workspace:*",
+    "@dazbee/sync-token": "workspace:*",
     "@workos-inc/node": "11.0.0",
     "drizzle-orm": "^0.45.0",
     "hono": "^4.13.0",
@@ -25,7 +25,7 @@
     "zod": "^4.6.0"
   },
   "devDependencies": {
-    "@razzlr/config": "workspace:*",
+    "@dazbee/config": "workspace:*",
     "@types/node": "^22.20.0",
     "eslint": "^9.39.0",
     "typescript": "~5.9.3",

@@ -1,4 +1,4 @@
-import preset from '@razzlr/config/eslint'
+import preset from '@dazbee/config/eslint'
 
 export default [
   ...preset,

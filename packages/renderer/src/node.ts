@@ -1,9 +1,9 @@
 import { createRequire } from 'node:module'
-import type { CanvasKit } from '@razzlr/canvaskit'
+import type { CanvasKit } from '@dazbee/canvaskit'
 
 // Our CanvasKit build (packages/canvaskit), the one every runtime loads, so exports match everywhere (ADR-0005).
 // It is CommonJS whose types claim an ES default export, so require gives the init function itself.
-const CanvasKitInit = createRequire(import.meta.url)('@razzlr/canvaskit') as typeof import('@razzlr/canvaskit').default
+const CanvasKitInit = createRequire(import.meta.url)('@dazbee/canvaskit') as typeof import('@dazbee/canvaskit').default
 
 let canvasKit: Promise<CanvasKit> | undefined
 

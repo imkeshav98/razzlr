@@ -1,9 +1,9 @@
 // The API's routes. /workspace and every route below /brands need a session, and reads and writes only that
 // session's workspace; a brand or design of another workspace is answered as if it didn't exist.
-import type { Db } from '@razzlr/db'
-import { BrandKit, CompleteSignIn, CreateBrand, CreateDesign, DuplicateDesign, Rename, SaveTemplate, StartFromTemplate, RecordAsset, RecordFont, StartFontUpload, StartUpload, UpdateAsset, UpdateWorkspace, type ApiError, type AssetLink, type DesignCover, type DesignThumbnail, type SignedIn, type SignedLink, type SignedOut, type SignInLink, type SyncToken } from '@razzlr/schema'
-import type { Storage } from '@razzlr/storage'
-import { signSyncToken } from '@razzlr/sync-token'
+import type { Db } from '@dazbee/db'
+import { BrandKit, CompleteSignIn, CreateBrand, CreateDesign, DuplicateDesign, Rename, SaveTemplate, StartFromTemplate, RecordAsset, RecordFont, StartFontUpload, StartUpload, UpdateAsset, UpdateWorkspace, type ApiError, type AssetLink, type DesignCover, type DesignThumbnail, type SignedIn, type SignedLink, type SignedOut, type SignInLink, type SyncToken } from '@dazbee/schema'
+import type { Storage } from '@dazbee/storage'
+import { signSyncToken } from '@dazbee/sync-token'
 import { Hono, type MiddlewareHandler } from 'hono'
 import type { z } from 'zod'
 import { getBrandKit, InvalidKit, saveBrandKit } from './brand-kits.ts'

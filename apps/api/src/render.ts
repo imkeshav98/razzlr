@@ -1,13 +1,13 @@
 // Drawing a design in Node (#54): the same render seam the editor's exports use, with every byte it
 // needs read from our storage as the editor reads it: the fonts we ship, the brand's catalog
 // families, the originals of its images, and its brand kit's values.
-import type { Db } from '@razzlr/db'
-import { FALLBACK_FAMILIES } from '@razzlr/fonts'
-import { loadFontFiles } from '@razzlr/fonts/node'
-import { renderDesign, type Rendered, type ResourceBytes } from '@razzlr/renderer'
-import { loadCanvasKit } from '@razzlr/renderer/node'
-import { brandVariables, fontFamilies, imageAssetIds, type Design } from '@razzlr/schema'
-import type { Storage } from '@razzlr/storage'
+import type { Db } from '@dazbee/db'
+import { FALLBACK_FAMILIES } from '@dazbee/fonts'
+import { loadFontFiles } from '@dazbee/fonts/node'
+import { renderDesign, type Rendered, type ResourceBytes } from '@dazbee/renderer'
+import { loadCanvasKit } from '@dazbee/renderer/node'
+import { brandVariables, fontFamilies, imageAssetIds, type Design } from '@dazbee/schema'
+import type { Storage } from '@dazbee/storage'
 import { findAsset, originalKey } from './assets.ts'
 import { getBrandKit } from './brand-kits.ts'
 import { fontFiles } from './fonts.ts'

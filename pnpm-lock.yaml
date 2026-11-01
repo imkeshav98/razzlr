@@ -8,7 +8,7 @@ importers:
 
   .:
     devDependencies:
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:packages/config
       turbo:
@@ -20,25 +20,25 @@ importers:
       '@hono/node-server':
         specifier: ^2.1.0
         version: 2.1.5(hono@4.13.14)
-      '@razzlr/db':
+      '@dazbee/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@razzlr/doc':
+      '@dazbee/doc':
         specifier: workspace:*
         version: link:../../packages/doc
-      '@razzlr/fonts':
+      '@dazbee/fonts':
         specifier: workspace:*
         version: link:../../packages/fonts
-      '@razzlr/renderer':
+      '@dazbee/renderer':
         specifier: workspace:*
         version: link:../../packages/renderer
-      '@razzlr/schema':
+      '@dazbee/schema':
         specifier: workspace:*
         version: link:../../packages/schema
-      '@razzlr/storage':
+      '@dazbee/storage':
         specifier: workspace:*
         version: link:../../packages/storage
-      '@razzlr/sync-token':
+      '@dazbee/sync-token':
         specifier: workspace:*
         version: link:../../packages/sync-token
       '@workos-inc/node':
@@ -57,7 +57,7 @@ importers:
         specifier: ^4.6.0
         version: 4.6.7
     devDependencies:
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@types/node':
@@ -81,20 +81,20 @@ importers:
       '@hocuspocus/server':
         specifier: 4.8.0
         version: 4.8.0(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
-      '@razzlr/db':
+      '@dazbee/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@razzlr/doc':
+      '@dazbee/doc':
         specifier: workspace:*
         version: link:../../packages/doc
-      '@razzlr/sync-token':
+      '@dazbee/sync-token':
         specifier: workspace:*
         version: link:../../packages/sync-token
     devDependencies:
       '@hocuspocus/provider':
         specifier: 4.8.0
         version: 4.8.0(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@types/node':
@@ -133,19 +133,19 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.4.1
         version: 1.4.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      '@razzlr/canvaskit':
+      '@dazbee/canvaskit':
         specifier: workspace:*
         version: link:../../packages/canvaskit
-      '@razzlr/doc':
+      '@dazbee/doc':
         specifier: workspace:*
         version: link:../../packages/doc
-      '@razzlr/editor':
+      '@dazbee/editor':
         specifier: workspace:*
         version: link:../../packages/editor
-      '@razzlr/fonts':
+      '@dazbee/fonts':
         specifier: workspace:*
         version: link:../../packages/fonts
-      '@razzlr/schema':
+      '@dazbee/schema':
         specifier: workspace:*
         version: link:../../packages/schema
       '@tailwindcss/postcss':
@@ -185,7 +185,7 @@ importers:
         specifier: ^4.6.0
         version: 4.6.7
     devDependencies:
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@types/node':
@@ -253,7 +253,7 @@ importers:
         specifier: ^8.16.0
         version: 8.23.1
     devDependencies:
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:../config
       '@types/node':
@@ -274,7 +274,7 @@ importers:
 
   packages/doc:
     dependencies:
-      '@razzlr/schema':
+      '@dazbee/schema':
         specifier: workspace:*
         version: link:../schema
       fractional-indexing:
@@ -290,7 +290,7 @@ importers:
         specifier: ^4.6.0
         version: 4.6.7
     devDependencies:
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:../config
       '@types/node':
@@ -311,22 +311,22 @@ importers:
       '@hocuspocus/provider':
         specifier: 4.8.0
         version: 4.8.0(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
-      '@razzlr/canvaskit':
+      '@dazbee/canvaskit':
         specifier: workspace:*
         version: link:../canvaskit
-      '@razzlr/doc':
+      '@dazbee/doc':
         specifier: workspace:*
         version: link:../doc
-      '@razzlr/export':
+      '@dazbee/export':
         specifier: workspace:*
         version: link:../export
-      '@razzlr/fonts':
+      '@dazbee/fonts':
         specifier: workspace:*
         version: link:../fonts
-      '@razzlr/renderer':
+      '@dazbee/renderer':
         specifier: workspace:*
         version: link:../renderer
-      '@razzlr/schema':
+      '@dazbee/schema':
         specifier: workspace:*
         version: link:../schema
       y-indexeddb:
@@ -336,7 +336,7 @@ importers:
         specifier: ^13.6.27
         version: 13.6.33
     devDependencies:
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:../config
       '@types/node':
@@ -354,20 +354,20 @@ importers:
 
   packages/export:
     dependencies:
-      '@razzlr/canvaskit':
+      '@dazbee/canvaskit':
         specifier: workspace:*
         version: link:../canvaskit
-      '@razzlr/renderer':
+      '@dazbee/renderer':
         specifier: workspace:*
         version: link:../renderer
-      '@razzlr/schema':
+      '@dazbee/schema':
         specifier: workspace:*
         version: link:../schema
     devDependencies:
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:../config
-      '@razzlr/fonts':
+      '@dazbee/fonts':
         specifier: workspace:*
         version: link:../fonts
       '@types/node':
@@ -385,7 +385,7 @@ importers:
 
   packages/fonts:
     devDependencies:
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:../config
       '@types/node':
@@ -403,17 +403,17 @@ importers:
 
   packages/renderer:
     dependencies:
-      '@razzlr/canvaskit':
+      '@dazbee/canvaskit':
         specifier: workspace:*
         version: link:../canvaskit
-      '@razzlr/doc':
+      '@dazbee/doc':
         specifier: workspace:*
         version: link:../doc
-      '@razzlr/schema':
+      '@dazbee/schema':
         specifier: workspace:*
         version: link:../schema
     devDependencies:
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:../config
       '@types/node':
@@ -435,7 +435,7 @@ importers:
         specifier: ^4.6.0
         version: 4.6.7
     devDependencies:
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:../config
       '@types/node':
@@ -457,7 +457,7 @@ importers:
         specifier: ^1.0.20
         version: 1.0.20
     devDependencies:
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:../config
       '@types/node':
@@ -475,7 +475,7 @@ importers:
 
   packages/sync-token:
     devDependencies:
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:../config
       '@types/node':
@@ -499,34 +499,34 @@ importers:
       '@playwright/test':
         specifier: 1.63.0
         version: 1.63.0
-      '@razzlr/canvaskit':
+      '@dazbee/canvaskit':
         specifier: workspace:*
         version: link:../../packages/canvaskit
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@razzlr/doc':
+      '@dazbee/doc':
         specifier: workspace:*
         version: link:../../packages/doc
-      '@razzlr/editor':
+      '@dazbee/editor':
         specifier: workspace:*
         version: link:../../packages/editor
-      '@razzlr/export':
+      '@dazbee/export':
         specifier: workspace:*
         version: link:../../packages/export
-      '@razzlr/fonts':
+      '@dazbee/fonts':
         specifier: workspace:*
         version: link:../../packages/fonts
-      '@razzlr/pixels':
+      '@dazbee/pixels':
         specifier: workspace:*
         version: link:../pixels
-      '@razzlr/renderer':
+      '@dazbee/renderer':
         specifier: workspace:*
         version: link:../../packages/renderer
-      '@razzlr/schema':
+      '@dazbee/schema':
         specifier: workspace:*
         version: link:../../packages/schema
-      '@razzlr/web':
+      '@dazbee/web':
         specifier: workspace:*
         version: link:../../apps/web
       '@types/node':
@@ -547,25 +547,25 @@ importers:
       '@playwright/test':
         specifier: 1.63.0
         version: 1.63.0
-      '@razzlr/canvaskit':
+      '@dazbee/canvaskit':
         specifier: workspace:*
         version: link:../../packages/canvaskit
-      '@razzlr/config':
+      '@dazbee/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@razzlr/doc':
+      '@dazbee/doc':
         specifier: workspace:*
         version: link:../../packages/doc
-      '@razzlr/export':
+      '@dazbee/export':
         specifier: workspace:*
         version: link:../../packages/export
-      '@razzlr/fonts':
+      '@dazbee/fonts':
         specifier: workspace:*
         version: link:../../packages/fonts
-      '@razzlr/renderer':
+      '@dazbee/renderer':
         specifier: workspace:*
         version: link:../../packages/renderer
-      '@razzlr/schema':
+      '@dazbee/schema':
         specifier: workspace:*
         version: link:../../packages/schema
       '@resvg/resvg-js':

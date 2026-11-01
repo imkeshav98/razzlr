@@ -4,7 +4,7 @@ import 'server-only'
 
 export { SESSION_COOKIE } from './api.ts'
 
-export const STATE_COOKIE = 'razzlr_sign_in_state'
+export const STATE_COOKIE = 'dazbee_sign_in_state'
 
 /** How long a started sign-in may take to come back. */
 export const STATE_SECONDS = 10 * 60

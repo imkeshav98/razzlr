@@ -6,11 +6,11 @@ import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, test, type Page, type Request } from '../support/test.ts'
-import { exportDesign } from '@razzlr/export'
-import { FALLBACK_FAMILIES } from '@razzlr/fonts'
-import { loadFontFiles } from '@razzlr/fonts/node'
-import { loadCanvasKit } from '@razzlr/renderer/node'
-import { FontFace, FontFamily, FontLink, FontUploadTicket, type DesignInput } from '@razzlr/schema'
+import { exportDesign } from '@dazbee/export'
+import { FALLBACK_FAMILIES } from '@dazbee/fonts'
+import { loadFontFiles } from '@dazbee/fonts/node'
+import { loadCanvasKit } from '@dazbee/renderer/node'
+import { FontFace, FontFamily, FontLink, FontUploadTicket, type DesignInput } from '@dazbee/schema'
 import { createHash } from 'node:crypto'
 import { api } from '../support/assets.ts'
 import { designOf, editorPath, writeOutput } from '../support/editor.ts'
@@ -103,17 +103,17 @@ test('a design with a Google font and an uploaded font loads only those files, a
   const requests = fontRequests(page)
   await page.goto(editorPath(designId))
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
 
   const families = await catalog()
   expect(families.filter((f) => GOOGLE.includes(f.family)).map((f) => f.family).sort()).toEqual([...GOOGLE].sort())
   // Every Inter weight and the one Righteous file, no other family's, nothing from anywhere but us.
   expect([...requests.seen].sort()).toEqual(faceIds(families, 'Inter', 'Righteous'))
   expect(requests.elsewhere).toEqual([])
-  expect(await page.evaluate(() => window.razzlr?.loadedFamilies().sort())).toEqual(['Inter', 'Noto Naskh Arabic', 'Noto Sans', 'Noto Sans Devanagari', 'Righteous'])
+  expect(await page.evaluate(() => window.dazbee?.loadedFamilies().sort())).toEqual(['Inter', 'Noto Naskh Arabic', 'Noto Sans', 'Noto Sans Devanagari', 'Righteous'])
 
   const browserPng = Buffer.from(await page.evaluate(async () => {
-    const file = await window.razzlr?.exportFiles({ pageIds: ['p1'], formatIds: ['sq'], type: 'png' })
+    const file = await window.dazbee?.exportFiles({ pageIds: ['p1'], formatIds: ['sq'], type: 'png' })
     return btoa(Array.from(file?.bytes ?? [], (b) => String.fromCharCode(b)).join(''))
   }), 'base64')
   const ck = await loadCanvasKit()
@@ -136,7 +136,7 @@ const style = async (page: Page, id: string) => (JSON.parse(await designOf(page)
 test('the font picker shows families as pictures of their names, searches, picks, sets the weight and uploads', async ({ browser }) => {
   const { page, errors } = await openStage(browser, design())
   const families = await catalog()
-  await page.evaluate(() => window.razzlr?.select(['body']))
+  await page.evaluate(() => window.dazbee?.select(['body']))
   const panel = page.getByTestId('font-panel')
   await expect(page.getByTestId('font-open')).toHaveAttribute('data-family', 'Noto Sans')
   writeOutput('fonts-1-panel.png', await panel.screenshot())
@@ -166,17 +166,17 @@ test('the font picker shows families as pictures of their names, searches, picks
   // Noto Sans 400 becomes Playfair Display 400, and its files load now.
   expect(await style(page, 'body')).toMatchObject({ fontFamily: 'Playfair Display', fontWeight: 400 })
   await expect.poll(() => [...requests.seen].sort()).toEqual(faceIds(families, 'Playfair Display'))
-  await expect.poll(() => page.evaluate(() => window.razzlr?.loadedFamilies().includes('Playfair Display'))).toBe(true)
+  await expect.poll(() => page.evaluate(() => window.dazbee?.loadedFamilies().includes('Playfair Display'))).toBe(true)
 
   await page.getByTestId('font-weight').selectOption('900')
   expect(await style(page, 'body')).toMatchObject({ fontFamily: 'Playfair Display', fontWeight: 900 })
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('fonts-4-picked.png', await page.screenshot())
 
   // Each pick is one undo step.
-  await page.evaluate(() => window.razzlr?.perform('undo'))
+  await page.evaluate(() => window.dazbee?.perform('undo'))
   expect(await style(page, 'body')).toMatchObject({ fontFamily: 'Playfair Display', fontWeight: 400 })
-  await page.evaluate(() => window.razzlr?.perform('undo'))
+  await page.evaluate(() => window.dazbee?.perform('undo'))
   expect(await style(page, 'body')).toMatchObject({ fontFamily: 'Noto Sans', fontWeight: 400 })
 
   // An upload from the list joins the brand's fonts and is set at once.

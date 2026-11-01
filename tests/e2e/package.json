@@ -1,5 +1,5 @@
 {
-  "name": "@razzlr/e2e",
+  "name": "@dazbee/e2e",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,16 +10,16 @@
   "devDependencies": {
     "@hyzyla/pdfium": "3.0.0",
     "@playwright/test": "1.63.0",
-    "@razzlr/canvaskit": "workspace:*",
-    "@razzlr/config": "workspace:*",
-    "@razzlr/doc": "workspace:*",
-    "@razzlr/editor": "workspace:*",
-    "@razzlr/export": "workspace:*",
-    "@razzlr/fonts": "workspace:*",
-    "@razzlr/pixels": "workspace:*",
-    "@razzlr/renderer": "workspace:*",
-    "@razzlr/schema": "workspace:*",
-    "@razzlr/web": "workspace:*",
+    "@dazbee/canvaskit": "workspace:*",
+    "@dazbee/config": "workspace:*",
+    "@dazbee/doc": "workspace:*",
+    "@dazbee/editor": "workspace:*",
+    "@dazbee/export": "workspace:*",
+    "@dazbee/fonts": "workspace:*",
+    "@dazbee/pixels": "workspace:*",
+    "@dazbee/renderer": "workspace:*",
+    "@dazbee/schema": "workspace:*",
+    "@dazbee/web": "workspace:*",
     "@types/node": "^22.20.0",
     "eslint": "^9.39.0",
     "typescript": "~5.9.3"

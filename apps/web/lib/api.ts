@@ -2,7 +2,7 @@
 import 'server-only'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignCover, DesignSummary, DesignThumbnail, FontFace, FontFamily, FontLink, FontUploadTicket, SignedIn, SignedLink, SignedOut, SignInLink, SyncToken, TemplateSummary, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type SaveTemplate, type UpdateAsset, type UpdateWorkspace } from '@razzlr/schema'
+import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignCover, DesignSummary, DesignThumbnail, FontFace, FontFamily, FontLink, FontUploadTicket, SignedIn, SignedLink, SignedOut, SignInLink, SyncToken, TemplateSummary, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type SaveTemplate, type UpdateAsset, type UpdateWorkspace } from '@dazbee/schema'
 import { z } from 'zod'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8787'
@@ -16,7 +16,7 @@ export class ApiFailure extends Error {
 }
 
 /** The httpOnly cookie that keeps the API's session token (#58). */
-export const SESSION_COOKIE = 'razzlr_session'
+export const SESSION_COOKIE = 'dazbee_session'
 
 /**
  * Calls the API as the signed-in person. Without a session the API answers 401, and the person is

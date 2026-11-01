@@ -1,4 +1,4 @@
-import type { SceneLayer } from '@razzlr/renderer'
+import type { SceneLayer } from '@dazbee/renderer'
 
 export interface Point { x: number; y: number }
 

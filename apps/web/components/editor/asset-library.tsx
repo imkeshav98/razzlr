@@ -5,8 +5,8 @@
 // dragging it onto a format or by clicking it. Thumbnails are small copies the API made and stored;
 // the design itself draws the original, decoded by CanvasKit.
 import { MagnifyingGlassIcon, PencilSimpleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react'
-import type { Editor } from '@razzlr/editor'
-import { AssetSummary, type UpdateAsset } from '@razzlr/schema'
+import type { Editor } from '@dazbee/editor'
+import { AssetSummary, type UpdateAsset } from '@dazbee/schema'
 import { useCallback, useEffect, useRef, useState, type DragEvent, type KeyboardEvent } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
@@ -15,7 +15,7 @@ import { ASSET_ACCEPT as ACCEPT, sendAsset as send } from '../../lib/upload-asse
 import { overlayScroll } from '../ui/overlay-scroll.ts'
 
 /** What an asset dragged from the library carries, for the stage to place it. */
-export const ASSET_DRAG_TYPE = 'application/x-razzlr-asset'
+export const ASSET_DRAG_TYPE = 'application/x-dazbee-asset'
 /** How long typing pauses before the library searches. */
 const SEARCH_DELAY_MS = 150
 

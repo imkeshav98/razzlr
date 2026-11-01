@@ -4,7 +4,7 @@
 // onboarding: the library's top bar, progress dashes over a bold headline, and the website in one
 // wide field with its button at the end.
 import { ArrowLeftIcon, ArrowRightIcon, GlobeIcon } from '@phosphor-icons/react/ssr'
-import { WorkspaceKind } from '@razzlr/schema'
+import { WorkspaceKind } from '@dazbee/schema'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { KindCards } from '../../components/kind-cards.tsx'

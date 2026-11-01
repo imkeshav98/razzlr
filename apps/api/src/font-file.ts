@@ -1,8 +1,8 @@
 // Reads a font file's family, weight and style from its own tables (#50), so the API can refuse what
 // isn't a TrueType or OpenType font and name an upload as its designer did. Drawing stays with
 // CanvasKit, which also has to accept the file before it is recorded.
-import { loadCanvasKit } from '@razzlr/renderer/node'
-import type { FontType } from '@razzlr/schema'
+import { loadCanvasKit } from '@dazbee/renderer/node'
+import type { FontType } from '@dazbee/schema'
 
 export interface FontInfo { contentType: FontType; family: string; weight: number; style: 'normal' | 'italic' }
 

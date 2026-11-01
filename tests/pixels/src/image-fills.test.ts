@@ -1,9 +1,9 @@
 // Image fills (#48) drawn on the CPU surface: each adjustment and filter turns a flat colour into
 // what its colour matrix says, so the matrix's added column is in the units Skia reads; and masks
 // keep what follows them only where they are opaque or bright, up to the next mask.
-import { imageColorMatrix, renderDesign } from '@razzlr/renderer'
-import { loadCanvasKit } from '@razzlr/renderer/node'
-import type { ImageAdjust, ImageFilter } from '@razzlr/schema'
+import { imageColorMatrix, renderDesign } from '@dazbee/renderer'
+import { loadCanvasKit } from '@dazbee/renderer/node'
+import type { ImageAdjust, ImageFilter } from '@dazbee/schema'
 import { describe, expect, it } from 'vitest'
 import { fixtureResources } from './pixels.ts'
 

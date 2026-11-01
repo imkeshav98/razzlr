@@ -7,7 +7,7 @@ import {
   ArrowUpRightIcon, CaretUpIcon, CircleIcon, LineSegmentIcon, PentagonIcon, RectangleIcon, StarIcon, type Icon,
 } from '@phosphor-icons/react'
 import * as Popover from '@radix-ui/react-popover'
-import type { ShapeTool } from '@razzlr/editor'
+import type { ShapeTool } from '@dazbee/editor'
 import { useRef, useState, type KeyboardEvent } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'

@@ -2,7 +2,7 @@
 // marquee; move, resize and rotate with handles (shift and alt too), on a turned layer as well;
 // arrow nudges, duplicate, z-order, delete, lock and hide from the shortcut table. Every drag,
 // resize and rotate undoes in one step.
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { expect, test, type Browser } from '../support/test.ts'
 import { screenPoint, writeOutput } from '../support/editor.ts'
 import { liveDesign } from '../support/seed.ts'
@@ -219,7 +219,7 @@ test('nudge, duplicate, z-order, lock, hide and delete from the keyboard', async
   await press(page, 'deselect')
   await click(page, 820, 240)
   expect(await selection(page)).toEqual([])
-  await page.evaluate(() => window.razzlr?.select(['dot']))
+  await page.evaluate(() => window.dazbee?.select(['dot']))
   await press(page, 'hide')
   expect(await props(page, 'dot')).toMatchObject({ visible: true })
 
@@ -232,7 +232,7 @@ test('nudge, duplicate, z-order, lock, hide and delete from the keyboard', async
   await press(page, 'deselect')
   await click(page, 230, 180)
   expect(await selection(page)).toEqual([])
-  await page.evaluate(() => window.razzlr?.select(['box']))
+  await page.evaluate(() => window.dazbee?.select(['box']))
   await press(page, 'lock')
   expect((await read(page)).nodes.box?.lock).toBeUndefined()
 

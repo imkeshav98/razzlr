@@ -1,6 +1,6 @@
 // The auto layout solver (#46), through scene building, with text measured by a stand-in: each
 // character 10 wide, lines 20 tall, words wrapped at the width given.
-import { parseDesign, type DesignInput } from '@razzlr/schema'
+import { parseDesign, type DesignInput } from '@dazbee/schema'
 import { describe, expect, it } from 'vitest'
 import type { MeasureText } from './layout.ts'
 import { render, type SceneLayer } from './scene.ts'

@@ -1,8 +1,8 @@
 // Groups (#41), with real pointer and keyboard input: group three layers, resize the group, enter it
 // with a double-click and move one layer inside, leave it with Escape, ungroup, and undo each step.
 // Inside a turned group a drag and the arrow keys move a layer along the page as it is drawn.
-import { boundsOf, centreOf, turn } from '@razzlr/doc'
-import type { DesignInput } from '@razzlr/schema'
+import { boundsOf, centreOf, turn } from '@dazbee/doc'
+import type { DesignInput } from '@dazbee/schema'
 import { expect, test, type Page } from '../support/test.ts'
 import { screenPoint, writeOutput } from '../support/editor.ts'
 import { liveDesign } from '../support/seed.ts'
@@ -51,7 +51,7 @@ function expectHugs(d: Design, group: string) {
 const dblclick = async (page: Page, x: number, y: number) => {
   const at = await screenPoint(page, x, y)
   await page.mouse.dblclick(at.x, at.y)
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
 }
 
 test('group three layers, resize the group, enter it and move one, ungroup, and undo each step', async ({ browser }) => {

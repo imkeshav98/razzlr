@@ -47,7 +47,7 @@ services:
       # A local-only key; deployed servers get their own from the environment.
       SYNC_TOKEN_SECRET: ${SYNC_TOKEN_SECRET:-local-only-sync-token-secret-0000}
       # Local and CI only: a request without a session token is the development user (apps/api/src/session.ts).
-      RAZZLR_DEV_SESSION: "on"
+      DAZBEE_DEV_SESSION: "on"
       # Sign-in (#58) is on when these three are set, from a git-ignored .env next to this file.
       WORKOS_API_KEY: ${WORKOS_API_KEY:-}
       WORKOS_CLIENT_ID: ${WORKOS_CLIENT_ID:-}

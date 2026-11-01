@@ -1,4 +1,4 @@
-import { parseDesign, type Design } from '@razzlr/schema'
+import { parseDesign, type Design } from '@dazbee/schema'
 import { describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
 import { anchorOffset, childrenOf, loadDesign, openSession, readDesign, textAnchor, type DesignDoc, type Session } from './index.ts'

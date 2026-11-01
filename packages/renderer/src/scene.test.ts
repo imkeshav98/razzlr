@@ -1,4 +1,4 @@
-import { parseDesign, type Design, type DesignInput } from '@razzlr/schema'
+import { parseDesign, type Design, type DesignInput } from '@dazbee/schema'
 import { describe, expect, it } from 'vitest'
 import { render, sceneMemo } from './scene.ts'
 

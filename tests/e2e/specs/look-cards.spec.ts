@@ -2,7 +2,7 @@
 // slider and its colour from the brand kit, the effects as tiles, and the numbers folded into the
 // Details card's rows, each showing its values until it opens.
 import { expect, test, type Page } from '../support/test.ts'
-import { EMPTY_BRAND_KIT, type DesignInput } from '@razzlr/schema'
+import { EMPTY_BRAND_KIT, type DesignInput } from '@dazbee/schema'
 import { writeOutput } from '../support/editor.ts'
 import { API_URL, DEV_BRAND } from '../support/seed.ts'
 import { openStage } from '../support/stage.ts'
@@ -27,13 +27,13 @@ const design = (): DesignInput => ({
 })
 
 type Node = { bindings?: Record<string, string>; props: Record<string, unknown> & { style?: Record<string, unknown> } }
-const node = (page: Page, id: string) => page.evaluate((id) => window.razzlr?.design().nodes[id], id) as Promise<Node>
+const node = (page: Page, id: string) => page.evaluate((id) => window.dazbee?.design().nodes[id], id) as Promise<Node>
 
 test('the look comes first: size and brand colour, effect tiles, and the numbers folded', async ({ browser }) => {
   const kit = { ...EMPTY_BRAND_KIT, colors: [{ token: 'berry', name: 'Berry', value: '#FF3D6EFF' }, { token: 'roast', name: 'Roast', value: '#2A140AFF' }] }
   expect((await fetch(`${API_URL}/brands/${DEV_BRAND}/kit`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(kit) })).ok).toBe(true)
   const { page, errors } = await openStage(browser, design())
-  await page.evaluate(() => window.razzlr?.select(['headline']))
+  await page.evaluate(() => window.dazbee?.select(['headline']))
 
   // Text: the size slider and the brand's colours, the colour it has now leading them.
   const look = page.getByTestId('text-look')
@@ -56,7 +56,7 @@ test('the look comes first: size and brand colour, effect tiles, and the numbers
     return [(props.effects as { type: string }[]).map((e) => e.type), (props.style?.outline as { width: number } | undefined)?.width]
   }).toEqual([['dropShadow'], 2])
   await expect(effects.locator('[data-tile="none"]')).toHaveAttribute('aria-pressed', 'false')
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('look-cards-text.png', await page.screenshot())
   // Fine-tune opens the picked effect's numbers.
   await effects.getByRole('button', { name: 'Fine-tune' }).click()
@@ -77,7 +77,7 @@ test('the look comes first: size and brand colour, effect tiles, and the numbers
   await expect(position.getByRole('textbox', { name: 'X position' })).toHaveValue('76')
 
   // A shape: its fill from the same colours, and Blur in place of Outline; the open row stays open.
-  await page.evaluate(() => window.razzlr?.select(['badge']))
+  await page.evaluate(() => window.dazbee?.select(['badge']))
   await expect(page.getByTestId('effects-card').locator('[data-tile="blur"]')).toBeVisible()
   await page.getByTestId('fill-look').getByRole('button', { name: 'Roast' }).click()
   await expect.poll(async () => (await node(page, 'badge')).bindings).toMatchObject({ fill: 'brand:roast' })

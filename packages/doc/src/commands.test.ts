@@ -1,4 +1,4 @@
-import { LayerTree, parseDesign } from '@razzlr/schema'
+import { LayerTree, parseDesign } from '@dazbee/schema'
 import { describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
 import type { z } from 'zod'

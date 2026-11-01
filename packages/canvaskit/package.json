@@ -1,5 +1,5 @@
 {
-  "name": "@razzlr/canvaskit",
+  "name": "@dazbee/canvaskit",
   "private": true,
   "description": "CanvasKit built from Skia with the PDF and SVG backends; every runtime loads this one build (ADR-0005).",
   "exports": {

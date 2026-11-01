@@ -1,4 +1,4 @@
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 
 /** The five formats a carousel campaign typically ships in, primary first. */
 const FORMATS = {

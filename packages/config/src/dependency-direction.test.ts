@@ -9,39 +9,39 @@ const workspacePackage = (name: string, dir: string, deps: string[] = []): Works
 describe('dependency direction', () => {
   it('flags a package that depends on an app', () => {
     const violations = findViolations([
-      workspacePackage('@razzlr/web', 'apps/web'),
-      workspacePackage('@razzlr/schema', 'packages/schema', ['@razzlr/web']),
+      workspacePackage('@dazbee/web', 'apps/web'),
+      workspacePackage('@dazbee/schema', 'packages/schema', ['@dazbee/web']),
     ])
-    expect(violations).toEqual(['@razzlr/schema (a package) depends on @razzlr/web (an app)'])
+    expect(violations).toEqual(['@dazbee/schema (a package) depends on @dazbee/web (an app)'])
   })
 
   it('flags a package that depends on a test suite', () => {
     const violations = findViolations([
-      workspacePackage('@razzlr/e2e', 'tests/e2e'),
-      workspacePackage('@razzlr/doc', 'packages/doc', ['@razzlr/e2e']),
+      workspacePackage('@dazbee/e2e', 'tests/e2e'),
+      workspacePackage('@dazbee/doc', 'packages/doc', ['@dazbee/e2e']),
     ])
-    expect(violations).toEqual(['@razzlr/doc (a package) depends on @razzlr/e2e (a test suite)'])
+    expect(violations).toEqual(['@dazbee/doc (a package) depends on @dazbee/e2e (a test suite)'])
   })
 
   it('flags a core package that depends on one later in schema → doc → renderer → editor', () => {
     const violations = findViolations([
-      workspacePackage('@razzlr/schema', 'packages/schema', ['@razzlr/renderer']),
-      workspacePackage('@razzlr/renderer', 'packages/renderer'),
+      workspacePackage('@dazbee/schema', 'packages/schema', ['@dazbee/renderer']),
+      workspacePackage('@dazbee/renderer', 'packages/renderer'),
     ])
     expect(violations).toEqual([
-      '@razzlr/schema depends on @razzlr/renderer, which comes later in schema → doc → renderer → editor',
+      '@dazbee/schema depends on @dazbee/renderer, which comes later in schema → doc → renderer → editor',
     ])
   })
 
   it('allows core packages to depend downward and apps and tests to depend on anything below them', () => {
     const violations = findViolations([
-      workspacePackage('@razzlr/schema', 'packages/schema'),
-      workspacePackage('@razzlr/doc', 'packages/doc', ['@razzlr/schema']),
-      workspacePackage('@razzlr/renderer', 'packages/renderer', ['@razzlr/doc', '@razzlr/schema', '@razzlr/fonts']),
-      workspacePackage('@razzlr/fonts', 'packages/fonts'),
-      workspacePackage('@razzlr/editor', 'packages/editor', ['@razzlr/renderer']),
-      workspacePackage('@razzlr/web', 'apps/web', ['@razzlr/editor']),
-      workspacePackage('@razzlr/e2e', 'tests/e2e', ['@razzlr/web']),
+      workspacePackage('@dazbee/schema', 'packages/schema'),
+      workspacePackage('@dazbee/doc', 'packages/doc', ['@dazbee/schema']),
+      workspacePackage('@dazbee/renderer', 'packages/renderer', ['@dazbee/doc', '@dazbee/schema', '@dazbee/fonts']),
+      workspacePackage('@dazbee/fonts', 'packages/fonts'),
+      workspacePackage('@dazbee/editor', 'packages/editor', ['@dazbee/renderer']),
+      workspacePackage('@dazbee/web', 'apps/web', ['@dazbee/editor']),
+      workspacePackage('@dazbee/e2e', 'tests/e2e', ['@dazbee/web']),
     ])
     expect(violations).toEqual([])
   })
@@ -50,7 +50,7 @@ describe('dependency direction', () => {
 describe('checkRepo', () => {
   let root: string
   const repo = (workspaceYaml: string) => {
-    root = mkdtempSync(join(tmpdir(), 'razzlr-deps-'))
+    root = mkdtempSync(join(tmpdir(), 'dazbee-deps-'))
     writeFileSync(join(root, 'pnpm-workspace.yaml'), workspaceYaml)
   }
   const pkg = (dir: string, json: object) => {
@@ -61,15 +61,15 @@ describe('checkRepo', () => {
 
   it('reads every workspace listed in pnpm-workspace.yaml and checks all dependency fields', () => {
     repo('packages:\n  - apps/*\n  - packages/*\n')
-    pkg('apps/web', { name: '@razzlr/web' })
-    pkg('packages/doc', { name: '@razzlr/doc', devDependencies: { '@razzlr/web': 'workspace:*' } })
+    pkg('apps/web', { name: '@dazbee/web' })
+    pkg('packages/doc', { name: '@dazbee/doc', devDependencies: { '@dazbee/web': 'workspace:*' } })
 
-    expect(checkRepo(root)).toEqual(['@razzlr/doc (a package) depends on @razzlr/web (an app)'])
+    expect(checkRepo(root)).toEqual(['@dazbee/doc (a package) depends on @dazbee/web (an app)'])
   })
 
   it('fails instead of passing when a workspace pattern is not understood', () => {
     repo('packages:\n  - apps/*\n  - packages/**\n')
-    pkg('apps/web', { name: '@razzlr/web' })
+    pkg('apps/web', { name: '@dazbee/web' })
 
     expect(checkRepo(root)).toEqual(['pnpm-workspace.yaml: cannot check the pattern "packages/**"; use "dir/*"'])
   })

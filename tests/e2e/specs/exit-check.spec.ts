@@ -7,14 +7,14 @@
 import { readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { PDFiumLibrary } from '@hyzyla/pdfium'
-import { exportDesign, readZip } from '@razzlr/export'
-import { FALLBACK_FAMILIES } from '@razzlr/fonts'
-import { loadFontFiles } from '@razzlr/fonts/node'
-import { encodePng } from '@razzlr/pixels/pixels'
-import { overWhite, rasterisePdf, rasteriseSvg, vectorDifference } from '@razzlr/pixels/vector'
-import { renderDesign } from '@razzlr/renderer'
-import { loadCanvasKit } from '@razzlr/renderer/node'
-import type { ExportType } from '@razzlr/schema'
+import { exportDesign, readZip } from '@dazbee/export'
+import { FALLBACK_FAMILIES } from '@dazbee/fonts'
+import { loadFontFiles } from '@dazbee/fonts/node'
+import { encodePng } from '@dazbee/pixels/pixels'
+import { overWhite, rasterisePdf, rasteriseSvg, vectorDifference } from '@dazbee/pixels/vector'
+import { renderDesign } from '@dazbee/renderer'
+import { loadCanvasKit } from '@dazbee/renderer/node'
+import type { ExportType } from '@dazbee/schema'
 import { expect, test, type Page } from '../support/test.ts'
 import { photo } from '../support/assets.ts'
 import { designOf, OUTPUT, screenPoint, writeOutput } from '../support/editor.ts'
@@ -36,7 +36,7 @@ interface Stored {
   overrides: Record<string, Record<string, Record<string, unknown>>>
 }
 const stored = async (page: Page) => JSON.parse(await designOf(page)) as Stored
-const drawn = (page: Page) => page.evaluate(() => window.razzlr?.drawn())
+const drawn = (page: Page) => page.evaluate(() => window.dazbee?.drawn())
 const shot = async (page: Page, name: string) => writeOutput(`exit-check-${name}.png`, await page.screenshot())
 
 test('an ad set rebuilt in 5 formats through real input exports PNG, JPG, PDF and SVG that match Node', async ({ browser }) => {
@@ -52,7 +52,7 @@ test('an ad set rebuilt in 5 formats through real input exports PNG, JPG, PDF an
   await page.getByLabel('Brief').fill(`Trail days ${run}`)
   await page.getByRole('button', { name: 'Make drafts' }).click()
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
-  await page.evaluate(() => window.razzlr?.setCamera({ x: 120, y: 80, zoom: 0.7 }))
+  await page.evaluate(() => window.dazbee?.setCamera({ x: 120, y: 80, zoom: 0.7 }))
   await drawn(page)
 
   // The brand kit gets two colours, typed in by hand.
@@ -117,7 +117,7 @@ test('an ad set rebuilt in 5 formats through real input exports PNG, JPG, PDF an
   await drawn(page)
   const headline = Object.entries((await stored(page)).nodes).find(([, n]) => n.type === 'text')?.[0] ?? ''
   expect(headline).not.toBe('')
-  expect(await page.evaluate(() => window.razzlr?.selection())).toEqual([headline])
+  expect(await page.evaluate(() => window.dazbee?.selection())).toEqual([headline])
   await page.getByTestId('font-open').click()
   // An upload from the list joins the brand's fonts and is set at once.
   await page.getByTestId('font-upload').setInputFiles({ name: 'Righteous-Regular.ttf', mimeType: 'font/ttf', buffer: Buffer.from(righteous) })
@@ -142,7 +142,7 @@ test('an ad set rebuilt in 5 formats through real input exports PNG, JPG, PDF an
   await expect.poll(async () => Object.keys((await stored(page)).formats).length).toBe(5)
   const design = await stored(page)
   const story = Object.entries(design.formats).find(([, f]) => f.height === 1920)?.[0] ?? ''
-  await page.evaluate(() => window.razzlr?.fitAll())
+  await page.evaluate(() => window.dazbee?.fitAll())
   await drawn(page)
 
   // The headline moves down in the story only, into the tall format's lower third.

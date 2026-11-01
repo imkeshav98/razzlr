@@ -1,7 +1,7 @@
 // Brand kits (#53): one per brand, its colours and fonts that designs bind to as `brand:<token>`,
 // its logo and its tone of voice. A brand that never saved one has the empty kit.
-import { brandKits, type Db } from '@razzlr/db'
-import { EMPTY_BRAND_KIT, type BrandKit } from '@razzlr/schema'
+import { brandKits, type Db } from '@dazbee/db'
+import { EMPTY_BRAND_KIT, type BrandKit } from '@dazbee/schema'
 import { and, eq } from 'drizzle-orm'
 import { findAsset } from './assets.ts'
 

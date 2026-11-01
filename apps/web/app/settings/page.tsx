@@ -3,7 +3,7 @@
 // brands clients. It looks like the
 // final mock's settings: a bold title with the workspace beside it, and each setting in a panel.
 import { CheckIcon } from '@phosphor-icons/react/ssr'
-import { WorkspaceKind } from '@razzlr/schema'
+import { WorkspaceKind } from '@dazbee/schema'
 import { redirect } from 'next/navigation'
 import { KindCards } from '../../components/kind-cards.tsx'
 import { LibraryShell } from '../../components/library-shell.tsx'

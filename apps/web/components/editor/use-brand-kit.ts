@@ -4,7 +4,7 @@
 // made in the flyout shows in the Page card's colours at once. Fetched once per brand, and again
 // each time the flyout opens; a fetch waits for a save still on its way, so it never brings back
 // the kit from before that save.
-import { BrandKit, EMPTY_BRAND_KIT } from '@razzlr/schema'
+import { BrandKit, EMPTY_BRAND_KIT } from '@dazbee/schema'
 import { useCallback, useEffect, useSyncExternalStore } from 'react'
 
 export const kitUrl = (brandId: string) => `/brands/${encodeURIComponent(brandId)}/kit`

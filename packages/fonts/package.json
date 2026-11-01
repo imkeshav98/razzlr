@@ -1,5 +1,5 @@
 {
-  "name": "@razzlr/fonts",
+  "name": "@dazbee/fonts",
   "private": true,
   "type": "module",
   "exports": {
@@ -12,7 +12,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@razzlr/config": "workspace:*",
+    "@dazbee/config": "workspace:*",
     "@types/node": "^22.20.0",
     "eslint": "^9.39.0",
     "typescript": "~5.9.3",

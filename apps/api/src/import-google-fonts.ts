@@ -1,10 +1,10 @@
 // Copies the Google Fonts families Dazbee offers into our storage (#50): every family in the catalog,
-// or only those named, as in `pnpm --filter @razzlr/api fonts:google Inter "Bebas Neue"`. Run it once
+// or only those named, as in `pnpm --filter @dazbee/api fonts:google Inter "Bebas Neue"`. Run it once
 // per environment, and again to pick up new families or Google's updates; from then on fonts load
 // from our storage only. Settings come from the environment, as the API's do.
-import { migrateDatabase, openDatabase } from '@razzlr/db'
-import { GOOGLE_FONTS } from '@razzlr/fonts'
-import { openStorage, storageSettings } from '@razzlr/storage'
+import { migrateDatabase, openDatabase } from '@dazbee/db'
+import { GOOGLE_FONTS } from '@dazbee/fonts'
+import { openStorage, storageSettings } from '@dazbee/storage'
 import { importGoogleFamily } from './fonts.ts'
 
 const databaseUrl = process.env.DATABASE_URL

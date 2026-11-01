@@ -2,7 +2,7 @@
 // duplicates and deletes it (asking first); a template tile's menu renames and deletes it; and the
 // editor's crumb renames the design open in it.
 import { expect, test } from '../support/test.ts'
-import { DesignSummary, TemplateSummary, type DesignInput } from '@razzlr/schema'
+import { DesignSummary, TemplateSummary, type DesignInput } from '@dazbee/schema'
 import { editorPath, writeOutput } from '../support/editor.ts'
 import { API_URL, DEV_BRAND, seed } from '../support/seed.ts'
 

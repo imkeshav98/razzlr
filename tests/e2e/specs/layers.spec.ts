@@ -3,7 +3,7 @@
 // step), rename, lock and hide; the same by keyboard alone; and 300 layers scrolling smoothly with
 // only the rows in view in the page.
 import { expect, test, type Page } from '../support/test.ts'
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { writeOutput } from '../support/editor.ts'
 import { click, openStage, read } from '../support/stage.ts'
 
@@ -39,7 +39,7 @@ const listed = (page: Page) => tree(page).getByRole('treeitem').evaluateAll((row
 const node = async (page: Page, id: string) => (await read(page)).nodes[id] as unknown as { parentId: string; name: string; lock?: Record<string, boolean> }
 /** The colour the export render draws at a design pixel. */
 const colourAt = (page: Page, x: number, y: number) => page.evaluate(([x, y]) => {
-  const pixels = window.razzlr?.exportPixels()
+  const pixels = window.dazbee?.exportPixels()
   const at = (y * 1080 + x) * 4
   return pixels ? [pixels[at], pixels[at + 1], pixels[at + 2]] : null
 }, [x, y] as const)
@@ -57,37 +57,37 @@ test('the panel and the stage select together; drag into a group, rename, lock a
 
   // Select in the panel: the stage selects. Select on the stage: the panel follows.
   await row(page, 'Dot').click()
-  expect(await page.evaluate(() => window.razzlr?.selection())).toEqual(['dot'])
+  expect(await page.evaluate(() => window.dazbee?.selection())).toEqual(['dot'])
   await expect(row(page, 'Dot')).toHaveAttribute('aria-selected', 'true')
   await click(page, 480, 380)
   await expect(row(page, 'Box')).toHaveAttribute('aria-selected', 'true')
   await expect(row(page, 'Dot')).toHaveAttribute('aria-selected', 'false')
   // A layer inside a group selected on the stage opens its group in the panel.
-  await page.evaluate(() => window.razzlr?.select(['c2']))
+  await page.evaluate(() => window.dazbee?.select(['c2']))
   await expect(row(page, 'Card')).toHaveAttribute('aria-expanded', 'true')
   await expect(row(page, 'Card stripe')).toHaveAttribute('aria-selected', 'true')
   await expect.poll(() => listed(page)).toEqual(['Dot', 'Box', 'Card', '  Card stripe', '  Card back', 'Backdrop'])
   writeOutput('layers-0-tree.png', await page.screenshot())
 
   // Drag Dot onto the middle of Card: it goes inside, on top, and the group grows to hold it.
-  const before = await page.evaluate(() => window.razzlr?.boxOf('card'))
+  const before = await page.evaluate(() => window.dazbee?.boxOf('card'))
   const target = await row(page, 'Card').boundingBox()
   await row(page, 'Dot').dragTo(row(page, 'Card'), { targetPosition: { x: 60, y: (target?.height ?? ROW) / 2 } })
   await expect.poll(async () => (await node(page, 'dot')).parentId).toBe('card')
   await expect.poll(() => listed(page)).toEqual(['Box', 'Card', '  Dot', '  Card stripe', '  Card back', 'Backdrop'])
-  const after = await page.evaluate(() => window.razzlr?.boxOf('card'))
+  const after = await page.evaluate(() => window.dazbee?.boxOf('card'))
   expect(after).toEqual({ x: 120, y: 620, width: 780, height: 300 })
   expect(before).toEqual({ x: 120, y: 620, width: 520, height: 300 })
   // The stage redraws the group with the dot in it: selecting the group, its box takes in the dot.
   await row(page, 'Card').click()
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('layers-1-dragged-into-group.png', await page.screenshot())
   // Dot drawn where it was: moving it in changed only where it sits in the tree.
   expect(await colourAt(page, 800, 780)).toEqual([31, 157, 85])
   // One undo puts it back.
-  await page.evaluate(() => window.razzlr?.perform('undo'))
+  await page.evaluate(() => window.dazbee?.perform('undo'))
   await expect.poll(async () => (await node(page, 'dot')).parentId).toBe('p1')
-  expect(await page.evaluate(() => window.razzlr?.boxOf('card'))).toEqual(before)
+  expect(await page.evaluate(() => window.dazbee?.boxOf('card'))).toEqual(before)
 
   // Drag Backdrop above Box: reordered among its siblings.
   const box = await row(page, 'Box').boundingBox()
@@ -96,7 +96,7 @@ test('the panel and the stage select together; drag into a group, rename, lock a
   expect(box).not.toBeNull()
   // The backdrop now covers the box: the stage draws it on top.
   expect(await colourAt(page, 300, 200)).toEqual([244, 237, 228])
-  await page.evaluate(() => window.razzlr?.perform('undo'))
+  await page.evaluate(() => window.dazbee?.perform('undo'))
   await expect.poll(() => listed(page)).toEqual(['Dot', 'Box', 'Card', '  Card stripe', '  Card back', 'Backdrop'])
 
   // Rename with a double-click.
@@ -120,7 +120,7 @@ test('the panel and the stage select together; drag into a group, rename, lock a
   await row(page, 'Hero panel').getByRole('button', { name: 'Hide Hero panel' }).click()
   await expect.poll(() => colourAt(page, 300, 200)).toEqual([244, 237, 228])
   await page.mouse.move(900, 900)
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('layers-3-locked-hidden.png', await page.screenshot())
   await row(page, 'Hero panel').getByRole('button', { name: 'Show Hero panel' }).click()
   await expect.poll(() => colourAt(page, 300, 200)).toEqual([224, 38, 43])
@@ -139,7 +139,7 @@ test('keyboard only: move through the tree, select, rename, lock, hide and move 
   // Down selects the next row as it moves there.
   await page.keyboard.press('ArrowDown')
   await expect(row(page, 'Box')).toBeFocused()
-  expect(await page.evaluate(() => window.razzlr?.selection())).toEqual(['box'])
+  expect(await page.evaluate(() => window.dazbee?.selection())).toEqual(['box'])
   // The arrows moved the focus, not the box.
   expect((await read(page)).nodes.box?.props).toMatchObject({ x: 120, y: 120 })
 

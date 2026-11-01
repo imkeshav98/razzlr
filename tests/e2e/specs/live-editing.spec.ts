@@ -10,7 +10,7 @@ test.describe.configure({ timeout: 120_000 })
 /** Runs `count` random commands in a tab, yielding after each so the two tabs' edits interleave on the wire. */
 const randomEdits = (page: Page, seed: number, count: number) =>
   page.evaluate(async ({ seed, count }) => {
-    const editor = window.razzlr
+    const editor = window.dazbee
     if (!editor) throw new Error('no editor')
     let state = seed
     // mulberry32: the same seed makes the same edits on every run.
@@ -102,12 +102,12 @@ test('two tabs make 200 random edits each and end with the same document and the
 test("each tab's undo leaves the other tab's edits intact", async ({ browser }) => {
   const { tabs, errors } = await openTabs(browser, 2)
   const [a, b] = tabs as [Page, Page]
-  await a.evaluate(() => window.razzlr?.session.run('node.update', { ids: ['box'], patch: { x: 500 } }))
-  await b.evaluate(() => window.razzlr?.session.run('node.update', { ids: ['dot'], patch: { x: 300 } }))
-  await b.evaluate(() => window.razzlr?.session.run('text.edit', { id: 'headline', op: { kind: 'insert', at: 11, text: '!' } }))
+  await a.evaluate(() => window.dazbee?.session.run('node.update', { ids: ['box'], patch: { x: 500 } }))
+  await b.evaluate(() => window.dazbee?.session.run('node.update', { ids: ['dot'], patch: { x: 300 } }))
+  await b.evaluate(() => window.dazbee?.session.run('text.edit', { id: 'headline', op: { kind: 'insert', at: 11, text: '!' } }))
   await settle(tabs)
 
-  await a.evaluate(() => window.razzlr?.session.undo())
+  await a.evaluate(() => window.dazbee?.session.undo())
   await settle(tabs)
   for (const tab of tabs) {
     const design = JSON.parse(await designOf(tab))
@@ -116,7 +116,7 @@ test("each tab's undo leaves the other tab's edits intact", async ({ browser }) 
     expect(design.nodes.headline.props.text).toBe('Summer sale!')
   }
 
-  await b.evaluate(() => window.razzlr?.session.undo())
+  await b.evaluate(() => window.dazbee?.session.undo())
   await settle(tabs)
   for (const tab of tabs) {
     const design = JSON.parse(await designOf(tab))
@@ -126,15 +126,15 @@ test("each tab's undo leaves the other tab's edits intact", async ({ browser }) 
   }
 
   // The same property from both tabs: A's undo must not take back B's later value.
-  await a.evaluate(() => window.razzlr?.session.run('node.update', { ids: ['box'], patch: { y: 400 } }))
+  await a.evaluate(() => window.dazbee?.session.run('node.update', { ids: ['box'], patch: { y: 400 } }))
   await settle(tabs)
-  await b.evaluate(() => window.razzlr?.session.run('node.update', { ids: ['box'], patch: { y: 600 } }))
+  await b.evaluate(() => window.dazbee?.session.run('node.update', { ids: ['box'], patch: { y: 600 } }))
   await settle(tabs)
-  await a.evaluate(() => window.razzlr?.session.undo())
+  await a.evaluate(() => window.dazbee?.session.undo())
   await settle(tabs)
   for (const tab of tabs) expect(JSON.parse(await designOf(tab)).nodes.box.props.y).toBe(600)
   // B's undo puts back the value B replaced, which was A's.
-  await b.evaluate(() => window.razzlr?.session.undo())
+  await b.evaluate(() => window.dazbee?.session.undo())
   await settle(tabs)
   for (const tab of tabs) expect(JSON.parse(await designOf(tab)).nodes.box.props.y).toBe(400)
   expect(errors).toEqual([])
@@ -173,7 +173,7 @@ test('a real mouse drag and real typing in one tab show up in the other, and und
   expect(JSON.parse(await designOf(b)).nodes.headline.props.text).toBe('Summer sale now')
 
   // Tab B types ahead of tab A's caret; A's caret moves along, so A's next key lands where it was.
-  await b.evaluate(() => window.razzlr?.session.run('text.edit', { id: 'headline', op: { kind: 'insert', at: 0, text: 'Hot ' } }))
+  await b.evaluate(() => window.dazbee?.session.run('text.edit', { id: 'headline', op: { kind: 'insert', at: 0, text: 'Hot ' } }))
   await settle(tabs)
   await a.keyboard.type('!')
   await settle(tabs)
@@ -212,7 +212,7 @@ test('latency from a command in tab A to the redraw in tab B', async ({ browser 
   for (let i = 0; i < 60; i++) {
     const x = 100 + i
     const seen = b.evaluate((x) => new Promise<number>((resolve) => {
-      const stop = window.razzlr?.onDraw((design, at) => {
+      const stop = window.dazbee?.onDraw((design, at) => {
         if (design.nodes.box?.props.x !== x) return
         stop?.()
         resolve(at)
@@ -222,7 +222,7 @@ test('latency from a command in tab A to the redraw in tab B', async ({ browser 
     await b.evaluate(() => new Promise((resolve) => requestAnimationFrame(resolve)))
     const sent = await a.evaluate((x) => {
       const at = performance.timeOrigin + performance.now()
-      window.razzlr?.session.run('node.update', { ids: ['box'], patch: { x } })
+      window.dazbee?.session.run('node.update', { ids: ['box'], patch: { x } })
       return at
     }, x)
     samples.push((await seen) - sent)
@@ -242,8 +242,8 @@ test('a design survives the sync server restarting, from Postgres', async ({ bro
   const [a] = tabs as [Page]
   const startedAt = new Date()
   await a.evaluate(() => {
-    window.razzlr?.session.run('node.update', { ids: ['dot'], patch: { x: 420, y: 640 } })
-    window.razzlr?.session.run('text.edit', { id: 'headline', op: { kind: 'insert', at: 11, text: ' today' } })
+    window.dazbee?.session.run('node.update', { ids: ['dot'], patch: { x: 420, y: 640 } })
+    window.dazbee?.session.run('text.edit', { id: 'headline', op: { kind: 'insert', at: 11, text: ' today' } })
   })
   await settle(tabs)
   const before = await designOf(a)

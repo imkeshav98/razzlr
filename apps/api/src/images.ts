@@ -1,6 +1,6 @@
 // Reads an image's type and size from its header, so the API can refuse what isn't the image it
 // claims to be before recording it. Decoding stays with CanvasKit in the renderer.
-import type { ImageType } from '@razzlr/schema'
+import type { ImageType } from '@dazbee/schema'
 
 export interface ImageHeader { contentType: ImageType; width: number; height: number }
 

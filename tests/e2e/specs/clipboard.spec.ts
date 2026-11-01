@@ -2,7 +2,7 @@
 // copied in one design and pasted into another draws the same pixels there; pasting twice gives
 // two copies; each paste is one undo step; Mod+Shift+V puts it where the pointer is.
 import { expect, test, type Page } from '../support/test.ts'
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { photo, upload } from '../support/assets.ts'
 import { editorPath, exportHashOf, screenPoint, writeOutput } from '../support/editor.ts'
 import { seed } from '../support/seed.ts'
@@ -44,7 +44,7 @@ const target = () => shell('Target', {
 /** SHA-256 of the export's pixels inside a rect of the 1080 wide square. */
 const regionHash = (page: Page, r: { x: number; y: number; width: number; height: number }) =>
   page.evaluate(async (r) => {
-    const pixels = window.razzlr?.exportPixels()
+    const pixels = window.dazbee?.exportPixels()
     if (!pixels) throw new Error('no editor')
     const rows: Uint8Array[] = []
     for (let y = r.y; y < r.y + r.height; y++) rows.push(pixels.slice((y * 1080 + r.x) * 4, (y * 1080 + r.x + r.width) * 4))
@@ -63,12 +63,12 @@ const CARD = { x: 60, y: 60, width: 580, height: 480 }
 async function goTo(page: Page, designId: string) {
   await page.goto(editorPath(designId))
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
-  await page.evaluate(() => window.razzlr?.setCamera({ x: 100, y: 60, zoom: 0.8 }))
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.setCamera({ x: 100, y: 60, zoom: 0.8 }))
+  await page.evaluate(() => window.dazbee?.drawn())
 }
 const keys = async (page: Page, key: string) => {
   await page.keyboard.press(key)
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
 }
 const layersUnder = async (page: Page, parentId: string) => Object.entries((await read(page)).nodes).filter(([, n]) => n.parentId === parentId).map(([id]) => id)
 

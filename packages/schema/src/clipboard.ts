@@ -39,11 +39,11 @@ export const LayerTree = z.object({
 export type LayerTree = z.infer<typeof LayerTree>
 
 /** The clipboard's custom type: layers copied in the editor, pasted into the same design or another. */
-export const LAYER_CLIPBOARD_TYPE = 'application/x-razzlr-layers'
+export const LAYER_CLIPBOARD_TYPE = 'application/x-dazbee-layers'
 
 /** What a copy puts on the clipboard: layers, in this schema version, from a client's design. */
 export const LayerClipboard = z.object({
-  kind: z.literal('razzlr.layers'),
+  kind: z.literal('dazbee.layers'),
   schemaVersion: z.literal(SCHEMA_VERSION),
   /** The design they were copied from. */
   designId: z.string(),

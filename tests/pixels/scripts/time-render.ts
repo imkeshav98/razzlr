@@ -1,7 +1,7 @@
 // Times the Node CPU render of one fixture page: `node scripts/time-render.ts [fixture] [page] [format] [runs]`.
 // Prints each run and the median; the first run includes warming up CanvasKit's code paths.
-import { renderDesign } from '@razzlr/renderer'
-import { loadCanvasKit } from '@razzlr/renderer/node'
+import { renderDesign } from '@dazbee/renderer'
+import { loadCanvasKit } from '@dazbee/renderer/node'
 import { loadFixtures } from '../src/fixtures.ts'
 import { fixtureResources } from '../src/pixels.ts'
 

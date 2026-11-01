@@ -9,7 +9,7 @@ import {
   ArrowsHorizontalIcon, ArrowsVerticalIcon, ArrowUpIcon, CircleHalfIcon, CopyIcon, ExcludeSquareIcon, IntersectSquareIcon, SelectionPlusIcon, SelectionSlashIcon,
   SubtractSquareIcon, UniteSquareIcon, type Icon,
 } from '@phosphor-icons/react'
-import { SHORTCUTS, type Editor, type ShortcutAction } from '@razzlr/editor'
+import { SHORTCUTS, type Editor, type ShortcutAction } from '@dazbee/editor'
 import { useEffect, useState } from 'react'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'

@@ -8,9 +8,9 @@ import {
   CaretRightIcon, CircleIcon, EyeIcon, EyeSlashIcon, FolderSimpleIcon, FrameCornersIcon, ImageIcon, LockSimpleIcon,
   LockSimpleOpenIcon, PenNibIcon, SquareIcon, TextTIcon, UniteIcon, type Icon,
 } from '@phosphor-icons/react'
-import { childrenOf } from '@razzlr/doc'
-import type { Editor } from '@razzlr/editor'
-import { canHold, LOCK_FLAGS, type Design } from '@razzlr/schema'
+import { childrenOf } from '@dazbee/doc'
+import type { Editor } from '@dazbee/editor'
+import { canHold, LOCK_FLAGS, type Design } from '@dazbee/schema'
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useLocale, useMessages } from '../../lib/i18n/client.tsx'
@@ -24,7 +24,7 @@ export const LAYER_ROW = 36
 /** Rows rendered beyond each edge of the view, so a fast scroll never shows a gap. */
 const OVERSCAN = 8
 const INDENT = 16
-const DRAG_TYPE = 'application/x-razzlr-layer'
+const DRAG_TYPE = 'application/x-dazbee-layer'
 
 type Layer = Design['nodes'][string]
 interface Row { id: string; node: Layer; depth: number; parentId: string; hasChildren: boolean; position: number; siblings: number }

@@ -68,12 +68,12 @@ test('the editor has no top bar: two islands float over the canvas and the ads f
 
   // The ads fit below the islands and above the dock: as the editor opens, and from Zoom to fit.
   const below = async () => {
-    await page.evaluate(() => window.razzlr?.drawn())
+    await page.evaluate(() => window.dazbee?.drawn())
     expect((await screenPoint(page, 0, 0)).y).toBeGreaterThan(Math.max(start.y + start.height, end.y + end.height))
     expect((await screenPoint(page, 1080, 1080)).y).toBeLessThan((await box(page, 'stage')).height - 60)
   }
   await below()
-  await page.evaluate(() => window.razzlr?.setCamera({ x: 0, y: 0, zoom: 1 }))
+  await page.evaluate(() => window.dazbee?.setCamera({ x: 0, y: 0, zoom: 1 }))
   await page.getByRole('button', { name: 'Zoom to fit' }).click()
   await below()
   await writeOutput('islands-editor-dark.png', await page.screenshot())

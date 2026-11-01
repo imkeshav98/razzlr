@@ -3,8 +3,8 @@
 // Save as template (#54): the design as the editor holds it now, named, for every brand of the
 // workspace or this brand alone. The template keeps its own copy; editing this design later
 // leaves it as it was.
-import type { Editor } from '@razzlr/editor'
-import { ApiError, TemplateSummary, type TemplateScope } from '@razzlr/schema'
+import type { Editor } from '@dazbee/editor'
+import { ApiError, TemplateSummary, type TemplateScope } from '@dazbee/schema'
 import Link from 'next/link'
 import { useState } from 'react'
 import { cn } from '../../lib/cn.ts'

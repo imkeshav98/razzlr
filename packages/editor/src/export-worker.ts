@@ -1,14 +1,14 @@
 // The export worker (#55): draws exports on the CPU surface off the main thread, so the editor
 // stays responsive while it makes every format. It has its own CanvasKit and keeps the fonts and
 // images it was sent between exports, so each is decoded once.
-import { exportDesign, type ExportedFile } from '@razzlr/export'
-import { resourceCache, type ResourceBytes } from '@razzlr/renderer'
-import canvasKitModule from '@razzlr/canvaskit'
-import { WASM_FILE } from '@razzlr/canvaskit/wasm'
+import { exportDesign, type ExportedFile } from '@dazbee/export'
+import { resourceCache, type ResourceBytes } from '@dazbee/renderer'
+import canvasKitModule from '@dazbee/canvaskit'
+import { WASM_FILE } from '@dazbee/canvaskit/wasm'
 import type { ExportReply, ExportJob } from './export-client.ts'
 
 // CommonJS whose types claim an ES default export; the bundler hands over the init function itself.
-const CanvasKitInit = canvasKitModule as unknown as typeof import('@razzlr/canvaskit').default
+const CanvasKitInit = canvasKitModule as unknown as typeof import('@dazbee/canvaskit').default
 
 /** What this file uses of a dedicated worker's global scope, which the DOM types don't describe. */
 const scope = self as unknown as {

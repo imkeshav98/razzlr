@@ -1,4 +1,4 @@
-import { parseDesign } from '@razzlr/schema'
+import { parseDesign } from '@dazbee/schema'
 import { describe, expect, it } from 'vitest'
 import { fit, toScreen, toWorld, visibleRect, zoomAt } from './camera.ts'
 import { COLUMN_GAP, frameAt, frameGrid, intersects, ROW_GAP } from './grid.ts'

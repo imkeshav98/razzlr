@@ -5,7 +5,7 @@
 import { useSyncExternalStore } from 'react'
 import { homePanelHref, panelOf, type HomePanel } from './home-panel.ts'
 
-const CHANGED = 'razzlr:home-panel'
+const CHANGED = 'dazbee:home-panel'
 
 /** Opens a panel, or closes it with null, as a new history entry on the same page. */
 export function showHomePanel(home: string, panel: HomePanel | null) {

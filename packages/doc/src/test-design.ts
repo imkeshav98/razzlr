@@ -1,4 +1,4 @@
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 
 /** A small design for tests: one page, a square and a banner, a box and a headline. */
 export const testDesign = (): DesignInput => ({

@@ -1,4 +1,4 @@
-import { migrateDesign, SCHEMA_VERSION } from '@razzlr/schema'
+import { migrateDesign, SCHEMA_VERSION } from '@dazbee/schema'
 import * as Y from 'yjs'
 import { nodeToJson, overrideKey, root, splitOverrideKey, type DesignDoc } from './design-doc.ts'
 

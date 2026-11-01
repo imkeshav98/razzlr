@@ -1,4 +1,4 @@
-import type { Design } from '@razzlr/schema'
+import type { Design } from '@dazbee/schema'
 import { z } from 'zod'
 import * as Y from 'yjs'
 import { CommandError } from './command.ts'

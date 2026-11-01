@@ -1,11 +1,11 @@
 // The paragraph-level text styles (#47) laid out with the real fonts: lists keep their lines clear
 // of the markers, paragraph spacing goes between paragraphs, maxLines cuts with an ellipsis, shrink
 // to fit picks the largest size that fits, case keeps offsets, and editing still finds every offset.
-import { FALLBACK_FAMILIES } from '@razzlr/fonts'
-import { loadFontFiles } from '@razzlr/fonts/node'
-import { caretAt, caretPosition, layoutText, makeResources, selectionBoxes } from '@razzlr/renderer'
-import { loadCanvasKit } from '@razzlr/renderer/node'
-import { TextProps } from '@razzlr/schema'
+import { FALLBACK_FAMILIES } from '@dazbee/fonts'
+import { loadFontFiles } from '@dazbee/fonts/node'
+import { caretAt, caretPosition, layoutText, makeResources, selectionBoxes } from '@dazbee/renderer'
+import { loadCanvasKit } from '@dazbee/renderer/node'
+import { TextProps } from '@dazbee/schema'
 import { afterAll, describe, expect, it } from 'vitest'
 
 const ck = await loadCanvasKit()

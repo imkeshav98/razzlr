@@ -1,6 +1,6 @@
 // Message catalogs and the person's locale. The locale comes from the `locale` cookie; Arabic
 // turns the whole UI right to left (CSS is written with logical properties only).
-import type { WorkspaceKind } from '@razzlr/schema'
+import type { WorkspaceKind } from '@dazbee/schema'
 import { ar } from './ar.ts'
 import { en, type Messages } from './en.ts'
 

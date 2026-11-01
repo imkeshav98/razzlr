@@ -1,4 +1,4 @@
-import { canHold, formatIdOf, parseDesignIncrementally, parseLayer, parseOverrideValues, SCHEMA_VERSION, type Design, type Layer } from '@razzlr/schema'
+import { canHold, formatIdOf, parseDesignIncrementally, parseLayer, parseOverrideValues, SCHEMA_VERSION, type Design, type Layer } from '@dazbee/schema'
 import type * as Y from 'yjs'
 import { buildChildIndex, registerChildIndex, siblingOrder } from './children.ts'
 import { DELETED, nodeToJson, readDesign, root, splitOverrideKey, type DesignDoc } from './design-doc.ts'

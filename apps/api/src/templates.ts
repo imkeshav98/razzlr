@@ -3,10 +3,10 @@
 // new design of the brand with fresh ids; where the brand isn't the one the template was saved
 // from, the images it names become assets of the brand too, so nothing crosses the brand wall.
 import { randomUUID } from 'node:crypto'
-import { assets, templates, type Db } from '@razzlr/db'
-import { withFreshIds } from '@razzlr/doc'
-import { imageAssetIds, parseDesign, type Design, type DesignSummary, type TemplateScope, type TemplateSummary } from '@razzlr/schema'
-import type { Storage } from '@razzlr/storage'
+import { assets, templates, type Db } from '@dazbee/db'
+import { withFreshIds } from '@dazbee/doc'
+import { imageAssetIds, parseDesign, type Design, type DesignSummary, type TemplateScope, type TemplateSummary } from '@dazbee/schema'
+import type { Storage } from '@dazbee/storage'
 import { and, desc, eq, isNull, or } from 'drizzle-orm'
 import { findAsset } from './assets.ts'
 import { createDesign, InvalidContent } from './designs.ts'

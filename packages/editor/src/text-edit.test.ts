@@ -1,5 +1,5 @@
 // Ranges and style keys inside text (#47), on English, Hindi and Arabic.
-import { TextProps } from '@razzlr/schema'
+import { TextProps } from '@dazbee/schema'
 import { describe, expect, it } from 'vitest'
 import { paragraphAt, step, toggled, wordAt } from './text-edit.ts'
 

@@ -1,7 +1,7 @@
 // Preset shapes and live booleans (#44), with real pointer and keyboard input: draw every shape from
 // the dock, its menu and its keys, Shift-draw a square, combine two shapes from the inspector and by
 // shortcut, then enter the boolean, drag one shape inside it and see the boolean follow.
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { expect, test, type Page } from '../support/test.ts'
 import { exportHashOf, screenPoint, writeOutput } from '../support/editor.ts'
 import { liveDesign } from '../support/seed.ts'
@@ -21,7 +21,7 @@ const box = (d: Design, id: string): Placed => {
 }
 const kids = (d: Design, id: string) => Object.entries(d.nodes).filter(([, n]) => n.parentId === id)
   .sort(([, a], [, b]) => (a.index < b.index ? -1 : 1)).map(([child]) => child)
-const toolOf = (page: Page) => page.evaluate(() => window.razzlr?.tool())
+const toolOf = (page: Page) => page.evaluate(() => window.dazbee?.tool())
 const pressed = (page: Page, tool: string) => expect(page.locator(`[role="toolbar"] [data-tool="${tool}"]`)).toHaveAttribute('aria-pressed', 'true')
 
 /** Draws with a real drag and returns the one layer it made, which is selected, with the tool back at select. */
@@ -102,11 +102,11 @@ test('every shape draws with real input: the dock, its menu, its keys, and Shift
 
   // The stage shows them all, the export draws them, and each drawing is one undo step.
   await page.keyboard.press('Escape')
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   await pressed(page, 'select')
   writeOutput('shapes-1-drawn.png', await page.screenshot({ animations: 'disabled' }))
   const all = await exportHashOf(page)
-  await page.evaluate(() => window.razzlr?.session.undo())
+  await page.evaluate(() => window.dazbee?.session.undo())
   expect((await read(page)).nodes[clicked]).toBeUndefined()
   expect(await exportHashOf(page)).not.toBe(all)
   expect(errors).toEqual([])
@@ -124,7 +124,7 @@ test('two shapes combine into a live boolean that follows a shape dragged inside
   await click(page, 120, 840)
   await click(page, 300, 960, ['Shift'])
   await page.locator('[data-action="booleanSubtract"]').click()
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   let d = await read(page)
   const [cut = ''] = await selection(page)
   expect(d.nodes[cut]).toMatchObject({ type: 'boolean', parentId: 'p1', props: { op: 'subtract', fills: back.node.props.fills } })
@@ -135,7 +135,7 @@ test('two shapes combine into a live boolean that follows a shape dragged inside
   writeOutput('shapes-2-subtract.png', await page.screenshot({ animations: 'disabled' }))
 
   // Undo takes it back in one step; the shortcut makes a union instead.
-  await page.evaluate(() => window.razzlr?.session.undo())
+  await page.evaluate(() => window.dazbee?.session.undo())
   expect((await read(page)).nodes[cut]).toBeUndefined()
   expect(await exportHashOf(page)).toBe(shapes)
   await click(page, 120, 840)
@@ -150,7 +150,7 @@ test('two shapes combine into a live boolean that follows a shape dragged inside
   // Double-click enters the boolean on the ellipse; dragging it out to the right refits the boolean.
   const at = await screenPoint(page, 290, 950)
   await page.mouse.dblclick(at.x, at.y)
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   expect(await selection(page)).toEqual([front.id])
   await page.keyboard.down('Control') // no snapping, so the drag measures exactly
   await drag(page, { x: 290, y: 950 }, { x: 390, y: 950 })

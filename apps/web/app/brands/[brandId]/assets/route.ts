@@ -1,6 +1,6 @@
 // The brand's asset library (#52): its images, found by name and tag, and image uploads. An upload
 // passes through here to the API and storage, so the browser needs no storage address or credentials.
-import { MAX_UPLOAD_BYTES, type ImageType } from '@razzlr/schema'
+import { MAX_UPLOAD_BYTES, type ImageType } from '@dazbee/schema'
 import { ApiFailure, listAssets, uploadAsset } from '../../../../lib/api.ts'
 
 export async function GET(request: Request, { params }: { params: Promise<{ brandId: string }> }) {

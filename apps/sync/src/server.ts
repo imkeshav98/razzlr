@@ -3,9 +3,9 @@
 // last connection leaves, deleted layers are compacted away before the design is stored (#57).
 import { Database } from '@hocuspocus/extension-database'
 import { Server } from '@hocuspocus/server'
-import { readDesignState, writeDesignState, type Db } from '@razzlr/db'
-import { compact } from '@razzlr/doc'
-import { verifySyncToken } from '@razzlr/sync-token'
+import { readDesignState, writeDesignState, type Db } from '@dazbee/db'
+import { compact } from '@dazbee/doc'
+import { verifySyncToken } from '@dazbee/sync-token'
 
 export function createSyncServer({ db, secret, port, onDestroy }: { db: Db; secret: string; port: number; onDestroy?: () => Promise<void> }) {
   return new Server({

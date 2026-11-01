@@ -5,7 +5,7 @@
 import { crc32, deflateSync } from 'node:zlib'
 import { randomUUID } from 'node:crypto'
 import { expect, test, type Page } from '../support/test.ts'
-import { AssetSummary, type DesignInput } from '@razzlr/schema'
+import { AssetSummary, type DesignInput } from '@dazbee/schema'
 import { screenPoint, writeOutput } from '../support/editor.ts'
 import { API_URL, DEV_BRAND } from '../support/seed.ts'
 import { openStage, read } from '../support/stage.ts'
@@ -130,11 +130,11 @@ test('uploads two images with progress, tags one, finds it by its tag and drags 
   const [placed] = await images(page)
   // Half the square wide at most, the photo's shape kept, centred where it was dropped.
   expect(placed).toMatchObject({ assetId: beachId, width: 540, height: 360, x: 490, y: 180 })
-  expect(await page.evaluate(() => window.razzlr?.selection())).toEqual([placed?.id])
+  expect(await page.evaluate(() => window.dazbee?.selection())).toEqual([placed?.id])
   // Its bytes arrive and it is drawn: the middle of the image is the photo, not the white page.
   // The export waits for the bytes, so it draws the photo, not the white page.
   const middle = await page.evaluate(async () => {
-    const file = await window.razzlr?.exportFiles({ pageIds: ['p1'], formatIds: ['sq'], type: 'png' })
+    const file = await window.dazbee?.exportFiles({ pageIds: ['p1'], formatIds: ['sq'], type: 'png' })
     const bitmap = await createImageBitmap(new Blob([new Uint8Array(file?.bytes ?? [])], { type: 'image/png' }))
     const canvas = new OffscreenCanvas(bitmap.width, bitmap.height)
     const context = canvas.getContext('2d')
@@ -144,16 +144,16 @@ test('uploads two images with progress, tags one, finds it by its tag and drags 
   expect(middle.slice(0, 3)).not.toEqual([255, 255, 255])
   await expect.poll(async () => page.evaluate(() => {
     try {
-      return window.razzlr?.exportPixels().length ?? 0
+      return window.dazbee?.exportPixels().length ?? 0
     } catch {
       return 0
     }
   }), { timeout: 15_000 }).toBeGreaterThan(0)
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('assets-3-dropped.png', await page.screenshot())
 
   // One undo step takes it away again.
-  await page.evaluate(() => window.razzlr?.perform('undo'))
+  await page.evaluate(() => window.dazbee?.perform('undo'))
   await expect.poll(async () => (await images(page)).length).toBe(0)
 
   // Without a drag: a click places the mountain in the middle of the square.

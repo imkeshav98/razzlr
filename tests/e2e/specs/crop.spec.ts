@@ -3,11 +3,11 @@
 // cropped export matches Node's pixel for pixel; and two layers made a mask in one key press.
 import { createHash } from 'node:crypto'
 import { expect, test, type Page } from '../support/test.ts'
-import { FALLBACK_FAMILIES } from '@razzlr/fonts'
-import { loadFontFiles } from '@razzlr/fonts/node'
-import { renderDesign } from '@razzlr/renderer'
-import { loadCanvasKit } from '@razzlr/renderer/node'
-import type { DesignInput } from '@razzlr/schema'
+import { FALLBACK_FAMILIES } from '@dazbee/fonts'
+import { loadFontFiles } from '@dazbee/fonts/node'
+import { renderDesign } from '@dazbee/renderer'
+import { loadCanvasKit } from '@dazbee/renderer/node'
+import type { DesignInput } from '@dazbee/schema'
 import { photo, upload } from '../support/assets.ts'
 import { designOf, exportHashOf, screenPoint, writeOutput } from '../support/editor.ts'
 import { click, drag, dragScreen, openStage, press, read, selection } from '../support/stage.ts'
@@ -58,7 +58,7 @@ test('Enter crops a photo: a drag moves it, a corner scales it, each one undo st
   await expect(page.locator('.crop-image')).toBeVisible()
   // The whole image sits 180 out past each side: 960 × 600 at half size.
   const whole = await page.locator('.crop-image').boundingBox()
-  const zoom = await page.evaluate(() => window.razzlr?.camera().zoom ?? 1)
+  const zoom = await page.evaluate(() => window.dazbee?.camera().zoom ?? 1)
   expect((whole?.width ?? 0) / zoom).toBeCloseTo(960, 0)
   expect((whole?.height ?? 0) / zoom).toBeCloseTo(600, 0)
   writeOutput('crop-0-entered.png', await page.screenshot({ animations: 'disabled' }))
@@ -93,7 +93,7 @@ test('Enter crops a photo: a drag moves it, a corner scales it, each one undo st
 
   // Escape ends the crop; the layer stays selected.
   await page.keyboard.press('Escape')
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   await expect(page.locator('.crop-image')).toHaveCount(0)
   expect(await selection(page)).toEqual(['photo'])
   writeOutput('crop-3-done.png', await page.screenshot({ animations: 'disabled' }))
@@ -113,7 +113,7 @@ test('a double click crops too, and a click outside the image ends it', async ({
   const { page, errors } = await openStage(browser, design(asset.id))
   const at = await screenPoint(page, 400, 400)
   await page.mouse.dblclick(at.x, at.y)
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   await expect(page.locator('.crop-image')).toBeVisible()
   await click(page, 400, 900)
   await expect(page.locator('.crop-image')).toHaveCount(0)

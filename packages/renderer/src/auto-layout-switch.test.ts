@@ -1,7 +1,7 @@
 // Switching a frame to auto layout at the commands seam (#46): node.autoLayout reads the settings
 // off where the children are, so every child is where it was, in every format, once laid out.
-import { loadDesign, openSession, readDesign } from '@razzlr/doc'
-import { parseDesign, type DesignInput } from '@razzlr/schema'
+import { loadDesign, openSession, readDesign } from '@dazbee/doc'
+import { parseDesign, type DesignInput } from '@dazbee/schema'
 import { describe, expect, it } from 'vitest'
 import type { MeasureText } from './layout.ts'
 import { render, type SceneLayer } from './scene.ts'

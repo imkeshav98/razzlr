@@ -1,4 +1,4 @@
-import { canHold } from '@razzlr/schema'
+import { canHold } from '@dazbee/schema'
 
 type Json = Record<string, unknown>
 type NodeJson = { parentId: string } & Json

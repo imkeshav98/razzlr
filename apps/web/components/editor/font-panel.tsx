@@ -5,9 +5,9 @@
 // drawn in it, so the browser never decodes a design font; its files load in the editor only once a
 // layer uses it. A brand can upload a TrueType or OpenType file from the same list.
 import { CaretDownIcon, MagnifyingGlassIcon, UploadSimpleIcon } from '@phosphor-icons/react'
-import type { Editor } from '@razzlr/editor'
-import { FONT_FACES } from '@razzlr/fonts'
-import { FontFace, FontFamily, type Design } from '@razzlr/schema'
+import type { Editor } from '@dazbee/editor'
+import { FONT_FACES } from '@dazbee/fonts'
+import { FontFace, FontFamily, type Design } from '@dazbee/schema'
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'

@@ -1,6 +1,6 @@
 // The brand's font catalog for the editor, and font uploads (#50). An upload passes through here to
 // the API and storage, so the browser needs no storage address or credentials.
-import { MAX_FONT_BYTES, type FontType } from '@razzlr/schema'
+import { MAX_FONT_BYTES, type FontType } from '@dazbee/schema'
 import { ApiFailure, listFonts, uploadFont } from '../../../../lib/api.ts'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ brandId: string }> }) {

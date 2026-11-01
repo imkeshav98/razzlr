@@ -3,7 +3,7 @@
 // The round avatar at the top end, as in the final mock. Language, theme, settings and signing out
 // live behind it, so the top bar keeps to the work and one action.
 import { GearSixIcon, SignOutIcon } from '@phosphor-icons/react'
-import type { WorkspaceKind } from '@razzlr/schema'
+import type { WorkspaceKind } from '@dazbee/schema'
 import Link from 'next/link'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useMessages } from '../lib/i18n/client.tsx'

@@ -1,4 +1,4 @@
-import { DesignSummary, type DesignInput } from '@razzlr/schema'
+import { DesignSummary, type DesignInput } from '@dazbee/schema'
 
 export const API_URL = process.env.API_URL ?? 'http://localhost:8787'
 /** A brand of the development workspace the API seeds (apps/api/src/session.ts). */

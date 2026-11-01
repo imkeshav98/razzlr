@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect } from '@playwright/test'
-import { AssetSummary, UploadTicket } from '@razzlr/schema'
+import { AssetSummary, UploadTicket } from '@dazbee/schema'
 import { API_URL, DEV_BRAND } from './seed.ts'
 
 /** A stand-in photo from the pixel fixtures, 1920 × 1200. */

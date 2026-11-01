@@ -2,9 +2,9 @@
 // the same bytes gets its own asset, so a brand never sees another brand's assets. Each brand names
 // and tags its own, and finds them by those (#52).
 import { createHash, randomUUID } from 'node:crypto'
-import { assets, type Db } from '@razzlr/db'
-import type { AssetSummary, ImageType, UpdateAsset, UploadTicket } from '@razzlr/schema'
-import type { Storage } from '@razzlr/storage'
+import { assets, type Db } from '@dazbee/db'
+import type { AssetSummary, ImageType, UpdateAsset, UploadTicket } from '@dazbee/schema'
+import type { Storage } from '@dazbee/storage'
 import { and, desc, eq, sql, type SQL } from 'drizzle-orm'
 import { readImageHeader } from './images.ts'
 import { makeThumbnail } from './thumbnails.ts'
