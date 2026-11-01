@@ -4,19 +4,12 @@
 import Link from 'next/link'
 import { shapeOf, type DesignSummary } from '@razzlr/schema'
 import { cn } from '../lib/cn.ts'
+import { tileOf } from '../lib/tile.ts'
 import { format, type Messages } from '../lib/i18n/index.ts'
 
 export interface BentoDesign extends DesignSummary {
   /** The primary format's size, when the design has a picture. */
   cover: { width: number; height: number } | null
-}
-
-/** A calm two-colour tile while a design has no picture, steady for each id. */
-function tileOf(id: string) {
-  let hash = 0
-  for (const c of id) hash = (hash * 31 + c.charCodeAt(0)) >>> 0
-  const hue = hash % 360
-  return `linear-gradient(135deg, oklch(0.62 0.15 ${hue}), oklch(0.45 0.12 ${(hue + 40) % 360}))`
 }
 
 export type BentoSpan = 'large' | 'tall' | 'wide' | 'one'

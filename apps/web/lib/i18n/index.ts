@@ -18,8 +18,8 @@ export const dirOf = (locale: Locale): 'ltr' | 'rtl' => (locale === 'ar' ? 'rtl'
 export function brandWords(t: Messages, kind: WorkspaceKind) {
   const l = t.library
   return kind === 'agency'
-    ? { title: l.clients, lead: l.clientsLead, none: l.noClients, all: l.allClients }
-    : { title: l.brands, lead: l.brandsLead, none: l.noBrands, all: l.allBrands }
+    ? { title: l.clients, lead: l.clientsLead, all: l.allClients, add: l.newClient, name: l.clientName }
+    : { title: l.brands, lead: l.brandsLead, all: l.allBrands, add: l.newBrand, name: l.brandName }
 }
 export type BrandWords = ReturnType<typeof brandWords>
 
