@@ -59,7 +59,7 @@ test('the panel and the stage select together; drag into a group, rename, lock a
   await row(page, 'Dot').click()
   expect(await page.evaluate(() => window.razzlr?.selection())).toEqual(['dot'])
   await expect(row(page, 'Dot')).toHaveAttribute('aria-selected', 'true')
-  await click(page, 300, 200)
+  await click(page, 480, 380)
   await expect(row(page, 'Box')).toHaveAttribute('aria-selected', 'true')
   await expect(row(page, 'Dot')).toHaveAttribute('aria-selected', 'false')
   // A layer inside a group selected on the stage opens its group in the panel.
