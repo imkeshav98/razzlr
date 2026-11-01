@@ -249,6 +249,42 @@ body {
 }
 
 /* Frosted surfaces (#81) for chrome that floats over the canvas: dock, zoom, flyouts, menus. */
+/* On phones the property cards are one frosted sheet with a grab handle (#125): the cards inside
+   drop their own surface and are parted by hairlines. */
+@media (max-width: 639px) {
+  .editor-cards {
+    border: 1px solid var(--glass-line);
+    border-radius: 22px;
+    background-color: var(--glass);
+    background-image: var(--grain);
+    backdrop-filter: blur(18px) saturate(1.4);
+    box-shadow: var(--shadow);
+  }
+  .editor-cards::before {
+    content: '';
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    flex-shrink: 0;
+    align-self: center;
+    width: 40px;
+    height: 4px;
+    margin-block: 8px 2px;
+    border-radius: 9px;
+    background: var(--line-strong);
+  }
+  .editor-cards > * {
+    border-width: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+  .editor-cards > * + * {
+    border-top: 1px solid var(--line);
+  }
+}
+
 .surface-frost {
   background-color: var(--glass);
   background-image: var(--grain);
