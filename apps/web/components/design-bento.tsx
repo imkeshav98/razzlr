@@ -19,15 +19,29 @@ function tileOf(id: string) {
   return `linear-gradient(135deg, oklch(0.62 0.15 ${hue}), oklch(0.45 0.12 ${(hue + 40) % 360}))`
 }
 
+export type BentoSpan = 'large' | 'tall' | 'wide' | 'one'
+
 /** How many columns and rows a tile spans: the first is large, tall formats tall, wide ones wide. */
-export function spanOf(design: BentoDesign, index: number): 'large' | 'tall' | 'wide' | 'one' {
+export function spanOf(design: BentoDesign, index: number): BentoSpan {
+  return spanOfSize(design.cover, index)
+}
+
+/** The same for anything with a size, such as a template. */
+export function spanOfSize(size: { width: number; height: number } | null, index: number): BentoSpan {
   if (index === 0) return 'large'
-  if (!design.cover) return 'one'
-  const shape = shapeOf(design.cover.width, design.cover.height)
+  if (!size) return 'one'
+  const shape = shapeOf(size.width, size.height)
   return shape === 'tall' ? 'tall' : shape === 'wide' ? 'wide' : 'one'
 }
 
-const SPAN = { large: 'col-span-2 row-span-2', tall: 'row-span-2', wide: 'col-span-2', one: '' }
+export const SPAN: Record<BentoSpan, string> = { large: 'col-span-2 row-span-2', tall: 'row-span-2', wide: 'col-span-2', one: '' }
+
+/** The bento's grid: rows as tall as a column is wide, 2, 4 or 6 columns by the container's width. */
+export const BENTO_GRID = 'grid grid-flow-dense auto-rows-[calc((100cqw-0.75rem)/2)] grid-cols-2 gap-3 md:auto-rows-[calc((100cqw-2.25rem)/4)] md:grid-cols-4 xl:auto-rows-[calc((100cqw-3.75rem)/6)] xl:grid-cols-6'
+
+/** A bento tile's frame, and the short shade at its foot that holds the name. */
+export const TILE = 'lift group relative block size-full overflow-hidden rounded-[16px] bg-raised shadow-panel focus-visible:outline-offset-4'
+export const TILE_SHADE = 'absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-3 pt-6 pb-2 text-start text-white'
 
 export function DesignBento({ t, locale, brandId, designs, eager = true }: {
   t: Messages
@@ -42,7 +56,7 @@ export function DesignBento({ t, locale, brandId, designs, eager = true }: {
     // Rows as tall as a column is wide, so a single tile is square, the big one too, a story tile
     // is 1:2 and a banner 2:1: each picture fills its tile with little cut away.
     <div className="@container">
-    <ul aria-label={t.home.recent} className="grid grid-flow-dense auto-rows-[calc((100cqw-0.75rem)/2)] grid-cols-2 gap-3 md:auto-rows-[calc((100cqw-2.25rem)/4)] md:grid-cols-4 xl:auto-rows-[calc((100cqw-3.75rem)/6)] xl:grid-cols-6">
+    <ul aria-label={t.home.recent} className={BENTO_GRID}>
       {designs.map((design, i) => {
         const span = spanOf(design, i)
         return (
@@ -53,7 +67,7 @@ export function DesignBento({ t, locale, brandId, designs, eager = true }: {
               // In CI those prefetches also held up the router's next navigation (#84).
               prefetch={false}
               title={format(t.library.edited, { when: when.format(new Date(design.updatedAt)) })}
-              className="lift group relative block size-full overflow-hidden rounded-[16px] bg-raised shadow-panel focus-visible:outline-offset-4"
+              className={TILE}
             >
               {design.cover
                 ? (
@@ -73,7 +87,7 @@ export function DesignBento({ t, locale, brandId, designs, eager = true }: {
                   </span>
                 )}
               {/* Only the name, on a short shade, as in the final mock; when it changed is in the title. */}
-              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-3 pt-6 pb-2 text-white">
+              <span className={TILE_SHADE}>
                 <span className={cn('block truncate font-medium', span === 'large' ? 'text-sm' : 'text-[13px]')}>{design.name}</span>
               </span>
             </Link>

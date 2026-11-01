@@ -11,7 +11,7 @@ import { findTemplate, listTemplates, saveTemplate, startFromTemplate, templateT
 import { ensureThumbnail, findAsset, InvalidUpload, listAssets, originalKey, recordAsset, SIGNED_URL_SECONDS, startUpload, updateAsset } from './assets.ts'
 import { designCover, ensureDesignThumbnail } from './design-thumbnails.ts'
 import { fontLink, InvalidFont, listFonts, recordFont, startFontUpload } from './fonts.ts'
-import { createBrand, createDesign, findBrand, findDesign, findWorkspace, InvalidContent, listBrands, listDesigns, setWorkspaceKind } from './designs.ts'
+import { createBrand, createDesign, findBrand, findDesign, findWorkspace, InvalidContent, listBrands, listDesigns, updateWorkspace } from './designs.ts'
 import { bearerToken, readSessionToken, type Session, type SessionOf } from './session.ts'
 import { completeSignIn, type SignedInPerson, type SignInProvider } from './sign-in.ts'
 
@@ -88,10 +88,11 @@ export function createApp({ db, storage, sessionOf, syncSecret, signIn = null }:
   })
 
   // Onboarding asks who Dazbee is for; the answer only changes defaults and words (ADR-0011).
+  // Settings also renames the workspace.
   app.patch('/workspace', async (c) => {
     const input = await body(c.req.raw, UpdateWorkspace)
     if (input instanceof Response) return input
-    const workspace = await setWorkspaceKind(db, c.var.session.workspaceId, input.kind)
+    const workspace = await updateWorkspace(db, c.var.session.workspaceId, input)
     return workspace ? c.json(workspace) : c.json(error('No such workspace'), 404)
   })
 

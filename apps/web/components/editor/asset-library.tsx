@@ -109,6 +109,7 @@ export function AssetLibrary({ editor, brandId }: { editor: Editor; brandId: str
         <label className="flex h-9 items-center gap-2 rounded-[10px] border border-line bg-bg/40 px-2.5 focus-within:border-accent">
           <MagnifyingGlassIcon size={14} aria-hidden className="shrink-0 text-subtle" />
           <input
+            name="asset-search"
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -121,6 +122,7 @@ export function AssetLibrary({ editor, brandId }: { editor: Editor; brandId: str
           <UploadSimpleIcon size={14} aria-hidden />
           {dropping ? t.dropHere : t.upload}
           <input
+            name="images"
             type="file"
             accept={ACCEPT}
             multiple
@@ -201,7 +203,7 @@ export function AssetLibrary({ editor, brandId }: { editor: Editor; brandId: str
                       editing === asset.id && 'border-accent',
                     )}
                   >
-                    <img src={`${base(brandId)}/${encodeURIComponent(asset.id)}/thumbnail`} alt="" draggable={false} loading="lazy" className="size-full object-contain" />
+                    <img src={`${base(brandId)}/${encodeURIComponent(asset.id)}/thumbnail`} alt="" width={asset.width} height={asset.height} draggable={false} loading="lazy" className="size-full object-contain" />
                   </button>
                   {/* Name and tags open from the tile's corner, shown on hover or focus, and while open. */}
                   <button
@@ -257,6 +259,7 @@ function AssetDetails({ asset, brandId, onSaved, onDone }: { asset: AssetSummary
       <label className="flex flex-col gap-1">
         <span className="text-xs text-muted">{t.name}</span>
         <input
+          name="asset-name"
           ref={nameField}
           value={name}
           maxLength={120}
@@ -283,6 +286,7 @@ function AssetDetails({ asset, brandId, onSaved, onDone }: { asset: AssetSummary
           </ul>
         )}
         <input
+          name="asset-tag"
           value={tag}
           maxLength={40}
           onChange={(e) => setTag(e.target.value)}

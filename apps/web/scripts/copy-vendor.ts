@@ -8,5 +8,5 @@ import { FONT_FILES_DIR } from '@razzlr/fonts/node'
 
 const out = join(import.meta.dirname, '..', 'public', 'vendor')
 mkdirSync(join(out, 'fonts'), { recursive: true })
-copyFileSync(join(dirname(createRequire(import.meta.url).resolve('canvaskit-wasm/full')), 'canvaskit.wasm'), join(out, 'canvaskit.wasm'))
+copyFileSync(join(dirname(createRequire(import.meta.url).resolve('@razzlr/canvaskit')), 'canvaskit.wasm'), join(out, 'canvaskit.wasm'))
 for (const face of FONT_FACES) copyFileSync(join(FONT_FILES_DIR, face.file), join(out, 'fonts', face.file))

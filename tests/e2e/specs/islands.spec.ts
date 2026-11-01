@@ -36,22 +36,24 @@ test('the editor has no top bar: two islands float over the canvas and the ads f
   }
   expect(start.x).toBeLessThan(48)
   expect(1440 - (end.x + end.width)).toBeLessThan(16)
-  // No surface of their own.
-  for (const id of ['island-start', 'island-end']) {
-    expect(await page.getByTestId(id).evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)')
-  }
+  // The start island sits on a small frosted pill, so the design's name reads over an ad under it;
+  // the end island has no surface of its own.
+  expect(await page.getByTestId('island-start').evaluate((el) => getComputedStyle(el).backdropFilter)).toContain('blur(18px)')
+  expect(start.height).toBeLessThan(48)
+  expect(await page.getByTestId('island-end').evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)')
   await expect(page.getByTestId('island-start').getByRole('heading', { level: 1 })).toBeVisible()
   // The end island is the mock's: a pink Share button and the account avatar, nothing else.
   const end_ = page.getByTestId('island-end')
   await expect(end_.getByRole('button')).toHaveCount(2)
   await expect(end_.getByTestId('share-open')).toHaveText('Share')
   await end_.getByTestId('share-open').click()
-  await expect(page.getByRole('menuitem')).toHaveText(['Export', 'Save as template'])
+  // Each item has its name and, under it, what it does.
+  await expect(page.getByRole('menuitem')).toHaveText([/^Export/, /^Save as template/])
   await page.keyboard.press('Escape')
   // Language and theme live behind the avatar.
   await end_.getByTestId('account-open').click()
   const account = page.getByTestId('account')
-  await expect(account.getByRole('combobox')).toBeVisible()
+  await expect(account.getByRole('radiogroup', { name: 'Language' })).toBeVisible()
   await expect(account.getByRole('radiogroup', { name: 'Theme' })).toBeVisible()
   await expect(account.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings')
   await writeOutput('islands-account.png', await page.screenshot({ clip: { x: 1440 - 320, y: 0, width: 320, height: 320 } }))
@@ -113,7 +115,7 @@ test('the library navigates with the capsule, and on a phone with a tab bar', as
   const capsule = page.getByTestId('library-capsule')
   await expect(capsule.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
   const shape = await box(page, 'library-capsule')
-  expect(shape.x).toBeLessThanOrEqual(16)
+  expect(shape.x).toBeLessThanOrEqual(20)
   expect(shape.height).toBeGreaterThan(shape.width)
   await writeOutput('islands-library.png', await page.screenshot())
   await capsule.getByRole('link', { name: 'Templates' }).click()

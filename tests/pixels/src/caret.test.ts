@@ -3,7 +3,7 @@ import { loadFontFiles } from '@razzlr/fonts/node'
 import { caretAt, caretPosition, layoutText, makeResources, selectionBoxes, type TextLayout } from '@razzlr/renderer'
 import { loadCanvasKit } from '@razzlr/renderer/node'
 import { TextProps } from '@razzlr/schema'
-import type { Paragraph } from 'canvaskit-wasm'
+import type { Paragraph } from '@razzlr/canvaskit'
 import { afterAll, describe, expect, it } from 'vitest'
 import { MIXED, SAMPLES, type TextSample } from './text-samples.ts'
 
