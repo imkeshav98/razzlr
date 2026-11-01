@@ -76,4 +76,18 @@ describe('camera', () => {
     expect((topLeft.x + bottomRight.x) / 2).toBeCloseTo(76 + (1440 - 76 - 320) / 2)
     expect(fit(bounds, viewport, 48, { top: 0, right: 0, bottom: 0, left: 0 })).toEqual(fit(bounds, viewport, 48))
   })
+
+  it('on a phone fits the ads to its width and puts them at the top of the clear part', () => {
+    const { bounds } = frameGrid(design)
+    const viewport = { width: 390, height: 760 }
+    const insets = { top: 64, right: 0, bottom: 150, left: 0 }
+    const camera = fit(bounds, viewport, undefined, insets)
+    const topLeft = toScreen(camera, bounds)
+    const bottomRight = toScreen(camera, { x: bounds.x + bounds.width, y: bounds.y + bounds.height })
+    expect(topLeft.y).toBeCloseTo(64 + 32)
+    expect(topLeft.x).toBeGreaterThanOrEqual(16 - 1e-9)
+    expect(bottomRight.x).toBeLessThanOrEqual(390 - 16 + 1e-9)
+    expect(bottomRight.y).toBeLessThanOrEqual(760 - 150 - 16 + 1e-9)
+    expect((topLeft.x + bottomRight.x) / 2).toBeCloseTo(195)
+  })
 })

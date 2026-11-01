@@ -133,6 +133,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.4.1
         version: 1.4.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@razzlr/canvaskit':
+        specifier: workspace:*
+        version: link:../../packages/canvaskit
       '@razzlr/doc':
         specifier: workspace:*
         version: link:../../packages/doc
@@ -148,9 +151,6 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.3.3
         version: 4.3.3
-      canvaskit-wasm:
-        specifier: 0.42.0
-        version: 0.42.0
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -209,6 +209,12 @@ importers:
       vitest:
         specifier: ^3.2.7
         version: 3.2.7(@types/node@22.20.5)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.15)
+
+  packages/canvaskit:
+    dependencies:
+      '@webgpu/types':
+        specifier: 0.1.21
+        version: 0.1.21
 
   packages/config:
     dependencies:
@@ -302,6 +308,9 @@ importers:
       '@hocuspocus/provider':
         specifier: 4.8.0
         version: 4.8.0(y-protocols@1.0.7(yjs@13.6.33))(yjs@13.6.33)
+      '@razzlr/canvaskit':
+        specifier: workspace:*
+        version: link:../canvaskit
       '@razzlr/doc':
         specifier: workspace:*
         version: link:../doc
@@ -317,9 +326,6 @@ importers:
       '@razzlr/schema':
         specifier: workspace:*
         version: link:../schema
-      canvaskit-wasm:
-        specifier: 0.42.0
-        version: 0.42.0
       y-indexeddb:
         specifier: 9.0.12
         version: 9.0.12(yjs@13.6.33)
@@ -345,15 +351,15 @@ importers:
 
   packages/export:
     dependencies:
+      '@razzlr/canvaskit':
+        specifier: workspace:*
+        version: link:../canvaskit
       '@razzlr/renderer':
         specifier: workspace:*
         version: link:../renderer
       '@razzlr/schema':
         specifier: workspace:*
         version: link:../schema
-      canvaskit-wasm:
-        specifier: 0.42.0
-        version: 0.42.0
     devDependencies:
       '@razzlr/config':
         specifier: workspace:*
@@ -394,15 +400,15 @@ importers:
 
   packages/renderer:
     dependencies:
+      '@razzlr/canvaskit':
+        specifier: workspace:*
+        version: link:../canvaskit
       '@razzlr/doc':
         specifier: workspace:*
         version: link:../doc
       '@razzlr/schema':
         specifier: workspace:*
         version: link:../schema
-      canvaskit-wasm:
-        specifier: 0.42.0
-        version: 0.42.0
     devDependencies:
       '@razzlr/config':
         specifier: workspace:*
@@ -526,6 +532,9 @@ importers:
       '@playwright/test':
         specifier: 1.63.0
         version: 1.63.0
+      '@razzlr/canvaskit':
+        specifier: workspace:*
+        version: link:../../packages/canvaskit
       '@razzlr/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -547,9 +556,6 @@ importers:
       '@types/node':
         specifier: ^22.20.0
         version: 22.20.5
-      canvaskit-wasm:
-        specifier: 0.42.0
-        version: 0.42.0
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
@@ -2092,9 +2098,6 @@ packages:
 
   caniuse-lite@1.0.30001820:
     resolution: {integrity: sha512-gfWD6MxqVCqAOwmODfZf7DchWvlrA+SRdNX7ceLfg3xRqe5ssjjpF7EgslC/0tiLiNTajdaNN/q8c/5u/7Gz8w==}
-
-  canvaskit-wasm@0.42.0:
-    resolution: {integrity: sha512-N3ikotmzYwDVAcpQKDMptBT2P5pIEWS9ywdmrQA2awwaMF9cxKEFuxZZHv9ay1Em9kDjxDsPtwUzDm1uNj136g==}
 
   chai@5.3.3:
     resolution: {integrity: sha512-4zNhdJD/iOjSH0A05ea+Ke6MU5mmpQcbQsSOkgdaUMJ9zTlDTD/GYlwohmIE2u0gaxHYiVHEn1Fw9mZ/ktJWgw==}
@@ -4719,10 +4722,6 @@ snapshots:
   callsites@3.1.0: {}
 
   caniuse-lite@1.0.30001820: {}
-
-  canvaskit-wasm@0.42.0:
-    dependencies:
-      '@webgpu/types': 0.1.21
 
   chai@5.3.3:
     dependencies:
