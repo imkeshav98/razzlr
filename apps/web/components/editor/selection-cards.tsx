@@ -157,6 +157,7 @@ function ColorField({ name, value, onSet }: { name: string; value: string | 'mix
   return (
     <div className="flex min-w-0 flex-1 items-center gap-1">
       <input
+        name="colour"
         type="color"
         aria-label={format(p.colourOf, { name })}
         value={hex || '#000000'}
@@ -164,6 +165,7 @@ function ColorField({ name, value, onSet }: { name: string; value: string | 'mix
         className="size-7 shrink-0 cursor-pointer rounded-row border border-line bg-surface p-0.5"
       />
       <input
+        name="colour-hex"
         aria-label={format(p.hexOf, { name })}
         value={draft ?? hex}
         placeholder={value === 'mixed' ? p.mixed : ''}
@@ -177,6 +179,7 @@ function ColorField({ name, value, onSet }: { name: string; value: string | 'mix
         className={cn(FIELD, 'uppercase')}
       />
       <input
+        name="colour-opacity"
         aria-label={format(p.alpha, { name })}
         inputMode="numeric"
         key={alpha ?? 'mixed'}
@@ -199,7 +202,7 @@ function ColorField({ name, value, onSet }: { name: string; value: string | 'mix
 function Choice<T extends string>({ name, value, options, labels, onSet }: { name: string; value: T | 'mixed' | undefined; options: readonly T[]; labels: Record<T, string>; onSet: (value: T) => void }) {
   const t = useMessages()
   return (
-    <select aria-label={name} value={value ?? ''} onChange={(event) => onSet(event.target.value as T)} className={SELECT}>
+    <select name="choice" aria-label={name} value={value ?? ''} onChange={(event) => onSet(event.target.value as T)} className={SELECT}>
       {(value === 'mixed' || value === undefined) && <option value="mixed" disabled>{t.editor.props.mixed}</option>}
       {options.map((option) => <option key={option} value={option}>{labels[option]}</option>)}
     </select>
@@ -535,6 +538,7 @@ function EffectsCard({ target, p }: { target: Target; p: P }) {
       title={p.effects}
       action={(
         <select
+          name="add-effect"
           aria-label={p.addEffect}
           value=""
           onChange={(event) => {
@@ -809,7 +813,7 @@ function AutoLayoutCard({ target, p }: { target: Target; p: P }) {
         <Choice name={p.alignItems} value={value('align') as string} options={['start', 'center', 'end']} labels={p.alignItemsOptions} onSet={(align) => setLayout(() => ({ align }))} />
       </div>
       <label className="flex items-center gap-2 text-[12px]">
-        <input type="checkbox" checked={value('wrap') === true} onChange={(event) => setLayout(() => ({ wrap: event.target.checked }))} />
+        <input name="wrap" type="checkbox" checked={value('wrap') === true} onChange={(event) => setLayout(() => ({ wrap: event.target.checked }))} />
         {p.wrap}
       </label>
     </Card>

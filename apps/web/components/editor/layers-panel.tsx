@@ -491,6 +491,7 @@ function RenameField({ name, label, onDone }: { name: string; label: string; onD
   }
   return (
     <input
+      name="layer-name"
       // Focused as it opens: the person asked to rename this layer.
       autoFocus
       aria-label={label}

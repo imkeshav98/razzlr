@@ -3,11 +3,11 @@
 import { exportDesign } from '@razzlr/export'
 import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
 import { drawDesign, renderDesign, type ResourceBytes } from '@razzlr/renderer'
-import type { Surface } from 'canvaskit-wasm'
-import canvasKitModule from 'canvaskit-wasm/full'
+import type { Surface } from '@razzlr/canvaskit'
+import canvasKitModule from '@razzlr/canvaskit'
 
 // CommonJS whose types claim an ES default export; the bundler hands over the init function itself.
-const CanvasKitInit = canvasKitModule as unknown as typeof import('canvaskit-wasm').default
+const CanvasKitInit = canvasKitModule as unknown as typeof import('@razzlr/canvaskit').default
 
 async function bytes(url: string) {
   const res = await fetch(url)
