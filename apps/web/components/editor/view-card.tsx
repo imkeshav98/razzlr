@@ -1,12 +1,14 @@
 'use client'
 
 // The View card, as in the final mock: rulers are off until asked for, and snapping can be turned
-// off for every drag. Shift+R turns the rulers on and off too, and the card follows it.
+// off for every drag. Shift+R turns the rulers on and off too, and the card follows it. The
+// keyboard button lists every shortcut (#158).
 import type { Editor } from '@razzlr/editor'
 import { useEffect, useState } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { CARD } from './card.tsx'
+import { ShortcutsButton } from './shortcuts-dialog.tsx'
 
 const viewOf = (editor: Editor) => ({ rulers: editor.rulers(), snapping: editor.snapping() })
 
@@ -36,6 +38,7 @@ export function ViewCard({ editor }: { editor: Editor }) {
       <button type="button" aria-pressed={view.rulers} title={t.rulersKey} onClick={() => editor.perform('toggleRulers')} className={chip(view.rulers)}>
         {t.rulers}
       </button>
+      <ShortcutsButton />
     </section>
   )
 }
