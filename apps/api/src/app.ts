@@ -1,17 +1,17 @@
 // The API's routes. /workspace and every route below /brands need a session, and reads and writes only that
 // session's workspace; a brand or design of another workspace is answered as if it didn't exist.
 import type { Db } from '@razzlr/db'
-import { BrandKit, CompleteSignIn, CreateBrand, CreateDesign, SaveTemplate, StartFromTemplate, RecordAsset, RecordFont, StartFontUpload, StartUpload, UpdateAsset, UpdateWorkspace, type ApiError, type AssetLink, type DesignCover, type DesignThumbnail, type SignedIn, type SignedLink, type SignedOut, type SignInLink, type SyncToken } from '@razzlr/schema'
+import { BrandKit, CompleteSignIn, CreateBrand, CreateDesign, DuplicateDesign, Rename, SaveTemplate, StartFromTemplate, RecordAsset, RecordFont, StartFontUpload, StartUpload, UpdateAsset, UpdateWorkspace, type ApiError, type AssetLink, type DesignCover, type DesignThumbnail, type SignedIn, type SignedLink, type SignedOut, type SignInLink, type SyncToken } from '@razzlr/schema'
 import type { Storage } from '@razzlr/storage'
 import { signSyncToken } from '@razzlr/sync-token'
 import { Hono, type MiddlewareHandler } from 'hono'
 import type { z } from 'zod'
 import { getBrandKit, InvalidKit, saveBrandKit } from './brand-kits.ts'
-import { findTemplate, listTemplates, saveTemplate, startFromTemplate, templateThumbnailKey } from './templates.ts'
+import { deleteTemplate, findTemplate, listTemplates, renameTemplate, saveTemplate, startFromTemplate, templateThumbnailKey } from './templates.ts'
 import { ensureThumbnail, findAsset, InvalidUpload, listAssets, originalKey, recordAsset, SIGNED_URL_SECONDS, startUpload, updateAsset } from './assets.ts'
-import { designCover, ensureDesignThumbnail } from './design-thumbnails.ts'
+import { designCover, ensureDesignThumbnail, storedDesign } from './design-thumbnails.ts'
 import { fontLink, InvalidFont, listFonts, recordFont, startFontUpload } from './fonts.ts'
-import { createBrand, createDesign, findBrand, findDesign, findWorkspace, InvalidContent, listBrands, listDesigns, updateWorkspace } from './designs.ts'
+import { createBrand, createDesign, deleteDesign, findBrand, findDesign, findWorkspace, InvalidContent, listBrands, listDesigns, renameDesign, updateWorkspace } from './designs.ts'
 import { bearerToken, readSessionToken, type Session, type SessionOf } from './session.ts'
 import { completeSignIn, type SignedInPerson, type SignInProvider } from './sign-in.ts'
 
@@ -130,6 +130,31 @@ export function createApp({ db, storage, sessionOf, syncSecret, signIn = null }:
     return design ? c.json(design) : c.json(error('No such design'), 404)
   })
 
+  // A design's name in the library and the editor; its content is the sync server's.
+  app.patch('/brands/:brandId/designs/:designId', async (c) => {
+    const input = await body(c.req.raw, Rename)
+    if (input instanceof Response) return input
+    const design = await renameDesign(db, c.var.session.workspaceId, c.req.param('brandId'), c.req.param('designId'), input.name)
+    return design ? c.json(design) : c.json(error('No such design'), 404)
+  })
+
+  // A copy of the design as it is stored now, in the same brand.
+  app.post('/brands/:brandId/designs/:designId/duplicate', async (c) => {
+    const { workspaceId } = c.var.session
+    const original = await findDesign(db, workspaceId, c.req.param('brandId'), c.req.param('designId'))
+    if (!original) return c.json(error('No such design'), 404)
+    const input = await body(c.req.raw, DuplicateDesign)
+    if (input instanceof Response) return input
+    const content = await storedDesign(db, original.id)
+    if (!content) return c.json(error('This design has nothing stored to copy yet'), 409)
+    return c.json(await createDesign(db, workspaceId, original.brandId, input.name ?? `${original.name} copy`.slice(0, 120), content), 201)
+  })
+
+  app.delete('/brands/:brandId/designs/:designId', async (c) => {
+    const deleted = await deleteDesign(db, c.var.session.workspaceId, c.req.param('brandId'), c.req.param('designId'))
+    return deleted ? c.body(null, 204) : c.json(error('No such design'), 404)
+  })
+
   // A token for the sync server, only after the same workspace and brand checks as opening the design.
   // The primary format's size alone, read without drawing, for the home to lay out its bento (#84).
   app.get('/brands/:brandId/designs/:designId/cover', async (c) => {
@@ -236,6 +261,18 @@ export function createApp({ db, storage, sessionOf, syncSecret, signIn = null }:
       if (e instanceof InvalidContent) return c.json(error(`The design is not valid: ${e.message}`), 400)
       throw e
     }
+  })
+
+  app.patch('/brands/:brandId/templates/:templateId', async (c) => {
+    const input = await body(c.req.raw, Rename)
+    if (input instanceof Response) return input
+    const template = await renameTemplate(db, c.var.session.workspaceId, c.req.param('brandId'), c.req.param('templateId'), input.name)
+    return template ? c.json(template) : c.json(error('No such template'), 404)
+  })
+
+  app.delete('/brands/:brandId/templates/:templateId', async (c) => {
+    const deleted = await deleteTemplate(db, storage, c.var.session.workspaceId, c.req.param('brandId'), c.req.param('templateId'))
+    return deleted ? c.body(null, 204) : c.json(error('No such template'), 404)
   })
 
   app.get('/brands/:brandId/templates/:templateId/thumbnail', async (c) => {

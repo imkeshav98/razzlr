@@ -33,9 +33,14 @@ export async function readDesignState(db: Db, designId: string): Promise<Uint8Ar
   return row?.state ?? null
 }
 
-/** Replaces a design's Yjs state and marks the design updated; the design must exist. */
+/**
+ * Replaces a design's Yjs state and marks the design updated. A design deleted while someone still
+ * had it open is gone: its state is not stored again.
+ */
 export async function writeDesignState(db: Db, designId: string, state: Uint8Array): Promise<void> {
   await db.transaction(async (tx) => {
+    const [design] = await tx.select({ id: tables.designs.id }).from(tables.designs).where(eq(tables.designs.id, designId))
+    if (!design) return
     await tx.insert(tables.designStates).values({ designId, state })
       .onConflictDoUpdate({ target: tables.designStates.designId, set: { state, updatedAt: sql`now()` } })
     await tx.update(tables.designs).set({ updatedAt: sql`now()` }).where(eq(tables.designs.id, designId))

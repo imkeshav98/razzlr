@@ -1,13 +1,15 @@
 // A brand's home (#84), as in the final mock: "What are we making for <brand>?" as a brief under a
 // slow aurora. The brand's recent work (a bento of real pictures of each design) and its templates
 // open under the brief from the capsule.
+import { revalidatePath } from 'next/cache'
 import { notFound, redirect } from 'next/navigation'
 import { BriefComposer } from '../../../components/brief-composer.tsx'
 import { BENTO_GRID, DesignBento, SPAN, spanOfSize, TILE, TILE_SHADE, type BentoDesign } from '../../../components/design-bento.tsx'
 import { HomeStage } from '../../../components/home-stage.tsx'
+import { TileMenu } from '../../../components/tile-menu.tsx'
 import { LibraryShell } from '../../../components/library-shell.tsx'
 import { cn } from '../../../lib/cn.ts'
-import { createDesign, designCover, getBrandKit, getWorkspace, listBrands, listDesigns, listTemplates, startFromTemplate } from '../../../lib/api.ts'
+import { createDesign, deleteDesign, deleteTemplate, duplicateDesign, renameDesign, renameTemplate, designCover, getBrandKit, getWorkspace, listBrands, listDesigns, listTemplates, startFromTemplate } from '../../../lib/api.ts'
 import { briefDesign } from '../../../lib/brief.ts'
 import { showsBrandList } from '../../../lib/home.ts'
 import { panelOf } from '../../../lib/home-panel.ts'
@@ -15,6 +17,9 @@ import { brandWords, format } from '../../../lib/i18n/index.ts'
 import { getLocale, getMessages } from '../../../lib/i18n/server.ts'
 
 export const dynamic = 'force-dynamic'
+
+/** The name a rename form sends, trimmed to what the API takes. */
+const nameOf = (form: FormData) => String(form.get('name') ?? '').trim().slice(0, 120)
 
 /** How many designs the bento shows: the most recently changed. */
 const BENTO_SIZE = 24
@@ -52,13 +57,42 @@ export default async function BrandPage({ params, searchParams }: { params: Prom
     redirect(`/brands/${brandId}/designs/${design.id}`)
   }
 
+  // A tile's menu (#159): its name, a copy, or gone; the page draws again with the change.
+  async function renameDesignAction(designId: string, form: FormData) {
+    'use server'
+    const name = nameOf(form)
+    if (name) await renameDesign(brandId, designId, name)
+    revalidatePath(`/brands/${brandId}`)
+  }
+  async function duplicateDesignAction(designId: string) {
+    'use server'
+    await duplicateDesign(brandId, designId)
+    revalidatePath(`/brands/${brandId}`)
+  }
+  async function deleteDesignAction(designId: string) {
+    'use server'
+    await deleteDesign(brandId, designId)
+    revalidatePath(`/brands/${brandId}`)
+  }
+  async function renameTemplateAction(templateId: string, form: FormData) {
+    'use server'
+    const name = nameOf(form)
+    if (name) await renameTemplate(brandId, templateId, name)
+    revalidatePath(`/brands/${brandId}`)
+  }
+  async function deleteTemplateAction(templateId: string) {
+    'use server'
+    await deleteTemplate(brandId, templateId)
+    revalidatePath(`/brands/${brandId}`)
+  }
+
   const recentBody = recent.length === 0
     ? (
       <div className="grid place-items-center rounded-[18px] border border-dashed border-line-strong px-6 py-14 text-center text-muted">
         {t.home.noDesigns}
       </div>
     )
-    : <DesignBento t={t} locale={locale} brandId={brand.id} designs={recent} eager={panelOf(show) === 'recent'} />
+    : <DesignBento t={t} locale={locale} brandId={brand.id} designs={recent} eager={panelOf(show) === 'recent'} actions={{ rename: renameDesignAction, duplicate: duplicateDesignAction, remove: deleteDesignAction }} />
   const templatesBody = templates.length === 0
     ? <p className="text-sm text-muted">{t.library.noTemplates}</p>
     : (
@@ -68,7 +102,7 @@ export default async function BrandPage({ params, searchParams }: { params: Prom
             // No large tile: a template's picture is a small copy, and blown up it would blur.
             const span = spanOfSize(template, i + 1)
             return (
-              <li key={template.id} data-template={template.id} data-span={span} className={cn('rise min-w-0', SPAN[span])} style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
+              <li key={template.id} data-template={template.id} data-span={span} className={cn('rise group/tile relative min-w-0', SPAN[span])} style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
                 <form action={start.bind(null, template.id)} className="size-full">
                   <button type="submit" aria-label={format(t.library.useTemplate, { name: template.name })} className={cn(TILE, 'cursor-pointer')}>
                     <img
@@ -85,6 +119,7 @@ export default async function BrandPage({ params, searchParams }: { params: Prom
                     </span>
                   </button>
                 </form>
+                <TileMenu name={template.name} rename={renameTemplateAction.bind(null, template.id)} remove={deleteTemplateAction.bind(null, template.id)} />
               </li>
             )
           })}

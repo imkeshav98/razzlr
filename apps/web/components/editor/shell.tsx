@@ -15,7 +15,7 @@ import Link from 'next/link'
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useLocale, useMessages } from '../../lib/i18n/client.tsx'
-import { dirOf } from '../../lib/i18n/index.ts'
+import { dirOf, format } from '../../lib/i18n/index.ts'
 import { useValue, type ValueStore } from '../../lib/value-store.ts'
 import { BrandMark } from '../brand-mark.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
@@ -175,10 +175,61 @@ function measureInsets(stage: DOMRect, tops: (Element | null)[], pieces: (Elemen
   return insets
 }
 
-export function EditorShell({ brandId, brandName, designName, status, tool: shownTool, shape = 'rect', onToolChange, onInsets, fitted = true, inspector, actions, account, panels, children }: {
+/**
+ * The design's name in the crumb (#159): a click or Enter on it makes it a field; Enter or leaving
+ * the field saves a new name, Esc keeps the old one.
+ */
+function DesignName({ name, onRename }: { name: string; onRename?: ((name: string) => Promise<void>) | undefined }) {
+  const t = useMessages()
+  const [editing, setEditing] = useState(false)
+  const done = useRef(false)
+  const title = 'truncate font-display text-sm font-semibold tracking-tight'
+  if (!onRename) return <h1 className={title}>{name}</h1>
+  if (!editing) {
+    return (
+      <h1 className={cn(title, 'min-w-0')}>
+        <button type="button" title={format(t.library.renameDesign, { name })} onClick={() => setEditing(true)} className="max-w-full cursor-text truncate rounded-[6px] px-1 -mx-1 hover:bg-hover">
+          {name}
+        </button>
+      </h1>
+    )
+  }
+  const finish = (field: HTMLInputElement, save: boolean) => {
+    if (done.current) return
+    done.current = true
+    const next = field.value.trim()
+    setEditing(false)
+    if (save && next && next !== name) void onRename(next)
+  }
+  return (
+    <input
+      name="design-name"
+      aria-label={format(t.library.renameDesign, { name })}
+      defaultValue={name}
+      maxLength={120}
+      autoFocus
+      onFocus={(event) => {
+        done.current = false
+        event.currentTarget.select()
+      }}
+      onBlur={(event) => finish(event.currentTarget, true)}
+      onKeyDown={(event) => {
+        // Keys typed into the name are the name's, not the stage's.
+        event.stopPropagation()
+        if (event.key === 'Enter') finish(event.currentTarget, true)
+        else if (event.key === 'Escape') finish(event.currentTarget, false)
+      }}
+      className="h-7 w-48 min-w-0 rounded-[6px] border border-accent bg-bg px-1.5 font-display text-sm font-semibold tracking-tight outline-none"
+    />
+  )
+}
+
+export function EditorShell({ brandId, brandName, designName, onRename, status, tool: shownTool, shape = 'rect', onToolChange, onInsets, fitted = true, inspector, actions, account, panels, children }: {
   brandId: string
   brandName: string
   designName: string
+  /** Saves a new name for the design; left out, the name can't be changed here. */
+  onRename?: (name: string) => Promise<void>
   /** The editor's save state, or what it is doing before it opens. */
   status: ValueStore<string>
   /** The tool in use, when the editor decides it (a key, or drawing a shape ends); the dock keeps its own otherwise. */
@@ -260,7 +311,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
               <nav aria-label={t.library.designs} className="flex min-w-0 items-center gap-1.5 text-[13px]">
                 <Link href={`/brands/${brandId}`} className="truncate text-muted transition-colors hover:text-text max-sm:hidden">{brandName}</Link>
                 <span aria-hidden className="text-subtle max-sm:hidden">/</span>
-                <h1 className="truncate font-display text-sm font-semibold tracking-tight">{designName}</h1>
+                <DesignName name={designName} onRename={onRename} />
               </nav>
               <SaveStatus status={status} fitted={fitted} />
             </div>

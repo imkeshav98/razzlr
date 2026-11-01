@@ -57,7 +57,7 @@ async function call(as: string | null, method: string, path: string, body?: unkn
   const headers: Record<string, string> = { 'content-type': 'application/json' }
   if (as) Object.assign(headers, authorization(as))
   const response = await app.request(path, { method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }) })
-  return { status: response.status, json: await response.json() as unknown }
+  return { status: response.status, json: response.status === 204 ? null : await response.json() as unknown }
 }
 
 beforeAll(async () => {
@@ -218,6 +218,39 @@ describe('sync tokens', () => {
 })
 
 // Saving a template draws its thumbnail with CanvasKit, which takes seconds on a busy CI runner.
+describe('renaming, copying and deleting designs (#159)', () => {
+  it('renames, copies and deletes a design of the brand, and nothing of another workspace', async () => {
+    const design = DesignSummary.parse((await call('a', 'POST', `/brands/${brand.id}/designs`, { name: 'Draft' })).json)
+    const renamed = await call('a', 'PATCH', `/brands/${brand.id}/designs/${design.id}`, { name: '  Spring launch ' })
+    expect(DesignSummary.parse(renamed.json)).toMatchObject({ id: design.id, name: 'Spring launch' })
+    expect((await call('a', 'PATCH', `/brands/${brand.id}/designs/${design.id}`, { name: '  ' })).status).toBe(400)
+    expect((await call('b', 'PATCH', `/brands/${brand.id}/designs/${design.id}`, { name: 'Taken' })).status).toBe(404)
+
+    // A copy has the content under its own id, named after the original.
+    const copied = await call('a', 'POST', `/brands/${brand.id}/designs/${design.id}/duplicate`, {})
+    expect(copied.status).toBe(201)
+    const copy = DesignSummary.parse(copied.json)
+    expect(copy).toMatchObject({ name: 'Spring launch copy', brandId: brand.id })
+    expect(copy.id).not.toBe(design.id)
+    const state = await readDesignState(db, copy.id)
+    if (!state) throw new Error('no state')
+    const doc = new Y.Doc()
+    Y.applyUpdate(doc, state)
+    expect(readDesign(doc).meta).toMatchObject({ designId: copy.id, name: 'Spring launch copy' })
+
+    // Deleting takes the design and its state; the copy stays.
+    expect((await call('b', 'DELETE', `/brands/${brand.id}/designs/${design.id}`)).status).toBe(404)
+    expect((await call('a', 'DELETE', `/brands/${brand.id}/designs/${design.id}`)).status).toBe(204)
+    expect((await call('a', 'GET', `/brands/${brand.id}/designs/${design.id}`)).status).toBe(404)
+    expect(await readDesignState(db, design.id)).toBeNull()
+    expect((await call('a', 'DELETE', `/brands/${brand.id}/designs/${design.id}`)).status).toBe(404)
+    expect((await call('a', 'GET', `/brands/${brand.id}/designs/${copy.id}`)).status).toBe(200)
+    // The sync server storing a deleted design's state is a no-op, not an error.
+    await expect(writeDesignState(db, design.id, state)).resolves.toBeUndefined()
+    expect(await readDesignState(db, design.id)).toBeNull()
+  })
+})
+
 describe('templates (#54)', { timeout: 60_000 }, () => {
   const sha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
   async function imageAsset(brandId: string, bytes: Uint8Array) {
@@ -268,6 +301,18 @@ describe('templates (#54)', { timeout: 60_000 }, () => {
     expect(JSON.stringify(copy)).toContain(photo.id)
     const [a, b] = await Promise.all([renderFirstPage(db, storage, workspace.id, brand.id, original.design), renderFirstPage(db, storage, workspace.id, brand.id, copy)])
     expect(Buffer.from(b.pixels).equals(Buffer.from(a.pixels))).toBe(true)
+  })
+
+  it('renames and deletes a template the brand can see (#159)', async () => {
+    const photo = await imageAsset(brand.id, png(64, 48, `${run}-template`))
+    const template = TemplateSummary.parse((await call('a', 'POST', `/brands/${brand.id}/templates`, { name: 'Old name', scope: 'brand', content: content(photo.id) })).json)
+    expect(TemplateSummary.parse((await call('a', 'PATCH', `/brands/${brand.id}/templates/${template.id}`, { name: 'New name' })).json)).toMatchObject({ id: template.id, name: 'New name' })
+    // Another brand can't see a brand template, so can't change it.
+    expect((await call('a', 'PATCH', `/brands/${sibling.id}/templates/${template.id}`, { name: 'Theirs' })).status).toBe(404)
+    expect((await call('a', 'DELETE', `/brands/${sibling.id}/templates/${template.id}`)).status).toBe(404)
+    expect((await call('a', 'DELETE', `/brands/${brand.id}/templates/${template.id}`)).status).toBe(204)
+    const listed = TemplateSummary.array().parse((await call('a', 'GET', `/brands/${brand.id}/templates`)).json).map((t) => t.id)
+    expect(listed).not.toContain(template.id)
   })
 
   it('shows workspace templates to every brand and brand templates to their brand only', async () => {

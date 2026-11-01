@@ -37,6 +37,21 @@ async function visibleTemplate(db: Db, workspaceId: string, brandId: string, id:
   return row ?? null
 }
 
+/** Renames a template the brand can see; null when it can't. */
+export async function renameTemplate(db: Db, workspaceId: string, brandId: string, id: string, name: string): Promise<TemplateSummary | null> {
+  if (!await visibleTemplate(db, workspaceId, brandId, id)) return null
+  const [row] = await db.update(templates).set({ name }).where(eq(templates.id, id)).returning(summary)
+  return row ? toSummary(row) : null
+}
+
+/** Deletes a template the brand can see, and its picture; false when it can't see one. */
+export async function deleteTemplate(db: Db, storage: Storage, workspaceId: string, brandId: string, id: string): Promise<boolean> {
+  if (!await visibleTemplate(db, workspaceId, brandId, id)) return false
+  await db.delete(templates).where(eq(templates.id, id))
+  await storage.delete(templateThumbnailKey(workspaceId, id)).catch(() => undefined)
+  return true
+}
+
 export const findTemplate = async (db: Db, workspaceId: string, brandId: string, id: string) => {
   const row = await visibleTemplate(db, workspaceId, brandId, id)
   return row ? toSummary(row) : null
