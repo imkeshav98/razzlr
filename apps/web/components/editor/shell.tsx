@@ -16,6 +16,7 @@ import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState
 import { cn } from '../../lib/cn.ts'
 import { useLocale, useMessages } from '../../lib/i18n/client.tsx'
 import { dirOf } from '../../lib/i18n/index.ts'
+import { useValue, type ValueStore } from '../../lib/value-store.ts'
 import { BrandMark } from '../brand-mark.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { ShapeTools } from './shape-menu.tsx'
@@ -114,6 +115,38 @@ function useShownStatus(status: string) {
   return shown
 }
 
+/** The design's save state at the end of the start island, read from the status store. */
+function SaveStatus({ status, fitted }: { status: ValueStore<string>; fitted: boolean }) {
+  const t = useMessages()
+  const current = useValue(status)
+  const shown = useShownStatus(current)
+  const save = SAVE[shown]
+  const failed = shown.startsWith('Error')
+  return (
+    <span
+      role="status"
+      aria-atomic="true"
+      aria-label={t.editor.status}
+      data-testid="status"
+      data-status={current}
+      data-ready={save && fitted ? '' : undefined}
+      title={save ? t.editor.statusHint[shown] : undefined}
+      className={cn(
+        'flex h-7 shrink-0 items-center gap-1.5 text-xs font-medium transition-colors duration-[var(--chrome)]',
+        failed ? 'text-danger' : save ? save.tone : 'text-subtle',
+      )}
+    >
+      {save ? (
+        <save.icon size={17} aria-hidden className={cn(shown === 'Saving' && 'animate-pulse')} />
+      ) : (
+        <span aria-hidden className={cn('size-1.5 rounded-full', failed ? 'bg-danger' : 'animate-pulse bg-subtle')} />
+      )}
+      <span className={cn(!(failed || save?.words) && 'sr-only')}>{t.editor.statusText[shown] ?? shown}</span>
+      {shown === 'Offline' && <span className="hidden font-normal text-muted md:inline">{t.editor.statusHint.Offline}</span>}
+    </span>
+  )
+}
+
 /** The stage's edges the floating chrome covers, in CSS pixels, left and right as on screen. */
 export interface ChromeInsets { top: number; right: number; bottom: number; left: number }
 
@@ -146,7 +179,8 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
   brandId: string
   brandName: string
   designName: string
-  status: string
+  /** The editor's save state, or what it is doing before it opens. */
+  status: ValueStore<string>
   /** The tool in use, when the editor decides it (a key, or drawing a shape ends); the dock keeps its own otherwise. */
   tool?: Tool
   /** The shape the shape tool draws (#44). */
@@ -177,9 +211,6 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
   const note = flyoutNote?.text ?? null
   const [ownTool, setTool] = useState<Tool>('select')
   const tool = shownTool ?? ownTool
-  const shown = useShownStatus(status)
-  const save = SAVE[shown]
-  const failed = shown.startsWith('Error')
   const panelTitle = (id: Panel) => (id === 'properties' ? t.editor.inspector : t.editor[id])
   const panelEmpty = { layers: t.editor.layersEmpty, assets: t.editor.assetsEmpty, ai: t.editor.aiEmpty, brand: t.editor.brandEmpty }
   const flyout = panel === 'properties' ? null : panel
@@ -231,27 +262,7 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
                 <span aria-hidden className="text-subtle max-sm:hidden">/</span>
                 <h1 className="truncate font-display text-sm font-semibold tracking-tight">{designName}</h1>
               </nav>
-              <span
-                role="status"
-                aria-atomic="true"
-                aria-label={t.editor.status}
-                data-testid="status"
-                data-status={status}
-                data-ready={save && fitted ? '' : undefined}
-                title={save ? t.editor.statusHint[shown] : undefined}
-                className={cn(
-                  'flex h-7 shrink-0 items-center gap-1.5 text-xs font-medium transition-colors duration-[var(--chrome)]',
-                  failed ? 'text-danger' : save ? save.tone : 'text-subtle',
-                )}
-              >
-                {save ? (
-                  <save.icon size={17} aria-hidden className={cn(shown === 'Saving' && 'animate-pulse')} />
-                ) : (
-                  <span aria-hidden className={cn('size-1.5 rounded-full', failed ? 'bg-danger' : 'animate-pulse bg-subtle')} />
-                )}
-                <span className={cn(!(failed || save?.words) && 'sr-only')}>{t.editor.statusText[shown] ?? shown}</span>
-                {shown === 'Offline' && <span className="hidden font-normal text-muted md:inline">{t.editor.statusHint.Offline}</span>}
-              </span>
+              <SaveStatus status={status} fitted={fitted} />
             </div>
             <div ref={endIsland} data-testid="island-end" className="pointer-events-auto flex shrink-0 items-center gap-2">
               {actions}
