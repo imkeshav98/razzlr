@@ -8,6 +8,7 @@ import { SHORTCUTS, type ShortcutAction } from '@razzlr/editor'
 import { useEffect, useRef, useState } from 'react'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import type { Messages } from '../../lib/i18n/index.ts'
+import { overlayScroll } from '../ui/overlay-scroll.ts'
 
 type Group = keyof Messages['editor']['shortcuts']['groups']
 
@@ -75,7 +76,7 @@ export function ShortcutsButton() {
               <XIcon size={16} aria-hidden />
             </button>
           </div>
-          <div className="min-h-0 columns-1 gap-8 overflow-y-auto px-6 pb-6 sm:columns-2">
+          <div ref={overlayScroll} className="min-h-0 columns-1 gap-8 overflow-y-auto px-6 pb-6 sm:columns-2">
             {GROUPS.map(([group, actions]) => (
               <section key={group} aria-labelledby={`shortcuts-${group}`} className="mb-5 break-inside-avoid">
                 <h3 id={`shortcuts-${group}`} className="mb-1.5 text-[11px] font-bold tracking-[0.08em] text-subtle uppercase">{t.groups[group]}</h3>

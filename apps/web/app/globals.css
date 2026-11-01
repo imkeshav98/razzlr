@@ -5,6 +5,8 @@
  * tokens.test.ts checks every text token against the surfaces it sits on at 4.5:1 or more.
  */
 @import 'tailwindcss';
+/* Below the utilities, so a scrolling area keeps the position and overflow its classes give it. */
+@import 'overlayscrollbars/overlayscrollbars.css' layer(components);
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
@@ -253,7 +255,40 @@ body {
 }
 
 /*
- * A scrolling stack with a hidden scrollbar fades out at its bottom edge while there is more below,
+ * Overlay scrollbars (components/ui/overlay-scroll.ts): a slim rounded bar over the content, hugging
+ * the area's end edge. Under the pointer, or while dragged, it widens and turns the accent.
+ */
+.os-theme-dazbee {
+  box-sizing: border-box;
+  --os-size: 12px;
+  --os-padding-perpendicular: 2px;
+  --os-padding-axis: 4px;
+  --os-track-border-radius: 99px;
+  --os-handle-border-radius: 99px;
+  --os-handle-bg: color-mix(in oklab, var(--text) 34%, transparent);
+  --os-handle-bg-hover: var(--accent);
+  --os-handle-bg-active: var(--accent);
+  --os-handle-min-size: 28px;
+  --os-handle-perpendicular-size: 62.5%;
+  --os-handle-perpendicular-size-hover: 100%;
+  --os-handle-perpendicular-size-active: 100%;
+  --os-handle-interactive-area-offset: 4px;
+}
+.os-theme-dazbee.os-scrollbar-vertical .os-scrollbar-handle {
+  inset-inline-end: 0;
+}
+.os-theme-dazbee.os-scrollbar-horizontal .os-scrollbar-handle {
+  bottom: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .os-theme-dazbee,
+  .os-theme-dazbee .os-scrollbar-handle {
+    transition: none;
+  }
+}
+
+/*
+ * A scrolling stack fades out at its bottom edge while there is more below,
  * and not once scrolled to the end. The scroll timeline is inactive while nothing overflows, so a
  * stack that fits never fades.
  */

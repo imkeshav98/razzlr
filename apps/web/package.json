@@ -29,6 +29,7 @@
     "clsx": "^2.1.1",
     "motion": "^14.8.0",
     "next": "^16.4.3",
+    "overlayscrollbars": "^2.17.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "server-only": "^0.0.1",
