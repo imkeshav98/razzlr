@@ -8,9 +8,9 @@ Measured on 2026-11-01 on Keshav's PC (Windows 11, Chromium 1.63 headless with S
 
 | Exit check (#27, #61) | Pass mark | Measured | Result |
 |---|---|---|---|
-| A real ad set rebuilt in 5 formats through real input | The scenario runs end to end with no page errors | `exit-check.spec.ts`: brief, two brand colours, a photo and a font uploaded, a page fill, a badge and a headline, 4 formats added, the headline moved in one format only, 20 files exported through the Export menu | **Pass** |
+| A real ad set rebuilt in 5 formats through real input | The scenario runs end to end with no page errors | `exit-check.spec.ts`: brief, two brand colours, a photo and a font uploaded, a page fill, a badge and a headline sized on the slider, 4 formats added, the headline moved in one format only, 20 files exported through the Export menu | **Pass** |
 | PNG and JPG export parity | 0 differing pixels against the Node render | All 10 PNG and JPG files of the exit check are byte-identical to Node's. Every pixel fixture's PNG and JPG are too (19 page-format cases), and the CPU parity checks show 0 differing pixels in all 58 cases | **Pass** |
-| PDF and SVG within the vector tolerance | ≤ 1% of pixels differing for the exit check's ad (fixtures: their recorded baselines) | Exit check, drawn by pdfium and resvg: PDF 0.04–0.44%, SVG 0.001–0.09%. All 10 files are byte-identical to Node's | **Pass** |
+| PDF and SVG within the vector tolerance | ≤ 1% of pixels differing for the exit check's ad (fixtures: their recorded baselines) | Exit check, drawn by pdfium and resvg: PDF 0.039–0.492%, SVG 0.001–0.089%. All 10 files are byte-identical to Node's | **Pass** |
 | PDF text stays text at the renderer's glyph positions | Within 0.05 px | Largest distance 0.0001 px, over 16,037 glyphs in the stress fixture and every glyph in the other fixtures; Hindi and Arabic 0 px | **Pass** |
 | Keshav rebuilds an ad set of his own | His notes are in this report | Not done yet | **Open** |
 
@@ -20,11 +20,11 @@ Measured on 2026-11-01 on Keshav's PC (Windows 11, Chromium 1.63 headless with S
 
 | Format | Size | PNG | JPG | PDF | SVG | PDF differing | SVG differing |
 |---|---|---|---|---|---|---|---|
-| Feed square | 1080×1080 | 76,716 B | 39,376 B | 307,066 B | 84,858 B | 0.127% | 0.047% |
-| Feed portrait | 1080×1350 | 78,513 B | 41,334 B | 307,068 B | 84,887 B | 0.101% | 0.037% |
-| Story (headline moved) | 1080×1920 | 72,101 B | 31,303 B | 306,306 B | 84,953 B | 0.038% | 0.001% |
-| Link image | 1200×628 | 46,327 B | 26,630 B | 307,087 B | 48,710 B | 0.135% | 0.087% |
-| Medium rectangle | 300×250 | 10,781 B | 5,553 B | 306,507 B | 21,349 B | 0.440% | 0.068% |
+| Feed square | 1080×1080 | 76,720 B | 39,387 B | 307,066 B | 84,869 B | 0.121% | 0.037% |
+| Feed portrait | 1080×1350 | 78,524 B | 41,283 B | 307,069 B | 84,896 B | 0.097% | 0.030% |
+| Story (headline moved) | 1080×1920 | 72,072 B | 31,294 B | 306,198 B | 84,962 B | 0.039% | 0.001% |
+| Link image | 1200×628 | 46,208 B | 26,403 B | 307,088 B | 48,672 B | 0.148% | 0.082% |
+| Medium rectangle | 300×250 | 10,750 B | 5,398 B | 306,507 B | 21,338 B | 0.492% | 0.089% |
 
 Every file is byte-identical to Node's export of the same design, drawn with the same font and photo bytes. A pixel counts as differing only when nothing within one pixel of it in the CPU render is within 16 of 255 on every channel (`tests/pixels/src/vector.ts`). The PDFs are about 300 KB each because the photo is stored losslessly.
 
