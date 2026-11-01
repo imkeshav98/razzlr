@@ -1,6 +1,6 @@
 # Dazbee
 
-A web app where a solo marketer, a company's team or a digital marketing agency makes everything a brand needs: ads in every size, social posts and everyday creative. It joins an AI flow (brief to editable ad), a design editor built for many formats and variants, and the team workflow (brand kits, approval, publishing). Each sign-up is a workspace with brands inside; an agency's brands are its clients (ADR-0011).
+A web app where a solo marketer, a company's team or a digital marketing agency makes everything a brand needs: ads in every size, social posts and everyday creative. It joins an AI flow (brief to editable ad), a design editor built for many formats and variants, and the team workflow (brand kits, approval, publishing). Each sign-up is a workspace with brands inside; an agency's clients are brands too (ADR-0011, ADR-0013).
 
 Read `GLOSSARY.md` before naming anything, and the ADRs in `docs/adr/` before changing an area they cover.
 

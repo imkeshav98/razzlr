@@ -1,14 +1,14 @@
-// Where the app opens (#84): a solo marketer or a company with one brand starts on that brand's
-// brief; an agency, or anyone with several brands, starts on the list.
-import type { BrandSummary, WorkspaceKind } from '@dazbee/schema'
+// Where the app opens (#84, ADR-0013): a workspace with one brand starts on that brand's brief; one
+// with several starts on the list.
+import type { BrandSummary } from '@dazbee/schema'
 
 /** The brand to open straight away, or null to show the list. */
-export function openingBrand(kind: WorkspaceKind, brands: readonly BrandSummary[]): BrandSummary | null {
-  return kind !== 'agency' && brands.length === 1 ? brands[0] ?? null : null
+export function openingBrand(brands: readonly BrandSummary[]): BrandSummary | null {
+  return brands.length === 1 ? brands[0] ?? null : null
 }
 
-/** Whether the brand list shows beside a brand's page: always for an agency, otherwise once there are two. */
-export const showsBrandList = (kind: WorkspaceKind, brands: readonly BrandSummary[]) => kind === 'agency' || brands.length > 1
+/** Whether the brand list shows beside a brand's page: once there are two. */
+export const showsBrandList = (brands: readonly BrandSummary[]) => brands.length > 1
 
 /** The app opens on onboarding (#109) until the workspace has a brand. */
 export const needsWelcome = (brands: readonly BrandSummary[]) => brands.length === 0

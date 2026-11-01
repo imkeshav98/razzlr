@@ -86,7 +86,7 @@ function BrandSwitcher({ t, words, brands, active, showAll }: { t: Messages; wor
 export async function TopBar({ t, workspace, children }: {
   t: Messages
   /** The workspace, for the account avatar and menu. */
-  workspace: Pick<WorkspaceSummary, 'name' | 'kind'>
+  workspace: Pick<WorkspaceSummary, 'name'>
   /** The crumb. */
   children: ReactNode
 }) {
@@ -98,7 +98,7 @@ export async function TopBar({ t, workspace, children }: {
       </Link>
       <div className="flex min-w-0 items-center gap-1 text-[13px]">{children}</div>
       <span className="ms-auto">
-        <AccountMenu name={workspace.name} kind={workspace.kind} signedIn={jar.has(SESSION_COOKIE)} />
+        <AccountMenu name={workspace.name} signedIn={jar.has(SESSION_COOKIE)} />
       </span>
     </header>
   )
@@ -106,13 +106,13 @@ export async function TopBar({ t, workspace, children }: {
 
 export async function LibraryShell({ t, words, workspace, brands, activeBrandId, showBrands = true, place = 'home', glow = false, recentCount, children }: {
   t: Messages
-  /** "Clients" in an agency workspace, "Brands" otherwise. */
+  /** The words for the workspace's brands. */
   words: BrandWords
   /** The workspace, for the account avatar and menu. */
-  workspace: Pick<WorkspaceSummary, 'name' | 'kind'>
+  workspace: Pick<WorkspaceSummary, 'name'>
   brands: BrandSummary[]
   activeBrandId?: string
-  /** Whether the workspace has brands to switch between; one brand and no clients goes without (#84). */
+  /** Whether the workspace has brands to switch between; one brand goes without (#84). */
   showBrands?: boolean
   /** The capsule's lit entry and the crumb's last part. */
   place?: LibraryPlace

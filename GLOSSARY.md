@@ -16,13 +16,9 @@ _Avoid_: Seat (that is billing), user (a user is the person, a member their plac
 A signed-in person in one of their workspaces: what every API route checks the workspace and brand against. It ends when they sign out, after seven days, or when they stop being a member there.
 _Avoid_: Login, auth
 
-**Workspace kind**:
-Who a workspace is for: solo, company or agency, asked at onboarding. It changes defaults and words only, never what is stored: an agency workspace calls its brands "Clients".
-_Avoid_: Plan, tier (those are billing)
-
 **Brand**:
 What a workspace makes work for: a solo user's business, a company's product line or region, or an agency's client. Every design, brand kit and asset belongs to exactly one brand, and a brand is a wall: nothing crosses from one brand to another.
-_Avoid_: Client (except as an agency workspace's word for a brand in UI copy), customer, project
+_Avoid_: Client, customer, project (an agency's clients are brands too, ADR-0013)
 
 **Brand kit**:
 A brand's logo, colours, fonts and tone of voice, applied automatically. Its colours and fonts are exposed to designs as variables, `brand:<token>`: a layer's fill, text colour or font family bound to one follows the brand, so changing the brand colour changes every design that uses it.

@@ -28,7 +28,7 @@ const BENTO_SIZE = 24
 export default async function BrandPage({ params, searchParams }: { params: Promise<{ brandId: string }>; searchParams: Promise<{ show?: string }> }) {
   const [{ brandId }, { show }] = await Promise.all([params, searchParams])
   const [t, locale, workspace, brands] = await Promise.all([getMessages(), getLocale(), getWorkspace(), listBrands()])
-  const words = brandWords(t, workspace.kind)
+  const words = brandWords(t)
   const brand = brands.find((c) => c.id === brandId)
   if (!brand) notFound()
   const [designs, kit, templates] = await Promise.all([listDesigns(brand.id), getBrandKit(brand.id), listTemplates(brand.id)])
@@ -39,7 +39,7 @@ export default async function BrandPage({ params, searchParams }: { params: Prom
   }))
   const untitled = t.library.untitled
   const presetName = t.editor.formats.preset
-  const switcher = showsBrandList(workspace.kind, brands)
+  const switcher = showsBrandList(brands)
 
   async function make(form: FormData) {
     'use server'

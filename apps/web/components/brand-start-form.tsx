@@ -4,16 +4,14 @@
 // end, as in the final mock. It takes an address or a plain name; the line under it names the brand
 // an address gives, with Change to type another.
 import { ArrowRightIcon, GlobeIcon } from '@phosphor-icons/react'
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { BrandNaming, type NamingWords } from './brand-naming.tsx'
 
-export function BrandStartForm({ action, words, error, back }: {
+export function BrandStartForm({ action, words, error }: {
   action: (form: FormData) => Promise<void>
   words: NamingWords & { start: string; placeholder: string; open: string }
   /** Why the last try made no brand, if it didn't. */
   error: string | null
-  /** The Back link, under the form. */
-  back: ReactNode
 }) {
   const [start, setStart] = useState('')
   return (
@@ -38,7 +36,6 @@ export function BrandStartForm({ action, words, error, back }: {
       <span aria-hidden className="col-span-2 col-start-1 row-start-1 -z-10 h-16 rounded-[18px] border-[1.5px] border-line bg-surface shadow-panel transition-[border-color,box-shadow] duration-[var(--chrome-fast)] peer-hover:border-line-strong peer-focus-within:border-accent peer-focus-within:shadow-[0_0_0_4px_var(--accent-soft)]" />
       <BrandNaming start={start} words={words} size="hero" className="col-span-2 row-start-2 mt-4 min-h-5 md:mx-5" />
       {error && <p role="alert" className="col-span-2 row-start-3 mt-3 text-sm text-danger md:mx-5">{error}</p>}
-      <div className="col-span-2 row-start-4 mt-6 flex justify-center">{back}</div>
       <button
         type="submit"
         className="ai-glow relative col-start-2 row-start-1 me-2.5 inline-flex h-11 cursor-pointer items-center gap-2 rounded-[12px] px-5 text-[15px] font-semibold text-white shadow-panel transition-transform duration-[var(--chrome-fast)] active:scale-[0.97]"

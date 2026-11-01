@@ -1,4 +1,4 @@
-// The Brands or Clients page (ADR-0011), as in the final mock: a card per brand in its own colours,
+// The Brands page (ADR-0011, ADR-0013), as in the final mock: a card per brand in its own colours,
 // with its latest design and how many it has, and a last card that adds one.
 import { redirect } from 'next/navigation'
 import { BrandCard, type BrandCardData } from '../components/brand-cards.tsx'
@@ -14,9 +14,9 @@ export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
   const [t, workspace, brands] = await Promise.all([getMessages(), getWorkspace(), listBrands()])
-  const words = brandWords(t, workspace.kind)
+  const words = brandWords(t)
   if (needsWelcome(brands)) redirect('/welcome')
-  const opening = openingBrand(workspace.kind, brands)
+  const opening = openingBrand(brands)
   if (opening) redirect(`/brands/${opening.id}`)
 
   const cards: BrandCardData[] = await Promise.all(brands.map(async (brand) => {

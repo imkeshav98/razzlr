@@ -1,4 +1,4 @@
-// The Brands or Clients page's cards, as in the final mock: each brand on a card in its own colours,
+// The Brands page's cards, as in the final mock: each brand on a card in its own colours,
 // with its initials large and faint behind, its latest design's picture, its name and how many
 // designs it has. The last card adds a brand.
 import Link from 'next/link'
