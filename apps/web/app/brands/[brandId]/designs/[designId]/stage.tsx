@@ -222,7 +222,8 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
       inspector={editor ? <PropertyCards editor={editor} brandId={brandId} onRemoved={setRemoved} /> : undefined}
     >
       {/* The design is a picture, so it never mirrors: the stage stays left to right in Arabic too. */}
-      {/* An asset dragged from the library lands where it is dropped (#52). */}
+      {/* An asset dragged from the library lands where it is dropped (#52): into the shape it is
+          dropped on, lit while it is over it, or as a new layer. */}
       <div
         dir="ltr"
         className="absolute inset-0"
@@ -230,12 +231,18 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
           if (!editor || !e.dataTransfer.types.includes(ASSET_DRAG_TYPE)) return
           e.preventDefault()
           e.dataTransfer.dropEffect = 'copy'
+          editor.imageTarget({ x: e.clientX, y: e.clientY })
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) editor?.imageTarget(null)
         }}
         onDrop={(e) => {
           const asset = editor && draggedAsset(e)
           if (!asset) return
           e.preventDefault()
-          editor.placeImage(asset, { x: e.clientX, y: e.clientY })
+          const into = editor.imageTarget({ x: e.clientX, y: e.clientY })
+          if (!into || !editor.fillWithImage(into, asset)) editor.placeImage(asset, { x: e.clientX, y: e.clientY })
+          editor.imageTarget(null)
         }}
       >
         <canvas ref={canvas} className="block size-full touch-none" data-testid="stage" />

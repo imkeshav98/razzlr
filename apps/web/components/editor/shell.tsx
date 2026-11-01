@@ -22,6 +22,7 @@ import { useOverlayScroll } from '../ui/overlay-scroll.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { ImageTool } from './image-tool.tsx'
 import { ShapeTools } from './shape-menu.tsx'
+import { dockTool } from './styles.ts'
 
 export type Panel = 'layers' | 'assets' | 'ai' | 'brand' | 'properties'
 export type Tool = 'select' | 'frame' | 'shape' | 'text' | 'pen' | 'image' | 'hand'
@@ -455,10 +456,7 @@ export function EditorShell({ brandId, brandName, designName, onRename, status, 
                           setTool(id)
                           onToolChange?.(id, shape)
                         }}
-                        className={cn(
-                          'grid size-10 cursor-pointer place-items-center rounded-[12px] transition-colors duration-[var(--chrome-fast)]',
-                          on ? 'bg-accent-solid text-on-accent' : 'text-muted hover:bg-hover hover:text-text',
-                        )}
+                        className={dockTool(on)}
                       >
                         <ToolIcon size={20} weight={on ? 'fill' : 'regular'} aria-hidden />
                       </button>

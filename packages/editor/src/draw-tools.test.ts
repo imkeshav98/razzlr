@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clickedBox, drawnBox, newImage, newShape } from './draw-tools.ts'
+import { clickedBox, drawnBox, newImage, newShape, withImage } from './draw-tools.ts'
 
 describe('drawing a shape (#44)', () => {
   it('spans the drag in any direction, square with Shift, out from the centre with Alt', () => {
@@ -48,5 +48,17 @@ describe('placing an image from the asset library (#52)', () => {
     expect(newImage({ ...photo, name: ' ', width: 40, height: 30 }, { x: 100, y: 100 }, { width: 1080, height: 1080 })).toMatchObject({
       name: 'Image', props: { x: 80, y: 85, width: 40, height: 30 },
     })
+  })
+})
+
+describe('withImage', () => {
+  const pink = { type: 'solid' as const, color: '#FF2E7EFF' }
+  it('puts an image on top of fills that have none', () => {
+    expect(withImage([pink], 'a1')).toEqual([pink, { type: 'image', assetId: 'a1', fit: 'fill', opacity: 1 }])
+  })
+  it('swaps the topmost image, keeping its fit, opacity, adjustments and filter but not its crop', () => {
+    const old = { type: 'image' as const, assetId: 'a1', fit: 'crop' as const, opacity: 0.5, crop: { x: 1, y: 2, width: 3, height: 4 }, filter: 'mono' as const }
+    const under = { type: 'image' as const, assetId: 'a0', fit: 'fill' as const, opacity: 1 }
+    expect(withImage([under, pink, old], 'a2')).toEqual([under, pink, { type: 'image', assetId: 'a2', fit: 'crop', opacity: 0.5, filter: 'mono' }])
   })
 })

@@ -12,6 +12,7 @@ import { useRef, useState, type KeyboardEvent } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
+import { DOCK_BUTTON, DOCK_OFF, DOCK_ON, POPOVER } from './styles.ts'
 
 export const SHAPES: { id: ShapeTool; icon: Icon; key?: string }[] = [
   { id: 'rect', icon: RectangleIcon, key: 'R' },
@@ -22,7 +23,6 @@ export const SHAPES: { id: ShapeTool; icon: Icon; key?: string }[] = [
   { id: 'arrow', icon: ArrowUpRightIcon, key: 'Shift+L' },
 ]
 
-const DOCK_BUTTON = 'grid h-10 cursor-pointer place-items-center rounded-[12px] transition-colors duration-[var(--chrome-fast)] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent'
 
 export function ShapeTools({ active, shape, onPick }: { active: boolean; shape: ShapeTool; onPick: (shape: ShapeTool) => void }) {
   const t = useMessages()
@@ -41,7 +41,7 @@ export function ShapeTools({ active, shape, onPick }: { active: boolean; shape: 
   }
 
   return (
-    <div role="group" aria-label={t.editor.shapes.menu} className={cn('flex items-center rounded-[12px] transition-colors duration-[var(--chrome-fast)]', active && 'bg-accent-solid text-on-accent')}>
+    <div role="group" aria-label={t.editor.shapes.menu} className={cn('flex items-center rounded-[12px] transition-colors duration-[var(--chrome-fast)]', active && DOCK_ON)}>
       <Tooltip label={current.key ? `${label} · ${current.key}` : label}>
         <button
           type="button"
@@ -50,7 +50,7 @@ export function ShapeTools({ active, shape, onPick }: { active: boolean; shape: 
           data-tool="shape"
           data-shape={current.id}
           onClick={() => onPick(current.id)}
-          className={cn(DOCK_BUTTON, 'w-9 ps-0.5', active ? 'text-on-accent' : 'text-muted hover:bg-hover hover:text-text')}
+          className={cn(DOCK_BUTTON, 'w-9 ps-0.5', active ? 'text-on-accent' : DOCK_OFF)}
         >
           <current.icon size={20} weight={active ? 'fill' : 'regular'} aria-hidden />
         </button>
@@ -82,7 +82,7 @@ export function ShapeTools({ active, shape, onPick }: { active: boolean; shape: 
               e.stopPropagation()
               move(e)
             }}
-            className="pop-in z-50 w-52 rounded-card surface-frost p-1"
+            className={cn(POPOVER, 'w-52 p-1')}
           >
             <div role="menu" aria-label={t.editor.shapes.menu}>
               {SHAPES.map(({ id, icon: ShapeIcon, key }, i) => (

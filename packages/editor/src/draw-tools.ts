@@ -1,5 +1,6 @@
 // Drawing shapes with a drag (#44): what each shape tool makes, and the box a drag gives it. Kept
 // free of the editor so the geometry can be tested on its own. Points are a page's design pixels.
+import type { Paint } from '@dazbee/schema'
 import { normalAngle, round } from './transform.ts'
 import type { Point } from './hit-test.ts'
 
@@ -103,6 +104,22 @@ export function newText(x: number, y: number, box: { x: number; y: number; width
       ? { ...box, text: '', boxMode: 'fixed', style: NEW_TEXT_STYLE }
       : { x, y, width: 0, height: 0, text: '', boxMode: 'autoWidth', style: NEW_TEXT_STYLE },
   }
+}
+
+/**
+ * A layer's fills with an image put in: in place of its topmost image fill, keeping that fill's fit,
+ * opacity, adjustments and filter but not its crop, which belonged to the old picture; or on top
+ * of its fills when it has none.
+ */
+export function withImage(fills: readonly Paint[], assetId: string): Paint[] {
+  const at = fills.findLastIndex((f) => f.type === 'image')
+  if (at < 0) return [...fills, { type: 'image', assetId, fit: 'fill', opacity: 1 }]
+  return fills.map((f, i) => {
+    if (i !== at || f.type !== 'image') return f
+    const swapped = { ...f, assetId }
+    delete swapped.crop
+    return swapped
+  })
 }
 
 /** The most of a frame's width or height an image placed from the asset library takes at first (#52). */

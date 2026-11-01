@@ -21,7 +21,7 @@ import { hitTest, type Point } from './hit-test.ts'
 import { align, distribute, type Alignment, type Distribution, type Offset } from './arrange.ts'
 import { coverCrop, cornersOfRect, cropOf, imageRect, panned, scaled } from './crop.ts'
 import { exportClient } from './export-client.ts'
-import { clickedBox, drawnBox, imageIn, isDrawTool, newDrawn, newImage, newText, type DrawTool, type ShapeTool } from './draw-tools.ts'
+import { clickedBox, drawnBox, imageIn, isDrawTool, newDrawn, newImage, newText, withImage, type DrawTool, type ShapeTool } from './draw-tools.ts'
 import {
   anchorOf, constrain, deleteAnchors, formatPath, hitPath, isSmooth, moveAnchors, moveControl, offsetPath, parsePath, pathBounds, sameRef, segmentsOf, splitSegment,
   type Anchor, type AnchorRef, type PenPath, type Side,
@@ -134,6 +134,22 @@ function runQuietly(run: () => unknown) {
   }
 }
 
+
+/**
+ * Whether two fill lists have the same topmost solid fill: the one a brand colour binding colours,
+ * so a change that leaves it be (an image added or swapped) keeps the binding.
+ */
+function sameTopSolid(a: unknown, b: unknown) {
+  const top = (fills: unknown) => (Array.isArray(fills) ? (fills as Paint[]).findLast((f) => f.type === 'solid') : undefined)
+  return JSON.stringify(top(a)) === JSON.stringify(top(b))
+}
+
+/** The page a layer is on. */
+function pageOf(design: Design, id: string) {
+  let up = id
+  while (design.nodes[up]) up = design.nodes[up]?.parentId ?? ''
+  return up
+}
 
 async function bytes(url: string) {
   const res = await fetch(url)
@@ -779,6 +795,10 @@ function live(
     const hoverFrame = hover && frameOf(hover.frame)
     const hoverBox = hoverFrame && hover && drawnBoxOf(hoverFrame, hover.id, design)
     if (hoverFrame && hoverBox) parts.push(outline('hover', hoverFrame, hoverBox))
+    // The layer an image dragged over the stage would go into.
+    const dropFrame = dropTarget && frameOf(dropTarget.frame)
+    const dropBox = dropFrame && dropTarget && drawnBoxOf(dropFrame, dropTarget.id, design)
+    if (dropFrame && dropBox) parts.push(outline('drop-target', dropFrame, dropBox))
     parts.push(...(pathEditing || cropping ? [] : selectionParts()), ...pathParts(), ...cropParts())
     if (gesture?.kind === 'textBox' || gesture?.kind === 'imageBox') {
       // The box the text tool (#47) or the image tool is drawing, drawn as a marquee is.
@@ -1511,6 +1531,26 @@ function live(
     gesture = { kind: 'move', frame, around, from: localTo(at.p, around), roots: ids, boxes: startBoxes(frame, ids), targets: targetsFor(frame, ids, around), end: session.beginGesture() }
     drawOverlay()
   }, on)
+
+  /** The layer an image dragged over the stage would be put into, outlined while it is over it. */
+  let dropTarget: Picked | null = null
+  /**
+   * The layer under a point, in client coordinates, that an image dropped there goes into as its
+   * fill: a shape, frame or boolean (a shape inside a boolean gives the boolean, whose paint shows),
+   * not a line, and not one whose style is locked. Null over text, a group's gaps or empty space.
+   */
+  function imageTargetAt(client: Point): Picked | null {
+    const rect = canvas.getBoundingClientRect()
+    const world = toWorld(camera, { x: client.x - rect.left, y: client.y - rect.top })
+    const frame = frameAt(grid.frames, world)
+    const hit = frame && hitTest(cached(frame).scene.layers, { x: world.x - frame.x, y: world.y - frame.y }, pickable)
+    if (!frame || !hit) return null
+    let id = hit.id
+    for (let up = design.nodes[id]?.parentId; up && design.nodes[up]; up = design.nodes[up]?.parentId) if (design.nodes[up]?.type === 'boolean') id = up
+    const node = design.nodes[id]
+    const takes = node?.type === 'frame' || node?.type === 'boolean' || (node?.type === 'graphic' && node.props.shape.kind !== 'line')
+    return takes && !node.lock?.style ? { id, frame: frame.key } : null
+  }
 
   /** Where the pointer last was over the stage, so the hover outline follows edits under it. */
   let pointer: MouseEvent | null = null
@@ -2678,7 +2718,7 @@ function live(
           const style = patch.style as { color?: string; fontFamily?: string } | undefined
           const was = at.style as { color?: string; fontFamily?: string } | undefined
           const unbind: BindingTarget[] = [
-            ...(node?.bindings?.fill && 'fills' in patch ? ['fill' as const] : []),
+            ...(node?.bindings?.fill && 'fills' in patch && !sameTopSolid(patch.fills, at.fills) ? ['fill' as const] : []),
             ...(node?.bindings?.textColor && style && style.color !== was?.color ? ['textColor' as const] : []),
             ...(node?.bindings?.fontFamily && style && style.fontFamily !== was?.fontFamily ? ['fontFamily' as const] : []),
           ]
@@ -2895,6 +2935,46 @@ function live(
       setTool('select')
       select([id], frame.key)
       return id
+    },
+    /**
+     * Outlines the layer an image dragged over the stage at `client` would go into, or clears the
+     * outline with null. Returns that layer's id, or null where a drop makes a new layer.
+     */
+    imageTarget(client: Point | null): string | null {
+      const next = client ? imageTargetAt(client) : null
+      if (next?.id !== dropTarget?.id || next?.frame !== dropTarget?.frame) {
+        dropTarget = next
+        drawOverlay()
+      }
+      return next?.id ?? null
+    },
+    /**
+     * Puts an image into a layer as its fill, in every format, as one undo step: in place of its
+     * topmost image fill (keeping its fit, adjustments and filter, the crop reset), or on top of its
+     * fills when it has none. A format with fills of its own gets the image in them too, keeping its
+     * colours; a fill bound to a brand colour stays bound. The layer is selected. False when it
+     * can't take one, such as a layer whose style is locked.
+     */
+    fillWithImage(id: string, asset: PlacedAsset): boolean {
+      const now = session.design()
+      const node = now.nodes[id]
+      if (!node || !('fills' in node.props) || node.lock?.style) return false
+      const fills = node.props.fills as Paint[]
+      const page = pageOf(now, id)
+      const near = [dropTarget?.id === id ? dropTarget.frame : undefined, selection?.frame].map(frameOf).find((f) => f?.pageId === page)
+      const frame = near ?? frameOf(`${page}/${now.meta.primaryFormatId}`)
+      dropTarget = null
+      stopEditing()
+      const ok = runQuietly(() => session.gesture(() => {
+        session.run('node.update', { ids: [id], patch: { fills: withImage(fills, asset.id) } })
+        for (const [scope, byNode] of Object.entries(now.overrides)) {
+          const own = byNode[id]?.fills as Paint[] | undefined
+          if (own) session.run('node.update', { ids: [id], scope: scope as `format:${string}`, patch: { fills: withImage(own, asset.id) } })
+        }
+      }))
+      if (ok && frame) select([id], frame.key)
+      drawOverlay()
+      return ok
     },
     synced: () => provider.synced && provider.unsyncedChanges === 0,
     destroy() {
