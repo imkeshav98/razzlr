@@ -11,7 +11,7 @@ import { KindCards } from '../../components/kind-cards.tsx'
 import { TopBar } from '../../components/library-shell.tsx'
 import { buttonStyles } from '../../components/ui/button.tsx'
 import { cn } from '../../lib/cn.ts'
-import { createBrand, getWorkspace, setWorkspaceKind } from '../../lib/api.ts'
+import { createBrand, getWorkspace, updateWorkspace } from '../../lib/api.ts'
 import { nameFromWebsite } from '../../lib/home.ts'
 import { format } from '../../lib/i18n/index.ts'
 import { getMessages } from '../../lib/i18n/server.ts'
@@ -47,7 +47,7 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
     'use server'
     const kind = WorkspaceKind.safeParse(form.get('kind'))
     if (!kind.success) redirect('/welcome')
-    await setWorkspaceKind(kind.data)
+    await updateWorkspace({ kind: kind.data })
     redirect('/welcome?step=brand')
   }
 
