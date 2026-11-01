@@ -5,7 +5,7 @@
 // mixed; setting it gives them all the same one, and scrubbing or the arrow keys move each from its
 // own. With more than one format the changes go to every format or to this one only. Each change
 // is one undo step, and a scrub, however long, is one too.
-import { MinusIcon, PlusIcon } from '@phosphor-icons/react'
+import { MinusIcon, PlusIcon, XIcon } from '@phosphor-icons/react'
 import type { Editor } from '@razzlr/editor'
 import { BlendMode, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@razzlr/schema'
 import { useId, useRef, useState, type ReactNode } from 'react'
@@ -950,8 +950,60 @@ function FlowCard({ target, p, inFlow }: { target: Target; p: P; inFlow: boolean
   )
 }
 
+type OwnGroup = keyof P['ownGroups']
+/** Which card's words name a property a format can have of its own. */
+const OWN_GROUP: Record<string, OwnGroup> = {
+  x: 'layout', y: 'layout', width: 'layout', height: 'layout', rotation: 'layout', sizing: 'layout', absolute: 'layout',
+  opacity: 'appearance', blendMode: 'appearance', visible: 'appearance',
+  fills: 'fill', strokes: 'stroke', effects: 'effects', shape: 'shape',
+  text: 'text', runs: 'text', style: 'text', align: 'text', verticalAlign: 'text', direction: 'text', boxMode: 'text', list: 'text', paragraphSpacing: 'text', maxLines: 'text', shrinkToFit: 'text',
+  layout: 'autoLayout',
+}
+
+/**
+ * What the format shown has of its own for the selected layers (#157), grouped as the cards are;
+ * each group, or all of them, goes back to following the other formats in one undo step.
+ */
+function OwnChanges({ design, ids, formatId, editor, p }: { design: Design; ids: string[]; formatId: string; editor: Editor; p: P }) {
+  const scope = `format:${formatId}` as const
+  const byNode = design.overrides[scope] ?? {}
+  const paths = [...new Set(ids.flatMap((id) => Object.keys(byNode[id] ?? {})))]
+  if (paths.length === 0) return null
+  const groups = new Map<OwnGroup, string[]>()
+  for (const path of paths) {
+    const group = OWN_GROUP[path] ?? 'other'
+    groups.set(group, [...groups.get(group) ?? [], path])
+  }
+  const reset = (only?: string[]) => editor.session.run('override.reset', { ids, scope, ...(only ? { paths: only } : {}) })
+  const name = design.formats[formatId]?.name ?? ''
+  return (
+    <div data-testid="own-changes" className="flex flex-col gap-1.5 px-1.5 pt-2">
+      <div className="flex items-center justify-between gap-2 text-[11px] text-subtle">
+        <span className="min-w-0 truncate">{format(p.ownChanges, { format: name })}</span>
+        <button type="button" onClick={() => reset()} className="shrink-0 cursor-pointer font-semibold text-accent-text hover:underline">{p.resetAll}</button>
+      </div>
+      <ul className="flex flex-wrap gap-1">
+        {[...groups].map(([group, groupPaths]) => (
+          <li key={group}>
+            <button
+              type="button"
+              onClick={() => reset(groupPaths)}
+              aria-label={format(p.resetOwn, { name: p.ownGroups[group] })}
+              title={format(p.resetOwn, { name: p.ownGroups[group] })}
+              className="group flex h-6 cursor-pointer items-center gap-1 rounded-full border border-accent/50 bg-accent-soft px-2 text-[11px] font-medium text-accent-text hover:border-accent"
+            >
+              {p.ownGroups[group]}
+              <XIcon size={10} weight="bold" aria-hidden className="opacity-70 group-hover:opacity-100" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 /** Where changes go when a design has more than one format: the one shown (as a canvas drag does), or every format. */
-function ScopeSwitch({ everyFormat, onChange, p }: { everyFormat: boolean; onChange: (every: boolean) => void; p: P }) {
+function ScopeSwitch({ everyFormat, onChange, p, children }: { everyFormat: boolean; onChange: (every: boolean) => void; p: P; children?: ReactNode }) {
   return (
     <section aria-label={p.applyTo} className={cn(CARD, 'p-1.5')} data-testid="scope-card">
       <div role="radiogroup" aria-label={p.applyTo} className="grid grid-cols-2 gap-1">
@@ -969,6 +1021,7 @@ function ScopeSwitch({ everyFormat, onChange, p }: { everyFormat: boolean; onCha
         ))}
       </div>
       {everyFormat && <p className="px-1.5 pt-1.5 text-[11px] leading-snug text-subtle">{p.everyFormatHint}</p>}
+      {children}
     </section>
   )
 }
@@ -1014,7 +1067,11 @@ export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Edit
   return (
     <>
       {several && arrange}
-      {Object.keys(design.formats).length > 1 && <ScopeSwitch everyFormat={everyFormat} onChange={setEveryFormat} p={p} />}
+      {Object.keys(design.formats).length > 1 && (
+        <ScopeSwitch everyFormat={everyFormat} onChange={setEveryFormat} p={p}>
+          <OwnChanges design={design} ids={live} formatId={formatId} editor={editor} p={p} />
+        </ScopeSwitch>
+      )}
       {all('text') && <TextCard target={target} p={p} />}
       {all('text') && <ParagraphCard target={target} p={p} />}
       {ownShape && <ShapeCard target={target} p={p} kind={ownShape} />}
