@@ -214,10 +214,12 @@ export function EditorShell({ brandId, brandName, designName, status, tool: show
         <div className="h-dvh overflow-hidden bg-bg text-text">
           <div className="relative flex h-full min-h-0">
           {/* No top bar (#110): two islands float over the canvas, the design's name and save state at
-              the start and Share and the account at the end, with no surface of their own, clear of the rulers
-              when they are on (top and left in either direction, so the insets swap in right-to-left). */}
+              the start and Share and the account at the end, clear of the rulers when they are on (top and
+              left in either direction, so the insets swap in right-to-left). The start island sits on a
+              small frosted pill, so its words read over an ad zoomed in under it; the end island's
+              buttons are solid and need none. */}
           <header className="pointer-events-none absolute start-6 end-4 rtl:start-4 rtl:end-6 top-6 z-30 flex items-center justify-between gap-3">
-            <div ref={startIsland} data-testid="island-start" className="pointer-events-auto flex min-w-0 items-center gap-2">
+            <div ref={startIsland} data-testid="island-start" className="pointer-events-auto flex min-w-0 items-center gap-2 rounded-full border surface-frost py-0.5 ps-0.5 pe-3 shadow-panel">
               <Link href="/" aria-label={t.library.home} className="grid size-9 shrink-0 place-items-center rounded-row hover:bg-hover">
                 <BrandMark size={28} />
               </Link>
