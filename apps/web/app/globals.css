@@ -253,7 +253,7 @@ body {
     border-radius: 22px;
     background-color: var(--glass);
     background-image: var(--grain);
-    backdrop-filter: blur(18px) saturate(1.4) var(--glass-tone,);
+    backdrop-filter: blur(18px) saturate(1.4);
     box-shadow: var(--shadow);
   }
   .editor-cards::before {
