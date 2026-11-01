@@ -12,7 +12,6 @@ import type { BrandSummary, WorkspaceSummary } from '@dazbee/schema'
 import { initialsOf } from '../lib/initials.ts'
 import { AccountMenu } from './account-menu.tsx'
 import { BrandMark } from './brand-mark.tsx'
-import { homePanelHref } from '../lib/home-panel.ts'
 import { LibraryCapsule } from './library-capsule.tsx'
 import { NewBrandRow } from './new-brand-row.tsx'
 import { addBrand } from '../app/actions.ts'
@@ -32,7 +31,7 @@ export function BrandAvatar({ name, active = false }: { name: string; active?: b
 }
 
 /** Where the capsule and the crumb say you are. */
-export type LibraryPlace = 'home' | 'brands' | 'settings'
+export type LibraryPlace = 'home' | 'brands' | 'settings' | 'designs' | 'templates' | 'kit'
 
 /**
  * The crumb's first part: the brand you are in, or the word for them all, with a menu of the
@@ -118,12 +117,13 @@ export async function LibraryShell({ t, words, workspace, brands, activeBrandId,
   place?: LibraryPlace
   /** The slow aurora behind the top of the page, as on a brand's home. */
   glow?: boolean
-  /** How many designs the brand has, on the capsule's Recent; given on the brand's home, which opens Recent in place. */
+  /** How many designs the brand has, on the capsule's Recent. */
   recentCount?: number
   children: ReactNode
 }) {
   const active = brands.find((brand) => brand.id === activeBrandId)
-  const placeName = { home: t.library.home, brands: words.title, settings: t.library.settings }[place]
+  const placeName = { home: t.library.home, brands: words.title, settings: t.library.settings, designs: t.home.recent, templates: t.library.templates, kit: t.home.brandKit }[place]
+  const brandHome = active ? `/brands/${active.id}` : null
   return (
     <div className="relative isolate min-h-dvh overflow-x-clip bg-bg">
       {glow && (
@@ -134,15 +134,14 @@ export async function LibraryShell({ t, words, workspace, brands, activeBrandId,
 
       <LibraryCapsule
         label={t.app.name}
-        current={place === 'settings' ? 'settings' : 'home'}
-        home={active && recentCount !== undefined ? `/brands/${active.id}` : undefined}
+        current={place === 'designs' ? 'recent' : place === 'templates' || place === 'kit' || place === 'settings' ? place : 'home'}
         links={[
-          { entry: 'home', href: active ? `/brands/${active.id}` : '/', label: active ? t.library.home : words.title },
-          ...(active
+          { entry: 'home', href: brandHome ?? '/', label: active ? t.library.home : words.title },
+          ...(brandHome
             ? [
-              { entry: 'recent' as const, href: homePanelHref(`/brands/${active.id}`, 'recent'), label: t.home.recent, badge: recentCount },
-              { entry: 'templates' as const, href: homePanelHref(`/brands/${active.id}`, 'templates'), label: t.library.templates },
-              { entry: 'kit' as const, href: homePanelHref(`/brands/${active.id}`, 'kit'), label: t.home.brandKit },
+              { entry: 'recent' as const, href: `${brandHome}/designs`, label: t.home.recent, badge: recentCount },
+              { entry: 'templates' as const, href: `${brandHome}/templates`, label: t.library.templates },
+              { entry: 'kit' as const, href: `${brandHome}/kit`, label: t.home.brandKit },
             ]
             : []),
           { entry: 'settings', href: '/settings', label: t.library.settings },

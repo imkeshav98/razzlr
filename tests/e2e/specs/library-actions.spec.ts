@@ -22,8 +22,8 @@ test('a design tile renames, duplicates and deletes its design', async ({ page }
   const run = crypto.randomUUID().slice(0, 6)
   const id = await seed(content(`Summer ${run}`))
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto(`/brands/${DEV_BRAND}?show=recent`)
-  const tile = page.getByTestId('bento-tile').filter({ hasText: `Summer ${run}` })
+  await page.goto(`/brands/${DEV_BRAND}/designs`)
+  const tile = page.getByTestId('design-tile').filter({ hasText: `Summer ${run}` })
   await tile.hover()
   await tile.getByRole('button', { name: `More for Summer ${run}` }).click()
   await expect(tile.getByRole('menuitem')).toHaveText(['Rename', 'Duplicate', 'Delete'])
@@ -39,7 +39,7 @@ test('a design tile renames, duplicates and deletes its design', async ({ page }
   await renamed.hover()
   await renamed.getByRole('button', { name: `More for Autumn ${run}` }).click()
   await renamed.getByRole('menuitem', { name: 'Duplicate' }).click()
-  await expect(page.getByTestId('bento-tile').filter({ hasText: `Autumn ${run} copy` })).toBeVisible()
+  await expect(page.getByTestId('design-tile').filter({ hasText: `Autumn ${run} copy` })).toBeVisible()
 
   // Delete asks first; Cancel keeps it, Delete takes it.
   await renamed.hover()
@@ -65,7 +65,7 @@ test('a template tile renames and deletes its template', async ({ page }) => {
   expect(saved.status).toBe(201)
   const template = TemplateSummary.parse(await saved.json())
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto(`/brands/${DEV_BRAND}?show=templates`)
+  await page.goto(`/brands/${DEV_BRAND}/templates`)
   const tile = page.locator(`[data-template="${template.id}"]`)
   await tile.hover()
   await tile.getByRole('button', { name: `More for Offer ${run}` }).click()
