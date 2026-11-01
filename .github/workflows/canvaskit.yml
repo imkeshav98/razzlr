@@ -2,7 +2,9 @@ name: CanvasKit
 
 # Builds our CanvasKit (packages/canvaskit) when its recipe changes and publishes it as a GitHub
 # release named after the recipe hash. CI and every install fetch that release by checksum
-# (packages/canvaskit/release.json), so only a recipe change ever rebuilds.
+# (packages/canvaskit/release.json), so only a recipe change ever rebuilds. A pull request's
+# builds are published so its own CI can fetch them; canvaskit-prune.yml deletes the ones main
+# doesn't use when it closes.
 on:
   pull_request:
     paths: [packages/canvaskit/build/**, .github/workflows/canvaskit.yml]
@@ -50,7 +52,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "${{ github.event.pull_request.head.sha || github.sha }}" \
             --title "CanvasKit ${{ steps.recipe.outputs.hash }}" \
-            --notes "CanvasKit from Skia $(cat packages/canvaskit/build/skia-commit) with the PDF and SVG backends, built from packages/canvaskit/build at recipe ${{ steps.recipe.outputs.hash }}."
+            --notes "CanvasKit from Skia $(cat packages/canvaskit/build/skia-commit) with the PDF and SVG backends, built from packages/canvaskit/build at recipe ${{ steps.recipe.outputs.hash }}${{ github.event.pull_request.number && format(' for pull request #{0}', github.event.pull_request.number) || '' }}."
       - run: |
           node -e '
             const { createHash } = require("node:crypto")

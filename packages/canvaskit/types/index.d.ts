@@ -1,6 +1,6 @@
 // CanvasKit's own types (canvaskit.d.ts, from npm's canvaskit-wasm 0.42.0, the same Skia commit)
-// plus the PDF and SVG documents our build adds (build/vector_bindings.cpp).
-import type { Canvas, CanvasKit as BaseCanvasKit, CanvasKitInitOptions, EmbindObject } from './canvaskit'
+// plus the PDF and SVG documents and text as shapes that our build adds (build/vector_bindings.cpp).
+import type { Canvas, CanvasKit as BaseCanvasKit, CanvasKitInitOptions, EmbindObject, SkPicture } from './canvaskit'
 
 export * from './canvaskit'
 
@@ -38,6 +38,8 @@ export interface CanvasKit extends BaseCanvasKit {
   readonly PDFDocument: new (options: PDFOptions) => PDFDocument
   /** An SVG of the size given, with `SVG_*` flags or 0. */
   readonly SVGDocument: new (width: number, height: number, flags: number) => SVGDocument
+  /** Plays a picture onto a canvas with its text drawn as the glyphs' outlines, in the text's own paint. */
+  DrawTextAsPaths(canvas: Canvas, picture: SkPicture): void
   readonly SVG_CONVERT_TEXT_TO_PATHS: number
   readonly SVG_NO_PRETTY_XML: number
   readonly SVG_RELATIVE_PATH_ENCODING: number

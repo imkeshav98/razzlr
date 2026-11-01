@@ -1,11 +1,16 @@
 /*
  * Bindings for Skia's PDF and SVG backends, which npm's CanvasKit leaves out. Each document hands out
  * an ordinary CanvasKit Canvas, so the same drawing code that draws on a surface draws into the file.
+ * DrawTextAsPaths draws a picture's text as shapes, for text a PDF must not hold twice.
  */
 
 #include "include/core/SkCanvas.h"
 #include "include/core/SkData.h"
 #include "include/core/SkDocument.h"
+#include "include/core/SkFont.h"
+#include "include/core/SkPath.h"
+#include "include/core/SkPathBuilder.h"
+#include "include/core/SkPicture.h"
 #include "include/core/SkPixmap.h"
 #include "include/core/SkRect.h"
 #include "include/core/SkRefCnt.h"
@@ -15,12 +20,16 @@
 #include "include/docs/SkPDFJpegHelpers.h"
 #include "include/encode/SkPngEncoder.h"
 #include "include/svg/SkSVGCanvas.h"
+#include "include/utils/SkNWayCanvas.h"
+#include "src/core/SkTextBlobPriv.h"
 
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
 #include <memory>
+#include <optional>
 #include <string>
+#include <vector>
 
 using namespace emscripten;
 
@@ -109,6 +118,63 @@ private:
     std::unique_ptr<SkCanvas> fCanvas;
 };
 
+// Passes every draw on to its target canvas, except text, which it draws as the glyphs' outlines
+// with the text's own paint, so a stroked paint strokes them.
+class TextAsPathsCanvas final : public SkNWayCanvas {
+public:
+    explicit TextAsPathsCanvas(SkCanvas* target) : SkNWayCanvas(kReach, kReach) {
+        this->addCanvas(target);
+    }
+
+protected:
+    void onDrawTextBlob(const SkTextBlob* blob, SkScalar x, SkScalar y, const SkPaint& paint) override {
+        SkPathBuilder outlines;
+        for (SkTextBlobRunIterator run(blob); !run.done(); run.next()) {
+            const SkFont& font = run.font();
+            const size_t count = run.glyphCount();
+            const SkPoint origin = run.offset() + SkPoint::Make(x, y);
+            std::vector<SkPoint> at(count);
+            switch (run.positioning()) {
+                case SkTextBlobRunIterator::kDefault_Positioning:
+                    font.getPos({run.glyphs(), count}, at, origin);
+                    break;
+                case SkTextBlobRunIterator::kHorizontal_Positioning:
+                    for (size_t i = 0; i < count; ++i) {
+                        at[i] = SkPoint::Make(origin.x() + run.pos()[i], origin.y());
+                    }
+                    break;
+                case SkTextBlobRunIterator::kFull_Positioning:
+                    for (size_t i = 0; i < count; ++i) {
+                        at[i] = origin + run.points()[i];
+                    }
+                    break;
+                default:
+                    // Turned glyphs stay text; our text never turns them.
+                    this->SkNWayCanvas::onDrawTextBlob(blob, x, y, paint);
+                    return;
+            }
+            for (size_t i = 0; i < count; ++i) {
+                if (std::optional<SkPath> glyph = font.getPath(run.glyphs()[i])) {
+                    outlines.addPath(*glyph, at[i].x(), at[i].y());
+                }
+            }
+        }
+        this->drawPath(outlines.detach(), paint);
+    }
+
+private:
+    // Wide enough that nothing drawn is ever cut by this canvas's own bounds.
+    static constexpr int kReach = 1 << 20;
+};
+
+void drawTextAsPaths(SkCanvas* target, sk_sp<SkPicture> picture) {
+    if (!target || !picture) {
+        return;
+    }
+    TextAsPathsCanvas canvas(target);
+    picture->playback(&canvas);
+}
+
 }  // namespace
 
 EMSCRIPTEN_BINDINGS(VectorDocuments) {
@@ -131,6 +197,8 @@ EMSCRIPTEN_BINDINGS(VectorDocuments) {
             .constructor<float, float, uint32_t>()
             .function("canvas", &SVGDocument::canvas, allow_raw_pointers())
             .function("close", &SVGDocument::close);
+
+    function("DrawTextAsPaths", &drawTextAsPaths, allow_raw_pointers());
 
     constant("SVG_CONVERT_TEXT_TO_PATHS", static_cast<uint32_t>(SkSVGCanvas::kConvertTextToPaths_Flag));
     constant("SVG_NO_PRETTY_XML", static_cast<uint32_t>(SkSVGCanvas::kNoPrettyXML_Flag));

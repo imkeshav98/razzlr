@@ -3,6 +3,7 @@
 import { exportDesign } from '@razzlr/export'
 import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
 import { drawDesign, renderDesign, type ResourceBytes } from '@razzlr/renderer'
+import type { ExportType } from '@razzlr/schema'
 import type { Surface } from '@razzlr/canvaskit'
 import canvasKitModule from '@razzlr/canvaskit'
 
@@ -67,8 +68,8 @@ async function renderFixture(json: unknown, pageId: string, formatId: string, su
   return { width, height, pixels: toBase64(pixels) }
 }
 
-/** One page in one format exported as PNG or JPG, the file's bytes as base64 (#55). */
-async function exportFixture(json: unknown, pageId: string, formatId: string, type: 'png' | 'jpg', assetIds: string[]) {
+/** One page in one format exported as PNG, JPG, PDF or SVG, the file's bytes as base64 (#55, #56). */
+async function exportFixture(json: unknown, pageId: string, formatId: string, type: ExportType, assetIds: string[]) {
   const file = exportDesign(ck, json, { pageIds: [pageId], formatIds: [formatId], type, quality: 85 }, await resourcesFor(assetIds))
   return toBase64(file.bytes)
 }

@@ -18,6 +18,8 @@ export interface Resources {
   paragraphs?: ParagraphCache
   /** Top-level layers recorded between draws, for the editor's screen; without it each draw draws every layer. */
   layers?: LayerPictures
+  /** Set when drawing into a PDF or SVG: a text's outline pass is drawn as shapes, so the file holds the text once. */
+  vector?: boolean
 }
 
 /** A text layer laid out, from the paragraph cache when there is one; `done` frees what the cache doesn't own. */
@@ -27,7 +29,7 @@ function laidOut(ck: CanvasKit, props: TextLayer['props'], resources: Resources)
   return { ...laid, done: () => laid.delete() }
 }
 
-type Box = { x: number; y: number; width: number; height: number }
+export type Box = { x: number; y: number; width: number; height: number }
 type TextLayer = Extract<SceneLayer, { type: 'text' }>
 type GraphicLayer = Extract<SceneLayer, { type: 'graphic' }>
 type BooleanLayer = Extract<SceneLayer, { type: 'boolean' }>
@@ -74,7 +76,7 @@ function drawPageContent(ck: CanvasKit, canvas: Canvas, scene: Scene, resources:
  * Draws one parent's layers in order. A mask isn't drawn (#48): the layers after it, up to the next
  * mask, are drawn together, then kept only where the mask is opaque or, for a luminance mask, bright.
  */
-function drawLayers(ck: CanvasKit, canvas: Canvas, layers: readonly SceneLayer[], resources: Resources, draw = (layer: SceneLayer) => drawLayer(ck, canvas, layer, resources)) {
+export function drawLayers(ck: CanvasKit, canvas: Canvas, layers: readonly SceneLayer[], resources: Resources, draw = (layer: SceneLayer) => drawLayer(ck, canvas, layer, resources)) {
   for (let i = 0; i < layers.length; i++) {
     const mask = layers[i] as SceneLayer
     if (!mask.props.mask) {
@@ -109,7 +111,7 @@ function drawLayers(ck: CanvasKit, canvas: Canvas, layers: readonly SceneLayer[]
   }
 }
 
-function drawLayer(ck: CanvasKit, canvas: Canvas, layer: SceneLayer, resources: Resources) {
+export function drawLayer(ck: CanvasKit, canvas: Canvas, layer: SceneLayer, resources: Resources) {
   const { props } = layer
   canvas.save()
   if (props.rotation !== 0) canvas.rotate(props.rotation, props.x + props.width / 2, props.y + props.height / 2)
@@ -261,6 +263,11 @@ function innerShadow(ck: CanvasKit, effect: Extract<Effect, { type: 'innerShadow
   return inside
 }
 
+/** Everything a layer draws, shadows and blur included, in its parent's coordinates. */
+export function layerReach(ck: CanvasKit, layer: SceneLayer, resources: Resources): Box {
+  return rotated(withEffects(drawnBounds(ck, layer, resources), layer.props.effects), layer.props, layer.props.rotation)
+}
+
 /** A Gaussian blur's visible reach, in sigmas. */
 const BLUR_REACH = 3
 
@@ -368,7 +375,7 @@ function withEffects(box: Box, effects: readonly Effect[]): Box {
   return reach
 }
 
-const rectPath = (ck: CanvasKit, box: Box) => new ck.PathBuilder().addRect(ck.XYWHRect(box.x, box.y, box.width, box.height)).detachAndDelete()
+export const rectPath = (ck: CanvasKit, box: Box) => new ck.PathBuilder().addRect(ck.XYWHRect(box.x, box.y, box.width, box.height)).detachAndDelete()
 
 function shapePath(ck: CanvasKit, layer: GraphicLayer): Path {
   const { x, y, width, height, shape } = layer.props
@@ -556,7 +563,7 @@ function drawLine(ck: CanvasKit, canvas: Canvas, box: Box, line: LineShape, stro
   }
 }
 
-function fillPath(ck: CanvasKit, canvas: Canvas, path: Path, fill: Paint, box: Box, resources: Resources) {
+export function fillPath(ck: CanvasKit, canvas: Canvas, path: Path, fill: Paint, box: Box, resources: Resources) {
   const paint = paintFor(ck, fill, box, resources)
   if (!paint) return
   canvas.drawPath(path, paint)
@@ -649,10 +656,22 @@ function drawText(ck: CanvasKit, canvas: Canvas, layer: TextLayer, resources: Re
   const y = layer.props.y + dy
   for (const b of blocks) {
     canvas.drawParagraph(b.paragraph, x + b.x, y + b.y)
-    if (b.outline) canvas.drawParagraph(b.outline, x + b.x, y + b.y)
+    const outline = b.outline
+    if (outline && resources.vector) drawAsShapes(ck, canvas, (into) => into.drawParagraph(outline, x + b.x, y + b.y))
+    else if (outline) canvas.drawParagraph(outline, x + b.x, y + b.y)
     if (b.marker) canvas.drawParagraph(b.marker, x + b.markerX, y + b.y + b.markerY)
   }
   done()
+}
+
+/** Draws text as the glyphs' outlines, so a PDF holds the text once, as the fill pass's text. */
+function drawAsShapes(ck: CanvasKit, canvas: Canvas, draw: (into: Canvas) => void) {
+  const recorder = new ck.PictureRecorder()
+  draw(recorder.beginRecording(EVERYWHERE))
+  const picture = recorder.finishRecordingAsPicture()
+  recorder.delete()
+  ck.DrawTextAsPaths(canvas, picture)
+  picture.delete()
 }
 
 function blendMode(ck: CanvasKit, mode: SceneLayer['props']['blendMode']) {

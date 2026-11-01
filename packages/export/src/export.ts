@@ -1,6 +1,7 @@
-// Exports (#55): one function per image type, drawn on the CPU surface (ADR-0005) by the render
-// seam, so the browser's export worker and Node make the same bytes from the same design.
-import { renderDesign, type ResourceBytes, type ResourceCache } from '@razzlr/renderer'
+// Exports (#55, #56): one function per file type. PNG and JPG are drawn on the CPU surface
+// (ADR-0005) and PDF and SVG on Skia's PDF and SVG canvases, by the render seam, so the browser's
+// export worker and Node make the same bytes from the same design.
+import { renderDesign, renderVector, type ResourceBytes, type ResourceCache } from '@razzlr/renderer'
 import { ExportRequest, parseDesign, type Design, type ExportType } from '@razzlr/schema'
 import type { CanvasKit } from '@razzlr/canvaskit'
 import { zip } from './zip.ts'
@@ -12,7 +13,9 @@ export interface ExportedFile {
   bytes: Uint8Array
 }
 
-const MIME: Record<ExportType | 'zip', string> = { png: 'image/png', jpg: 'image/jpeg', zip: 'application/zip' }
+const MIME: Record<ExportType | 'zip', string> = {
+  png: 'image/png', jpg: 'image/jpeg', pdf: 'application/pdf', svg: 'image/svg+xml', zip: 'application/zip',
+}
 
 /** One page in one format as a PNG, transparency kept. */
 export function exportPng(ck: CanvasKit, design: Design, pageId: string, formatId: string, bytes: ResourceBytes, cache?: ResourceCache): Uint8Array {
@@ -42,6 +45,19 @@ export function exportJpg(
   }
 }
 
+/**
+ * One page in one format as a one-page PDF for print: shapes and text stay vectors, text keeps its
+ * fonts embedded and can be selected, and a page unit is one pixel of the format.
+ */
+export function exportPdf(ck: CanvasKit, design: Design, pageId: string, formatId: string, bytes: ResourceBytes, cache?: ResourceCache): Uint8Array {
+  return renderVector(ck, design, pageId, formatId, bytes, 'pdf', cache, { title: design.meta.name })
+}
+
+/** One page in one format as an SVG, its text drawn as shapes so it looks the same in every app. */
+export function exportSvg(ck: CanvasKit, design: Design, pageId: string, formatId: string, bytes: ResourceBytes, cache?: ResourceCache): Uint8Array {
+  return renderVector(ck, design, pageId, formatId, bytes, 'svg', cache)
+}
+
 /** A name safe on every file system: no path separators or reserved characters, never empty. */
 function safe(part: string) {
   // eslint-disable-next-line no-control-regex
@@ -55,7 +71,7 @@ export function fileName(template: string, values: { design: string; page: strin
 }
 
 /**
- * The request's pages in its formats, each one image, named from the request's template. One
+ * The request's pages in its formats, each one file, named from the request's template. One
  * file comes as itself; more come as one zip with a folder per format. `onFile` hears each file
  * as it is made, so a caller can show progress.
  */
@@ -73,9 +89,12 @@ export function exportDesign(
     const format = design.formats[formatId]
     if (!page) throw new Error(`no page "${pageId}"`)
     if (!format) throw new Error(`no format "${formatId}"`)
-    const image = request.type === 'png'
-      ? exportPng(ck, design, pageId, formatId, bytes, cache)
-      : exportJpg(ck, design, pageId, formatId, bytes, request.quality, cache)
+    const image = {
+      png: () => exportPng(ck, design, pageId, formatId, bytes, cache),
+      jpg: () => exportJpg(ck, design, pageId, formatId, bytes, request.quality, cache),
+      pdf: () => exportPdf(ck, design, pageId, formatId, bytes, cache),
+      svg: () => exportSvg(ck, design, pageId, formatId, bytes, cache),
+    }[request.type]()
     const base = fileName(request.name, { design: design.meta.name, page: page.name, format: format.name })
     const folder = jobs.length > 1 ? `${safe(format.name)}/` : ''
     // Two pages may share a name: the later ones get a number.
