@@ -26,7 +26,7 @@ test('dark and light change only the tokens', async ({ page }) => {
     await shoot(page, `${theme}-designs`)
     await page.goto(editorPath(designId))
     await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
-    await page.getByRole('button', { name: 'AI' }).click()
+    await page.getByRole('button', { name: 'AI', exact: true }).click()
     await expect(page.getByTestId('flyout')).toBeVisible()
     await page.waitForTimeout(300)
     await shoot(page, `${theme}-editor`)
@@ -212,7 +212,7 @@ test('the panels live in a capsule floating over the canvas', async ({ page }) =
   await expect.poll(async () => Math.abs(centre(await page.getByTestId('rail-blob').boundingBox()).y - layers.y)).toBeLessThan(1)
   await shoot(page, 'capsule-layers')
   const { landing, frames: path } = await blobPath(page, 'Brand')
-  const brand = centre(await page.getByRole('button', { name: 'Brand' }).boundingBox())
+  const brand = centre(await page.getByRole('button', { name: 'Brand', exact: true }).boundingBox())
   // A slide, not a jump: once the blob is on Brand, it is drawn back where Layers was and travels
   // from there. (How many steps between a busy machine draws depends on its frame rate.) It lands
   // stretched and settles on Brand.
@@ -221,7 +221,7 @@ test('the panels live in a capsule floating over the canvas', async ({ page }) =
   expect(path.slice(arrived).some((p) => p.y < brand.y - 4)).toBe(true)
   expect(landing).toBeGreaterThan(1.05)
   await expect.poll(async () => Math.abs(centre(await page.getByTestId('rail-blob').boundingBox()).y - brand.y)).toBeLessThan(1)
-  await expect(page.getByRole('button', { name: 'Brand' })).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByRole('button', { name: 'Brand', exact: true })).toHaveAttribute('aria-expanded', 'true')
   await expect(page.getByRole('button', { name: 'Layers', exact: true })).toHaveAttribute('aria-expanded', 'false')
 
   // The flyout opens beside the capsule.
@@ -231,7 +231,7 @@ test('the panels live in a capsule floating over the canvas', async ({ page }) =
 
   // Keyboard: the buttons take focus and toggle their panel with Enter. (Space is the canvas's pan
   // key, which the editor takes before any button does.)
-  const ai = page.getByRole('button', { name: 'AI' })
+  const ai = page.getByRole('button', { name: 'AI', exact: true })
   await ai.focus()
   await page.keyboard.press('Enter')
   await expect(ai).toHaveAttribute('aria-expanded', 'true')
@@ -255,7 +255,7 @@ test('with reduced motion the blob jumps without sliding or squishing', async ({
   await page.getByRole('button', { name: 'Layers', exact: true }).click()
   const layers = centre(await page.getByRole('button', { name: 'Layers', exact: true }).boundingBox())
   const { landing, frames: path } = await blobPath(page, 'Brand')
-  const brand = centre(await page.getByRole('button', { name: 'Brand' }).boundingBox())
+  const brand = centre(await page.getByRole('button', { name: 'Brand', exact: true }).boundingBox())
   expect(landing).toBe(1)
   // Every frame has the blob on Layers (before the click lands) or on Brand, never between.
   expect(Math.abs((path.at(-1)?.y ?? Number.NaN) - brand.y)).toBeLessThan(1)
