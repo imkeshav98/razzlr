@@ -1,11 +1,11 @@
 // Keeps what the editor needs to open without a connection (#37): the editor pages themselves,
 // the app's built scripts and styles, CanvasKit and our fonts, and the images designs use. The
 // design itself lives in IndexedDB (see packages/editor); this only lets the page load to read it.
-const CACHE = 'razzlr-editor-v2'
+const CACHE = 'razzlr-editor-v3'
 
 const EDITOR_PAGE = /^\/brands\/[^/]+\/designs\/[^/]+$/
 const ASSET = /^\/brands\/[^/]+\/assets\/[^/]+$/
-/** Built files carry their content hash in the name, and vendor files are pinned: one copy is enough. */
+/** Built files and CanvasKit's wasm carry their content hash in the name, and fonts are pinned: one copy is enough. */
 const immutable = (path) => path.startsWith('/_next/static/') || path.startsWith('/vendor/')
 /** Pages and images can change: fetch them when we can, and use the kept copy when we can't. */
 const fresh = (path) => EDITOR_PAGE.test(path) || ASSET.test(path)

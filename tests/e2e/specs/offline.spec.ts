@@ -1,5 +1,6 @@
 // Autosave and offline edits (#37): the design is kept in the browser, an edit made offline
 // survives a reload without a connection, and it reaches the other tab once the connection is back.
+import { WASM_FILE } from '@razzlr/canvaskit/wasm'
 import { expect, test, type Page } from '../support/test.ts'
 import { designOf, openTabs, settle, writeOutput } from '../support/editor.ts'
 
@@ -33,7 +34,7 @@ test('an edit made offline survives a reload offline and reaches the other tab w
   const status = a.getByTestId('status')
 
   // The worker keeps the page and what it loaded, so it opens again without a connection.
-  await expect.poll(() => a.evaluate(async () => Boolean(await caches.match(location.href)) && Boolean(await caches.match('/vendor/canvaskit.wasm'))), { timeout: 30_000 }).toBe(true)
+  await expect.poll(() => a.evaluate(async (wasm) => Boolean(await caches.match(location.href)) && Boolean(await caches.match(`/vendor/${wasm}`)), WASM_FILE), { timeout: 30_000 }).toBe(true)
   await expect(status).toHaveAttribute('data-status', 'Saved')
   await expect(status).toHaveText('Saved')
   writeOutput('offline-0-saved.png', await a.screenshot())

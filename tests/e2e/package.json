@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
+    "@razzlr/canvaskit": "workspace:*",
     "@razzlr/config": "workspace:*",
     "@razzlr/doc": "workspace:*",
     "@razzlr/editor": "workspace:*",

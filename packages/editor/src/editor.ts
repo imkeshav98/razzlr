@@ -12,6 +12,7 @@ import {
 } from '@razzlr/schema'
 import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from '@razzlr/canvaskit'
 import canvasKitModule from '@razzlr/canvaskit'
+import { WASM_FILE } from '@razzlr/canvaskit/wasm'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
 import { fit, NO_INSETS, toScreen, toWorld, visibleRect, zoomAt, type Camera, type Insets, type Viewport } from './camera.ts'
@@ -139,7 +140,7 @@ export async function startEditor(options: EditorOptions) {
   const { designId, syncUrl } = options
   const status = options.onStatus ?? (() => {})
   status('Loading renderer')
-  const ck: CanvasKit = await CanvasKitInit({ locateFile: (file: string) => `/vendor/${file}` })
+  const ck: CanvasKit = await CanvasKitInit({ locateFile: (file: string) => `/vendor/${file === 'canvaskit.wasm' ? WASM_FILE : file}` })
   // The fonts we ship, the fallbacks among them, load first; the design's own families once it is here.
   const fontBytes = await Promise.all(FONT_FACES.map(async (f) => ({ family: f.family, bytes: await bytes(`/vendor/fonts/${f.file}`) })))
   const resourceBytes = { fonts: fontBytes, fallbackFamilies: [...FALLBACK_FAMILIES], images: {}, ...(options.variables ? { variables: options.variables } : {}) }
