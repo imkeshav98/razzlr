@@ -47,7 +47,7 @@ function BrandSwitcher({ t, words, brands, active, showAll }: { t: Messages; wor
         <span className="max-w-48 truncate">{active?.name ?? words.title}</span>
         <CaretDownIcon size={12} weight="bold" aria-hidden className="transition-transform group-open:rotate-180" />
       </summary>
-      <nav aria-label={words.title} className="pop-in-start absolute start-0 top-full z-40 mt-2 flex w-64 flex-col gap-0.5 rounded-card border surface-frost p-1.5 shadow-panel">
+      <nav aria-label={words.title} className="pop-in-start absolute start-0 top-full z-40 mt-2 flex w-64 flex-col gap-0.5 rounded-card surface-frost p-1.5">
         {brands.map((brand) => {
           const current = brand.id === active?.id
           return (

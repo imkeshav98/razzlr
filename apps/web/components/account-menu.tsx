@@ -49,7 +49,7 @@ export function AccountMenu({ name, signedIn }: {
         <span aria-hidden>{initialsOf(name)}</span>
       </button>
       {open && (
-        <div id={id} role="dialog" aria-label={t.account.open} data-testid="account" className="pop-in-end absolute end-0 top-full z-40 mt-2 flex w-72 flex-col gap-1 rounded-card border surface-frost p-1.5 shadow-panel">
+        <div id={id} role="dialog" aria-label={t.account.open} data-testid="account" className="pop-in-end absolute end-0 top-full z-40 mt-2 flex w-72 flex-col gap-1 rounded-card surface-frost p-1.5">
           {/* As in the final mock: the avatar beside the workspace's name. */}
           <div className="flex items-center gap-3 px-3 pt-2 pb-1.5">
             <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-[image:var(--ai-gradient)] text-[13px] font-bold text-white">{initialsOf(name)}</span>

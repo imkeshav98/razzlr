@@ -35,7 +35,7 @@ const TOOL = cn(
   'aria-expanded:border-accent aria-expanded:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
 )
 const ROUND = cn(TOOL, 'w-9 justify-center px-0')
-const PANEL = 'pop-in z-40 w-[min(18rem,calc(100vw-2rem))] rounded-card border surface-frost p-1.5 shadow-panel outline-none'
+const PANEL = 'pop-in z-40 w-[min(18rem,calc(100vw-2rem))] rounded-card surface-frost p-1.5 outline-none'
 const ROW = 'flex w-full cursor-pointer items-center gap-3 rounded-row px-2.5 py-2 text-start text-[13px] text-text transition-colors duration-[var(--chrome-fast)] hover:bg-hover focus-visible:bg-hover focus-visible:outline-none'
 const LABEL = 'px-1 pt-3 pb-1.5 text-[10px] font-bold tracking-[0.08em] text-subtle uppercase'
 

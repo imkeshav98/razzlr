@@ -82,7 +82,7 @@ export function ShapeTools({ active, shape, onPick }: { active: boolean; shape: 
               e.stopPropagation()
               move(e)
             }}
-            className="pop-in z-50 w-52 rounded-card surface-frost border p-1 shadow-panel"
+            className="pop-in z-50 w-52 rounded-card surface-frost p-1"
           >
             <div role="menu" aria-label={t.editor.shapes.menu}>
               {SHAPES.map(({ id, icon: ShapeIcon, key }, i) => (

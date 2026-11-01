@@ -67,7 +67,7 @@ export function ShortcutsButton() {
         data-testid="shortcuts"
         // A click on the backdrop, outside the panel, closes it.
         onClick={(e) => e.target === e.currentTarget && e.currentTarget.close()}
-        className="m-auto max-h-[min(80dvh,46rem)] w-[min(92vw,52rem)] overflow-hidden rounded-[20px] border surface-frost p-0 text-text shadow-panel backdrop:bg-black/40 backdrop:backdrop-blur-[2px]"
+        className="m-auto max-h-[min(80dvh,46rem)] w-[min(92vw,52rem)] overflow-hidden rounded-[20px] surface-frost p-0 text-text"
       >
         <div className="flex max-h-[inherit] flex-col">
           <div className="flex h-14 shrink-0 items-center gap-2 ps-6 pe-3">

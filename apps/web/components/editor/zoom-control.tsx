@@ -21,7 +21,7 @@ export function ZoomControl({ zoom, onZoomIn, onZoomOut, onFit }: {
   const percent = useMemo(() => new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }), [locale])
   const off = zoom === null
   return (
-    <div role="group" aria-label={t.editor.zoom} data-zoom className="absolute end-4 bottom-4 z-10 flex max-sm:top-20 max-sm:bottom-auto items-center gap-0.5 rounded-card surface-frost border p-1 shadow-panel">
+    <div role="group" aria-label={t.editor.zoom} data-zoom className="absolute end-4 bottom-4 z-10 flex max-sm:top-20 max-sm:bottom-auto items-center gap-0.5 rounded-card surface-frost p-1">
       <Tooltip label={`${t.editor.zoomOut} · ${t.editor.zoomOutKey}`}>
         <button type="button" aria-label={t.editor.zoomOut} disabled={off} onClick={onZoomOut} className={BUTTON}>
           <MinusIcon size={16} aria-hidden />
