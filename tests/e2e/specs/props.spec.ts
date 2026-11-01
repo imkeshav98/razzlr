@@ -5,6 +5,7 @@ import { expect, test, type Locator, type Page } from '../support/test.ts'
 import type { DesignInput } from '@razzlr/schema'
 import { writeOutput } from '../support/editor.ts'
 import { openStage, unfoldAll } from '../support/stage.ts'
+import { choose } from '../support/select.ts'
 
 test.describe.configure({ timeout: 120_000 })
 
@@ -70,7 +71,7 @@ test('one layer: position, size, turn, opacity, blend, fill, stroke and effects'
   const look = page.getByTestId('appearance-card')
   await enter(look.getByRole('textbox', { name: 'Opacity' }), '50')
   await expect.poll(async () => (await props(page, 'box')).opacity).toBe(0.5)
-  await look.getByRole('combobox', { name: 'Blend mode' }).selectOption('multiply')
+  await choose(look.getByRole('combobox', { name: 'Blend mode' }), 'multiply')
   await expect.poll(async () => (await props(page, 'box')).blendMode).toBe('multiply')
 
   const fill = page.getByTestId('fill-card')
@@ -87,14 +88,14 @@ test('one layer: position, size, turn, opacity, blend, fill, stroke and effects'
   await stroke.getByRole('button', { name: 'Add stroke' }).click()
   await expect.poll(async () => (await props(page, 'box')).strokes).toMatchObject([{ width: 2, align: 'center' }])
   await enter(stroke.getByRole('textbox', { name: 'Stroke 1 width' }), '6')
-  await stroke.getByRole('combobox', { name: 'Stroke 1 position' }).selectOption('inside')
+  await choose(stroke.getByRole('combobox', { name: 'Stroke 1 position' }), 'inside')
   await expect.poll(async () => (await props(page, 'box')).strokes).toMatchObject([{ width: 6, align: 'inside' }])
   // Dashes typed as lengths, an offset, and the look of the ends and corners (#152); a pattern
   // that isn't one is refused, and clearing it makes the line solid again.
   await enter(stroke.getByRole('textbox', { name: 'Stroke 1 dashes' }), '12, 6')
   await enter(stroke.getByRole('textbox', { name: 'Stroke 1 dash offset' }), '3')
-  await stroke.getByRole('combobox', { name: 'Stroke 1 ends' }).selectOption('round')
-  await stroke.getByRole('combobox', { name: 'Stroke 1 corners' }).selectOption('bevel')
+  await choose(stroke.getByRole('combobox', { name: 'Stroke 1 ends' }), 'round')
+  await choose(stroke.getByRole('combobox', { name: 'Stroke 1 corners' }), 'bevel')
   await expect.poll(async () => (await props(page, 'box')).strokes).toMatchObject([{ width: 6, align: 'inside', dashes: [12, 6], dashOffset: 3, cap: 'round', join: 'bevel' }])
   await page.evaluate(() => window.razzlr?.drawn())
   writeOutput('props-dashed-stroke.png', await page.screenshot())
@@ -104,7 +105,7 @@ test('one layer: position, size, turn, opacity, blend, fill, stroke and effects'
   await expect.poll(async () => (await props(page, 'box')).strokes).toMatchObject([{ dashes: [] }])
 
   const effects = page.getByTestId('effects-card')
-  await effects.getByRole('combobox', { name: 'Add effect' }).selectOption('dropShadow')
+  await choose(effects.getByRole('combobox', { name: 'Add effect' }), 'dropShadow')
   await expect.poll(async () => (await props(page, 'box')).effects).toMatchObject([{ type: 'dropShadow', blur: 24 }])
   await enter(effects.getByRole('textbox', { name: 'Drop shadow 1 Blur' }), '40')
   await expect.poll(async () => (await props(page, 'box')).effects).toMatchObject([{ type: 'dropShadow', blur: 40 }])
@@ -149,8 +150,8 @@ test('several layers: mixed values, set together or each from its own; text and 
   await enter(text.getByRole('textbox', { name: 'Letter spacing' }), '2')
   await enter(text.getByRole('textbox', { name: 'Line height' }), '1.1')
   await enter(text.getByRole('textbox', { name: 'Text colour hex' }), '1f9d55')
-  await text.getByRole('combobox', { name: 'Alignment', exact: true }).selectOption('center')
-  await text.getByRole('combobox', { name: 'Case' }).selectOption('upper')
+  await choose(text.getByRole('combobox', { name: 'Alignment', exact: true }), 'center')
+  await choose(text.getByRole('combobox', { name: 'Case' }), 'upper')
   await expect.poll(async () => {
     const p = await props(page, 'headline')
     return { style: p.style, align: p.align }
@@ -162,7 +163,7 @@ test('several layers: mixed values, set together or each from its own; text and 
   await select(page, ['stack'])
   const auto = page.getByTestId('auto-layout-card')
   await enter(auto.getByRole('textbox', { name: 'Gap', exact: true }), '32')
-  await auto.getByRole('combobox', { name: 'Direction' }).selectOption('column')
+  await choose(auto.getByRole('combobox', { name: 'Direction' }), 'column')
   await enter(auto.getByRole('textbox', { name: 'Padding left' }), '40')
   await expect.poll(async () => (await props(page, 'stack')).layout).toMatchObject({ direction: 'column', gap: 32, padding: { left: 40, top: 20 } })
   await page.evaluate(() => window.razzlr?.drawn())

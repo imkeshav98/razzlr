@@ -5,6 +5,7 @@ import { expect, test, type Page } from '../support/test.ts'
 import type { DesignInput } from '@razzlr/schema'
 import { writeOutput } from '../support/editor.ts'
 import { openStage, unfoldAll } from '../support/stage.ts'
+import { choose } from '../support/select.ts'
 
 test.describe.configure({ timeout: 120_000 })
 
@@ -46,8 +47,8 @@ test('a child of an auto layout fills, hugs or keeps its size, and can leave the
 
   await select(page, ['two'])
   await expect(card.getByRole('heading')).toHaveText('In auto layout')
-  await expect(card.getByRole('combobox', { name: 'Width sizing' })).toHaveValue('fixed')
-  await card.getByRole('combobox', { name: 'Width sizing' }).selectOption('fill')
+  await expect(card.getByRole('combobox', { name: 'Width sizing' })).toHaveAttribute('data-value', 'fixed')
+  await choose(card.getByRole('combobox', { name: 'Width sizing' }), 'fill')
   await expect.poll(() => propsOf(page, 'two')).toMatchObject({ sizing: { width: 'fill', height: 'fixed' } })
   // Filling the row, Two takes what One and the gap leave: 920 - 40 padding - 160 - 20.
   await expect.poll(async () => (await boxOf(page, 'two')).width).toBe(700)
@@ -64,9 +65,9 @@ test('a child of an auto layout fills, hugs or keeps its size, and can leave the
   await expect(card.getByRole('heading')).toHaveText('Sizing')
   await expect(card.getByRole('checkbox')).toHaveCount(0)
   await select(page, ['two'])
-  await card.getByRole('combobox', { name: 'Width sizing' }).selectOption('fixed')
+  await choose(card.getByRole('combobox', { name: 'Width sizing' }), 'fixed')
   await select(page, ['stack'])
-  await card.getByRole('combobox', { name: 'Width sizing' }).selectOption('hug')
+  await choose(card.getByRole('combobox', { name: 'Width sizing' }), 'hug')
   await expect.poll(async () => (await propsOf(page, 'stack')).sizing).toEqual({ width: 'hug', height: 'fixed' })
   // 20 + 160 + 20 + 160 + 20.
   await expect.poll(async () => (await boxOf(page, 'stack')).width).toBe(380)

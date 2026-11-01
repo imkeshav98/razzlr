@@ -13,6 +13,7 @@ import { createContext, useContext, useId, useRef, useState, type ReactNode } fr
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format, type Messages } from '../../lib/i18n/index.ts'
+import { Select } from '../ui/select.tsx'
 import { CARD, CardHeader, FineTune, PICKED_RING, SWATCHES } from './card.tsx'
 import { ICON_BUTTON } from './formats-panel.tsx'
 import { useBrandKit } from './use-brand-kit.ts'
@@ -23,7 +24,7 @@ type Patch = Record<string, unknown>
 type P = Messages['editor']['props']
 
 const FIELD = 'h-7 min-w-0 w-full rounded-row border border-line bg-surface px-1.5 font-mono text-[12px] tabular-nums text-text outline-none placeholder:text-subtle focus:border-accent'
-const SELECT = 'h-7 min-w-0 w-full rounded-row border border-line bg-surface px-1 text-[12px] text-text outline-none focus:border-accent'
+const SELECT = 'h-7 w-full bg-surface px-1.5 text-[12px]'
 const NEW_FILL: Paint = { type: 'solid', color: '#D9D9D9FF' }
 const NEW_STROKE = { paint: { type: 'solid', color: '#1A1420FF' } as Paint, width: 2, align: 'center' as const }
 
@@ -212,10 +213,15 @@ function ColorField({ name, value, onSet }: { name: string; value: string | 'mix
 function Choice<T extends string>({ name, value, options, labels, onSet }: { name: string; value: T | 'mixed' | undefined; options: readonly T[]; labels: Record<T, string>; onSet: (value: T) => void }) {
   const t = useMessages()
   return (
-    <select name="choice" aria-label={name} value={value ?? ''} onChange={(event) => onSet(event.target.value as T)} className={SELECT}>
-      {(value === 'mixed' || value === undefined) && <option value="mixed" disabled>{t.editor.props.mixed}</option>}
-      {options.map((option) => <option key={option} value={option}>{labels[option]}</option>)}
-    </select>
+    <Select
+      name="choice"
+      label={name}
+      value={value === 'mixed' || value === undefined ? '' : value}
+      placeholder={t.editor.props.mixed}
+      options={options.map((option) => ({ value: option, label: labels[option] }))}
+      onChange={(next) => onSet(next as T)}
+      className={SELECT}
+    />
   )
 }
 
@@ -1217,19 +1223,18 @@ function EffectsCard({ target, p }: { target: Target; p: P }) {
       <FineTune open={fine} onToggle={() => setFine(!fine)} label={p.fineTune} />
       {fine && (
         <div className="flex flex-col gap-2.5 px-[18px] pb-4">
-          <select
+          <Select
             name="add-effect"
-            aria-label={p.addEffect}
+            label={p.addEffect}
             value=""
-            onChange={(event) => {
-              const fresh = NEW_EFFECT[event.target.value as Effect['type']]
+            placeholder={p.addEffect}
+            options={(Object.keys(NEW_EFFECT) as Effect['type'][]).map((type) => ({ value: type, label: p.effect[type] }))}
+            onChange={(type) => {
+              const fresh = NEW_EFFECT[type as Effect['type']]
               write((now) => [...(list === 'mixed' ? [] : now), fresh])
             }}
-            className="h-7 w-full cursor-pointer rounded-row border border-line bg-bg/40 px-2 text-[12px] font-semibold text-muted hover:border-line-strong focus:border-accent focus:outline-none"
-          >
-            <option value="" disabled>{p.addEffect}</option>
-            {Object.keys(NEW_EFFECT).map((type) => <option key={type} value={type}>{p.effect[type as Effect['type']]}</option>)}
-          </select>
+            className="h-7 w-full bg-bg/40 px-2 text-[12px] font-semibold"
+          />
           {list === 'mixed'
             ? (
               <div className="flex items-center justify-between gap-2 text-xs text-muted">

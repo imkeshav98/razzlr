@@ -12,6 +12,7 @@ import type { DesignInput } from '@razzlr/schema'
 import { photo, upload } from '../support/assets.ts'
 import { designOf, writeOutput } from '../support/editor.ts'
 import { openStage } from '../support/stage.ts'
+import { choose } from '../support/select.ts'
 
 test.describe.configure({ timeout: 180_000 })
 
@@ -81,7 +82,7 @@ test('every format of a page as PNG is one zip whose files are what Node exports
   await page.getByTestId('export-open').click()
   const dialog = page.getByTestId('export')
   await expect(dialog).toBeVisible()
-  await page.getByTestId('export-page').selectOption('p1')
+  await choose(page.getByTestId('export-page'), 'p1')
   await expect(page.getByTestId('export-run')).toHaveText('Export 5 files')
   writeOutput('export-0-menu.png', await page.screenshot())
 
@@ -122,7 +123,7 @@ test('one format as JPG downloads as itself, at the quality picked, the same byt
   const { page, errors } = await openStage(browser, design(asset.id))
   await page.getByTestId('share-open').click()
   await page.getByTestId('export-open').click()
-  await page.getByTestId('export-page').selectOption('p2')
+  await choose(page.getByTestId('export-page'), 'p2')
   // Only the landscape format.
   for (const formatId of ['sq', 'pt', 'story', 'mpu']) await page.getByTestId('export').locator(`[data-format="${formatId}"]`).uncheck()
   await page.locator('[data-type="jpg"]').click()

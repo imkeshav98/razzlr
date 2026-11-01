@@ -5,6 +5,7 @@ import type { DesignInput } from '@razzlr/schema'
 import { photo, upload } from '../support/assets.ts'
 import { writeOutput } from '../support/editor.ts'
 import { openStage } from '../support/stage.ts'
+import { choose } from '../support/select.ts'
 
 test.describe.configure({ timeout: 120_000 })
 
@@ -50,7 +51,7 @@ test('the Image card sets the filter, the fit, the opacity and the adjustments',
   await expect(filters.locator('img').first()).toHaveJSProperty('complete', true)
 
   await filters.getByRole('radio', { name: 'Warm' }).click()
-  await card.getByRole('combobox', { name: 'Fit' }).selectOption('fit')
+  await choose(card.getByRole('combobox', { name: 'Fit' }), 'fit')
   await expect.poll(() => imageOf(page)).toMatchObject({ filter: 'warm', fit: 'fit' })
 
   await card.getByRole('button', { name: 'Fine-tune' }).click()

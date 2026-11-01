@@ -12,6 +12,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type Keyboard
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
+import { Select } from '../ui/select.tsx'
 import { CARD, CardHeader } from './card.tsx'
 import { useEditorDesign } from './formats-panel.tsx'
 
@@ -159,19 +160,20 @@ export function FontPanel({ editor, brandId }: { editor: Editor; brandId: string
         </button>
         <label className="flex items-center justify-between gap-3">
           <span className="text-xs text-muted">{t.editor.fonts.weight}</span>
-          <select
+          <Select
             name="font-weight"
-            value={current.weight ?? ''}
-            onChange={(event) => current.family && editor.setFont(current.family, Number(event.target.value))}
+            label={t.editor.fonts.weight}
+            value={current.weight === null ? '' : String(current.weight)}
+            placeholder={t.editor.fonts.mixed}
+            options={(weights.length > 0 ? weights : current.weight === null ? [] : [current.weight]).map((w) => ({
+              value: String(w),
+              label: t.editor.fonts.weights[w as keyof typeof t.editor.fonts.weights] ?? String(w),
+            }))}
+            onChange={(w) => current.family && editor.setFont(current.family, Number(w))}
             disabled={!current.family || weights.length < 2}
-            data-testid="font-weight"
-            className="h-8 min-w-0 flex-1 rounded-row border border-line bg-transparent px-2 text-[13px] hover:border-line-strong disabled:opacity-60"
-          >
-            {current.weight === null && <option value="">{t.editor.fonts.mixed}</option>}
-            {(weights.length > 0 ? weights : current.weight === null ? [] : [current.weight]).map((w) => (
-              <option key={w} value={w}>{t.editor.fonts.weights[w as keyof typeof t.editor.fonts.weights] ?? String(w)}</option>
-            ))}
-          </select>
+            testId="font-weight"
+            className="h-8 flex-1 bg-transparent px-2 text-[13px]"
+          />
         </label>
         {open && (
           <FontList

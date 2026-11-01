@@ -10,6 +10,7 @@ import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { Button } from '../ui/button.tsx'
+import { Select } from '../ui/select.tsx'
 
 const byOrder = <T extends { order: string }>(items: Record<string, T>) =>
   Object.entries(items).sort(([a, x], [b, y]) => (x.order < y.order ? -1 : x.order > y.order ? 1 : a < b ? -1 : 1))
@@ -73,16 +74,15 @@ export function ExportForm({ id, editor, design }: { id: string; editor: Editor;
     >
       <label className="flex flex-col gap-1.5">
         <span className={LABEL}>{t.editor.exports.pages}</span>
-        <select
+        <Select
           name="page"
+          label={t.editor.exports.pages}
           value={page}
-          onChange={(event) => setPage(event.target.value)}
-          data-testid="export-page"
-          className="h-8 rounded-row border border-line bg-raised px-2 text-[13px]"
-        >
-          <option value="all">{t.editor.exports.allPages}</option>
-          {pages.map(([pageId, p]) => <option key={pageId} value={pageId}>{p.name}</option>)}
-        </select>
+          options={[{ value: 'all', label: t.editor.exports.allPages }, ...pages.map(([pageId, p]) => ({ value: pageId, label: p.name }))]}
+          onChange={setPage}
+          testId="export-page"
+          className="h-8 bg-raised px-2 text-[13px]"
+        />
       </label>
 
       <fieldset className="flex flex-col">
