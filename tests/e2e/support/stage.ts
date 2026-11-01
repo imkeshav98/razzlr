@@ -76,6 +76,6 @@ export const zoomOf = (page: Page) => page.evaluate(() => window.dazbee?.camera(
  * so a check can reach every number.
  */
 export async function unfoldAll(page: Page) {
-  const closed = page.locator('[data-testid="details-card"] [data-fold][aria-expanded="false"], [data-testid="effects-card"] button[aria-expanded="false"]')
+  const closed = page.locator('[data-testid="details-card"] [data-fold][aria-expanded="false"], [data-testid="effects-card"] button[aria-expanded="false"]:not([role="combobox"])')
   while (await closed.count() > 0) await closed.first().click()
 }

@@ -13,6 +13,7 @@ import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { overlayScroll } from '../ui/overlay-scroll.ts'
+import { Select } from '../ui/select.tsx'
 import { FontPreview, useFontCatalog } from './font-panel.tsx'
 import { useEditorDesign } from './formats-panel.tsx'
 import { loadKit, saveKit, showKit, useBrandKit } from './use-brand-kit.ts'
@@ -319,9 +320,14 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
                     onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                     className={field}
                   />
-                  <select name="font-family" value={f.family} aria-label={format(t.fontFamily, { name: f.name })} onChange={(e) => setFont(i, { family: e.target.value })} className={cn(field, 'h-7 text-xs')}>
-                    {[...new Set([f.family, ...families])].map((family) => <option key={family} value={family}>{family}</option>)}
-                  </select>
+                  <Select
+                    name="font-family"
+                    label={format(t.fontFamily, { name: f.name })}
+                    value={f.family}
+                    options={[...new Set([f.family, ...families])].map((family) => ({ value: family, label: family }))}
+                    onChange={(family) => setFont(i, { family })}
+                    className="h-7 bg-bg/40 px-2 text-xs"
+                  />
                 </div>
                 <button
                   type="button"
@@ -359,16 +365,14 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
           <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-[12px] border border-line bg-bg/40">
             {kit.logoAssetId && <img src={`/brands/${encodeURIComponent(brandId)}/assets/${encodeURIComponent(kit.logoAssetId)}/thumbnail`} alt="" className="size-full object-contain" />}
           </div>
-          <select
+          <Select
             name="logo"
+            label={t.logo}
             value={kit.logoAssetId ?? ''}
-            aria-label={t.logo}
-            onChange={(e) => change({ ...kit, logoAssetId: e.target.value || null })}
-            className={cn(field, 'flex-1')}
-          >
-            <option value="">{t.noLogo}</option>
-            {assets.map((a) => <option key={a.id} value={a.id}>{a.name || a.id}</option>)}
-          </select>
+            options={[{ value: '', label: t.noLogo }, ...assets.map((a) => ({ value: a.id, label: a.name || a.id }))]}
+            onChange={(id) => change({ ...kit, logoAssetId: id || null })}
+            className="h-8 flex-1 bg-bg/40 px-2 text-[13px]"
+          />
         </div>
       </section>
 

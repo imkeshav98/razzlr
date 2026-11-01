@@ -5,6 +5,7 @@ import { expect, test, type Locator, type Page } from '../support/test.ts'
 import type { DesignInput } from '@dazbee/schema'
 import { writeOutput } from '../support/editor.ts'
 import { openStage, unfoldAll } from '../support/stage.ts'
+import { choose } from '../support/select.ts'
 
 test.describe.configure({ timeout: 120_000 })
 
@@ -39,8 +40,8 @@ test('the Box and paragraphs card sets the box, lines, lists, decoration, fit an
   const card = page.getByTestId('paragraph-card')
   await expect(card).toBeVisible()
 
-  await card.getByRole('combobox', { name: 'Box' }).selectOption('fixed')
-  await card.getByRole('combobox', { name: 'List' }).selectOption('bullet')
+  await choose(card.getByRole('combobox', { name: 'Box' }), 'fixed')
+  await choose(card.getByRole('combobox', { name: 'List' }), 'bullet')
   await enter(card.getByRole('textbox', { name: 'Paragraph spacing' }), '24')
   await enter(card.getByRole('textbox', { name: 'Lines at most' }), '2')
   await expect.poll(() => copy(page)).toMatchObject({ boxMode: 'fixed', list: 'bullet', paragraphSpacing: 24, maxLines: 2 })
@@ -66,7 +67,7 @@ test('the Box and paragraphs card sets the box, lines, lists, decoration, fit an
 
   // 0 lines lifts the limit; turning things off removes them.
   await enter(card.getByRole('textbox', { name: 'Lines at most' }), '0')
-  await card.getByRole('combobox', { name: 'List' }).selectOption('none')
+  await choose(card.getByRole('combobox', { name: 'List' }), 'none')
   await card.getByRole('button', { name: 'Shrink to fit' }).click()
   await card.getByRole('button', { name: 'Outline', exact: true }).click()
   await expect.poll(async () => {

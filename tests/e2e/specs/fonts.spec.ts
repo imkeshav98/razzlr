@@ -16,6 +16,7 @@ import { api } from '../support/assets.ts'
 import { designOf, editorPath, writeOutput } from '../support/editor.ts'
 import { API_URL, DEV_BRAND, seed } from '../support/seed.ts'
 import { openStage } from '../support/stage.ts'
+import { choose } from '../support/select.ts'
 
 test.describe.configure({ timeout: 180_000 })
 
@@ -168,7 +169,7 @@ test('the font picker shows families as pictures of their names, searches, picks
   await expect.poll(() => [...requests.seen].sort()).toEqual(faceIds(families, 'Playfair Display'))
   await expect.poll(() => page.evaluate(() => window.dazbee?.loadedFamilies().includes('Playfair Display'))).toBe(true)
 
-  await page.getByTestId('font-weight').selectOption('900')
+  await choose(page.getByTestId('font-weight'), '900')
   expect(await style(page, 'body')).toMatchObject({ fontFamily: 'Playfair Display', fontWeight: 900 })
   await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('fonts-4-picked.png', await page.screenshot())

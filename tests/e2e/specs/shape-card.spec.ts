@@ -5,6 +5,7 @@ import { expect, test, type Locator, type Page } from '../support/test.ts'
 import type { DesignInput } from '@dazbee/schema'
 import { writeOutput } from '../support/editor.ts'
 import { openStage } from '../support/stage.ts'
+import { choose } from '../support/select.ts'
 
 test.describe.configure({ timeout: 120_000 })
 
@@ -71,8 +72,8 @@ test('the Shape card sets corners, sides, points and line ends', async ({ browse
   await expect.poll(() => shapeOf(page, 'star')).toMatchObject({ points: 9, innerRadius: 0.6 })
 
   await select(page, ['rule'])
-  await card.getByRole('combobox', { name: 'Line end' }).selectOption('arrow')
-  await card.getByRole('combobox', { name: 'Line start' }).selectOption('circle')
+  await choose(card.getByRole('combobox', { name: 'Line end' }), 'arrow')
+  await choose(card.getByRole('combobox', { name: 'Line start' }), 'circle')
   await expect.poll(() => shapeOf(page, 'rule')).toEqual({ kind: 'line', start: 'circle', end: 'arrow' })
   await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('shape-card-line.png', await page.screenshot())
