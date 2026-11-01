@@ -1,4 +1,4 @@
-export { SAVE_STATES, startEditor, type DrawInfo, type Editor, type EditorOptions, type PlacedAsset, type SaveState, type Tool } from './editor.ts'
+export { SAVE_STATES, startEditor, type DrawInfo, type Editor, type EditorOptions, type Notice, type PlacedAsset, type SaveState, type Tool } from './editor.ts'
 export { type Camera, type Insets } from './camera.ts'
 export { SHAPE_TOOLS, withImage, type DrawTool, type ShapeTool } from './draw-tools.ts'
 export { type Frame } from './grid.ts'

@@ -29,3 +29,6 @@ export const dockTool = (on: boolean) => `${DOCK_BUTTON} w-10 ${on ? DOCK_ON : D
 
 /** A round colour swatch that picks its colour; its size is the caller's. */
 export const SWATCH = 'shrink-0 cursor-pointer rounded-full border border-line-strong transition-transform duration-[var(--chrome-fast)] hover:scale-110'
+
+/** A small message floating at the stage's start corner: a layer removed, something auto layout decides. */
+export const TOAST = 'toast-in pointer-events-auto flex h-10 items-center gap-2 rounded-card surface-frost ps-3.5 pe-1.5 text-[13px]'

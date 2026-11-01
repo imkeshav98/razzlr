@@ -4,7 +4,7 @@
 // custom size, rename, reorder, make primary, show one alone, remove. Every change is a command,
 // so it is one undo step and reaches the other tabs.
 import {
-  ArrowsInSimpleIcon, CaretDownIcon, CaretUpIcon, PlusIcon, StarIcon, TrashIcon,
+  ArrowsInSimpleIcon, CaretDownIcon, CaretUpIcon, InfoIcon, PlusIcon, StarIcon, TrashIcon,
 } from '@phosphor-icons/react'
 import * as Popover from '@radix-ui/react-popover'
 import type { Editor } from '@dazbee/editor'
@@ -19,7 +19,7 @@ import { Button } from '../ui/button.tsx'
 import { overlayScroll } from '../ui/overlay-scroll.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { CARD, CardHeader } from './card.tsx'
-import { ICON_BUTTON, POPOVER } from './styles.ts'
+import { ICON_BUTTON, POPOVER, TOAST } from './styles.ts'
 import { useLiveDesign } from './use-live-design.ts'
 
 /** The design as the editor holds it, kept current: every redraw hands over the latest one. */
@@ -325,7 +325,7 @@ export function UndoToast({ editor, message, onDone }: { editor: Editor; message
       onPointerLeave={() => setHeld(false)}
       onFocus={() => setHeld(true)}
       onBlur={() => setHeld(false)}
-      className="toast-in pointer-events-auto flex h-10 items-center gap-2 rounded-card surface-frost ps-3.5 pe-1.5 text-[13px]">
+      className={TOAST}>
       <TrashIcon size={14} aria-hidden className="text-subtle" />
       <span>{message}</span>
       <Button
@@ -338,6 +338,20 @@ export function UndoToast({ editor, message, onDone }: { editor: Editor; message
       >
         {t.editor.formats.undo}
       </Button>
+    </div>
+  )
+}
+
+/** Says why a gesture did nothing, such as a nudge auto layout decides; it goes after a few seconds. */
+export function NoticeToast({ message, onDone }: { message: string; onDone: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onDone, TOAST_MS)
+    return () => clearTimeout(timer)
+  }, [message, onDone])
+  return (
+    <div role="status" data-testid="notice-toast" className={cn(TOAST, 'pe-3.5')}>
+      <InfoIcon size={14} aria-hidden className="shrink-0 text-subtle" />
+      <span>{message}</span>
     </div>
   )
 }
