@@ -474,6 +474,7 @@ function DashField({ name, value, onSet }: { name: string; value: number[]; onSe
   }
   return (
     <input
+      name="dashes"
       aria-label={name}
       title={t.editor.props.dashesHint}
       value={draft ?? shown}
