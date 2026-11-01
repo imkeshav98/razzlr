@@ -14,6 +14,9 @@ import { LayersPanel } from '../../../../../components/editor/layers-panel.tsx'
 import { BrandKit, brandVariables, FontFamily, type Variables } from '@dazbee/schema'
 import { useValue, valueStore, type ValueStore } from '../../../../../lib/value-store.ts'
 
+/** The editor's tools that the dock shows as the one shape button. */
+const isShapeTool = (tool: Tool): tool is ShapeTool => (SHAPE_TOOLS as readonly string[]).includes(tool)
+
 declare global {
   interface Window { dazbee?: Editor }
 }
@@ -107,17 +110,20 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
   // The dock follows the editor's tool: a key picks one, and drawing a shape goes back to select.
   const [tool, setEditorTool] = useState<Tool>('select')
   const [shape, setShape] = useState<ShapeTool>('rect')
+  // The image tool's picker shows until an image is picked; any other tool forgets the pick.
+  const [imagePicked, setImagePicked] = useState(false)
   useEffect(() => {
     if (!editor) return
     const stop = editor.onTool((next) => {
       setEditorTool(next)
-      if ((SHAPE_TOOLS as readonly string[]).includes(next)) setShape(next as ShapeTool)
+      if (next !== 'image') setImagePicked(false)
+      if (isShapeTool(next)) setShape(next)
     })
     return () => {
       stop()
     }
   }, [editor])
-  const dockTool = tool === 'hand' || tool === 'select' || tool === 'pen' || tool === 'text' ? tool : 'shape'
+  const dockTool = isShapeTool(tool) ? 'shape' : tool
   const dismissRemoved = useCallback(() => setRemoved(null), [])
 
   // The stage's edges the capsule, cards and dock cover (#83): the editor fits the ads between
@@ -194,7 +200,19 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
       shape={shape}
       onToolChange={(tool, picked) => {
         setShape(picked)
-        editor?.setTool(tool === 'hand' || tool === 'pen' || tool === 'text' ? tool : tool === 'shape' ? picked : 'select')
+        // Pressing the image tool again asks for another image.
+        if (tool === 'image') {
+          editor?.armImage(null)
+          setImagePicked(false)
+        }
+        editor?.setTool(tool === 'shape' ? picked : tool)
+      }}
+      image={{
+        picking: !imagePicked,
+        onPick: (asset) => {
+          editor?.armImage(asset)
+          setImagePicked(true)
+        },
       }}
       onInsets={onInsets}
       fitted={editor !== null && fittedTo === editor}

@@ -15,8 +15,8 @@ type Group = keyof Messages['editor']['shortcuts']['groups']
 /** The table's actions, in the groups the list shows them in. */
 const GROUPS: [Group, ShortcutAction[]][] = [
   ['edit', ['undo', 'redo', 'selectAll', 'deselect', 'delete', 'duplicate', 'editPoints']],
-  ['tools', ['toolSelect', 'toolHand', 'toolRect', 'toolEllipse', 'toolLine', 'toolArrow', 'toolPen', 'toolText']],
-  ['arrange', ['group', 'ungroup', 'bringForward', 'sendBackward', 'bringToFront', 'sendToBack', 'lock', 'hide', 'mask', 'autoLayout']],
+  ['tools', ['toolSelect', 'toolHand', 'toolFrame', 'toolRect', 'toolEllipse', 'toolLine', 'toolArrow', 'toolPen', 'toolText', 'toolImage']],
+  ['arrange', ['group', 'ungroup', 'frameSelection', 'bringForward', 'sendBackward', 'bringToFront', 'sendToBack', 'lock', 'hide', 'mask', 'autoLayout']],
   ['align', ['alignLeft', 'alignCentre', 'alignRight', 'alignTop', 'alignMiddle', 'alignBottom', 'distributeHorizontal', 'distributeVertical']],
   ['combine', ['booleanUnion', 'booleanSubtract', 'booleanIntersect', 'booleanExclude']],
   ['move', ['nudgeLeft', 'nudgeRight', 'nudgeUp', 'nudgeDown', 'nudgeLeftFar', 'nudgeRightFar', 'nudgeUpFar', 'nudgeDownFar']],

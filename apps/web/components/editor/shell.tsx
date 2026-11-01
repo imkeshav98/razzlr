@@ -9,7 +9,7 @@ import {
   CloudArrowUpIcon, CloudCheckIcon, CloudSlashIcon, CursorIcon, FrameCornersIcon, HandIcon, ImageIcon, ImagesIcon, PaletteIcon, PenNibIcon, ShapesIcon,
   SlidersHorizontalIcon, SparkleIcon, StackIcon, TextTIcon, XIcon, type Icon,
 } from '@phosphor-icons/react'
-import type { ShapeTool } from '@dazbee/editor'
+import type { PlacedAsset, ShapeTool } from '@dazbee/editor'
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
@@ -20,6 +20,7 @@ import { useValue, type ValueStore } from '../../lib/value-store.ts'
 import { BrandMark } from '../brand-mark.tsx'
 import { useOverlayScroll } from '../ui/overlay-scroll.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
+import { ImageTool } from './image-tool.tsx'
 import { ShapeTools } from './shape-menu.tsx'
 
 export type Panel = 'layers' | 'assets' | 'ai' | 'brand' | 'properties'
@@ -225,7 +226,7 @@ function DesignName({ name, onRename }: { name: string; onRename?: ((name: strin
   )
 }
 
-export function EditorShell({ brandId, brandName, designName, onRename, status, tool: shownTool, shape = 'rect', onToolChange, onInsets, fitted = true, inspector, actions, account, panels, children }: {
+export function EditorShell({ brandId, brandName, designName, onRename, status, tool: shownTool, shape = 'rect', onToolChange, image, onInsets, fitted = true, inspector, actions, account, panels, children }: {
   brandId: string
   brandName: string
   designName: string
@@ -238,6 +239,8 @@ export function EditorShell({ brandId, brandName, designName, onRename, status, 
   /** The shape the shape tool draws (#44). */
   shape?: ShapeTool
   onToolChange?: (tool: Tool, shape: ShapeTool) => void
+  /** The image tool: whether it is waiting for an image to be picked, and what to do with the one picked. */
+  image?: { picking: boolean; onPick: (asset: PlacedAsset) => void }
   /** Called with the stage's edges the chrome covers, whenever they change; `withCards` once the cards are in. */
   onInsets?: (insets: ChromeInsets, withCards: boolean) => void
   /** False until the stage has fitted the design between the chrome: the editor is not ready before. */
@@ -416,6 +419,25 @@ export function EditorShell({ brandId, brandName, designName, onRename, status, 
                         onPick={(picked) => {
                           setTool('shape')
                           onToolChange?.('shape', picked)
+                        }}
+                      />
+                    )
+                  }
+                  if (id === 'image') {
+                    return (
+                      <ImageTool
+                        key={id}
+                        brandId={brandId}
+                        active={tool === 'image'}
+                        open={tool === 'image' && Boolean(image?.picking)}
+                        onPress={() => {
+                          setTool('image')
+                          onToolChange?.('image', shape)
+                        }}
+                        onPick={(asset) => image?.onPick(asset)}
+                        onClose={() => {
+                          setTool('select')
+                          onToolChange?.('select', shape)
                         }}
                       />
                     )
