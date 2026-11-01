@@ -38,6 +38,8 @@
   --shadow: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 12px 32px -12px rgb(0 0 0 / 0.6);
   --glass: rgb(32 26 39 / 0.52);
   --glass-line: rgb(255 255 255 / 0.1);
+  /* What shows through the frost is dimmed, so its text stays readable over a white ad (#138). */
+  --glass-tone: brightness(0.25);
   --ai-3: #ffd23f;
 }
 
@@ -69,6 +71,8 @@
   --shadow: 0 1px 2px rgb(60 30 60 / 0.06), 0 12px 32px -16px rgb(60 30 60 / 0.22);
   --glass: rgb(255 255 255 / 0.62);
   --glass-line: rgb(26 20 32 / 0.08);
+  /* Light frost lifts and flattens what shows through, so dark text stays readable over a black ad. */
+  --glass-tone: contrast(0.35) brightness(1.7);
   --ai-3: #ffc21a;
 }
 
@@ -249,7 +253,7 @@ body {
   background-color: var(--glass);
   background-image: var(--grain);
   border-color: var(--glass-line);
-  backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4) var(--glass-tone);
 }
 
 
