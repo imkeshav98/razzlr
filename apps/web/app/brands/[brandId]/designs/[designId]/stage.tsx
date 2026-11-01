@@ -156,6 +156,12 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
   // loaded, and the design itself is in IndexedDB.
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
+    // In development the worker would keep serving the chunks from before an edit, so it is
+    // never used there, and one left from a production build is removed.
+    if (process.env.NODE_ENV !== 'production') {
+      void navigator.serviceWorker.getRegistrations().then((all) => Promise.all(all.map((r) => r.unregister())))
+      return
+    }
     navigator.serviceWorker.register('/sw.js').then(keepForOffline).catch(() => {
       // Without the worker the editor still works online; only reopening offline is lost.
     })

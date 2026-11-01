@@ -4,6 +4,7 @@
 import { exportDesign, type ExportedFile } from '@razzlr/export'
 import { resourceCache, type ResourceBytes } from '@razzlr/renderer'
 import canvasKitModule from '@razzlr/canvaskit'
+import { WASM_FILE } from '@razzlr/canvaskit/wasm'
 import type { ExportReply, ExportJob } from './export-client.ts'
 
 // CommonJS whose types claim an ES default export; the bundler hands over the init function itself.
@@ -15,7 +16,7 @@ const scope = self as unknown as {
   postMessage(message: ExportReply, transfer?: Transferable[]): void
 }
 
-const loaded = CanvasKitInit({ locateFile: (file: string) => `/vendor/${file}` }).then((ck) => ({ ck, cache: resourceCache(ck) }))
+const loaded = CanvasKitInit({ locateFile: (file: string) => `/vendor/${file === 'canvaskit.wasm' ? WASM_FILE : file}` }).then((ck) => ({ ck, cache: resourceCache(ck) }))
 const bytes: ResourceBytes = { fonts: [], fallbackFamilies: [], images: {} }
 
 scope.onmessage = async ({ data: job }) => {

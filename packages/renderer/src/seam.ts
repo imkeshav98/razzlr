@@ -136,9 +136,23 @@ export function renderVector(
       drawVectorPage(ck, canvas, scene, resources, 'svg')
       const file = svg.close()
       if (!file) throw new Error('CanvasKit could not finish the SVG')
-      return file
+      return numberClips(file)
     } finally {
       svg.delete()
     }
   })
+}
+
+/**
+ * Skia names an SVG's clip paths after its clips' ids, which count up across the whole process, so
+ * the same page would come out different after other exports. Renumbered in order of appearance,
+ * the file depends on the page alone, in every runtime.
+ */
+function numberClips(file: Uint8Array): Uint8Array {
+  const ids = new Map<string, string>()
+  const text = new TextDecoder().decode(file).replace(/\bcl_[0-9a-f]+\b/g, (id) => {
+    if (!ids.has(id)) ids.set(id, `cl_${ids.size + 1}`)
+    return ids.get(id) as string
+  })
+  return new TextEncoder().encode(text)
 }
