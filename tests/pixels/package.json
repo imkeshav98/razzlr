@@ -2,6 +2,10 @@
   "name": "@razzlr/pixels",
   "private": true,
   "type": "module",
+  "exports": {
+    "./pixels": "./src/pixels.ts",
+    "./vector": "./src/vector.ts"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

@@ -8,6 +8,7 @@
     "lint": "eslint ."
   },
   "devDependencies": {
+    "@hyzyla/pdfium": "3.0.0",
     "@playwright/test": "1.63.0",
     "@razzlr/canvaskit": "workspace:*",
     "@razzlr/config": "workspace:*",
@@ -15,6 +16,7 @@
     "@razzlr/editor": "workspace:*",
     "@razzlr/export": "workspace:*",
     "@razzlr/fonts": "workspace:*",
+    "@razzlr/pixels": "workspace:*",
     "@razzlr/renderer": "workspace:*",
     "@razzlr/schema": "workspace:*",
     "@razzlr/web": "workspace:*",
