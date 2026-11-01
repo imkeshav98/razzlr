@@ -4,7 +4,7 @@
 import { expect, test, type Locator, type Page } from '../support/test.ts'
 import type { DesignInput } from '@razzlr/schema'
 import { writeOutput } from '../support/editor.ts'
-import { openStage } from '../support/stage.ts'
+import { openStage, unfoldAll } from '../support/stage.ts'
 
 test.describe.configure({ timeout: 120_000 })
 
@@ -44,6 +44,7 @@ const props = async (page: Page, id: string) => ({ ...await base(page, id), ...(
 const select = async (page: Page, ids: string[]) => {
   await page.evaluate((ids) => window.razzlr?.select(ids), ids)
   await expect(page.getByTestId('layout-card')).toBeVisible()
+  await unfoldAll(page)
 }
 /** Types a value into a field and presses Enter. */
 const enter = async (field: Locator, value: string) => {
@@ -144,7 +145,7 @@ test('several layers: mixed values, set together or each from its own; text and 
   // Text.
   await select(page, ['headline'])
   const text = page.getByTestId('text-card')
-  await enter(text.getByRole('textbox', { name: 'Size' }), '120')
+  await page.getByTestId('text-look').getByRole('slider', { name: 'Size' }).fill('120')
   await enter(text.getByRole('textbox', { name: 'Letter spacing' }), '2')
   await enter(text.getByRole('textbox', { name: 'Line height' }), '1.1')
   await enter(text.getByRole('textbox', { name: 'Text colour hex' }), '1f9d55')

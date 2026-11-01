@@ -1,19 +1,21 @@
 'use client'
 
-// The selection's property cards (#60): the shape's own settings (#151), position and size,
-// appearance, fill, stroke, effects, text and auto layout, for one layer or several. A value the selected layers don't share shows as
-// mixed; setting it gives them all the same one, and scrubbing or the arrow keys move each from its
-// own. With more than one format the changes go to every format or to this one only. Each change
-// is one undo step, and a scrub, however long, is one too.
-import { MinusIcon, PlusIcon, XIcon } from '@phosphor-icons/react'
+// The selection's property cards (#60), visual first as in the final mock (layout A): the look
+// card (text size and colour, or the shape and its fill, or the image's filters), the effects as
+// tiles, then Details, one folded row per card of numbers (#151 to #157). A value the selected
+// layers don't share shows as mixed; setting it gives them all the same one, and scrubbing or the
+// arrow keys move each from its own. With more than one format the changes go to every format or to
+// this one only. Each change is one undo step, and a scrub or a slider drag, however long, is one too.
+import { CaretRightIcon, MinusIcon, PlusIcon, XIcon } from '@phosphor-icons/react'
 import type { Editor } from '@razzlr/editor'
-import { BlendMode, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@razzlr/schema'
-import { useId, useRef, useState, type ReactNode } from 'react'
+import { BlendMode, brandRef, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@razzlr/schema'
+import { createContext, useContext, useId, useRef, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format, type Messages } from '../../lib/i18n/index.ts'
-import { CARD, CardHeader, FineTune } from './card.tsx'
+import { CARD, CardHeader, FineTune, PICKED_RING, SWATCHES } from './card.tsx'
 import { ICON_BUTTON } from './formats-panel.tsx'
+import { useBrandKit } from './use-brand-kit.ts'
 import { useLiveDesign } from './use-live-design.ts'
 
 type Props = Readonly<Record<string, unknown>>
@@ -217,9 +219,42 @@ function Choice<T extends string>({ name, value, options, labels, onSet }: { nam
   )
 }
 
-function Card({ id, title, note, action, children }: { id: string; title: string; note?: string; action?: ReactNode; children: ReactNode }) {
+/** Which rows of the Details card are open; kept while the selection changes. */
+const Folds = createContext<{ open: ReadonlySet<string>; toggle: (id: string) => void } | null>(null)
+
+/**
+ * A card of numbers. Inside Details it is a folded row, as in the mock: its name and a short summary
+ * of its values, opening in place; its action (such as add) stays on the row. Elsewhere it is a
+ * card of its own.
+ */
+function Card({ id, title, note, summary, action, children }: { id: string; title: string; note?: string; summary?: string; action?: ReactNode; children: ReactNode }) {
+  const folds = useContext(Folds)
+  if (folds) {
+    const open = folds.open.has(id)
+    return (
+      <section aria-labelledby={`${id}-title`} data-testid={id} data-open={open ? '' : undefined} className="border-t border-line first:border-t-0">
+        <div className="flex min-h-11 items-center gap-1">
+          <h3 id={`${id}-title`} className="min-w-0 flex-1">
+            <button
+              type="button"
+              data-fold
+              aria-expanded={open}
+              onClick={() => folds.toggle(id)}
+              className="group flex h-11 w-full cursor-pointer items-center gap-2 text-start text-[13px] font-semibold text-muted transition-colors duration-[var(--chrome-fast)] hover:text-text aria-expanded:text-text"
+            >
+              <span className="shrink-0">{title}</span>
+              {!open && (summary ?? note) && <span className="min-w-0 flex-1 truncate text-end font-mono text-[11px] font-normal text-subtle">{summary ?? note}</span>}
+              <CaretRightIcon size={12} weight="bold" aria-hidden className="ms-auto shrink-0 transition-transform duration-[var(--chrome-fast)] group-aria-expanded:rotate-90 rtl:-scale-x-100 rtl:group-aria-expanded:-rotate-90" />
+            </button>
+          </h3>
+          {action}
+        </div>
+        {open && <div className="flex flex-col gap-2.5 pb-4">{children}</div>}
+      </section>
+    )
+  }
   return (
-    <section aria-labelledby={id} className={CARD} data-testid={id}>
+    <section aria-labelledby={`${id}-title`} className={CARD} data-testid={id}>
       <CardHeader id={`${id}-title`} title={title} note={note}>{action}</CardHeader>
       <div className="flex flex-col gap-2.5 px-[18px] pb-4 empty:hidden">{children}</div>
     </section>
@@ -252,8 +287,12 @@ function LayoutCard({ target, p }: { target: Target; p: P }) {
   ] as const
   // A group's box follows what it holds; its size and turn come from them.
   const sized = target.types.every((type) => type !== 'group' && type !== 'boolean')
+  const one = (key: string) => {
+    const v = shared(target.props.map((pr) => num(pr, key)))
+    return v === 'mixed' ? '–' : String(Math.round(v))
+  }
   return (
-    <Card id="layout-card" title={p.layout}>
+    <Card id="layout-card" title={p.layout} summary={`${one('x')}, ${one('y')} · ${one('width')}×${one('height')}`}>
       <div className="grid grid-cols-2 gap-x-3 gap-y-2">
         {fields.map((f) => (
           (f.key === 'width' || f.key === 'height') && !sized
@@ -289,8 +328,14 @@ function LayoutCard({ target, p }: { target: Target; p: P }) {
 function AppearanceCard({ target, p }: { target: Target; p: P }) {
   const containers = target.types.every((type) => type === 'group' || type === 'frame')
   const modes = containers ? ContainerBlendMode.options : BlendMode.options
+  const opacity = shared(target.props.map((pr) => num(pr, 'opacity') ?? 1))
+  const blend = shared(target.props.map((pr) => (pr.blendMode as string | undefined) ?? 'normal'))
   return (
-    <Card id="appearance-card" title={p.appearance}>
+    <Card
+      id="appearance-card"
+      title={p.appearance}
+      summary={`${opacity === 'mixed' ? '–' : Math.round(opacity * 100)}% · ${blend === 'mixed' ? p.mixed : (p.blends as Record<string, string>)[blend] ?? blend}`}
+    >
       <div className="grid grid-cols-2 gap-x-3">
         <NumberField
           label="%"
@@ -328,25 +373,24 @@ const CORNER_FIELDS = [0, 1, 3, 2] as const
  * A shape's own settings (#151), for layers that are all the same kind: a rectangle's corner radius
  * or each corner's own, a polygon's sides, a star's points and inner radius, a line's ends.
  */
-function ShapeCard({ target, p, kind }: { target: Target; p: P; kind: ShapeKind }) {
+function ShapeCard({ target, p, kind, look }: { target: Target; p: P; kind: ShapeKind; look?: ReactNode }) {
   const shapes = target.props.map((pr) => pr.shape as Shape)
   const value = (key: string) => shared(shapes.map((s) => (s as Record<string, unknown>)[key])) as number | string | 'mixed' | undefined
   const setShape = (change: (now: Record<string, unknown>) => Record<string, unknown>) =>
     set(target, (now) => ({ shape: { ...(now.shape as Record<string, unknown>), ...change(now.shape as Record<string, unknown>) } }))
-  const field = (key: string, label: string, name: string, { min = 0, max, whole = false, scale = 1 }: { min?: number; max?: number; whole?: boolean; scale?: number } = {}) => {
-    const fit = (n: number) => clamp(whole ? Math.round(n) : tidy(n), min, max)
+  /** A slider, as in the mock: its range is what designs mostly use, and the shape keeps the schema's limits. */
+  const slider = (key: string, name: string, { min, max, step = 1, show = (n: number) => String(Math.round(n)) }: { min: number; max: number; step?: number; show?: (n: number) => string }) => {
+    const v = value(key) as number | 'mixed' | undefined
     return (
-      <NumberField
-        label={label}
+      <Slider
         name={name}
-        value={value(key) as number | 'mixed' | undefined}
+        value={v}
         min={min}
         max={max}
-        scale={scale}
-        step={scale === 1 ? 1 : 1 / scale}
+        step={step}
+        display={v === undefined || v === 'mixed' ? '–' : show(v)}
         editor={target.editor}
-        onSet={(v) => setShape(() => ({ [key]: fit(v) }))}
-        onShift={(by) => setShape((now) => ({ [key]: fit(((now[key] as number | undefined) ?? 0) + by) }))}
+        onSet={(n) => setShape(() => ({ [key]: step === 1 ? Math.round(n) : tidy(n) }))}
       />
     )
   }
@@ -364,6 +408,7 @@ function ShapeCard({ target, p, kind }: { target: Target; p: P; kind: ShapeKind 
   })
   return (
     <Card id="shape-card" title={p.shapeKinds[kind]} note={target.names.join(', ')}>
+      {look}
       {kind === 'line'
         ? (
           <div className="grid grid-cols-2 gap-x-3">
@@ -380,11 +425,12 @@ function ShapeCard({ target, p, kind }: { target: Target; p: P; kind: ShapeKind 
           </div>
         )
         : (
-          <div dir={each ? 'ltr' : undefined} className="grid grid-cols-2 gap-x-3 gap-y-2">
-            {kind === 'polygon' && field('sides', '#', p.sides, { min: 3, max: 100, whole: true })}
-            {kind === 'star' && field('points', '★', p.points, { min: 3, max: 100, whole: true })}
-            {kind === 'star' && field('innerRadius', '%', p.innerRadius, { max: 1, scale: 100 })}
-            {!each && field('cornerRadius', '◜', p.cornerRadius)}
+          <>
+            {kind === 'polygon' && slider('sides', p.sides, { min: 3, max: 24 })}
+            {kind === 'star' && slider('points', p.points, { min: 3, max: 24 })}
+            {kind === 'star' && slider('innerRadius', p.innerRadius, { min: 0.05, max: 0.95, step: 0.01, show: (n) => `${Math.round(n * 100)}%` })}
+            {!each && slider('cornerRadius', p.cornerRadius, { min: 0, max: 200 })}
+          <div dir="ltr" className="grid grid-cols-2 gap-x-3 gap-y-2 empty:hidden">
             {each && CORNER_FIELDS.map((i) => CORNERS[i]).map((corner, n) => {
               const i = CORNER_FIELDS[n] ?? 0
               return (
@@ -401,6 +447,7 @@ function ShapeCard({ target, p, kind }: { target: Target; p: P; kind: ShapeKind 
               )
             })}
           </div>
+          </>
         )}
       {kind === 'rect' && (
         <label className="flex items-center gap-2 text-[12px]">
@@ -413,7 +460,9 @@ function ShapeCard({ target, p, kind }: { target: Target; p: P; kind: ShapeKind 
 }
 
 /** A list of paints, strokes or effects that every selected layer has the same of, or a way to make it so. */
-function ListCard<T>({ id, title, p, target, field, fresh, render }: {
+function ListCard<T>({ id, title, p, target, field, fresh, render, summaryOf }: {
+  /** A few words on the list's values for its folded row. */
+  summaryOf?: (list: T[]) => string
   id: string
   title: string
   p: P
@@ -427,7 +476,12 @@ function ListCard<T>({ id, title, p, target, field, fresh, render }: {
   const list = shared(lists)
   const write = (to: (now: T[]) => T[]) => set(target, (now) => ({ [field]: to((now[field] ?? []) as T[]) }))
   return (
-    <Card id={id} title={title} action={<AddButton label={format(p.add, { name: title.toLowerCase() })} onClick={() => write((now) => [...(list === 'mixed' ? [] : now), fresh])} />}>
+    <Card
+      id={id}
+      title={title}
+      summary={list === 'mixed' ? p.mixed : list.length === 0 ? p.none : summaryOf?.(list) ?? String(list.length)}
+      action={<AddButton label={format(p.add, { name: title.toLowerCase() })} onClick={() => write((now) => [...(list === 'mixed' ? [] : now), fresh])} />}
+    >
       {list === 'mixed'
         ? (
           <div className="flex items-center justify-between gap-2 text-xs text-muted">
@@ -537,69 +591,36 @@ const NEW_EFFECT: Record<Effect['type'], Effect> = {
   backgroundBlur: { type: 'backgroundBlur', radius: 16 },
 }
 
-function EffectsCard({ target, p }: { target: Target; p: P }) {
-  const lists = target.props.map((pr) => (pr.effects ?? []) as Effect[])
-  const list = shared(lists)
-  const write = (to: (now: Effect[]) => Effect[]) => set(target, (now) => ({ effects: to((now.effects ?? []) as Effect[]) }))
+/** One effect's numbers and colour, with its remove button. */
+function EffectRow({ effect, i, target, p, write }: { effect: Effect; i: number; target: Target; p: P; write: (to: (now: Effect[]) => Effect[]) => void }) {
+  const change = (to: (now: Effect) => Effect) => write((now) => now.map((x, j) => (j === i ? to(x) : x)))
+  const effectName = p.effect[effect.type]
   return (
-    <Card
-      id="effects-card"
-      title={p.effects}
-      action={(
-        <select
-          name="add-effect"
-          aria-label={p.addEffect}
-          value=""
-          onChange={(event) => {
-            const fresh = NEW_EFFECT[event.target.value as Effect['type']]
-            write((now) => [...(list === 'mixed' ? [] : now), fresh])
-          }}
-          className="h-7 w-28 cursor-pointer rounded-full border border-line bg-bg/40 px-2 text-[12px] font-semibold text-muted hover:border-line-strong focus:border-accent focus:outline-none"
-        >
-          <option value="" disabled>{p.addEffect}</option>
-          {Object.keys(NEW_EFFECT).map((type) => <option key={type} value={type}>{p.effect[type as Effect['type']]}</option>)}
-        </select>
-      )}
-    >
-      {list === 'mixed'
-        ? (
-          <div className="flex items-center justify-between gap-2 text-xs text-muted">
-            {p.mixedList}
-            <button type="button" onClick={() => write(() => [])} className="cursor-pointer font-medium text-accent-text hover:underline">{p.useOne}</button>
-          </div>
-        )
-        : list.map((effect, i) => {
-          const change = (to: (now: Effect) => Effect) => write((now) => now.map((x, j) => (j === i ? to(x) : x)))
-          const effectName = p.effect[effect.type]
+    <div className="flex flex-col gap-1.5 border-t border-line pt-2.5" data-item={`effects-${i}`}>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-text">{effectName}</span>
+        <RemoveButton label={format(p.remove, { name: effectName.toLowerCase(), n: i + 1 })} onClick={() => write((now) => now.filter((_, j) => j !== i))} />
+      </div>
+      <div className="grid grid-cols-2 gap-1.5">
+        {EFFECT_FIELDS[effect.type].map((field) => {
+          const value = (effect as unknown as Record<string, number>)[field] ?? 0
+          const min = field === 'x' || field === 'y' || (field === 'spread' && effect.type === 'dropShadow') ? undefined : 0
           return (
-            <div key={i} className="flex flex-col gap-1.5 border-t border-line pt-2.5 first:border-t-0 first:pt-0" data-item={`effects-${i}`}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-text">{effectName}</span>
-                <RemoveButton label={format(p.remove, { name: effectName.toLowerCase(), n: i + 1 })} onClick={() => write((now) => now.filter((_, j) => j !== i))} />
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                {EFFECT_FIELDS[effect.type].map((field) => {
-                  const value = (effect as unknown as Record<string, number>)[field] ?? 0
-                  const min = field === 'x' || field === 'y' || (field === 'spread' && effect.type === 'dropShadow') ? undefined : 0
-                  return (
-                    <NumberField
-                      key={field}
-                      label={p.effectField[field].charAt(0)}
-                      name={format(p.effectFieldName, { effect: effectName, n: i + 1, field: p.effectField[field] })}
-                      value={value}
-                      min={min}
-                      editor={target.editor}
-                      onSet={(v) => change((now) => ({ ...now, [field]: v }) as Effect)}
-                      onShift={(by) => change((now) => ({ ...now, [field]: tidy(clamp(((now as unknown as Record<string, number>)[field] ?? 0) + by, min)) }) as Effect)}
-                    />
-                  )
-                })}
-              </div>
-              {'color' in effect && <ColorField name={effectName} value={effect.color} onSet={(to) => change((now) => ({ ...now, color: to('color' in now ? now.color : undefined) }) as Effect)} />}
-            </div>
+            <NumberField
+              key={field}
+              label={p.effectField[field].charAt(0)}
+              name={format(p.effectFieldName, { effect: effectName, n: i + 1, field: p.effectField[field] })}
+              value={value}
+              min={min}
+              editor={target.editor}
+              onSet={(v) => change((now) => ({ ...now, [field]: v }) as Effect)}
+              onShift={(by) => change((now) => ({ ...now, [field]: tidy(clamp(((now as unknown as Record<string, number>)[field] ?? 0) + by, min)) }) as Effect)}
+            />
           )
         })}
-    </Card>
+      </div>
+      {'color' in effect && <ColorField name={effectName} value={effect.color} onSet={(to) => change((now) => ({ ...now, color: to('color' in now ? now.color : undefined) }) as Effect)} />}
+    </div>
   )
 }
 
@@ -615,7 +636,7 @@ function TextCard({ target, p }: { target: Target; p: P }) {
       return { style: { ...s, [key]: tidy(clamp(((s[key] as number | undefined) ?? from) + by, min)) } }
     })
   return (
-    <Card id="text-card" title={p.text} note={target.names.join(', ')}>
+    <Card id="text-card" title={p.textNumbers} summary={[style('fontSize'), style('color')].map((v) => (v === 'mixed' ? '–' : typeof v === 'string' ? v.slice(0, 7) : String(v))).join(' · ')}>
       <div className="grid grid-cols-2 gap-x-3 gap-y-2">
         <NumberField label="Aa" name={p.fontSize} value={style('fontSize') as number | 'mixed'} min={1} editor={target.editor} onSet={(v) => setStyle('fontSize', v)} onShift={(by) => shiftStyle('fontSize', by, 1)} />
         <NumberField
@@ -1015,6 +1036,214 @@ function OwnChanges({ design, ids, formatId, editor, p }: { design: Design; ids:
   )
 }
 
+/** A swatch of the look cards: round, ringed while it is the colour. */
+function Swatch({ color, label, on, onPick }: { color: string; label: string; on: boolean; onPick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      aria-pressed={on}
+      onClick={onPick}
+      style={{ backgroundColor: color }}
+      className={cn('size-[22px] shrink-0 cursor-pointer rounded-full border border-line-strong transition-transform duration-[var(--chrome-fast)] hover:scale-110', on && PICKED_RING)}
+    />
+  )
+}
+
+/**
+ * The colours a look card offers: the brand's own, which the layers then follow (change the colour
+ * in the kit and they change too), or, with no kit colours, a fixed set painted as it is.
+ */
+function Swatches({ target, brandId, p, current, paint }: { target: Target; brandId: string; p: P; current: string | 'mixed' | undefined; paint: (hex: string) => void }) {
+  const kit = useBrandKit(brandId)
+  const now = current && current !== 'mixed' ? current.slice(0, 7).toUpperCase() : null
+  const colors = kit?.colors ?? []
+  // The colour it has now leads the row when the row does not hold it, as in the mock.
+  const offered = colors.length > 0 ? colors.map((c) => c.value.slice(0, 7).toUpperCase()) : [...SWATCHES]
+  return (
+    <div role="group" aria-label={colors.length > 0 ? p.brandColours : p.colours} className="flex flex-wrap items-center gap-1.5">
+      {now && !offered.includes(now) && <Swatch color={now} label={format(p.currentColour, { hex: now })} on onPick={() => undefined} />}
+      {colors.length > 0
+        ? colors.map((c) => (
+          <Swatch key={c.token} color={c.value.slice(0, 7)} label={c.name} on={now === c.value.slice(0, 7).toUpperCase()} onPick={() => target.editor.bindSelection('color', brandRef(c.token))} />
+        ))
+        : SWATCHES.map((hex) => <Swatch key={hex} color={hex} label={hex} on={now === hex} onPick={() => paint(hex)} />)}
+    </div>
+  )
+}
+
+/** A slider for a number, as in the mock; a drag is one undo step. */
+function Slider({ name, value, min, max, step = 1, display, editor, onSet }: {
+  name: string
+  value: number | 'mixed' | undefined
+  min: number
+  max: number
+  step?: number
+  /** The value as the row shows it at its end. */
+  display: string
+  editor: Editor
+  onSet: (value: number) => void
+}) {
+  const drag = useRef<(() => void) | null>(null)
+  const end = () => {
+    drag.current?.()
+    drag.current = null
+  }
+  const shown = value === 'mixed' || value === undefined ? min : clamp(value, min, max)
+  return (
+    <label className="grid grid-cols-[3.5rem_1fr_2.25rem] items-center gap-2 text-[12px] text-muted">
+      <span className="truncate">{name}</span>
+      <input
+        type="range"
+        name={name}
+        min={min}
+        max={max}
+        step={step}
+        value={shown}
+        onPointerDown={() => {
+          drag.current = editor.beginGesture()
+        }}
+        onPointerUp={end}
+        onPointerCancel={end}
+        onChange={(event) => onSet(Number(event.target.value))}
+        style={{ '--fill': `${((shown - min) / (max - min)) * 100}%` } as React.CSSProperties}
+        className="slider"
+      />
+      <span className="text-end font-mono text-[11px] text-text tabular-nums">{value === 'mixed' ? '–' : display}</span>
+    </label>
+  )
+}
+
+/** Text's look, as in the mock: its size on a slider and its colour from the brand. */
+function TextLook({ target, brandId, p }: { target: Target; brandId: string; p: P }) {
+  const styles = target.props.map((pr) => pr.style as Style)
+  const size = shared(styles.map((s) => s.fontSize))
+  return (
+    <Card id="text-look" title={p.text} note={target.names.join(', ')}>
+      <Slider
+        name={p.fontSize}
+        value={size}
+        min={8}
+        max={240}
+        display={size === 'mixed' ? '–' : String(Math.round(size))}
+        editor={target.editor}
+        onSet={(fontSize) => set(target, (now) => ({ style: { ...(now.style as Style), fontSize } }))}
+      />
+      <Swatches target={target} brandId={brandId} p={p} current={shared(styles.map((s) => s.color))} paint={(hex) => set(target, (now) => ({ style: { ...(now.style as Style), color: `${hex}${((now.style as Style).color ?? '').slice(7, 9) || 'FF'}` } }))} />
+    </Card>
+  )
+}
+
+/** A shape's or frame's look: its fill from the brand, painted over its first solid fill. */
+function FillLook({ target, brandId, p }: { target: Target; brandId: string; p: P }) {
+  const firstSolid = (fills: Paint[]) => fills.find((f) => f.type === 'solid')
+  const current = shared(target.props.map((pr) => firstSolid((pr.fills ?? []) as Paint[])?.color))
+  const paint = (hex: string) => set(target, (now) => {
+    const fills = (now.fills ?? []) as Paint[]
+    const i = fills.findIndex((f) => f.type === 'solid')
+    const color = `${hex}FF`
+    return { fills: i < 0 ? [...fills, { type: 'solid', color }] : fills.map((f, j) => (j === i ? { type: 'solid' as const, color } : f)) }
+  })
+  return <Swatches target={target} brandId={brandId} p={p} current={current} paint={paint} />
+}
+
+/** The letters each effect tile shows its effect on; the same in every language, as a font sample is. */
+const TILE_SAMPLE = 'Aa'
+
+type Tile = 'none' | 'shadow' | 'glow' | 'outline' | 'blur'
+const TILE_EFFECT: Partial<Record<Tile, Effect['type']>> = { shadow: 'dropShadow', glow: 'glow', blur: 'layerBlur' }
+/** How each tile draws its Aa, close to what the effect does. */
+const TILE_LOOK: Record<Tile, string> = {
+  none: '',
+  shadow: '[text-shadow:3px_3px_0_rgb(0_0_0/0.55)]',
+  glow: '[text-shadow:0_0_7px_var(--accent),0_0_14px_var(--accent)]',
+  outline: 'text-transparent [-webkit-text-stroke:1px_var(--text)]',
+  blur: 'blur-[1.5px]',
+}
+
+/**
+ * The effects as tiles, as in the mock: none, a shadow, a glow, and an outline for text or a blur for
+ * the rest. A tile turns its effect on or off; Fine-tune opens every effect's numbers, and adds the
+ * ones without a tile.
+ */
+function EffectsCard({ target, p }: { target: Target; p: P }) {
+  const [fine, setFine] = useState(false)
+  const lists = target.props.map((pr) => (pr.effects ?? []) as Effect[])
+  const list = shared(lists)
+  const write = (to: (now: Effect[]) => Effect[]) => set(target, (now) => ({ effects: to((now.effects ?? []) as Effect[]) }))
+  const text = target.types.every((type) => type === 'text')
+  const tiles: Tile[] = ['none', 'shadow', 'glow', text ? 'outline' : 'blur']
+  const outlined = (pr: Props) => ((pr.style as Style | undefined)?.outline as { width: number } | undefined)?.width ?? 0
+  const on = (tile: Tile): boolean => {
+    if (tile === 'outline') return target.props.every((pr) => outlined(pr) > 0)
+    if (tile === 'none') return lists.every((l) => l.length === 0) && (!text || target.props.every((pr) => outlined(pr) === 0))
+    return lists.every((l) => l.some((e) => e.type === TILE_EFFECT[tile]))
+  }
+  const press = (tile: Tile) => {
+    if (tile === 'none') {
+      set(target, (now) => ({ effects: [], ...(text ? { style: { ...(now.style as Style), outline: undefined } } : {}) }))
+      return
+    }
+    if (tile === 'outline') {
+      const off = on('outline')
+      set(target, (now) => ({ style: { ...(now.style as Style), outline: off ? undefined : { width: 2, color: ((now.style as Style).outline as { color?: string } | undefined)?.color ?? '#000000FF' } } }))
+      return
+    }
+    const type = TILE_EFFECT[tile] as Effect['type']
+    const off = on(tile)
+    write((now) => (off ? now.filter((e) => e.type !== type) : now.some((e) => e.type === type) ? now : [...now, NEW_EFFECT[type]]))
+  }
+  return (
+    <section aria-labelledby="effects-card-title" className={CARD} data-testid="effects-card">
+      <CardHeader id="effects-card-title" title={p.effects} />
+      <div role="group" aria-label={p.effects} className="grid grid-cols-4 gap-[7px] px-[18px] pb-3.5">
+        {tiles.map((tile) => (
+          <button
+            key={tile}
+            type="button"
+            aria-pressed={on(tile)}
+            data-tile={tile}
+            onClick={() => press(tile)}
+            className="group flex min-w-0 cursor-pointer flex-col items-center gap-1 text-[11px] font-semibold text-muted aria-pressed:text-text"
+          >
+            <span className="grid aspect-square w-full place-items-center rounded-[10px] border border-line bg-bg/60 transition-colors duration-[var(--chrome-fast)] group-hover:border-line-strong group-aria-pressed:border-accent">
+              <span aria-hidden className={cn('font-display text-[19px] font-extrabold text-text', TILE_LOOK[tile])}>{TILE_SAMPLE}</span>
+            </span>
+            {p.tiles[tile]}
+          </button>
+        ))}
+      </div>
+      <FineTune open={fine} onToggle={() => setFine(!fine)} label={p.fineTune} />
+      {fine && (
+        <div className="flex flex-col gap-2.5 px-[18px] pb-4">
+          <select
+            name="add-effect"
+            aria-label={p.addEffect}
+            value=""
+            onChange={(event) => {
+              const fresh = NEW_EFFECT[event.target.value as Effect['type']]
+              write((now) => [...(list === 'mixed' ? [] : now), fresh])
+            }}
+            className="h-7 w-full cursor-pointer rounded-row border border-line bg-bg/40 px-2 text-[12px] font-semibold text-muted hover:border-line-strong focus:border-accent focus:outline-none"
+          >
+            <option value="" disabled>{p.addEffect}</option>
+            {Object.keys(NEW_EFFECT).map((type) => <option key={type} value={type}>{p.effect[type as Effect['type']]}</option>)}
+          </select>
+          {list === 'mixed'
+            ? (
+              <div className="flex items-center justify-between gap-2 text-xs text-muted">
+                {p.mixedList}
+                <button type="button" onClick={() => write(() => [])} className="cursor-pointer font-medium text-accent-text hover:underline">{p.useOne}</button>
+              </div>
+            )
+            : list.map((effect, i) => <EffectRow key={i} effect={effect} i={i} target={target} p={p} write={write} />)}
+        </div>
+      )}
+    </section>
+  )
+}
+
 /** Where changes go when a design has more than one format: the one shown (as a canvas drag does), or every format. */
 function ScopeSwitch({ everyFormat, onChange, p, children }: { everyFormat: boolean; onChange: (every: boolean) => void; p: P; children?: ReactNode }) {
   return (
@@ -1047,6 +1276,8 @@ export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Edit
   const t = useMessages()
   const p = t.editor.props
   const { design } = useLiveDesign(editor)
+  const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set())
+  const folds = { open, toggle: (id: string) => setOpen((was) => new Set(was.has(id) ? [...was].filter((x) => x !== id) : [...was, id])) }
   // Like a drag on the canvas, a change goes to the format shown unless every format is asked for.
   const [everyFormat, setEveryFormat] = useState(false)
   const [framePage, frameFormat] = editor.selectedFrame()?.split('/') ?? []
@@ -1085,38 +1316,55 @@ export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Edit
           <OwnChanges design={design} ids={live} formatId={formatId} editor={editor} p={p} />
         </ScopeSwitch>
       )}
-      {all('text') && <TextCard target={target} p={p} />}
-      {all('text') && <ParagraphCard target={target} p={p} />}
-      {ownShape && <ShapeCard target={target} p={p} kind={ownShape} />}
-      {all('graphic', 'frame', 'boolean') && imageFill && <ImageCard target={target} p={p} brandId={brandId} index={imageFill.index} paint={imageFill.paint} />}
-      {all('graphic', 'frame', 'boolean') && (
-        <ListCard<Paint>
-          id="fill-card"
-          title={p.fill}
-          p={p}
-          target={target}
-          field="fills"
-          fresh={NEW_FILL}
-          render={(paint, i, change) => <PaintRow paint={paint} name={format(p.colour, { n: i + 1 })} p={p} onSet={change} />}
-        />
-      )}
-      {all('graphic', 'boolean') && (
-        <ListCard<Stroke>
-          id="stroke-card"
-          title={p.stroke}
-          p={p}
-          target={target}
-          field="strokes"
-          fresh={NEW_STROKE}
-          render={(stroke, i, change) => <StrokeRow stroke={stroke} i={i} p={p} editor={editor} onSet={change} />}
-        />
-      )}
+      {/* The look first, as in the mock. */}
+      {all('text') && <TextLook target={target} brandId={brandId} p={p} />}
+      {imageFill
+        ? <ImageCard target={target} p={p} brandId={brandId} index={imageFill.index} paint={imageFill.paint} />
+        : all('graphic', 'frame', 'boolean') && (ownShape
+          ? <ShapeCard target={target} p={p} kind={ownShape} look={ownShape === 'line' ? null : <FillLook target={target} brandId={brandId} p={p} />} />
+          : (
+            <section aria-labelledby="fill-look-title" className={CARD} data-testid="fill-look">
+              <CardHeader id="fill-look-title" title={p.fill} note={target.names.join(', ')} />
+              <div className="px-[18px] pb-4"><FillLook target={target} brandId={brandId} p={p} /></div>
+            </section>
+          ))}
       <EffectsCard target={target} p={p} />
       {!several && arrange}
-      <LayoutCard target={target} p={p} />
-      <AppearanceCard target={target} p={p} />
-      {all('frame') && <AutoLayoutCard target={target} p={p} />}
-      {(inFlow || all('frame') && target.props.every((pr) => pr.layout)) && <FlowCard target={target} p={p} inFlow={inFlow} />}
+      {/* Then the numbers, each card a folded row. */}
+      <section aria-label={p.details} className={cn(CARD, 'px-[18px] py-1')} data-testid="details-card">
+        <Folds.Provider value={folds}>
+          {all('text') && <TextCard target={target} p={p} />}
+          {all('text') && <ParagraphCard target={target} p={p} />}
+          {all('graphic', 'frame', 'boolean') && (
+            <ListCard<Paint>
+              id="fill-card"
+              title={p.fill}
+              p={p}
+              target={target}
+              field="fills"
+              fresh={NEW_FILL}
+              summaryOf={(list) => list.map((paint) => (paint.type === 'solid' ? paint.color.slice(0, 7) : p.paint[paint.type])).join(', ')}
+              render={(paint, i, change) => <PaintRow paint={paint} name={format(p.colour, { n: i + 1 })} p={p} onSet={change} />}
+            />
+          )}
+          {all('graphic', 'boolean') && (
+            <ListCard<Stroke>
+              id="stroke-card"
+              title={p.stroke}
+              p={p}
+              target={target}
+              field="strokes"
+              fresh={NEW_STROKE}
+              summaryOf={(list) => list.map((stroke) => `${stroke.width} px`).join(', ')}
+              render={(stroke, i, change) => <StrokeRow stroke={stroke} i={i} p={p} editor={editor} onSet={change} />}
+            />
+          )}
+          <LayoutCard target={target} p={p} />
+          <AppearanceCard target={target} p={p} />
+          {all('frame') && <AutoLayoutCard target={target} p={p} />}
+          {(inFlow || all('frame') && target.props.every((pr) => pr.layout)) && <FlowCard target={target} p={p} inFlow={inFlow} />}
+        </Folds.Provider>
+      </section>
     </>
   )
 }
