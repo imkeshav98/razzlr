@@ -3,10 +3,11 @@
 // The brief's form (#136), as in the final mock: a few words, then a chat-style toolbar. + adds a
 // reference ad (one of the brand's designs) or uploads images into the brand's assets, each shown
 // as a thumbnail above the brief; the Formats dropdown picks the formats to make; the Brand kit
-// button opens the whole kit to pick from. Every choice is a form field, so Make drafts sends it
+// button opens the whole kit to pick from, and the brand home's Brand kit panel to set it up or
+// change it (#200). Every choice is a form field, so Make drafts sends it
 // with the brief. The format checkboxes are in the page from the start, so the form works before
 // any script loads.
-import { ArrowLeftIcon, CaretDownIcon, CheckIcon, CircleNotchIcon, LayoutIcon, PlusIcon, SparkleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react'
+import { ArrowLeftIcon, CaretDownIcon, CheckIcon, CircleNotchIcon, LayoutIcon, PaletteIcon, PlusIcon, SparkleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react'
 import * as Popover from '@radix-ui/react-popover'
 import { FORMAT_PRESETS, type AssetSummary, type BrandKit } from '@dazbee/schema'
 import { useRef, useState, type ReactNode } from 'react'
@@ -15,6 +16,9 @@ import { cn } from '../lib/cn.ts'
 import { useMessages } from '../lib/i18n/client.tsx'
 import { format } from '../lib/i18n/index.ts'
 import { ASSET_ACCEPT, sendAsset } from '../lib/upload-asset.ts'
+import { showHomePanel } from '../lib/use-home-panel.ts'
+import { useBrandKit } from './editor/use-brand-kit.ts'
+import { buttonStyles } from './ui/button.tsx'
 import { overlayScroll } from './ui/overlay-scroll.ts'
 import { Tooltip } from './ui/tooltip.tsx'
 
@@ -57,9 +61,10 @@ function Tick({ on }: { on: boolean }) {
   )
 }
 
-export function BriefForm({ brandId, brandName, kit, references, action }: {
+export function BriefForm({ brandId, brandName, kit: first, references, action }: {
   brandId: string
   brandName: string
+  /** The brand's kit as the page came with it; a change in the Brand kit panel shows here at once. */
   kit: BrandKit
   references: BriefReference[]
   action: (form: FormData) => Promise<void>
@@ -67,18 +72,27 @@ export function BriefForm({ brandId, brandName, kit, references, action }: {
   const t = useMessages()
   const h = t.home
   const k = h.kit
+  const kit = useBrandKit(brandId, first) ?? first
   const [open, setOpen] = useState<Popup | null>(null)
   const [adding, setAdding] = useState<'menu' | 'reference'>('menu')
   const [formats, setFormats] = useState<BriefFormat[]>([BRIEF_FORMATS[0]])
   const [reference, setReference] = useState<BriefReference | null>(null)
   const [uploads, setUploads] = useState<Upload[]>([])
   const [useKit, setUseKit] = useState(true)
-  const [colors, setColors] = useState(() => new Set(kit.colors.map((c) => c.token)))
-  const [fonts, setFonts] = useState(() => new Set(kit.fonts.map((f) => f.token)))
+  // The parts left out, so a colour or font added in the Brand kit panel is picked from the start.
+  const [offColors, setOffColors] = useState(() => new Set<string>())
+  const [offFonts, setOffFonts] = useState(() => new Set<string>())
+  const colors = kit.colors.filter((c) => !offColors.has(c.token))
+  const fonts = kit.fonts.filter((f) => !offFonts.has(f.token))
   const [logo, setLogo] = useState(true)
   const [voice, setVoice] = useState(true)
   const files = useRef<HTMLInputElement>(null)
 
+  /** Closes the kit popover and opens the brand home's Brand kit panel under the brief. */
+  const openKitPanel = () => {
+    setOpen(null)
+    showHomePanel(`/brands/${brandId}`, 'kit')
+  }
   const toggle = (popup: Popup) => (next: boolean) => {
     setOpen(next ? popup : null)
     if (next && popup === 'add') setAdding('menu')
@@ -178,8 +192,8 @@ export function BriefForm({ brandId, brandName, kit, references, action }: {
       {useKit && (
         <>
           <input type="hidden" name="kit" value="on" />
-          {kit.colors.filter((c) => colors.has(c.token)).map((c) => <input key={c.token} type="hidden" name="kitColor" value={c.token} />)}
-          {kit.fonts.filter((f) => fonts.has(f.token)).map((f) => <input key={f.token} type="hidden" name="kitFont" value={f.token} />)}
+          {colors.map((c) => <input key={c.token} type="hidden" name="kitColor" value={c.token} />)}
+          {fonts.map((f) => <input key={f.token} type="hidden" name="kitFont" value={f.token} />)}
           {kit.logoAssetId && logo && <input type="hidden" name="kitLogo" value={kit.logoAssetId} />}
           {kit.voice.trim() && voice && <input type="hidden" name="kitVoice" value="on" />}
         </>
@@ -330,7 +344,15 @@ export function BriefForm({ brandId, brandName, kit, references, action }: {
               </button>
             </div>
             {kitEmpty
-              ? <p className="px-1 pt-3 text-xs text-muted">{k.empty}</p>
+              ? (
+                <div className="flex flex-col items-start gap-2.5 px-1 pt-3">
+                  <p className="text-xs text-muted">{k.empty}</p>
+                  <button type="button" onClick={openKitPanel} className={cn(buttonStyles({ variant: 'primary' }), 'h-9 px-4 font-semibold')} data-testid="brief-kit-set-up">
+                    <PaletteIcon size={15} aria-hidden />
+                    {k.setUp}
+                  </button>
+                </div>
+              )
               : (
                 <div className={cn('transition-opacity duration-[var(--chrome-fast)]', !useKit && 'pointer-events-none opacity-45')} aria-disabled={!useKit || undefined}>
                   {kit.logoAssetId && (
@@ -348,7 +370,7 @@ export function BriefForm({ brandId, brandName, kit, references, action }: {
                     <KitSection label={k.colors}>
                       <div className="grid grid-cols-4 gap-1.5 px-1">
                         {kit.colors.map((c) => {
-                          const on = colors.has(c.token)
+                          const on = !offColors.has(c.token)
                           return (
                             <button
                               key={c.token}
@@ -357,7 +379,7 @@ export function BriefForm({ brandId, brandName, kit, references, action }: {
                               aria-label={c.name}
                               title={c.name}
                               disabled={!useKit}
-                              onClick={() => setColors(flip(colors, c.token))}
+                              onClick={() => setOffColors(flip(offColors, c.token))}
                               data-token={c.token}
                               className="group flex min-w-0 cursor-pointer flex-col items-center gap-1 rounded-row py-1 focus-visible:outline-2 focus-visible:outline-ring"
                             >
@@ -376,12 +398,12 @@ export function BriefForm({ brandId, brandName, kit, references, action }: {
                   {kit.fonts.length > 0 && (
                     <KitSection label={k.fonts}>
                       {kit.fonts.map((f) => (
-                        <button key={f.token} type="button" aria-pressed={fonts.has(f.token)} disabled={!useKit} onClick={() => setFonts(flip(fonts, f.token))} className={cn(ROW, 'px-1 py-1.5')} data-token={f.token}>
+                        <button key={f.token} type="button" aria-pressed={!offFonts.has(f.token)} disabled={!useKit} onClick={() => setOffFonts(flip(offFonts, f.token))} className={cn(ROW, 'px-1 py-1.5')} data-token={f.token}>
                           <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
                             <span className="truncate font-semibold">{f.family}</span>
                             <span className="shrink-0 text-xs text-muted">{f.name}</span>
                           </span>
-                          <Tick on={fonts.has(f.token)} />
+                          <Tick on={!offFonts.has(f.token)} />
                         </button>
                       ))}
                     </KitSection>
@@ -395,10 +417,16 @@ export function BriefForm({ brandId, brandName, kit, references, action }: {
                     </KitSection>
                   )}
                   <p className="mt-2.5 border-t border-line px-1 pt-2.5 text-xs text-muted tabular-nums" data-testid="brief-kit-summary">
-                    {format(k.summary, { colors: colors.size, allColors: kit.colors.length, fonts: fonts.size, allFonts: kit.fonts.length })}
+                    {format(k.summary, { colors: colors.length, allColors: kit.colors.length, fonts: fonts.length, allFonts: kit.fonts.length })}
                   </p>
                 </div>
               )}
+            {!kitEmpty && (
+              <button type="button" onClick={openKitPanel} className="mt-1.5 flex cursor-pointer items-center gap-1.5 px-1 text-xs font-semibold text-accent-text hover:underline" data-testid="brief-kit-edit">
+                <PaletteIcon size={13} aria-hidden />
+                {k.editKit}
+              </button>
+            )}
           </Popover.Content>
         </Popover.Root>
 

@@ -1,8 +1,11 @@
-// The panel open under a brand home's brief, kept in the address (?show=recent, ?show=templates) so
+// The panel open under a brand home's brief, kept in the address (?show=recent, ?show=templates,
+// ?show=kit) so
 // it survives a reload and the back button, and can be linked to.
-export const HOME_PANELS = ['recent', 'templates'] as const
+export const HOME_PANELS = ['recent', 'templates', 'kit'] as const
 
 export type HomePanel = (typeof HOME_PANELS)[number]
+
+export const isHomePanel = (value: string): value is HomePanel => (HOME_PANELS as readonly string[]).includes(value)
 
 export const panelOf = (value: string | null | undefined): HomePanel | null =>
   HOME_PANELS.find((panel) => panel === value) ?? null
