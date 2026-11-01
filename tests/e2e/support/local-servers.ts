@@ -31,19 +31,24 @@ async function ensureDatabase() {
   }
 }
 
-const env = {
-  ...process.env,
+/** The suite's own database and storage bucket. */
+export const SUITE_STORE = {
   DATABASE_URL: `${SERVER}/${DATABASE}`,
-  SYNC_TOKEN_SECRET: 'local-only-sync-token-secret-0000',
-  DAZBEE_DEV_SESSION: 'on',
-  API_PORT: String(LOCAL.api),
-  SYNC_PORT: String(LOCAL.sync),
   STORAGE_ENDPOINT: 'http://127.0.0.1:59000',
-  STORAGE_PUBLIC_ENDPOINT: 'http://127.0.0.1:59000',
   STORAGE_BUCKET: 'razzlr-e2e',
   STORAGE_ACCESS_KEY_ID: 'razzlr',
   STORAGE_SECRET_ACCESS_KEY: 'razzlr-local-secret',
   STORAGE_REGION: 'us-east-1',
+}
+
+const env = {
+  ...process.env,
+  ...SUITE_STORE,
+  SYNC_TOKEN_SECRET: 'local-only-sync-token-secret-0000',
+  DAZBEE_DEV_SESSION: 'on',
+  API_PORT: String(LOCAL.api),
+  SYNC_PORT: String(LOCAL.sync),
+  STORAGE_PUBLIC_ENDPOINT: 'http://127.0.0.1:59000',
   STORAGE_CREATE_BUCKET: 'on',
 }
 

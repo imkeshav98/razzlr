@@ -2,7 +2,6 @@
 // families' files and no others, all from our own origin, and its export is byte for byte what Node
 // draws from the same files fetched through the API. The font picker lists families as pictures of
 // their names, searches, picks, sets the weight and uploads, each pick one undo step.
-import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, test, type Page, type Request } from '../support/test.ts'
@@ -14,6 +13,7 @@ import { FontFace, FontFamily, FontLink, FontUploadTicket, type DesignInput } fr
 import { createHash } from 'node:crypto'
 import { api } from '../support/assets.ts'
 import { designOf, editorPath, writeOutput } from '../support/editor.ts'
+import { importGoogleFonts } from '../support/fonts.ts'
 import { API_URL, DEV_BRAND, seed } from '../support/seed.ts'
 import { openStage } from '../support/stage.ts'
 import { choose } from '../support/select.ts'
@@ -22,21 +22,6 @@ test.describe.configure({ timeout: 180_000 })
 
 const GOOGLE = ['Inter', 'Playfair Display', 'Lobster']
 const righteous = new Uint8Array(readFileSync(join(import.meta.dirname, '..', 'assets', 'fonts', 'Righteous-Regular.ttf')))
-
-/** Copies the Google families these checks use into the stack's storage, as `fonts:google` does for a deployment. */
-function importGoogleFonts() {
-  const root = join(import.meta.dirname, '..', '..', '..')
-  execFileSync('node', ['apps/api/src/import-google-fonts.ts', ...GOOGLE], {
-    cwd: root,
-    stdio: 'pipe',
-    env: {
-      DATABASE_URL: 'postgres://razzlr:razzlr-local@127.0.0.1:55432/razzlr',
-      STORAGE_ENDPOINT: 'http://127.0.0.1:59000', STORAGE_BUCKET: 'razzlr', STORAGE_ACCESS_KEY_ID: 'razzlr',
-      STORAGE_SECRET_ACCESS_KEY: 'razzlr-local-secret', STORAGE_REGION: 'us-east-1',
-      ...process.env,
-    },
-  })
-}
 
 /** Uploads a font for the development brand the way the web app does: ask, PUT to the signed URL, record. */
 async function uploadFont(bytes: Uint8Array<ArrayBuffer>) {
@@ -48,7 +33,7 @@ async function uploadFont(bytes: Uint8Array<ArrayBuffer>) {
 }
 
 test.beforeAll(async () => {
-  importGoogleFonts()
+  importGoogleFonts(GOOGLE)
   await uploadFont(righteous)
 })
 
