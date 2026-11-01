@@ -1,0 +1,28 @@
+name: CanvasKit prune
+
+# When a pull request that changed the CanvasKit recipe closes, deletes the builds it published
+# (canvaskit.yml) except the one main's release.json names.
+on:
+  pull_request:
+    types: [closed]
+    paths: [packages/canvaskit/build/**, .github/workflows/canvaskit.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  prune:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - run: |
+          keep=$(node -p 'require("./packages/canvaskit/release.json").tag')
+          gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.body | endswith(\" for pull request #$PR.\")) | .tag_name" |
+          while read -r tag; do
+            if [ "$tag" != "$keep" ]; then gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag; fi
+          done
