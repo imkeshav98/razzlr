@@ -66,18 +66,20 @@ export function vectorDifference(expected: Pixels, actual: Pixels): number {
   const a = expected.pixels
   const b = actual.pixels
   const t = VECTOR_CHANNEL_TOLERANCE
+  const near = (i: number, j: number) =>
+    Math.abs((a[j] ?? 0) - (b[i] ?? 0)) <= t && Math.abs((a[j + 1] ?? 0) - (b[i + 1] ?? 0)) <= t && Math.abs((a[j + 2] ?? 0) - (b[i + 2] ?? 0)) <= t
   let differing = 0
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4
-      let matched = false
+      // Most pixels match the same pixel; only the rest look around.
+      let matched = near(i, i)
       for (let dy = -1; dy <= 1 && !matched; dy++) {
         for (let dx = -1; dx <= 1 && !matched; dx++) {
           const xx = x + dx
           const yy = y + dy
           if (xx < 0 || yy < 0 || xx >= width || yy >= height) continue
-          const j = (yy * width + xx) * 4
-          matched = Math.abs((a[j] ?? 0) - (b[i] ?? 0)) <= t && Math.abs((a[j + 1] ?? 0) - (b[i + 1] ?? 0)) <= t && Math.abs((a[j + 2] ?? 0) - (b[i + 2] ?? 0)) <= t
+          matched = near(i, (yy * width + xx) * 4)
         }
       }
       if (!matched) differing++

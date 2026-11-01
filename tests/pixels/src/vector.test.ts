@@ -31,14 +31,23 @@ const cases = loadFixtures().flatMap(({ name, json }) => {
   return Object.keys(design.pages).flatMap((pageId) => Object.keys(design.formats).map((formatId) => ({ name, json, design, pageId, formatId, label: `${name} ${pageId}.${formatId}` })))
 })
 const baselines = readVectorBaselines()
+/** Each case's PDF, made once for the pixel check and read again for the glyph check. */
+const pdfs = new Map<string, Uint8Array>()
+/** Lets the test worker answer vitest between long draws, which otherwise time its messages out. */
+const breathe = () => new Promise((resolve) => setImmediate(resolve))
 
 describe('PDF and SVG exports (#56)', () => {
   it.each(cases)('$label: pdfium and resvg draw them as the CPU does, within the baseline', async ({ name, json, pageId, formatId, label }) => {
     const cpu = overWhite(renderDesign(ck, json, pageId, formatId, bytes, cache))
+    await breathe()
     const pdf = renderVector(ck, json, pageId, formatId, bytes, 'pdf', cache)
+    pdfs.set(label, pdf)
+    await breathe()
     const svg = renderVector(ck, json, pageId, formatId, bytes, 'svg', cache)
+    await breathe()
     const pdfPixels = await rasterisePdf(pdfium, pdf)
     const svgPixels = rasteriseSvg(svg)
+    await breathe()
     const measured = { pdf: vectorDifference(cpu, pdfPixels), svg: vectorDifference(cpu, svgPixels) }
     if (UPDATE) {
       recordVectorBaseline(label, measured)
@@ -72,11 +81,12 @@ describe('PDF and SVG exports (#56)', () => {
     expect(await pdfText(pdfium, renderVector(ck, sale.json, sale.pageId, sale.formatId, bytes, 'pdf', cache))).toContain('Summer sale')
   })
 
-  it.each(cases)('$label: every glyph in the PDF sits where the renderer draws it, within 0.05 px', ({ design, pageId, formatId, json }) => {
+  it.each(cases)('$label: every glyph in the PDF sits where the renderer draws it, within 0.05 px', async ({ design, pageId, formatId, json, label }) => {
+    await breathe()
     const resources = cache.resources(bytes)
     const scene = render(design, pageId, formatId, undefined, textMeasure(ck, resources), bytes.variables)
     const drawn = rendererGlyphs(scene.layers, resources)
-    const inFile = pdfGlyphs(renderVector(ck, json, pageId, formatId, bytes, 'pdf', cache))
+    const inFile = pdfGlyphs(pdfs.get(label) ?? renderVector(ck, json, pageId, formatId, bytes, 'pdf', cache))
     // Text drawn only as a mask lives in the PDF's soft masks, which this doesn't read.
     let worst = 0
     for (const g of inFile) {
