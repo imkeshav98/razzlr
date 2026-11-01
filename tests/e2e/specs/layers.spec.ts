@@ -45,7 +45,7 @@ const colourAt = (page: Page, x: number, y: number) => page.evaluate(([x, y]) =>
 }, [x, y] as const)
 
 async function openLayers(page: Page) {
-  await page.getByRole('button', { name: 'Layers' }).click()
+  await page.getByRole('button', { name: 'Layers', exact: true }).click()
   await expect(tree(page)).toBeVisible()
 }
 
@@ -129,7 +129,7 @@ test('the panel and the stage select together; drag into a group, rename, lock a
 
 test('keyboard only: move through the tree, select, rename, lock, hide and move a layer into a group', async ({ browser }) => {
   const { page, errors } = await openStage(browser, design())
-  await page.getByRole('button', { name: 'Layers' }).focus()
+  await page.getByRole('button', { name: 'Layers', exact: true }).focus()
   await page.keyboard.press('Enter')
   await expect(tree(page)).toBeVisible()
   // Tab into the tree: it is one stop, on the first row.
