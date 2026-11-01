@@ -73,7 +73,7 @@ function BrandSwitcher({ t, words, brands, active, showAll }: { t: Messages; wor
             {words.all}
           </Link>
         )}
-        <NewBrandRow action={addBrand} words={{ add: words.add, name: words.name, create: t.library.create }} />
+        <NewBrandRow action={addBrand} words={{ add: words.add, start: t.library.start, placeholder: t.library.startPlaceholder, callIt: t.library.callIt, change: t.library.change, name: words.name, create: t.library.create }} />
       </nav>
     </details>
   )

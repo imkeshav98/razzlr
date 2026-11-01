@@ -1,11 +1,12 @@
 'use client'
 
-// The last card on the Brands or Clients page: a dashed card that opens into a name field. Creating
-// the brand opens its home.
+// The last card on the Brands or Clients page: a dashed card that opens into a website-or-name field
+// (#203). Creating the brand opens its home.
 import { PlusIcon } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { cn } from '../lib/cn.ts'
+import { BrandNaming, type NamingWords } from './brand-naming.tsx'
 import { buttonStyles } from './ui/button.tsx'
 
 function Create({ label }: { label: string }) {
@@ -15,14 +16,15 @@ function Create({ label }: { label: string }) {
 
 export function NewBrandCard({ action, words }: {
   action: (form: FormData) => Promise<void>
-  words: { add: string; name: string; create: string; cancel: string }
+  words: NamingWords & { add: string; start: string; placeholder: string; create: string; cancel: string }
 }) {
   const [open, setOpen] = useState(false)
+  const [start, setStart] = useState('')
   const field = useRef<HTMLInputElement>(null)
   useEffect(() => {
     if (open) field.current?.focus()
   }, [open])
-  const card = 'flex h-52 rounded-[20px] border border-dashed border-line-strong'
+  const card = 'flex min-h-52 rounded-[20px] border border-dashed border-line-strong'
   if (!open) {
     return (
       <button
@@ -37,17 +39,21 @@ export function NewBrandCard({ action, words }: {
   }
   return (
     <form action={action} className={cn(card, 'flex-col justify-end gap-3 bg-surface p-5')}>
-      <label htmlFor="new-brand-name" className="text-sm font-semibold">{words.name}</label>
+      <label htmlFor="new-brand-name" className="text-sm font-semibold">{words.start}</label>
       <input
         ref={field}
         id="new-brand-name"
-        name="name"
+        name="start"
         required
-        maxLength={120}
-        autoComplete="organization"
+        maxLength={2048}
+        autoComplete="url"
+        placeholder={words.placeholder}
+        value={start}
+        onChange={(e) => setStart(e.target.value)}
         onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
         className="h-10 min-w-0 rounded-row border border-line bg-bg px-3 text-[15px] outline-none hover:border-line-strong focus:border-accent"
       />
+      <BrandNaming start={start} words={words} />
       <div className="flex items-center gap-2">
         <Create label={words.create} />
         <button type="button" onClick={() => setOpen(false)} className={cn(buttonStyles({ variant: 'ghost' }), 'h-9 px-3')}>{words.cancel}</button>

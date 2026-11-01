@@ -1,20 +1,22 @@
 // Onboarding (#109): who Dazbee is for, as three big cards, then "Paste your website" for the
-// first brand (or client), named from the site's address. The app opens here until the workspace
-// has a brand; the kind can be changed later in settings. No card is picked on the first visit, so
-// the kind is always a choice; Back from the website step (?step=kind) shows the one picked. It looks like the final mock's
-// onboarding: the library's top bar, progress dashes over a bold headline, and the website in one
-// wide field with its button at the end.
-import { ArrowLeftIcon, ArrowRightIcon, GlobeIcon } from '@phosphor-icons/react/ssr'
+// first brand (or client): an address names it and is kept as its website, or a plain name is
+// typed (#203). The app opens here until the workspace has a brand; the kind can be changed later
+// in settings. No card is picked on the first visit, so the kind is always a choice; Back from the
+// website step (?step=kind) shows the one picked. It looks like the final mock's onboarding: the
+// library's top bar, progress dashes over a bold headline, and the website in one wide field with
+// its button at the end.
+import { ArrowLeftIcon, ArrowRightIcon } from '@phosphor-icons/react/ssr'
 import { WorkspaceKind } from '@dazbee/schema'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { BrandStartForm } from '../../components/brand-start-form.tsx'
 import { KindCards } from '../../components/kind-cards.tsx'
 import { TopBar } from '../../components/library-shell.tsx'
 import { buttonStyles } from '../../components/ui/button.tsx'
 import { cn } from '../../lib/cn.ts'
 import { createBrand, getWorkspace, updateWorkspace } from '../../lib/api.ts'
-import { nameFromWebsite } from '../../lib/home.ts'
-import { format } from '../../lib/i18n/index.ts'
+import { brandFromForm } from '../../lib/home.ts'
+import { brandWords, format } from '../../lib/i18n/index.ts'
 import { getMessages } from '../../lib/i18n/server.ts'
 
 export const dynamic = 'force-dynamic'
@@ -55,11 +57,10 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
 
   async function startBrand(form: FormData) {
     'use server'
-    const typed = String(form.get('name') ?? '').trim()
-    const name = typed || nameFromWebsite(String(form.get('website') ?? ''))
-    if (!name) redirect('/welcome?step=brand&error=name')
-    const brand = await createBrand(name.slice(0, 120))
-    redirect(`/brands/${brand.id}`)
+    const brand = brandFromForm(form)
+    if (!brand) redirect('/welcome?step=brand&error=name')
+    const made = await createBrand(brand.name, brand.website)
+    redirect(`/brands/${made.id}`)
   }
 
   return (
@@ -75,35 +76,17 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
             <>
               <h1 className={HEADLINE}>{w.websiteTitle}</h1>
               <p className={LEAD}>{format(w.websiteLead, { thing: w.thing[workspace.kind] })}</p>
-              {/* One wide field with the button inside its end, as in the mock. The grid puts the
-                  button in the field's row while the name stays next in the tab order. */}
-              <form action={startBrand} className="isolate mx-auto mt-8 grid w-full max-w-2xl grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2">
-                {/* The field's own ring would cut through the bar; the bar's edge shows focus instead. */}
-                <label className="peer col-start-1 row-start-1 flex min-w-0 items-center gap-3 ps-5">
-                  <GlobeIcon size={20} aria-hidden className="shrink-0 text-muted" />
-                  <span className="sr-only">{w.website}</span>
-                  <input name="website" inputMode="url" autoComplete="url" placeholder={w.websitePlaceholder} className="h-16 w-full min-w-0 bg-transparent text-base text-text placeholder:text-subtle md:text-lg" style={{ outline: 'none' }} autoFocus />
-                </label>
-                <span aria-hidden className="col-span-2 col-start-1 row-start-1 -z-10 h-16 rounded-[18px] border-[1.5px] border-line bg-surface shadow-panel transition-[border-color,box-shadow] duration-[var(--chrome-fast)] peer-hover:border-line-strong peer-focus-within:border-accent peer-focus-within:shadow-[0_0_0_4px_var(--accent-soft)]" />
-                <label className="col-span-2 row-start-2 mt-5 flex flex-col gap-1.5 text-[13px] font-medium text-muted md:mx-5">
-                  {w.name}
-                  <input name="name" maxLength={120} placeholder={w.namePlaceholder} className="h-11 w-full rounded-[12px] border border-line bg-surface px-4 text-[15px] text-text transition-colors duration-[var(--chrome-fast)] placeholder:text-subtle hover:border-line-strong focus:border-accent focus:outline-none" />
-                </label>
-                {error === 'name' && <p role="alert" className="col-span-2 row-start-3 mt-3 text-sm text-danger md:mx-5">{w.needName}</p>}
-                <div className="col-span-2 row-start-4 mt-6 flex justify-center">
+              <BrandStartForm
+                action={startBrand}
+                words={{ start: t.library.start, placeholder: t.library.startPlaceholder, open: w.open, callIt: t.library.callIt, change: t.library.change, name: brandWords(t, workspace.kind).name }}
+                error={error === 'name' ? w.needName : null}
+                back={(
                   <Link href="/welcome?step=kind" className={buttonStyles({ variant: 'ghost', size: 'lg' })}>
                     <ArrowLeftIcon size={16} aria-hidden className="rtl:-scale-x-100" />
                     {w.back}
                   </Link>
-                </div>
-                <button
-                  type="submit"
-                  className="ai-glow relative col-start-2 row-start-1 me-2.5 inline-flex h-11 cursor-pointer items-center gap-2 rounded-[12px] px-5 text-[15px] font-semibold text-white shadow-panel transition-transform duration-[var(--chrome-fast)] active:scale-[0.97]"
-                >
-                  {w.open}
-                  <ArrowRightIcon size={16} weight="bold" aria-hidden className="rtl:-scale-x-100" />
-                </button>
-              </form>
+                )}
+              />
             </>
           )
           : (
