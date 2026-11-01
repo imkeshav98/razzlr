@@ -2,11 +2,12 @@
 // slow aurora. The brand's recent work (a bento of real pictures of each design) and its templates
 // open under the brief from the capsule.
 import { notFound, redirect } from 'next/navigation'
-import { BriefComposer, briefDesign } from '../../../components/brief-composer.tsx'
+import { BriefComposer } from '../../../components/brief-composer.tsx'
 import { DesignBento, type BentoDesign } from '../../../components/design-bento.tsx'
 import { HomeStage } from '../../../components/home-stage.tsx'
 import { LibraryShell } from '../../../components/library-shell.tsx'
 import { createDesign, designCover, getBrandKit, getWorkspace, listBrands, listDesigns, listTemplates, startFromTemplate } from '../../../lib/api.ts'
+import { briefDesign } from '../../../lib/brief.ts'
 import { showsBrandList } from '../../../lib/home.ts'
 import { panelOf } from '../../../lib/home-panel.ts'
 import { brandWords, format } from '../../../lib/i18n/index.ts'
@@ -88,7 +89,7 @@ export default async function BrandPage({ params, searchParams }: { params: Prom
     <LibraryShell t={t} words={words} workspace={workspace.name} brands={brands} activeBrandId={brand.id} showBrands={switcher} glow recentCount={designs.length}>
       <HomeStage
         home={`/brands/${brand.id}`}
-        brief={<BriefComposer t={t} brandName={brand.name} kitColors={kit.colors.map((c) => c.value)} action={make} />}
+        brief={<BriefComposer t={t} brandId={brand.id} brandName={brand.name} kit={kit} references={recent.map(({ id, name, updatedAt, cover }) => ({ id, name, updatedAt, cover }))} action={make} />}
         hint={t.home.panelHint}
         closeLabel={t.home.close}
         panels={{
