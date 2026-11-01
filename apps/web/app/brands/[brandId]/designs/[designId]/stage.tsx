@@ -56,7 +56,7 @@ function fontLoader(brandId: string) {
  * editor starts without them, and bound layers keep the values they were bound with.
  */
 async function brandKitVariables(brandId: string): Promise<Variables | undefined> {
-  const response = await fetch(`/brands/${encodeURIComponent(brandId)}/kit`).catch(() => null)
+  const response = await fetch(`/brands/${encodeURIComponent(brandId)}/kit/data`).catch(() => null)
   if (!response?.ok) return undefined
   return brandVariables(BrandKit.parse(await response.json()))
 }

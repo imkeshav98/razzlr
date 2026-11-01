@@ -36,6 +36,15 @@ export const en = {
     untitled: 'Untitled design',
     noDesigns: 'No designs yet. Name one above to start.',
     edited: 'Edited {when}',
+    /** The brand's own pages (Recent, Templates, Brand kit), as in the earlier mock's pages. */
+    filters: 'Filters',
+    filterAll: 'All {n}',
+    shapes: { square: 'Square', portrait: 'Portrait', story: 'Story', landscape: 'Landscape' },
+    noShape: 'No designs in this shape yet.',
+    scopes: { all: 'All', brand: 'This brand', workspace: 'Every brand' },
+    templatesFor: 'Made for {brand}',
+    latest: 'Latest designs',
+    emptyRecent: 'Nothing made yet. Write a brief on the brand home to start.',
     templates: 'Templates',
     templatesMeta: 'Made for this brand',
     noTemplates: 'No templates yet. Save a design as a template from the editor.',
@@ -91,10 +100,8 @@ export const en = {
     count: '{count} designs',
     noDesigns: 'Nothing made yet. Write a brief above to start.',
     switchBrand: 'Switch brand',
-    /** Under the brief while no panel is open: where the brand's work went. */
-    panelHint: 'Your recent designs and templates open from the bar.',
-    /** Closes the Recent or Templates panel under the brief. */
-    close: 'Close',
+    /** Under the brief: where the brand's work is. */
+    panelHint: 'Your designs, templates and brand kit are in the bar.',
   },
   welcome: {
     // Onboarding (#109): the first brand, from its website or its name.

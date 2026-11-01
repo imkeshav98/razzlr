@@ -3,20 +3,20 @@
 // The brief's form (#136), as in the final mock: a few words, then a chat-style toolbar. + adds a
 // reference ad (one of the brand's designs) or uploads images into the brand's assets, each shown
 // as a thumbnail above the brief; the Formats dropdown picks the formats to make; the Brand kit
-// button opens the whole kit to pick from, and the brand home's Brand kit panel to set it up or
-// change it (#200). Every choice is a form field, so Make drafts sends it
+// button opens the whole kit to pick from, and the brand's Brand kit page to set it up or change it
+// (#200). Every choice is a form field, so Make drafts sends it
 // with the brief. The format checkboxes are in the page from the start, so the form works before
 // any script loads.
 import { ArrowLeftIcon, CaretDownIcon, CheckIcon, CircleNotchIcon, LayoutIcon, PaletteIcon, PlusIcon, SparkleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react'
 import * as Popover from '@radix-ui/react-popover'
 import { FORMAT_PRESETS, type AssetSummary, type BrandKit } from '@dazbee/schema'
+import { useRouter } from 'next/navigation'
 import { useRef, useState, type ReactNode } from 'react'
 import { BRIEF_FORMATS, type BriefFormat } from '../lib/brief.ts'
 import { cn } from '../lib/cn.ts'
 import { useMessages } from '../lib/i18n/client.tsx'
 import { format } from '../lib/i18n/index.ts'
 import { ASSET_ACCEPT, sendAsset } from '../lib/upload-asset.ts'
-import { showHomePanel } from '../lib/use-home-panel.ts'
 import { useBrandKit } from './editor/use-brand-kit.ts'
 import { buttonStyles } from './ui/button.tsx'
 import { overlayScroll } from './ui/overlay-scroll.ts'
@@ -88,10 +88,11 @@ export function BriefForm({ brandId, brandName, kit: first, references, action }
   const [voice, setVoice] = useState(true)
   const files = useRef<HTMLInputElement>(null)
 
-  /** Closes the kit popover and opens the brand home's Brand kit panel under the brief. */
+  const router = useRouter()
+  /** Closes the kit popover and opens the brand's Brand kit page. */
   const openKitPanel = () => {
     setOpen(null)
-    showHomePanel(`/brands/${brandId}`, 'kit')
+    router.push(`/brands/${brandId}/kit`)
   }
   const toggle = (popup: Popup) => (next: boolean) => {
     setOpen(next ? popup : null)

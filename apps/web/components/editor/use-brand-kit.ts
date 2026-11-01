@@ -7,7 +7,7 @@
 import { BrandKit, EMPTY_BRAND_KIT } from '@dazbee/schema'
 import { useCallback, useEffect, useSyncExternalStore } from 'react'
 
-export const kitUrl = (brandId: string) => `/brands/${encodeURIComponent(brandId)}/kit`
+export const kitUrl = (brandId: string) => `/brands/${encodeURIComponent(brandId)}/kit/data`
 
 const kits = new Map<string, BrandKit>()
 const listeners = new Map<string, Set<() => void>>()

@@ -60,3 +60,11 @@ export function brandFromForm(form: FormData): BrandStart | null {
   if (!start) return null
   return { name: typed || start.name, website: start.website }
 }
+
+/** A brand's own pages, beside its home: its designs, its templates and its kit. */
+export type BrandPage = 'designs' | 'templates' | 'kit'
+
+const FROM_PANEL: Record<string, BrandPage> = { recent: 'designs', templates: 'templates', kit: 'kit' }
+
+/** The page an old ?show= panel link means now, or null. */
+export const brandPage = (show: string | undefined): BrandPage | null => (show ? FROM_PANEL[show] ?? null : null)

@@ -1,20 +1,15 @@
 'use client'
 
-// The library's floating capsule: Home, Recent, Templates, Brand kit and Settings, with the editor
-// capsule's pink blob under the lit entry. On a brand's home, Recent, Templates and Brand kit open
-// their panel under the brief (?show=recent, ?show=templates, ?show=kit) without leaving the page;
-// clicking the lit one again closes it. Each page renders its own capsule, so the tab remembers the last lit entry (sessionStorage)
+// The library's floating capsule: Home, Recent, Templates, Brand kit and Settings, each a page, with
+// the editor capsule's pink blob under the lit entry. Each page renders its own capsule, so the tab remembers the last lit entry (sessionStorage)
 // and the blob slides from there when the next page opens.
 import { ClockIcon, GearSixIcon, HouseIcon, PaletteIcon, SquaresFourIcon, type Icon } from '@phosphor-icons/react'
 import { animate, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
 import { useCallback, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
 import { cn } from '../lib/cn.ts'
-import { isHomePanel, panelOf, type HomePanel } from '../lib/home-panel.ts'
-import { showHomePanel, useHomePanel } from '../lib/use-home-panel.ts'
 
-export type CapsuleEntry = 'home' | HomePanel | 'settings'
+export type CapsuleEntry = 'home' | 'recent' | 'templates' | 'kit' | 'settings'
 
 export type CapsuleLink = { entry: CapsuleEntry; href: string; label: string; badge?: number | undefined }
 
@@ -44,21 +39,17 @@ const saveLit = (entry: CapsuleEntry) => {
   }
 }
 
-export function LibraryCapsule({ label, links, current, home }: {
+export function LibraryCapsule({ label, links, current }: {
   /** The capsule's accessible name. */
   label: string
   links: CapsuleLink[]
   /** The entry for the page shown, which the server lights. */
   current: CapsuleEntry
-  /** The brand home's path when this page is it: Recent and Templates then open in place. */
-  home?: string | undefined
 }) {
   const reduced = useReducedMotion()
-  const panel = useHomePanel(panelOf(useSearchParams().get('show')))
   // A click that leaves the page lights its entry at once, before the next page comes.
   const [leaving, setLeaving] = useState<CapsuleEntry | null>(null)
-  const shown = home && panel && links.some((link) => link.entry === panel) ? panel : current
-  const lit = leaving ?? shown
+  const lit = leaving ?? current
   const nav = useRef<HTMLElement>(null)
   const blob = useRef<HTMLSpanElement>(null)
   const fill = useRef<HTMLSpanElement>(null)
@@ -89,16 +80,6 @@ export function LibraryCapsule({ label, links, current, home }: {
   const onClick = (entry: CapsuleEntry) => (event: MouseEvent) => {
     // A new tab or window keeps this page as it is.
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
-    if (home && isHomePanel(entry)) {
-      event.preventDefault()
-      showHomePanel(home, entry === panel ? null : entry)
-      return
-    }
-    if (home && entry === 'home') {
-      event.preventDefault()
-      if (panel) showHomePanel(home, null)
-      return
-    }
     if (entry !== lit) setLeaving(entry)
   }
 
@@ -116,16 +97,13 @@ export function LibraryCapsule({ label, links, current, home }: {
       {links.map(({ entry, href, label: name, badge }) => {
         const LinkIcon = ICONS[entry]
         const on = entry === lit
-        const opens = isHomePanel(entry)
         return (
           <Link
             key={entry}
             href={href}
-            scroll={!opens}
             aria-label={name}
             title={name}
-            aria-current={entry === current && !(home && panel) ? 'page' : undefined}
-            aria-expanded={home && opens ? on : undefined}
+            aria-current={entry === current ? 'page' : undefined}
             data-entry={entry}
             data-lit={on || undefined}
             onClick={onClick(entry)}
