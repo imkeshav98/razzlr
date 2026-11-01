@@ -10,9 +10,21 @@ import { useEffect, useState } from 'react'
 export function useLiveDesign(editor: Editor) {
   const [version, setVersion] = useState(0)
   useEffect(() => {
-    const stop = editor.onDraw(() => setVersion((v) => v + 1))
+    // Counted at the redraw after the document changed, so a burst of edits is one count per frame
+    // and a redraw that only moved the view, such as a pan, is none.
+    let changed = false
+    const onUpdate = () => {
+      changed = true
+    }
+    editor.doc.on('update', onUpdate)
+    const stop = editor.onDraw(() => {
+      if (!changed) return
+      changed = false
+      setVersion((v) => v + 1)
+    })
     return () => {
       stop()
+      editor.doc.off('update', onUpdate)
     }
   }, [editor])
   return { design: editor.design(), version }
