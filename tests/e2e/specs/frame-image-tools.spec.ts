@@ -16,7 +16,7 @@ const rect = (name: string, index: string, x: number, y: number, width: number, 
 
 const design = (): DesignInput => ({
   meta: { schemaVersion: 2, designId: 'replaced-by-the-api', name: 'Frames', kind: 'single', primaryFormatId: 'sq' },
-  formats: { sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' } },
+  formats: { sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' }, wide: { name: 'Wide', width: 1920, height: 1080, order: 'a1' } },
   pages: { p1: { name: 'Page 1', order: 'a0', fills: [{ type: 'solid', color: '#FFF8F0FF' }] } },
   nodes: {
     a: rect('A', 'a0', 100, 100, 160, 120, '#FF2E7EFF'),
@@ -27,13 +27,21 @@ const design = (): DesignInput => ({
     e: rect('E', 'a4', 120, 600, 200, 160, '#9747FFFF'),
     f: rect('F', 'a5', 360, 600, 120, 100, '#1F2329FF'),
   },
-  overrides: {},
+  // The wide format moves A and B apart and makes A smaller: a frame drawn around them in the square holds them there too.
+  overrides: { 'format:wide': { a: { x: 900, y: 500, width: 80, height: 60 }, b: { x: 1300, y: 600 } } },
 })
 
 type Box = { x: number; y: number; width: number; height: number }
 const boxOf = (page: Page, id: string) => page.evaluate((id) => window.dazbee?.boxOf(id), id) as Promise<Box>
 const near = (a: Box, b: Box) => {
   for (const k of ['x', 'y', 'width', 'height'] as const) expect(Math.abs(a[k] - b[k]), `${k}: ${a[k]} vs ${b[k]}`).toBeLessThanOrEqual(0.5)
+}
+const wideBoxOf = (page: Page, id: string) => page.evaluate((id) => window.dazbee?.boxOf(id, 'p1', 'wide'), id) as Promise<Box>
+const holds = (outer: Box, inner: Box) => {
+  expect(inner.x).toBeGreaterThanOrEqual(outer.x - 0.5)
+  expect(inner.y).toBeGreaterThanOrEqual(outer.y - 0.5)
+  expect(inner.x + inner.width).toBeLessThanOrEqual(outer.x + outer.width + 0.5)
+  expect(inner.y + inner.height).toBeLessThanOrEqual(outer.y + outer.height + 0.5)
 }
 const childrenOf = async (page: Page, parentId: string) => Object.entries((await read(page)).nodes)
   .filter(([, n]) => n.parentId === parentId).sort(([, x], [, y]) => (x.index < y.index ? -1 : 1)).map(([id]) => id)
@@ -60,6 +68,14 @@ test('F draws a frame; a frame drawn around layers takes them in without moving 
   await undo(page)
   expect((await read(page)).nodes[lone ?? '']).toBeUndefined()
 
+  // A click draws a frame of the default size, centred on it.
+  await press(page, 'toolFrame')
+  await click(page, 700, 800)
+  const [clicked] = await selection(page)
+  expect((await read(page)).nodes[clicked ?? '']).toMatchObject({ props: { x: 600, y: 700, width: 200, height: 200 } })
+  await undo(page)
+  const wideBefore = { a: await wideBoxOf(page, 'a'), b: await wideBoxOf(page, 'b') }
+
   // Around A and the turned B: both go inside it, and neither moves on the stage.
   await press(page, 'toolFrame')
   await drag(page, { x: 80, y: 80 }, { x: 460, y: 300 })
@@ -69,6 +85,10 @@ test('F draws a frame; a frame drawn around layers takes them in without moving 
   near(await boxOf(page, 'b'), before.b)
   // C, outside it, stays on the page.
   expect((await read(page)).nodes.c?.parentId).toBe('p1')
+  // In the wide format, where A and B are elsewhere, they don't move either, and the frame holds them.
+  near(await wideBoxOf(page, 'a'), wideBefore.a)
+  holds(await wideBoxOf(page, frame ?? ''), wideBefore.a)
+  holds(await wideBoxOf(page, frame ?? ''), { x: 1300, y: 600, width: 120, height: 120 })
   writeOutput('frame-2-around.png', await page.screenshot({ animations: 'disabled' }))
   await undo(page)
   expect((await read(page)).nodes.a?.parentId).toBe('p1')
@@ -114,6 +134,14 @@ test('Mod+Alt+G and the Arrange card frame the selection; Shift+A wraps shapes i
   near(await boxOf(page, 'f'), before.f)
   near(await boxOf(page, auto ?? ''), { x: 120, y: 600, width: 360, height: 160 })
   writeOutput('frame-4-auto-layout.png', await page.screenshot({ animations: 'disabled' }))
+  // With a frame among the selection, Shift+A switches that frame's auto layout instead: off here, and C stays on the page.
+  await click(page, 660, 160, ['Shift'])
+  expect(await selection(page)).toEqual([auto, 'c'])
+  await press(page, 'autoLayout')
+  now = await read(page)
+  expect(now.nodes[auto ?? '']?.props.layout).toBeUndefined()
+  expect(now.nodes.c?.parentId).toBe('p1')
+  await undo(page)
   // One undo step for the whole wrap.
   await undo(page)
   expect((await read(page)).nodes[auto ?? '']).toBeUndefined()
@@ -149,6 +177,17 @@ test('I opens the image picker; the image uploaded there lands where the stage i
   await undo(page)
   expect((await read(page)).nodes[placed ?? '']).toBeUndefined()
   expect(Object.keys((await read(page)).nodes).length).toBe(layers)
+
+  // A brand image picked in the picker covers the box dragged on the stage.
+  await press(page, 'toolImage')
+  await expect(picker).toBeVisible()
+  await picker.locator('[data-asset] button').first().click()
+  await expect(picker).toBeHidden()
+  await drag(page, { x: 100, y: 850 }, { x: 400, y: 1000 })
+  const [dragged] = await selection(page)
+  expect((await read(page)).nodes[dragged ?? '']).toMatchObject({ props: { x: 100, y: 850, width: 300, height: 150, fills: [{ type: 'image', fit: 'fill' }] } })
+  writeOutput('image-3-dragged.png', await page.screenshot({ animations: 'disabled' }))
+  await undo(page)
 
   // Pressing I again and closing the picker goes back to the select tool.
   await press(page, 'toolImage')

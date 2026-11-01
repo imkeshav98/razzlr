@@ -14,6 +14,9 @@ import { LayersPanel } from '../../../../../components/editor/layers-panel.tsx'
 import { BrandKit, brandVariables, FontFamily, type Variables } from '@dazbee/schema'
 import { useValue, valueStore, type ValueStore } from '../../../../../lib/value-store.ts'
 
+/** The editor's tools that the dock shows as the one shape button. */
+const isShapeTool = (tool: Tool): tool is ShapeTool => (SHAPE_TOOLS as readonly string[]).includes(tool)
+
 declare global {
   interface Window { dazbee?: Editor }
 }
@@ -114,13 +117,13 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
     const stop = editor.onTool((next) => {
       setEditorTool(next)
       if (next !== 'image') setImagePicked(false)
-      if ((SHAPE_TOOLS as readonly string[]).includes(next)) setShape(next as ShapeTool)
+      if (isShapeTool(next)) setShape(next)
     })
     return () => {
       stop()
     }
   }, [editor])
-  const dockTool = tool === 'hand' || tool === 'select' || tool === 'pen' || tool === 'text' || tool === 'frame' || tool === 'image' ? tool : 'shape'
+  const dockTool = isShapeTool(tool) ? 'shape' : tool
   const dismissRemoved = useCallback(() => setRemoved(null), [])
 
   // The stage's edges the capsule, cards and dock cover (#83): the editor fits the ads between
@@ -202,7 +205,7 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
           editor?.armImage(null)
           setImagePicked(false)
         }
-        editor?.setTool(tool === 'hand' || tool === 'pen' || tool === 'text' || tool === 'frame' || tool === 'image' ? tool : tool === 'shape' ? picked : 'select')
+        editor?.setTool(tool === 'shape' ? picked : tool)
       }}
       image={{
         picking: !imagePicked,

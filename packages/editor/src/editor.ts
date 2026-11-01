@@ -1647,13 +1647,25 @@ function live(
   /** A press with the text tool (#47): a click makes text that grows as it is typed, a drag a box of that size. */
   function startTextBox(e: PointerEvent, at: { frame: Frame; p: Point }) {
     stopEditing()
+    canvas.setPointerCapture(e.pointerId)
+    gesture = { kind: 'textBox', ...boxStart(at, 'text') }
+  }
+  /**
+   * Where a box a tool drags out starts: in the group or frame double-clicked into if it can hold
+   * a layer of `type`, otherwise on the page, at the press as layers there see it.
+   */
+  function boxStart(at: { frame: Frame; p: Point }, type: 'text' | 'graphic') {
     const now = session.design()
     const inside = entered ? now.nodes[entered] : undefined
-    const parentId = entered && inside && canHold(inside.type, 'text') ? entered : at.frame.pageId
+    const parentId = entered && inside && canHold(inside.type, type) ? entered : at.frame.pageId
     const around = containersOf(at.frame, parentId, now)
     const from = localTo(at.p, around)
-    canvas.setPointerCapture(e.pointerId)
-    gesture = { kind: 'textBox', frame: at.frame, around, parentId, from, to: from }
+    return { frame: at.frame, around, parentId, from, to: from }
+  }
+  /** The box a text or image box gesture dragged, or null when the press stayed a click. */
+  function draggedBox(g: { from: Point; to: Point }) {
+    const dragged = Math.max(Math.abs(g.to.x - g.from.x), Math.abs(g.to.y - g.from.y)) * camera.zoom >= CLICK_SLOP
+    return dragged ? { x: Math.min(g.from.x, g.to.x), y: Math.min(g.from.y, g.to.y), width: Math.abs(g.to.x - g.from.x), height: Math.abs(g.to.y - g.from.y) } : null
   }
   /**
    * A press with the image tool once its image is picked: a click places the image at its own size
@@ -1662,16 +1674,12 @@ function live(
    */
   function startImageBox(e: PointerEvent, at: { frame: Frame; p: Point }, asset: PlacedAsset) {
     stopEditing()
-    const now = session.design()
-    const inside = entered ? now.nodes[entered] : undefined
-    const parentId = entered && inside && canHold(inside.type, 'graphic') ? entered : at.frame.pageId
-    const around = containersOf(at.frame, parentId, now)
-    const from = localTo(at.p, around)
     canvas.setPointerCapture(e.pointerId)
-    gesture = { kind: 'imageBox', frame: at.frame, around, parentId, from, to: from, asset }
+    gesture = { kind: 'imageBox', ...boxStart(at, 'graphic'), asset }
   }
   /** The corner a drag from `from` reaches with the image's shape kept: as far as the pointer went on the longer side. */
   function keepRatio(from: Point, to: Point, asset: PlacedAsset): Point {
+    if (asset.width <= 0 || asset.height <= 0) return to
     const ratio = asset.width / asset.height
     const dx = to.x - from.x
     const dy = to.y - from.y
@@ -1680,10 +1688,10 @@ function live(
   }
   /** Places the image the image tool drew, one undo step; it is selected and the select tool comes back. */
   function finishImageBox(g: Extract<Gesture, { kind: 'imageBox' }>) {
-    const dragged = Math.max(Math.abs(g.to.x - g.from.x), Math.abs(g.to.y - g.from.y)) * camera.zoom >= CLICK_SLOP
+    const box = draggedBox(g)
     const format = design.formats[g.frame.formatId] ?? g.frame
-    const layer = dragged
-      ? imageIn(g.asset, { x: round(Math.min(g.from.x, g.to.x)), y: round(Math.min(g.from.y, g.to.y)), width: Math.max(1, round(Math.abs(g.to.x - g.from.x))), height: Math.max(1, round(Math.abs(g.to.y - g.from.y))) })
+    const layer = box
+      ? imageIn(g.asset, { x: round(box.x), y: round(box.y), width: Math.max(1, round(box.width)), height: Math.max(1, round(box.height)) })
       : newImage(g.asset, g.from, format)
     let id = ''
     if (!runQuietly(() => session.gesture(() => {
@@ -1696,10 +1704,7 @@ function live(
 
   /** Makes the text layer the text tool drew and starts typing into it, one undo step with the typing. */
   function finishTextBox(g: Extract<Gesture, { kind: 'textBox' }>) {
-    const dragged = Math.max(Math.abs(g.to.x - g.from.x), Math.abs(g.to.y - g.from.y)) * camera.zoom >= CLICK_SLOP
-    const box = dragged
-      ? { x: Math.min(g.from.x, g.to.x), y: Math.min(g.from.y, g.to.y), width: Math.abs(g.to.x - g.from.x), height: Math.abs(g.to.y - g.from.y) }
-      : null
+    const box = draggedBox(g)
     const end = session.beginGesture()
     let id = ''
     if (!runQuietly(() => { id = session.run('node.create', { parentId: g.parentId, layer: newText(round(g.from.x), round(g.from.y), box && { width: round(box.width), height: round(box.height), x: round(box.x), y: round(box.y) }) }) })) {
@@ -1903,14 +1908,18 @@ function live(
     setTool('select')
   }
 
-  /** Moves the layers beside a new frame that lie wholly inside it, as drawn in this frame, into it. */
+  /**
+   * Moves the layers beside a new frame that lie wholly inside it, as drawn in this frame, into it.
+   * Layers locked in place stay where they are, and so does everything in an auto layout frame,
+   * where the layout, not the drag, places the new frame.
+   */
   function enclose(frame: Frame, id: string) {
     const now = session.design()
     const parent = now.nodes[id]?.parentId ?? ''
     const box = boxIn(frame, id, now)
-    if (!box) return
-    const inside = childrenOf(now, parent).flatMap(([child]) => {
-      const b = child !== id && boxIn(frame, child, now)
+    if (!box || laidOut(id, now)) return
+    const inside = childrenOf(now, parent).flatMap(([child, node]) => {
+      const b = child !== id && !node.lock?.move && boxIn(frame, child, now)
       if (!b) return []
       const drawn = boundsOf([b])
       const fits = drawn.x >= box.x && drawn.y >= box.y && drawn.x + drawn.width <= box.x + box.width && drawn.y + drawn.height <= box.y + box.height
@@ -1932,15 +1941,9 @@ function live(
       drawOverlay()
       return
     }
-    if (gesture?.kind === 'imageBox') {
-      finishImageBox(gesture)
-      gesture = null
-      showCursor()
-      drawOverlay()
-      return
-    }
-    if (gesture?.kind === 'textBox') {
-      finishTextBox(gesture)
+    if (gesture?.kind === 'textBox' || gesture?.kind === 'imageBox') {
+      if (gesture.kind === 'textBox') finishTextBox(gesture)
+      else finishImageBox(gesture)
       gesture = null
       showCursor()
       drawOverlay()
@@ -2243,8 +2246,9 @@ function live(
       }
       case 'autoLayout': {
         // Selected frames: auto layout on, or off when every one has it already (#46).
+        if (ids.length === 0) return false
         const frames = ids.filter((id) => nodes[id]?.type === 'frame')
-        if (frames.length === ids.length) {
+        if (frames.length > 0) {
           const on = !frames.every((id) => {
             const node = nodes[id]
             return node?.type === 'frame' && node.props.layout !== undefined
@@ -2254,7 +2258,8 @@ function live(
           }))
           break
         }
-        // Anything else is wrapped in a frame that hugs it, laid out as it already sits, so nothing moves.
+        // Layers none of which is a frame are wrapped in a frame that hugs them, its layout read off
+        // where they are: layers already in an even row or column don't move.
         let framed = ''
         if (runQuietly(() => session.gesture(() => {
           framed = session.run('node.frame', { ids })

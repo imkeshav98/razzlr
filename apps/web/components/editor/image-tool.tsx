@@ -7,7 +7,7 @@ import { ImageIcon, UploadSimpleIcon } from '@phosphor-icons/react'
 import * as Popover from '@radix-ui/react-popover'
 import type { PlacedAsset } from '@dazbee/editor'
 import { AssetSummary } from '@dazbee/schema'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
@@ -30,6 +30,11 @@ export function ImageTool({ brandId, active, open, onPress, onPick, onClose }: {
   const t = useMessages().editor
   const [assets, setAssets] = useState<AssetSummary[] | null>(null)
   const [upload, setUpload] = useState<{ name: string; progress: number; error?: string } | null>(null)
+  // An upload that ends after the picker closed (another tool, or Escape) places nothing.
+  const showing = useRef(open)
+  useEffect(() => {
+    showing.current = open
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -48,7 +53,7 @@ export function ImageTool({ brandId, active, open, onPress, onPick, onClose }: {
     sendAsset(brandId, file, (progress) => setUpload({ name: file.name, progress }))
       .then((asset) => {
         setUpload(null)
-        onPick(asset)
+        if (showing.current) onPick(asset)
       })
       .catch((error: unknown) => setUpload({ name: file.name, progress: 0, error: error instanceof Error ? error.message : String(error) }))
   }
