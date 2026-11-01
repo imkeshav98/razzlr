@@ -20,7 +20,7 @@ test.describe.configure({ mode: 'parallel', timeout: 180_000 })
 test.use({ actionTimeout: 15_000 })
 
 /** Rows that fail today, with the bug filed for each. */
-const KNOWN: Record<number, number> = { 12: 243, 16: 244, 25: 246, 35: 245 }
+const KNOWN: Record<number, number> = { 12: 243, 16: 244, 35: 245 }
 
 const righteous = new Uint8Array(readFileSync(join(import.meta.dirname, '..', 'assets', 'fonts', 'Righteous-Regular.ttf')))
 const tile = new Uint8Array(readFileSync(join(import.meta.dirname, '..', '..', 'pixels', 'assets', 'tile.jpg')))
@@ -91,6 +91,12 @@ const doc = async (page: Page) => JSON.parse(await designOf(page)) as Doc
 const props = async (page: Page, id: string) => placed(await doc(page), id, 'sq') as Props
 const byOrder = <T extends { order: string }>(a: T, b: T) => (a.order < b.order ? -1 : 1)
 const style = async (page: Page, id: string) => (await props(page, id)).style ?? {}
+const boxOf = async (page: Page, id: string) => { const p = await props(page, id); return { width: Number(p.width), height: Number(p.height) } }
+/** Makes the headline size itself to its words, as the Box menu does. */
+const autoBox = async (page: Page, mode: 'autoWidth' | 'autoHeight') => {
+  await choose(page.getByTestId('paragraph-card').getByRole('combobox', { name: 'Box' }), mode)
+  await expect.poll(async () => (await props(page, 'headline')).boxMode).toBe(mode)
+}
 const fills = async (page: Page, id: string) => (await props(page, id)).fills ?? []
 const children = async (page: Page, parentId: string) => Object.entries((await doc(page)).nodes)
   .filter(([, n]) => n.parentId === parentId).sort(([, a], [, b]) => (a.index < b.index ? -1 : 1)).map(([id]) => id)
@@ -417,9 +423,13 @@ test.describe('text', () => {
     const offered = (await page.locator('[role="listbox"] [role="option"]').evaluateAll((options) => options.map((o) => Number(o.getAttribute('data-value')))))
     await page.keyboard.press('Escape')
     expect(offered.length).toBeGreaterThan(2)
+    // The box sizes itself to its words, so each weight gives it a width of its own.
+    await autoBox(page, 'autoWidth')
     for (const weight of [offered[0] ?? 400, offered.at(-1) ?? 400, 400]) {
+      const was = (await boxOf(page, 'headline')).width
       await step(page, () => choose(field, String(weight)), async () => {
         await expect.poll(async () => (await style(page, 'headline')).fontWeight).toBe(weight)
+        await expect.poll(async () => (await boxOf(page, 'headline')).width).not.toBe(was)
       })
     }
     await reloads(page)
@@ -433,6 +443,12 @@ test.describe('text', () => {
     })
     await step(page, () => enter(page.getByTestId('text-card').getByRole('textbox', { name: 'Size' }), '90'), async () => {
       await expect.poll(async () => (await style(page, 'headline')).fontSize).toBe(90)
+    })
+    // A box that grows with its words follows the size.
+    await autoBox(page, 'autoHeight')
+    const tall = (await boxOf(page, 'headline')).height
+    await step(page, () => enter(page.getByTestId('text-card').getByRole('textbox', { name: 'Size' }), '140'), async () => {
+      await expect.poll(async () => (await boxOf(page, 'headline')).height).toBeGreaterThan(tall)
     })
     await reloads(page)
   })
@@ -467,6 +483,12 @@ test.describe('text', () => {
     await select(page, ['headline'])
     await step(page, () => enter(page.getByTestId('text-card').getByRole('textbox', { name: 'Letter spacing' }), '4'), async () => {
       await expect.poll(async () => (await style(page, 'headline')).letterSpacing).toBe(4)
+    })
+    // A box as wide as its words widens with them.
+    await autoBox(page, 'autoWidth')
+    const wide = (await boxOf(page, 'headline')).width
+    await step(page, () => enter(page.getByTestId('text-card').getByRole('textbox', { name: 'Letter spacing' }), '20'), async () => {
+      await expect.poll(async () => (await boxOf(page, 'headline')).width).toBeGreaterThan(wide)
     })
     await reloads(page)
   })

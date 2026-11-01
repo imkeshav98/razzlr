@@ -149,13 +149,13 @@ test('the font picker shows families as pictures of their names, searches, picks
   writeOutput('fonts-3-search.png', await page.screenshot({ clip: { x: 1100, y: 0, width: 340, height: 700 } }))
   await page.getByTestId('font-search').press('Enter')
   await expect(list).toBeHidden()
-  // Noto Sans 400 becomes Playfair Display 400, and its files load now.
-  expect(await style(page, 'body')).toMatchObject({ fontFamily: 'Playfair Display', fontWeight: 400 })
+  // Noto Sans 400 becomes Playfair Display 400 once its files are here.
+  await expect.poll(() => style(page, 'body')).toMatchObject({ fontFamily: 'Playfair Display', fontWeight: 400 })
   await expect.poll(() => [...requests.seen].sort()).toEqual(faceIds(families, 'Playfair Display'))
   await expect.poll(() => page.evaluate(() => window.dazbee?.loadedFamilies().includes('Playfair Display'))).toBe(true)
 
   await choose(page.getByTestId('font-weight'), '900')
-  expect(await style(page, 'body')).toMatchObject({ fontFamily: 'Playfair Display', fontWeight: 900 })
+  await expect.poll(() => style(page, 'body')).toMatchObject({ fontFamily: 'Playfair Display', fontWeight: 900 })
   await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('fonts-4-picked.png', await page.screenshot())
 

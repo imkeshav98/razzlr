@@ -1109,8 +1109,12 @@ function live(
   /** Images a design named after it opened (one placed from the asset library, #52); exports wait for them too. */
   let imagesLoading: Promise<void> = Promise.resolve()
   function loadNewFonts(current: Design) {
+    loadFamilies(fontFamilies(current, resourceBytes.variables))
+  }
+  /** Asks for the files of the families not asked for yet; `fontsLoading` settles when they are here. */
+  function loadFamilies(families: string[]) {
     if (!options.fontFiles) return
-    const fresh = fontFamilies(current, resourceBytes.variables).filter((family) => !fontsAsked.has(family))
+    const fresh = families.filter((family) => !fontsAsked.has(family))
     if (fresh.length === 0) return
     for (const family of fresh) fontsAsked.add(family)
     const loading = loadFonts(fresh, options).then((fonts) => {
@@ -3035,6 +3039,8 @@ function live(
             if (paths.length > 0) session.run('override.reset', { ids: [id], scope: other as `format:${string}`, paths })
           }
         }
+        // Text that grows the size of its words fits them again, in the formats the change reached.
+        for (const id of writes.keys()) fitText(id, everyFormat ? undefined : frame.formatId)
         hug([...writes.keys()])
       }))
     },
@@ -3171,12 +3177,16 @@ function live(
     loadedFamilies: () => [...new Set(resourceBytes.fonts.map((f) => f.family))],
     /**
      * Sets the font of the selected text layers, as one undo step (#50): the family, and the weight
-     * when one is given. Their files load in the background, and the text redraws when they are here.
+     * when one is given. It waits for the family's files first, so text that grows the size of its
+     * words is measured in it and fits its box in the same step.
      */
-    setFont(fontFamily: string, fontWeight?: number) {
-      const current = session.design()
-      const ids = (selection?.ids ?? []).filter((id) => current.nodes[id]?.type === 'text')
+    async setFont(fontFamily: string, fontWeight?: number) {
+      const ids = (selection?.ids ?? []).filter((id) => session.design().nodes[id]?.type === 'text')
       if (ids.length === 0) return
+      loadFamilies([fontFamily])
+      await fontsLoading
+      if (listening.signal.aborted) return
+      const current = session.design()
       session.gesture(() => {
         for (const id of ids) {
           const node = current.nodes[id]
@@ -3185,6 +3195,7 @@ function live(
           if (node.bindings?.fontFamily) runQuietly(() => session.run('node.bind', { ids: [id], target: 'fontFamily', ref: null }))
           const style = { ...node.props.style, fontFamily, ...(fontWeight === undefined ? {} : { fontWeight }) }
           runQuietly(() => session.run('node.update', { ids: [id], patch: { style } }))
+          fitText(id)
         }
       })
     },
@@ -3217,7 +3228,9 @@ function live(
       let changed = 0
       session.gesture(() => {
         for (const { id, target } of targets) {
-          if (runQuietly(() => session.run('node.bind', { ids: [id], target, ref, ...(value === undefined ? {} : { value }) }))) changed++
+          if (!runQuietly(() => session.run('node.bind', { ids: [id], target, ref, ...(value === undefined ? {} : { value }) }))) continue
+          changed++
+          if (target === 'fontFamily') fitText(id)
         }
       })
       return changed
