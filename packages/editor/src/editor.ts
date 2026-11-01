@@ -96,7 +96,11 @@ const PEN_STROKE = { paint: { type: 'solid', color: '#1F2329FF' }, width: 2, cap
 interface Reshaping { id: string; start: Box; applied: Point }
 
 /** Something the editor tells the person, for the page to show: a gesture that auto layout decides instead. */
-export type Notice = 'placedByLayout'
+export type Notice = 'placedByLayout' | 'flowEnd'
+
+/** A frame's auto layout and a layer's sizing, as the schema has them. */
+type AutoLayoutOf = NonNullable<Extract<Layer, { type: 'frame' }>['props']['layout']>
+type SizingOf = NonNullable<Layer['props']['sizing']>
 
 /** Where the design's edits are, once it is open. */
 export type SaveState = 'Saved' | 'Saving' | 'Offline'
@@ -509,6 +513,8 @@ function live(
   /** A layer's value of one property as a frame's format has it: the base with the format's override. */
   const propIn = (frame: Frame, id: string, key: string, from: Design) =>
     ({ ...from.nodes[id]?.props, ...from.overrides[scope(frame)]?.[id] } as Record<string, unknown>)[key]
+  /** Whether a flow runs in a row (not a column) in a frame's format. */
+  const rowIn = (frame: Frame, id: string, from: Design) => (propIn(frame, id, 'layout', from) as AutoLayoutOf | undefined)?.direction !== 'column'
   /** Whether a frame lays out what it holds with auto layout in a frame's format. */
   const layoutIn = (frame: Frame, id: string, from: Design) => from.nodes[id]?.type === 'frame' && propIn(frame, id, 'layout', from) !== undefined
   /** Whether a layer is in an auto layout frame's flow in a frame's format, so the frame places it. */
@@ -750,16 +756,17 @@ function live(
       parts.push(outline('reorder-leave', g.frame, drawnFrom(holder, g.around.slice(0, -1))))
       return parts
     }
-    const row = (propIn(g.frame, g.parentId, 'layout', now) as { direction?: string } | undefined)?.direction !== 'column'
-    const siblings = flowSiblings(g.frame, g.parentId, g.roots, now).map((id) => boxIn(g.frame, id, now)).filter((b): b is Box => b !== null)
-    const prev = siblings[g.slot - 1]
-    const next = siblings[g.slot]
-    const along = prev && next ? (row ? (prev.x + prev.width + next.x) / 2 : (prev.y + prev.height + next.y) / 2)
-      : next ? (row ? next.x - 2 : next.y - 2) : prev ? (row ? prev.x + prev.width + 2 : prev.y + prev.height + 2) : (row ? holder.x : holder.y)
+    const row = rowIn(g.frame, g.parentId, now)
+    const gap = (propIn(g.frame, g.parentId, 'layout', now) as AutoLayoutOf | undefined)?.gap ?? 0
+    const near = g.near && boxIn(g.frame, g.near.id, now)
     const thick = 2 / camera.zoom
+    // Halfway into the gap beside the nearest sibling; at the frame's start when the flow is empty.
+    const edge = !near ? (row ? holder.x : holder.y)
+      : g.near?.after ? (row ? near.x + near.width : near.y + near.height) + gap / 2 : (row ? near.x : near.y) - gap / 2
+    const span = near ?? holder
     const line = row
-      ? { x: along - thick / 2, y: holder.y, width: thick, height: holder.height, rotation: 0 }
-      : { x: holder.x, y: along - thick / 2, width: holder.width, height: thick, rotation: 0 }
+      ? { x: edge - thick / 2, y: span.y, width: thick, height: span.height, rotation: 0 }
+      : { x: span.x, y: edge - thick / 2, width: span.width, height: thick, rotation: 0 }
     parts.push(outline('reorder-line', g.frame, drawnFrom(line, g.around)))
     return parts
   }
@@ -1244,7 +1251,7 @@ function live(
     | { kind: 'resize'; frame: Frame; around: Box[]; handle: Handle; outer: Box; grab: Point; roots: string[]; boxes: Map<string, Box>; targets: Targets | null; switched: boolean; end: () => void }
     | {
       kind: 'reorder'; frame: Frame; around: Box[]; parentId: string; roots: string[]; boxes: Map<string, Box>; from: Point; to: Point
-      moved: boolean; slot: number; outside: boolean; end: () => void
+      moved: boolean; slot: number; near: { id: string; after: boolean } | null; outside: boolean; end: () => void
     }
     | { kind: 'rotate'; frame: Frame; around: Box[]; outer: Box; from: number; roots: string[]; boxes: Map<string, Box>; end: () => void }
     | { kind: 'marquee'; from: Point; to: Point; base: string[]; baseFrame: string | null }
@@ -1440,11 +1447,15 @@ function live(
         const next = down ? 'fixed' : boxMode === 'autoWidth' && across ? 'autoHeight' : boxMode
         if (next !== boxMode) patch.boxMode = next
       }
-      const sizing = propIn(frame, id, 'sizing', from) as { width: string; height: string } | undefined
-      // Text without sizing of its own follows its box mode, changed above.
+      const sizing = propIn(frame, id, 'sizing', from) as SizingOf | undefined
+      // Text without sizing of its own follows its box mode, changed above; with its own, the
+      // axes its new box mode fixes are fixed too.
       if ((inFlow(frame, id, from) || layoutIn(frame, id, from)) && (sizing || node.type !== 'text')) {
-        const was = sizing ?? { width: 'fixed', height: 'fixed' }
-        const next = { width: across ? 'fixed' : was.width, height: down ? 'fixed' : was.height }
+        const was: SizingOf = sizing ?? { width: 'fixed', height: 'fixed' }
+        const mode = patch.boxMode ?? boxMode
+        const fixedW = across || (node.type === 'text' && mode !== 'autoWidth')
+        const fixedH = down || (node.type === 'text' && mode === 'fixed')
+        const next: SizingOf = { width: fixedW ? 'fixed' : was.width, height: fixedH ? 'fixed' : was.height }
         if (next.width !== was.width || next.height !== was.height) patch.sizing = next
       }
       if (Object.keys(patch).length > 0) runQuietly(() => session.run('node.update', { ids: [id], scope: scope(frame), patch }))
@@ -1455,15 +1466,28 @@ function live(
   function flowSiblings(frame: Frame, parentId: string, moving: string[], from: Design) {
     return childrenOf(from, parentId).map(([id]) => id).filter((id) => !moving.includes(id) && inFlow(frame, id, from))
   }
-  /** Where in a flow a point puts layers being moved: before the sibling at that index, or at the end. */
+  /**
+   * Where in a flow a point puts layers being moved: next to the sibling nearest it (on its line,
+   * when the flow wraps), before it or after it as the point is before or past its middle along the
+   * flow. The slot is the index of the sibling they go before; the list's length is the end.
+   */
   function slotAt(g: Extract<Gesture, { kind: 'reorder' }>, p: Point) {
     const now = session.design()
-    const row = (propIn(g.frame, g.parentId, 'layout', now) as { direction?: string } | undefined)?.direction !== 'column'
+    const row = rowIn(g.frame, g.parentId, now)
     const siblings = flowSiblings(g.frame, g.parentId, g.roots, now)
-    return siblings.filter((id) => {
+    let best: { i: number; d: number; after: boolean } | null = null
+    siblings.forEach((id, i) => {
       const b = boxIn(g.frame, id, now)
-      return b && (row ? b.x + b.width / 2 : b.y + b.height / 2) < (row ? p.x : p.y)
-    }).length
+      if (!b) return
+      const dx = Math.max(b.x - p.x, 0, p.x - (b.x + b.width))
+      const dy = Math.max(b.y - p.y, 0, p.y - (b.y + b.height))
+      const d = Math.hypot(dx, dy)
+      const after = row ? p.x > b.x + b.width / 2 : p.y > b.y + b.height / 2
+      if (!best || d < best.d) best = { i, d, after }
+    })
+    const near = best as { i: number; d: number; after: boolean } | null
+    g.near = near ? { id: siblings[near.i] as string, after: near.after } : null
+    return near ? near.i + (near.after ? 1 : 0) : 0
   }
   /** Follows a drag of layers in a flow: where they would go in it, or out of it. */
   function reorderTo(g: Extract<Gesture, { kind: 'reorder' }>, p: Point) {
@@ -1485,34 +1509,52 @@ function live(
     if (!g.outside) {
       const siblings = flowSiblings(g.frame, g.parentId, g.roots, now)
       const before = siblings[g.slot]
-      for (const id of g.roots) runQuietly(() => session.run('node.move', { id, parentId: g.parentId, ...(before ? { before } : {}) }))
+      const flow = childrenOf(now, g.parentId).map(([id]) => id)
+      const moving = flow.filter((id) => g.roots.includes(id))
+      const next = siblings.flatMap((id) => (id === before ? [...moving, id] : [id]))
+      if (!before) next.push(...moving)
+      // Dropped where they were: nothing to write.
+      if (next.join() === flow.filter((id) => next.includes(id)).join()) return
+      for (const id of moving) runQuietly(() => session.run('node.move', { id, parentId: g.parentId, ...(before ? { before } : {}) }))
       return
     }
-    const holder = now.nodes[g.parentId]
-    if (!holder) return
-    const outer = holder.parentId
-    const after = childrenOf(now, outer).map(([id]) => id)
-    const before = after[after.indexOf(g.parentId) + 1]
+    if (!now.nodes[g.parentId]) return
     const dx = g.to.x - g.from.x
     const dy = g.to.y - g.from.y
+    // The container the drop point is in, among those holding the frame, nearest first; or the page.
+    const point = pageFrom(g.to, g.around)
+    let branch = g.parentId
+    let target = now.nodes[g.parentId]?.parentId ?? g.frame.pageId
+    while (now.nodes[target] && !(canHold(now.nodes[target]?.type ?? '', 'graphic') && drawnContains(g.frame, target, point, now))) {
+      branch = target
+      target = now.nodes[target]?.parentId ?? g.frame.pageId
+    }
+    // Above the part of the container that held them.
+    const order = childrenOf(now, target).map(([id]) => id)
+    const before = order[order.indexOf(branch) + 1]
     // Each format's box as its flow placed it, before the layers leave it.
-    const others = grid.frames.filter((f) => f.pageId === g.frame.pageId && f.key !== g.frame.key)
+    const others = frameGrid(now, null).frames.filter((f) => f.pageId === g.frame.pageId && f.key !== g.frame.key)
     const placed = new Map(others.map((f) => [f, new Map(g.roots.map((id) => [id, boxIn(f, id, now)]))]))
-    const aroundOut = g.around.slice(0, -1)
     for (const id of g.roots) {
       const box = g.boxes.get(id)
       if (!box) continue
-      runQuietly(() => session.run('node.move', { id, parentId: outer, ...(before ? { before } : {}) }))
+      runQuietly(() => session.run('node.move', { id, parentId: target, ...(before ? { before } : {}) }))
       const drawn = drawnFrom({ ...box, x: box.x + dx, y: box.y + dy }, g.around)
-      runQuietly(() => session.run('node.update', { ids: [id], scope: scope(g.frame), patch: { ...undrawn(drawn, aroundOut) } }))
+      runQuietly(() => session.run('node.update', { ids: [id], scope: scope(g.frame), patch: { ...undrawn(drawn, containersOf(g.frame, target, now)) } }))
       for (const [f, boxes] of placed) {
         const there = boxes.get(id)
-        const holderThere = boxIn(f, g.parentId, now)
-        if (!there || !holderThere) continue
-        const aroundThere = [...containersOf(f, outer, now), holderThere]
-        runQuietly(() => session.run('node.update', { ids: [id], scope: scope(f), patch: { ...undrawn(drawnFrom(there, aroundThere), aroundThere.slice(0, -1)) } }))
+        if (!there) continue
+        const drawnThere = drawnFrom(there, containersOf(f, g.parentId, now))
+        runQuietly(() => session.run('node.update', { ids: [id], scope: scope(f), patch: { ...undrawn(drawnThere, containersOf(f, target, now)) } }))
       }
     }
+  }
+  /** Whether a point on the page is inside a layer as it is drawn in a frame. */
+  function drawnContains(frame: Frame, id: string, p: Point, from: Design) {
+    const box = drawnBoxOf(frame, id, from)
+    if (!box) return false
+    const q = turn(p, centreOf(box), -box.rotation)
+    return q.x >= box.x && q.y >= box.y && q.x <= box.x + box.width && q.y <= box.y + box.height
   }
   /** A box as drawn on the page, as layers inside containers keep it: the inverse of drawnFrom. */
   function undrawn(drawn: Box, around: Box[]): Box {
@@ -1725,11 +1767,14 @@ function live(
     if (flowParent && parents.size === 1 && ids.every((id) => inFlow(frame, id, now))) {
       // Auto layout places these: a drag moves them along the flow, or out of the frame.
       const from = localTo(at.p, around)
-      gesture = { kind: 'reorder', frame, around, parentId: flowParent, roots: ids, boxes: startBoxes(frame, ids), from, to: from, moved: false, slot: 0, outside: false, end: session.beginGesture() }
+      gesture = { kind: 'reorder', frame, around, parentId: flowParent, roots: ids, boxes: startBoxes(frame, ids), from, to: from, moved: false, slot: 0, near: null, outside: false, end: session.beginGesture() }
       drawOverlay()
       return
     }
-    gesture = { kind: 'move', frame, around, from: localTo(at.p, around), roots: ids, boxes: startBoxes(frame, ids), targets: targetsFor(frame, ids, around), end: session.beginGesture() }
+    // Layers in a flow among others stay in it: auto layout places them.
+    const free = ids.filter((id) => !inFlow(frame, id, now))
+    if (free.length < ids.length) notify('placedByLayout')
+    gesture = { kind: 'move', frame, around, from: localTo(at.p, around), roots: free, boxes: startBoxes(frame, free), targets: targetsFor(frame, free, around), end: session.beginGesture() }
     drawOverlay()
   }, on)
 
@@ -2212,7 +2257,11 @@ function live(
     drawOverlay()
   }
   canvas.addEventListener('pointerup', endDrag, on)
-  canvas.addEventListener('pointercancel', endDrag, on)
+  canvas.addEventListener('pointercancel', () => {
+    // A drag the browser took away drops nothing into a flow.
+    if (gesture?.kind === 'reorder') gesture.moved = false
+    endDrag()
+  }, on)
   canvas.addEventListener('pointerleave', () => {
     pointer = null
     if (!hovered) return
@@ -2312,10 +2361,13 @@ function live(
     if (!frame || !format) return false
     const now = session.design()
     const ids = roots(now)
-    if (ids.some((id) => inFlow(frame, id, now))) {
-      notify('placedByLayout')
-      return true
-    }
+    if (ids.some((id) => inFlow(frame, id, now))) notify('placedByLayout')
+    const free = ids.filter((id) => !inFlow(frame, id, now))
+    if (free.length === 0) return true
+    return arrangeFree(frame, format, free, offsets, now)
+  }
+  /** Align or distribute layers that aren't in a flow. */
+  function arrangeFree(frame: Frame, format: { width: number; height: number }, ids: string[], offsets: (boxes: Rect[], within: Rect) => Offset[], now: Design) {
     const boxes = startBoxes(frame, ids)
     // One layer lines up with what holds it: its group or frame, or the format.
     const parent = now.nodes[ids[0] ?? '']?.parentId
@@ -2366,7 +2418,7 @@ function live(
   function nudgeInFlow(frame: Frame, ids: string[], dx: number, dy: number, now: Design) {
     const parents = new Set(ids.map((id) => now.nodes[id]?.parentId))
     const [parentId] = parents
-    const row = parentId && (propIn(frame, parentId, 'layout', now) as { direction?: string } | undefined)?.direction !== 'column'
+    const row = parentId && rowIn(frame, parentId, now)
     const along = row ? dx : dy
     if (!parentId || parents.size > 1 || !ids.every((id) => inFlow(frame, id, now)) || along === 0 || (row ? dy : dx) !== 0) {
       notify('placedByLayout')
@@ -2378,7 +2430,10 @@ function live(
     const last = places.at(-1) ?? 0
     // Earlier: before the layer ahead of the first; later: past the layer after the last.
     const before = along < 0 ? flow[first - 1] : flow[last + 2]
-    if (along < 0 ? first === 0 : last === flow.length - 1) return
+    if (along < 0 ? first === 0 : last === flow.length - 1) {
+      notify('flowEnd')
+      return
+    }
     const moving = flow.filter((id) => ids.includes(id))
     runQuietly(() => session.gesture(() => {
       for (const id of moving) session.run('node.move', { id, parentId, ...(before ? { before } : {}) })
@@ -2996,12 +3051,12 @@ function live(
       const frame = defaultFrame(pageId, formatId)
       return runQuietly(() => session.run('node.update', { ids, scope: scope(frame), patch: { visible: !hidden } }))
     },
-    /** Calls back with the selected layers whenever the selection changes. */
     /** Calls back with what the editor tells the person, such as a nudge auto layout decides. */
     onNotice(listener: (notice: Notice) => void) {
       noticeListeners.add(listener)
       return () => noticeListeners.delete(listener)
     },
+    /** Calls back with the selected layers whenever the selection changes. */
     onSelection(listener: (ids: string[]) => void) {
       selectionListeners.add(listener)
       return () => selectionListeners.delete(listener)

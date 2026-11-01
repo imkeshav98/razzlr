@@ -142,6 +142,7 @@ export const ar: Messages = {
     zoomOutKey: 'Ctrl+-',
     notices: {
       placedByLayout: 'التخطيط التلقائي يحدد مكان هذه الطبقة. اسحبها على طول الصف أو العمود، أو اجعلها تبقى في مكانها لتحريكها بحرية.',
+      flowEnd: 'هذه الطبقة في طرف صفها أو عمودها بالفعل.',
     },
     imageTool: {
       title: 'ضع صورة',

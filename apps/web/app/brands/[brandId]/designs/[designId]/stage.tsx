@@ -110,11 +110,11 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
   const [removed, setRemoved] = useState<string | null>(null)
   // Why a gesture did nothing: auto layout decides where a layer in its flow goes.
   const notices = useMessages().editor.notices
-  const [notice, setNotice] = useState<string | null>(null)
+  const [notice, setNotice] = useState<{ text: string; at: number } | null>(null)
   const dismissNotice = useCallback(() => setNotice(null), [])
   useEffect(() => {
     if (!editor) return
-    const stop = editor.onNotice((n) => setNotice(notices[n]))
+    const stop = editor.onNotice((n) => setNotice({ text: notices[n], at: Date.now() }))
     return () => {
       stop()
     }
@@ -264,7 +264,7 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
         </div>
         <div className="pointer-events-none absolute start-4 bottom-4 z-10">
           {editor && removed && <UndoToast key={removed} editor={editor} message={removed} onDone={dismissRemoved} />}
-          {!removed && notice && <NoticeToast message={notice} onDone={dismissNotice} />}
+          {!removed && notice && <NoticeToast key={notice.at} message={notice.text} onDone={dismissNotice} />}
         </div>
       </div>
       <StageZoom editor={editor} store={zoom} />

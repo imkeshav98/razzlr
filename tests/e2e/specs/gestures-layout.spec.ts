@@ -205,3 +205,38 @@ test('auto width text resized takes the size given instead of snapping back', as
   writeOutput('layout-text-resize.png', await page.screenshot({ animations: 'disabled' }))
   expect(errors).toEqual([])
 })
+
+test('a fill child grows with its frame; in a wrapped flow a drag lands next to the layer it is dropped by', async ({ browser }) => {
+  const content = design()
+  // C1 fills the row's room left over.
+  ;(content.nodes.c1 as { props: Record<string, unknown> }).props.sizing = { width: 'fill', height: 'fixed' }
+  ;(content.nodes.row as { props: Record<string, unknown> }).props.layout = { direction: 'row', gap: 20, padding: { top: 20, right: 20, bottom: 20, left: 20 } }
+  const { page, errors } = await openStage(browser, content)
+  const fill = (await boxOf(page, 'c1')).width
+  await click(page, 70, 70)
+  await dragHandle(page, 'e', 100, 0)
+  expect((await boxOf(page, 'c1')).width).toBeCloseTo(fill + 100, 0)
+  for (const id of ['c0', 'c2', 'c3']) expect((await boxOf(page, id)).width).toBe(100)
+  await undo(page)
+  expect(errors).toEqual([])
+})
+
+test('in a wrapped flow, a layer dropped beside one on the first line goes next to it', async ({ browser }) => {
+  const { page, errors } = await openStage(browser, design())
+  await click(page, 70, 70)
+  await dragHandle(page, 'e', -200, 0)
+  // Two lines: C0 C1 / C2 C3. C3 dropped just after C0, on the first line.
+  expect((await boxOf(page, 'c3')).y).toBe(200)
+  const at = await screenPoint(page, 250, 250)
+  await page.mouse.dblclick(at.x, at.y)
+  await page.evaluate(() => window.dazbee?.drawn())
+  expect(await selection(page)).toEqual(['c3'])
+  await dragDesign(page, { x: 250, y: 250 }, { x: 150, y: 120 }, 'layout-move-4-wrapped.png')
+  expect(await order(page, 'row')).toEqual(['c0', 'c3', 'c1', 'c2'])
+  // The last one can't go further along: the page says so.
+  await press(page, 'nudgeRight')
+  await press(page, 'nudgeRight')
+  await press(page, 'nudgeRight')
+  await expect(page.getByTestId('notice-toast')).toContainText('already at that end')
+  expect(errors).toEqual([])
+})
