@@ -16,7 +16,7 @@ const rect = (x: number, y: number, width: number, height: number, color: string
   ({ x, y, width, height, shape: { kind: 'rect' as const, cornerRadius: 16 }, fills: [{ type: 'solid' as const, color }] })
 
 const design = (): DesignInput => ({
-  meta: { schemaVersion: 2, designId: 'replaced-by-the-api', name: 'Layers panel', kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: 3, designId: 'replaced-by-the-api', name: 'Layers panel', kind: 'single', primaryFormatId: 'sq' },
   formats: { sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' } },
   pages: { p1: { name: 'Page 1', order: 'a0', fills: [{ type: 'solid', color: '#FFFFFFFF' }] } },
   nodes: {

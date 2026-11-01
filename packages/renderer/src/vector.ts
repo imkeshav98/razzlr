@@ -135,11 +135,13 @@ function drawImage(ck: CanvasKit, canvas: Canvas, box: Box, scale: number, draw:
 }
 
 /**
- * Whether a paint is one Skia's SVG writer draws as it is: solid colours and linear and radial
- * gradients. It has no angular gradient, and places image fills wrongly once they are scaled.
+ * Whether a paint is one Skia's SVG writer draws as it is: solid colours, and linear and radial
+ * gradients at their own full opacity. It has no angular gradient, and places image fills wrongly
+ * once they are scaled. A hidden paint draws nothing, which SVG holds too.
  */
 function svgPaint(paint: Paint): boolean {
-  return paint.type === 'solid' || paint.type === 'linear' || paint.type === 'radial'
+  if (paint.visible === false || paint.type === 'solid') return true
+  return (paint.type === 'linear' || paint.type === 'radial') && (paint.opacity ?? 1) === 1
 }
 
 /** A group or frame whose own drawing adds nothing an offscreen layer would change. */

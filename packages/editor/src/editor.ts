@@ -8,7 +8,7 @@ import {
   caretAt, caretPosition, drawPage, layerPictures, paragraphCache, selectionBoxes, render, renderDesign, resourceCache, sceneMemo, textMeasure, type MeasureText, type ResourceCache, type Resources, type Scene, type SceneLayer,
 } from '@dazbee/renderer'
 import {
-  canBind, canHold, fontFamilies, imageAssetIds, isContainer, LAYER_CLIPBOARD_TYPE, LayerClipboard, LOCK_FLAGS, SCHEMA_VERSION, type BindingTarget, type Design, type ExportRequestInput, type Layer, type LayerTree, type Paint, type Variables, type VariableRef,
+  boundFillIndex, canBind, canHold, fontFamilies, imageAssetIds, isContainer, LAYER_CLIPBOARD_TYPE, LayerClipboard, LOCK_FLAGS, SCHEMA_VERSION, type BindingTarget, type Design, type ExportRequestInput, type Layer, type LayerTree, type Paint, type Variables, type VariableRef,
 } from '@dazbee/schema'
 import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from '@dazbee/canvaskit'
 import canvasKitModule from '@dazbee/canvaskit'
@@ -140,7 +140,7 @@ function runQuietly(run: () => unknown) {
  * so a change that leaves it be (an image added or swapped) keeps the binding.
  */
 function sameTopSolid(a: unknown, b: unknown) {
-  const top = (fills: unknown) => (Array.isArray(fills) ? (fills as Paint[]).findLast((f) => f.type === 'solid') : undefined)
+  const top = (fills: unknown) => (Array.isArray(fills) ? fills[boundFillIndex(fills)] : undefined)
   return JSON.stringify(top(a)) === JSON.stringify(top(b))
 }
 
@@ -2077,6 +2077,8 @@ function live(
   /** Keys typed into the page's own fields belong to them. */
   const inField = (target: EventTarget | null) =>
     target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
+  /** Keys pressed in a popover or dialog, such as Escape to close it, are its own, not the stage's; undo and redo still are. */
+  const inDialog = (target: EventTarget | null) => target instanceof Element && target.closest('[role="dialog"], dialog') !== null
 
   /** Groups fit what they hold again after a change inside them, in the same undo step (#41). */
   function hug(ids: string[]) {
@@ -2380,6 +2382,7 @@ function live(
       perform(action)
       return
     }
+    if (inDialog(e.target)) return
     if (!editing) {
       if (e.code === 'Space' && !(e.metaKey || e.ctrlKey)) {
         e.preventDefault()
@@ -2700,7 +2703,9 @@ function live(
           const node = now.nodes[id]
           if (!node) continue
           const at = placedProps(id)
-          const patch = to(id, at)
+          // Values a change leaves as they are aren't written, so they make no undo step.
+          const asked = to(id, at)
+          const patch = asked && Object.fromEntries(Object.entries(asked).filter(([key, value]) => JSON.stringify(value) !== JSON.stringify(at[key])))
           if (!patch || Object.keys(patch).length === 0) continue
           writes.set(id, { ...writes.get(id), ...patch })
           if (!isContainer(node.type) || !('x' in patch || 'y' in patch)) continue

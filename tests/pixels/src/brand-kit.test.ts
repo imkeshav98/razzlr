@@ -8,7 +8,7 @@ import { fixtureResources } from './pixels.ts'
 
 const ck = await loadCanvasKit()
 const design = {
-  meta: { schemaVersion: 2, designId: 'd', name: 'Brand kit', kind: 'single', primaryFormatId: 'f' },
+  meta: { schemaVersion: 3, designId: 'd', name: 'Brand kit', kind: 'single', primaryFormatId: 'f' },
   formats: { f: { name: 'F', width: 200, height: 100, order: 'a0' }, wide: { name: 'Wide', width: 400, height: 100, order: 'a1' } },
   pages: { p1: { name: 'Page', order: 'a0', fills: [{ type: 'solid', color: '#FFFFFFFF' }] } },
   nodes: {

@@ -9,7 +9,7 @@ import { FALLBACK_FAMILIES } from '@dazbee/fonts'
 import { loadFontFiles } from '@dazbee/fonts/node'
 import { renderDesign } from '@dazbee/renderer'
 import { loadCanvasKit } from '@dazbee/renderer/node'
-import type { DesignInput } from '@dazbee/schema'
+import { SCHEMA_VERSION, type DesignInput } from '@dazbee/schema'
 import { expect, test, type Page } from '../support/test.ts'
 import { editorPath, exportHashOf, writeOutput } from '../support/editor.ts'
 import { seed } from '../support/seed.ts'
@@ -66,12 +66,12 @@ test('every new paint, stroke and effect draws on the stage and exports as Node 
   expect(errors).toEqual([])
 })
 
-test('a design sent at version 1 is stored at version 2 and draws as it did', async ({ page }) => {
+test('a design sent at version 1 is stored at the current version and draws as it did', async ({ page }) => {
   const content = fixture('groups-and-frames')
   expect(content.meta.schemaVersion as number).toBe(1)
   const { errors } = await open(page, content)
   const design = await page.evaluate(() => window.dazbee?.design()) as { meta: { schemaVersion: number }; nodes: Record<string, { type: string; props: { blendMode: string } }> }
-  expect(design.meta.schemaVersion).toBe(2)
+  expect(design.meta.schemaVersion).toBe(SCHEMA_VERSION)
   const containers = Object.values(design.nodes).filter((n) => n.type === 'group' || n.type === 'frame')
   expect(containers.length).toBeGreaterThan(0)
   expect(new Set(containers.map((n) => n.props.blendMode))).toEqual(new Set(['pass-through']))

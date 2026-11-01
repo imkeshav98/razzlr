@@ -1,4 +1,4 @@
-import { BINDING_TARGETS, BooleanOp, canBind, canHold, fitsTarget, Paint, VariableRef, Format, LayerTree, FormatId, formatIdOf, formatSizeProblem, Layer, LAYER_PROPS, LayerLock, LOCK_FLAGS, type Layer as LayerT, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@dazbee/schema'
+import { BINDING_TARGETS, BooleanOp, boundFillIndex, canBind, canHold, fitsTarget, Paint, VariableRef, Format, LayerTree, FormatId, formatIdOf, formatSizeProblem, Layer, LAYER_PROPS, LayerLock, LOCK_FLAGS, type Layer as LayerT, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@dazbee/schema'
 import { generateKeyBetween } from 'fractional-indexing'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
@@ -258,7 +258,7 @@ export const nodeBind = defineCommand({
       const props = ynode.get('props') as Y.Map<unknown>
       if (target === 'fill') {
         const fills = (props.get('fills') ?? []) as z.infer<typeof Paint>[]
-        const at = fills.findLastIndex((f) => f.type === 'solid')
+        const at = boundFillIndex(fills)
         props.set('fills', at < 0 ? [...fills, { type: 'solid', color: value }] : fills.map((f, i) => (i === at ? { ...f, color: value } : f)))
       } else {
         const key = target === 'textColor' ? 'color' : 'fontFamily'

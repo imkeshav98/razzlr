@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FORMAT_PRESETS, FORMAT_SHAPES, fontFamilies, formatSizeProblem, imageAssetIds, parseDesign, parseDesignIncrementally, shapeOf } from './index.ts'
+import { FORMAT_PRESETS, FORMAT_SHAPES, fontFamilies, formatSizeProblem, imageAssetIds, parseDesign, parseDesignIncrementally, SCHEMA_VERSION, shapeOf } from './index.ts'
 
 /**
  * Parses with the full parser, checking on the way that the incremental one agrees exactly,
@@ -15,7 +15,7 @@ const parse = (input: unknown) => {
 
 /** The smallest valid design: one page, one format, one rectangle. */
 const minimal = () => ({
-  meta: { schemaVersion: 2, designId: 'd1', name: 'Minimal', kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: SCHEMA_VERSION, designId: 'd1', name: 'Minimal', kind: 'single', primaryFormatId: 'sq' },
   formats: { sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' } },
   pages: { p1: { name: 'Page 1', order: 'a0', fills: [{ type: 'solid', color: '#FFFFFFFF' }] } },
   nodes: {
@@ -190,7 +190,7 @@ describe('imageAssetIds', () => {
   it('finds image fills on pages, layers and format overrides, once each', () => {
     const image = (assetId: string) => ({ type: 'image', assetId })
     const parsed = parseDesign({
-      meta: { schemaVersion: 2, designId: 'd', name: 'D', kind: 'single', primaryFormatId: 'sq' },
+      meta: { schemaVersion: 3, designId: 'd', name: 'D', kind: 'single', primaryFormatId: 'sq' },
       formats: { sq: { name: 'Square', width: 100, height: 100, order: 'a0' }, st: { name: 'Story', width: 100, height: 200, order: 'a1' } },
       pages: { p1: { name: 'P', order: 'a0', fills: [image('page-bg')] } },
       nodes: {
@@ -208,7 +208,7 @@ describe('fontFamilies', () => {
   it('finds the families of base styles, runs and format overrides, once each', () => {
     const text = (fontFamily: string, runs: unknown[] = []) => ({ x: 0, y: 0, width: 10, height: 10, text: 'Sale now', style: { fontFamily, fontSize: 20, color: '#000000FF' }, runs })
     const parsed = parseDesign({
-      meta: { schemaVersion: 2, designId: 'd', name: 'D', kind: 'single', primaryFormatId: 'sq' },
+      meta: { schemaVersion: 3, designId: 'd', name: 'D', kind: 'single', primaryFormatId: 'sq' },
       formats: { sq: { name: 'Square', width: 100, height: 100, order: 'a0' }, st: { name: 'Story', width: 100, height: 200, order: 'a1' } },
       pages: { p1: { name: 'P', order: 'a0' } },
       nodes: {

@@ -564,14 +564,28 @@ function drawLine(ck: CanvasKit, canvas: Canvas, box: Box, line: LineShape, stro
 }
 
 export function fillPath(ck: CanvasKit, canvas: Canvas, path: Path, fill: Paint, box: Box, resources: Resources) {
-  const paint = paintFor(ck, fill, box, resources)
+  // A PDF reader can drop a see-through image pattern's alpha, so a vector export draws the image
+  // whole inside a layer that holds its opacity instead.
+  const faded = resources.vector && fill.type === 'image' && fill.opacity < 1
+  const paint = paintFor(ck, faded ? { ...fill, opacity: 1 } : fill, box, resources)
   if (!paint) return
+  if (faded) {
+    const layer = new ck.Paint()
+    layer.setAlphaf(fill.opacity)
+    canvas.saveLayer(layer, path.getBounds())
+    layer.delete()
+  }
   canvas.drawPath(path, paint)
+  if (faded) canvas.restore()
   paint.delete()
 }
 
-/** A CanvasKit paint for one schema paint. Gradient and image geometry is placed in the layer's box. */
+/**
+ * A CanvasKit paint for one schema paint, or null for a hidden one. Gradient and image geometry is
+ * placed in the layer's box; the paint's own opacity multiplies its colours' alpha.
+ */
 function paintFor(ck: CanvasKit, fill: Paint, box: Box, resources: Resources): CkPaint | null {
+  if (fill.visible === false) return null
   const paint = new ck.Paint()
   paint.setAntiAlias(true)
   let shader: Shader | null = null
@@ -615,6 +629,8 @@ function paintFor(ck: CanvasKit, fill: Paint, box: Box, resources: Resources): C
       break
     }
   }
+  const opacity = fill.opacity ?? 1
+  if (fill.type !== 'image' && opacity < 1) paint.setAlphaf((paint.getColor()[3] ?? 1) * opacity)
   if (shader) {
     paint.setShader(shader)
     shader.delete()

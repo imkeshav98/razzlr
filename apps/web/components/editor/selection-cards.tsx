@@ -6,27 +6,29 @@
 // layers don't share shows as mixed; setting it gives them all the same one, and scrubbing or the
 // arrow keys move each from its own. With more than one format the changes go to every format or to
 // this one only. Each change is one undo step, and a scrub or a slider drag, however long, is one too.
-import { ArrowsClockwiseIcon, CaretRightIcon, ImageSquareIcon, MinusIcon, PlusIcon, XIcon } from '@phosphor-icons/react'
+import { ArrowsClockwiseIcon, CaretRightIcon, ImageSquareIcon, XIcon } from '@phosphor-icons/react'
 import { withImage, type Editor } from '@dazbee/editor'
-import { BlendMode, brandRef, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@dazbee/schema'
-import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { BlendMode, boundFillIndex, brandRef, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@dazbee/schema'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format, type Messages } from '../../lib/i18n/index.ts'
 import { Select } from '../ui/select.tsx'
 import { CARD, CardHeader, FineTune, PICKED_RING, SWATCHES } from './card.tsx'
-import { CHIP, DASHED_BUTTON, FOCUS_RING, ICON_BUTTON } from './styles.ts'
+import { CHIP, DASHED_BUTTON, FOCUS_RING, SWATCH } from './styles.ts'
 import { ImagePickerButton } from './image-tool.tsx'
 import { useBrandKit } from './use-brand-kit.ts'
 import { useLiveDesign } from './use-live-design.ts'
+import { Choice, clamp, ColorField, FIELD, NumberField, tidy } from './fields.tsx'
+import { AddButton, PaintRow, RemoveButton, Stack } from './paint-stack.tsx'
 
 type Props = Readonly<Record<string, unknown>>
 type Patch = Record<string, unknown>
 type P = Messages['editor']['props']
 
-const FIELD = 'h-7 min-w-0 w-full rounded-row border border-line bg-surface px-1.5 font-mono text-[12px] tabular-nums text-text outline-none placeholder:text-subtle focus:border-accent'
-const SELECT = 'h-7 w-full bg-surface px-1.5 text-[12px]'
 const NEW_FILL: Paint = { type: 'solid', color: '#D9D9D9FF' }
+/** A fill + adds over others: a see-through wash, so what was there still shows through it. */
+const FILL_ON_TOP: Paint = { type: 'solid', color: '#00000033' }
 const NEW_STROKE = { paint: { type: 'solid', color: '#1A1420FF' } as Paint, width: 2, align: 'center' as const }
 
 /** What the cards act on: the layers, the frame they are shown in, and where changes go. */
@@ -53,177 +55,6 @@ function shared<T>(values: T[]): T | 'mixed' {
   const [first] = values
   const same = values.every((v) => JSON.stringify(v) === JSON.stringify(first))
   return same ? first as T : 'mixed'
-}
-
-const clamp = (n: number, min = Number.NEGATIVE_INFINITY, max = Number.POSITIVE_INFINITY) => Math.min(max, Math.max(min, n))
-const tidy = (n: number) => Math.round(n * 100) / 100
-
-/**
- * A number: type it and press Enter, nudge it with the arrow keys (Shift for 10), or drag its label
- * sideways to scrub it, one undo step for the whole drag.
- */
-function NumberField({ label, name, value, step = 1, min, max, scale = 1, placeholder, editor, onSet, onShift }: {
-  label: string
-  name: string
-  value: number | 'mixed' | undefined
-  step?: number
-  min?: number | undefined
-  max?: number | undefined
-  /** Shown as the value times this, such as 100 for a percentage. */
-  scale?: number
-  placeholder?: string
-  editor: Editor
-  onSet: (value: number) => void
-  onShift: (by: number) => void
-}) {
-  const t = useMessages()
-  const id = useId()
-  const shown = value === undefined || value === 'mixed' ? '' : String(tidy(value * scale))
-  const [draft, setDraft] = useState<string | null>(null)
-  const scrub = useRef<{ x: number; applied: number; end: () => void } | null>(null)
-  const commit = (text: string) => {
-    setDraft(null)
-    const n = Number.parseFloat(text.replace(',', '.'))
-    if (Number.isFinite(n) && text.trim() !== shown) onSet(clamp(n / scale, min, max))
-  }
-  return (
-    <div className="flex min-w-0 items-center gap-1">
-      <label
-        htmlFor={id}
-        title={format(t.editor.props.scrub, { name })}
-        onPointerDown={(event) => {
-          if (event.button !== 0) return
-          event.preventDefault()
-          event.currentTarget.setPointerCapture(event.pointerId)
-          scrub.current = { x: event.clientX, applied: 0, end: editor.beginGesture() }
-        }}
-        onPointerMove={(event) => {
-          const s = scrub.current
-          if (!s) return
-          const by = Math.round((event.clientX - s.x) / 2) * step * (event.shiftKey ? 10 : 1)
-          if (by === s.applied) return
-          onShift((by - s.applied) / scale)
-          s.applied = by
-        }}
-        onPointerUp={() => {
-          scrub.current?.end()
-          scrub.current = null
-        }}
-        onPointerCancel={() => {
-          scrub.current?.end()
-          scrub.current = null
-        }}
-        data-scrub={name}
-        className="w-5 shrink-0 cursor-ew-resize text-center text-[11px] font-medium text-subtle select-none hover:text-text"
-      >
-        {label}
-      </label>
-      <input
-        id={id}
-        aria-label={name}
-        inputMode="decimal"
-        value={draft ?? shown}
-        placeholder={value === 'mixed' ? t.editor.props.mixed : placeholder}
-        onChange={(event) => setDraft(event.target.value)}
-        onBlur={(event) => draft !== null && commit(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') commit(event.currentTarget.value)
-          else if (event.key === 'Escape') {
-            setDraft(null)
-            event.currentTarget.blur()
-          } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-            event.preventDefault()
-            setDraft(null)
-            onShift(((event.key === 'ArrowUp' ? 1 : -1) * step * (event.shiftKey ? 10 : 1)) / scale)
-          } else return
-          // Keys typed into a field are the field's, not the stage's.
-          event.stopPropagation()
-        }}
-        className={FIELD}
-      />
-    </div>
-  )
-}
-
-/** A colour as #RRGGBBAA: one part changed, the other as the document holds it now. */
-const withHex = (hex: string) => (now: string | undefined) => `${hex}${now?.slice(7, 9) || 'FF'}`
-const withOpacity = (alpha: number) => (now: string | undefined) =>
-  `${now?.slice(0, 7) || '#000000'}${Math.round(clamp(alpha, 0, 1) * 255).toString(16).padStart(2, '0').toUpperCase()}`
-
-/**
- * A colour: a swatch that opens the system picker, the hex, and its opacity as a percentage. A
- * change gives `onSet` the colour to build from the one the document holds then, so a hex and an
- * opacity committed one after the other each keep the other's change.
- */
-function ColorField({ name, value, onSet }: { name: string; value: string | 'mixed' | undefined; onSet: (to: (now: string | undefined) => string) => void }) {
-  const t = useMessages()
-  const p = t.editor.props
-  const hex = value && value !== 'mixed' ? value.slice(0, 7).toUpperCase() : ''
-  const alpha = value && value !== 'mixed' ? Number.parseInt(value.slice(7, 9) || 'FF', 16) / 255 : undefined
-  const [draft, setDraft] = useState<string | null>(null)
-  const commitHex = (text: string) => {
-    setDraft(null)
-    const h = (text.startsWith('#') ? text : `#${text}`).toUpperCase()
-    if (/^#[0-9A-F]{6}$/.test(h) && h !== hex) onSet(withHex(h))
-  }
-  return (
-    <div className="flex min-w-0 flex-1 items-center gap-1">
-      <input
-        name="colour"
-        type="color"
-        aria-label={format(p.colourOf, { name })}
-        value={hex || '#000000'}
-        onChange={(event) => onSet(withHex(event.target.value.toUpperCase()))}
-        className="size-7 shrink-0 cursor-pointer rounded-row border border-line bg-surface p-0.5"
-      />
-      <input
-        name="colour-hex"
-        aria-label={format(p.hexOf, { name })}
-        value={draft ?? hex}
-        placeholder={value === 'mixed' ? p.mixed : ''}
-        spellCheck={false}
-        onChange={(event) => setDraft(event.target.value)}
-        onBlur={(event) => draft !== null && commitHex(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') commitHex(event.currentTarget.value)
-          event.stopPropagation()
-        }}
-        className={cn(FIELD, 'uppercase')}
-      />
-      <input
-        name="colour-opacity"
-        aria-label={format(p.alpha, { name })}
-        inputMode="numeric"
-        key={alpha ?? 'mixed'}
-        defaultValue={alpha === undefined ? '' : String(Math.round(alpha * 100))}
-        placeholder={value === 'mixed' ? '–' : ''}
-        onBlur={(event) => {
-          const n = Number.parseFloat(event.target.value)
-          if (Number.isFinite(n) && hex && Math.round(n) !== Math.round((alpha ?? 1) * 100)) onSet(withOpacity(n / 100))
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') event.currentTarget.blur()
-          event.stopPropagation()
-        }}
-        className={cn(FIELD, 'w-11 shrink-0 text-end')}
-      />
-    </div>
-  )
-}
-
-function Choice<T extends string>({ name, value, options, labels, onSet }: { name: string; value: T | 'mixed' | undefined; options: readonly T[]; labels: Record<T, string>; onSet: (value: T) => void }) {
-  const t = useMessages()
-  return (
-    <Select
-      name="choice"
-      label={name}
-      value={value === 'mixed' || value === undefined ? '' : value}
-      placeholder={t.editor.props.mixed}
-      options={options.map((option) => ({ value: option, label: labels[option] }))}
-      onChange={(next) => onSet(next as T)}
-      className={SELECT}
-    />
-  )
 }
 
 /**
@@ -288,20 +119,6 @@ function Card({ id, title, note, summary, action, children }: { id: string; titl
   )
 }
 
-function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button type="button" aria-label={label} title={label} onClick={onClick} className={ICON_BUTTON}>
-      <PlusIcon size={14} aria-hidden />
-    </button>
-  )
-}
-function RemoveButton({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button type="button" aria-label={label} title={label} onClick={onClick} className={ICON_BUTTON}>
-      <MinusIcon size={14} aria-hidden />
-    </button>
-  )
-}
 
 const num = (props: Props, key: string) => props[key] as number
 
@@ -487,17 +304,21 @@ function ShapeCard({ target, p, kind, look }: { target: Target; p: P; kind: Shap
 }
 
 /** A list of paints, strokes or effects that every selected layer has the same of, or a way to make it so. */
-function ListCard<T>({ id, title, p, target, field, fresh, render, summaryOf }: {
+function ListCard<T>({ id, title, p, target, field, fresh, onTop = fresh, topFirst = false, render, summaryOf }: {
   /** A few words on the list's values for its folded row. */
   summaryOf?: (list: T[]) => string
+  /** What + adds over a list that has items already; `fresh` starts an empty one. */
+  onTop?: T
+  /** The last item, drawn on top, shows first, and rows can be reordered. */
+  topFirst?: boolean
   id: string
   title: string
   p: P
   target: Target
   field: string
   fresh: T
-  /** `change` takes the item as the document holds it when the change is made, not as last drawn. */
-  render: (item: T, i: number, change: (to: (now: T) => T) => void) => ReactNode
+  /** `n` is the row's place as shown, from 1; `change` takes the item as the document holds it when the change is made, not as last drawn. */
+  render: (item: T, n: number, change: (to: (now: T) => T) => void) => ReactNode
 }) {
   const lists = target.props.map((pr) => (pr[field] ?? []) as T[])
   const list = shared(lists)
@@ -507,7 +328,7 @@ function ListCard<T>({ id, title, p, target, field, fresh, render, summaryOf }: 
       id={id}
       title={title}
       summary={list === 'mixed' ? p.mixed : list.length === 0 ? p.none : summaryOf?.(list) ?? String(list.length)}
-      action={<AddButton label={format(p.add, { name: title.toLowerCase() })} onClick={() => write((now) => [...(list === 'mixed' ? [] : now), fresh])} />}
+      action={<AddButton label={format(p.add, { name: title.toLowerCase() })} onClick={() => write((now) => (list === 'mixed' && !topFirst ? [fresh] : [...now, now.length === 0 ? fresh : onTop]))} />}
     >
       {list === 'mixed'
         ? (
@@ -516,20 +337,9 @@ function ListCard<T>({ id, title, p, target, field, fresh, render, summaryOf }: 
             <button type="button" onClick={() => write(() => [fresh])} className="cursor-pointer font-medium text-accent-text hover:underline">{p.useOne}</button>
           </div>
         )
-        : list.map((item, i) => (
-          // Paints have no ids; their place in the list is what they are.
-          <div key={i} className="flex items-center gap-1" data-item={`${field}-${i}`}>
-            {render(item, i, (to) => write((now) => now.map((x, j) => (j === i ? to(x) : x))))}
-            <RemoveButton label={format(p.remove, { name: title.toLowerCase(), n: i + 1 })} onClick={() => write((now) => now.filter((_, j) => j !== i))} />
-          </div>
-        ))}
+        : <Stack items={list} field={field} topFirst={topFirst} removeLabel={(n) => format(p.remove, { name: title.toLowerCase(), n })} onWrite={write} render={render} />}
     </Card>
   )
-}
-
-function PaintRow({ paint, name, p, onSet }: { paint: Paint; name: string; p: P; onSet: (to: (now: Paint) => Paint) => void }) {
-  if (paint.type !== 'solid') return <span className="min-w-0 flex-1 truncate text-xs text-muted">{p.paint[paint.type]}</span>
-  return <ColorField name={name} value={paint.color} onSet={(to) => onSet((now) => ({ type: 'solid', color: to(now.type === 'solid' ? now.color : undefined) }))} />
 }
 
 type Stroke = {
@@ -585,11 +395,11 @@ function DashField({ name, value, onSet }: { name: string; value: number[]; onSe
 }
 
 /** One stroke: its colour, width and position, then its dashes and the look of its ends and corners (#152). */
-function StrokeRow({ stroke, i, p, editor, onSet }: { stroke: Stroke; i: number; p: P; editor: Editor; onSet: (to: (now: Stroke) => Stroke) => void }) {
-  const n = { n: i + 1 }
+function StrokeRow({ stroke, place, brandId, p, editor, onSet }: { stroke: Stroke; place: number; brandId: string; p: P; editor: Editor; onSet: (to: (now: Stroke) => Stroke) => void }) {
+  const n = { n: place }
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
-      <PaintRow paint={stroke.paint} name={format(p.colour, n)} p={p} onSet={(to) => onSet((now) => ({ ...now, paint: to(now.paint) }))} />
+      <PaintRow paint={stroke.paint} name={format(p.strokeColour, n)} brandId={brandId} editor={editor} p={p} onSet={(to) => onSet((now) => ({ ...now, paint: to(now.paint) }))} />
       <div className="grid grid-cols-2 gap-1">
         <NumberField label="W" name={format(p.strokeWidth, n)} value={stroke.width} min={0.5} step={0.5} editor={editor} onSet={(width) => onSet((now) => ({ ...now, width }))} onShift={(by) => onSet((now) => ({ ...now, width: tidy(clamp(now.width + by, 0.5)) }))} />
         <Choice name={format(p.strokeAlign, n)} value={stroke.align} options={['inside', 'center', 'outside'] as const} labels={p.aligns} onSet={(align) => onSet((now) => ({ ...now, align }))} />
@@ -1083,7 +893,7 @@ function Swatch({ color, label, on, onPick }: { color: string; label: string; on
       aria-pressed={on}
       onClick={onPick}
       style={{ backgroundColor: color }}
-      className={cn('size-[22px] shrink-0 cursor-pointer rounded-full border border-line-strong transition-transform duration-[var(--chrome-fast)] hover:scale-110', on && PICKED_RING)}
+      className={cn(SWATCH, 'size-[22px]', on && PICKED_RING)}
     />
   )
 }
@@ -1174,13 +984,14 @@ function TextLook({ target, brandId, p }: { target: Target; brandId: string; p: 
 
 /** A shape's or frame's look: its fill from the brand, painted over its first solid fill. */
 function FillLook({ target, brandId, p }: { target: Target; brandId: string; p: P }) {
-  const firstSolid = (fills: Paint[]) => fills.find((f) => f.type === 'solid')
-  const current = shared(target.props.map((pr) => firstSolid((pr.fills ?? []) as Paint[])?.color))
+  // The fill a brand colour binds: the topmost one that shows.
+  const bound = (fills: Paint[]) => fills[boundFillIndex(fills)] as Extract<Paint, { type: 'solid' }> | undefined
+  const current = shared(target.props.map((pr) => bound((pr.fills ?? []) as Paint[])?.color))
   const paint = (hex: string) => set(target, (now) => {
     const fills = (now.fills ?? []) as Paint[]
-    const i = fills.findIndex((f) => f.type === 'solid')
+    const i = boundFillIndex(fills)
     const color = `${hex}FF`
-    return { fills: i < 0 ? [...fills, { type: 'solid', color }] : fills.map((f, j) => (j === i ? { type: 'solid' as const, color } : f)) }
+    return { fills: i < 0 ? [...fills, { type: 'solid', color }] : fills.map((f, j) => (j === i && f.type === 'solid' ? { ...f, color } : f)) }
   })
   // A picture goes into layers that have none; one that has a picture changes it from the Image card.
   const pictureless = target.props.every((pr) => !((pr.fills ?? []) as Paint[]).some((f) => f.type === 'image'))
@@ -1395,8 +1206,10 @@ export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Edit
               target={target}
               field="fills"
               fresh={NEW_FILL}
-              summaryOf={(list) => list.map((paint) => (paint.type === 'solid' ? paint.color.slice(0, 7) : p.paint[paint.type])).join(', ')}
-              render={(paint, i, change) => <PaintRow paint={paint} name={format(p.colour, { n: i + 1 })} p={p} onSet={change} />}
+              onTop={FILL_ON_TOP}
+              topFirst
+              summaryOf={(list) => list.filter((paint) => paint.visible !== false).map((paint) => (paint.type === 'solid' ? paint.color.slice(0, 7) : p.paint[paint.type])).join(', ') || p.none}
+              render={(paint, n, change) => <PaintRow paint={paint} name={format(p.colour, { n })} brandId={brandId} editor={editor} p={p} onSet={change} />}
             />
           )}
           {all('graphic', 'boolean') && (
@@ -1407,8 +1220,8 @@ export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Edit
               target={target}
               field="strokes"
               fresh={NEW_STROKE}
-              summaryOf={(list) => list.map((stroke) => `${stroke.width} px`).join(', ')}
-              render={(stroke, i, change) => <StrokeRow stroke={stroke} i={i} p={p} editor={editor} onSet={change} />}
+              summaryOf={(list) => list.filter((stroke) => stroke.paint.visible !== false).map((stroke) => `${stroke.width} px`).join(', ') || p.none}
+              render={(stroke, n, change) => <StrokeRow stroke={stroke} place={n} brandId={brandId} p={p} editor={editor} onSet={change} />}
             />
           )}
           <LayoutCard target={target} p={p} />

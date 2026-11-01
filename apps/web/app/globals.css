@@ -980,3 +980,8 @@ body {
     animation: ad-fan 7s cubic-bezier(0.2, 1, 0.3, 1) infinite;
   }
 }
+
+/* A see-through paint's swatch shows over a checkerboard, as design tools draw one. */
+@utility checker {
+  background: repeating-conic-gradient(color-mix(in srgb, var(--text) 14%, transparent) 0 25%, transparent 0 50%) 0 0 / 8px 8px;
+}

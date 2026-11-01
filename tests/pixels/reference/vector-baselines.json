@@ -89,6 +89,16 @@
       "limit": 0.388
     }
   },
+  "fill-stacks p1.sq": {
+    "pdf": {
+      "percent": 0.046,
+      "limit": 0.107
+    },
+    "svg": {
+      "percent": 0,
+      "limit": 0.05
+    }
+  },
   "groups-and-frames p1.sq": {
     "pdf": {
       "percent": 0.025,

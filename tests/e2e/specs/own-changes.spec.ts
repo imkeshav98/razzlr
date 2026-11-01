@@ -9,7 +9,7 @@ import { openStage, unfoldAll } from '../support/stage.ts'
 test.describe.configure({ timeout: 120_000 })
 
 const design = (): DesignInput => ({
-  meta: { schemaVersion: 2, designId: 'replaced-by-the-api', name: 'Own changes', kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: 3, designId: 'replaced-by-the-api', name: 'Own changes', kind: 'single', primaryFormatId: 'sq' },
   formats: {
     sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' },
     story: { name: 'Story', width: 1080, height: 1920, order: 'a1' },

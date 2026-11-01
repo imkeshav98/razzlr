@@ -15,7 +15,7 @@ const rect = (name: string, index: string, x: number, y: number, width: number, 
   ({ type: 'graphic', parentId: 'p1', index, name, props: { x, y, width, height, shape: { kind: 'rect', cornerRadius: 12 }, fills: [{ type: 'solid', color }] } }) as Node
 
 const design = (): DesignInput => ({
-  meta: { schemaVersion: 2, designId: 'replaced-by-the-api', name: 'Frames', kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: 3, designId: 'replaced-by-the-api', name: 'Frames', kind: 'single', primaryFormatId: 'sq' },
   formats: { sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' }, wide: { name: 'Wide', width: 1920, height: 1080, order: 'a1' } },
   pages: { p1: { name: 'Page 1', order: 'a0', fills: [{ type: 'solid', color: '#FFF8F0FF' }] } },
   nodes: {

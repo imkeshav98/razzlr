@@ -12,7 +12,7 @@ const ck = await loadCanvasKit()
 const bytes = { fonts: loadFontFiles().map((f) => ({ family: f.family, bytes: f.bytes })), fallbackFamilies: [...FALLBACK_FAMILIES], images: {} }
 
 const design = {
-  meta: { schemaVersion: 2, designId: 'd', name: 'Summer: sale', kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: 3, designId: 'd', name: 'Summer: sale', kind: 'single', primaryFormatId: 'sq' },
   formats: { sq: { name: 'Square', width: 120, height: 120, order: 'a0' }, story: { name: 'Story 9:16', width: 90, height: 160, order: 'a1' } },
   pages: {
     p1: { name: 'Hero', order: 'a0', fills: [{ type: 'solid', color: '#FF000080' }] },

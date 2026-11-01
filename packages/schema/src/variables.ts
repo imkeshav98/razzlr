@@ -2,6 +2,7 @@
 // colours and fonts, named `brand:<token>`, which a layer binds its fill, its text colour or its
 // font family to, so changing the brand colour changes every design that uses it.
 import { z } from 'zod'
+import { boundFillIndex } from './paint.ts'
 import { Color } from './primitives.ts'
 
 /** A brand kit token's name: lowercase words joined by hyphens, such as `primary` or `sale-red`. */
@@ -48,7 +49,7 @@ export function bindProps<P extends Record<string, unknown>>(type: string, props
     if (target === 'fill') {
       const fills = out.fills
       if (!Array.isArray(fills)) continue
-      const at = fills.findLastIndex((f: unknown) => (f as { type?: unknown } | null)?.type === 'solid')
+      const at = boundFillIndex(fills)
       if (at < 0 || (fills[at] as { color?: unknown }).color === value) continue
       out = { ...out, fills: fills.map((f: unknown, i: number) => (i === at ? { ...(f as object), color: value } : f)) }
       continue

@@ -25,7 +25,7 @@ const FORMATS = {
 }
 
 const design = (assetId: string): DesignInput => ({
-  meta: { schemaVersion: 2, designId: 'replaced-by-the-api', name: 'Spring drop', kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: 3, designId: 'replaced-by-the-api', name: 'Spring drop', kind: 'single', primaryFormatId: 'sq' },
   formats: FORMATS,
   pages: {
     p1: { name: 'Hero', order: 'a0', fills: [{ type: 'solid', color: '#FFF6E8FF' }] },
