@@ -56,7 +56,7 @@ export function TileMenu({ name, rename, duplicate, remove }: {
         aria-expanded={step !== null}
         onClick={() => setStep(step ? null : 'menu')}
         className={cn(
-          'grid size-8 cursor-pointer place-items-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-opacity duration-[var(--chrome-fast)] hover:bg-black/60',
+          'grid size-8 cursor-pointer place-items-center rounded-full surface-frost text-muted transition-opacity duration-[var(--chrome-fast)] hover:text-text',
           // Shown on hover and focus, and while it is open, so the tiles stay clean.
           step ? 'opacity-100' : 'opacity-0 group-hover/tile:opacity-100 focus-visible:opacity-100 max-md:opacity-100',
         )}
@@ -64,7 +64,7 @@ export function TileMenu({ name, rename, duplicate, remove }: {
         <DotsThreeIcon size={18} weight="bold" aria-hidden />
       </button>
       {step === 'menu' && (
-        <div role="menu" aria-label={format(t.moreFor, { name })} className="pop-in-end absolute end-0 top-full mt-1.5 flex w-44 flex-col rounded-card border surface-frost p-1 shadow-panel">
+        <div role="menu" aria-label={format(t.moreFor, { name })} className="pop-in-end absolute end-0 top-full mt-1.5 flex w-44 flex-col rounded-card surface-frost p-1">
           <button type="button" role="menuitem" className={row} onClick={() => setStep('rename')}>{t.rename}</button>
           {duplicate && (
             // The menu closes once the copy is made: closing it on the click would take the form away before it sends.
@@ -76,7 +76,7 @@ export function TileMenu({ name, rename, duplicate, remove }: {
         </div>
       )}
       {step === 'rename' && (
-        <form action={async (form) => { await rename(form); setStep(null) }} className="pop-in-end absolute end-0 top-full mt-1.5 flex w-64 flex-col gap-2 rounded-card border surface-frost p-3 shadow-panel">
+        <form action={async (form) => { await rename(form); setStep(null) }} className="pop-in-end absolute end-0 top-full mt-1.5 flex w-64 flex-col gap-2 rounded-card surface-frost p-3">
           <label htmlFor="tile-rename" className="text-xs font-semibold text-muted">{t.newName}</label>
           <input
             id="tile-rename"
@@ -95,7 +95,7 @@ export function TileMenu({ name, rename, duplicate, remove }: {
         </form>
       )}
       {step === 'delete' && (
-        <form action={remove} className="pop-in-end absolute end-0 top-full mt-1.5 flex w-64 flex-col gap-3 rounded-card border surface-frost p-3 shadow-panel">
+        <form action={remove} className="pop-in-end absolute end-0 top-full mt-1.5 flex w-64 flex-col gap-3 rounded-card surface-frost p-3">
           <p className="text-[13px] leading-snug">{format(t.deleteConfirm, { name })}</p>
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => setStep(null)} className={cn(buttonStyles({ variant: 'ghost' }), 'h-8 px-3')}>{t.cancel}</button>

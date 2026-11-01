@@ -259,7 +259,7 @@ function FontList({ id, brandId, catalog, current, onPick, onClose, onUploaded }
 
   const label = { upload: t.editor.fonts.brand, google: t.editor.fonts.google, builtin: t.editor.fonts.builtin }
   return (
-    <div className="pop-in absolute inset-x-2 top-full z-30 mt-1 flex max-h-[min(28rem,60vh)] flex-col rounded-card border surface-frost shadow-panel" data-testid="font-list">
+    <div className="pop-in absolute inset-x-2 top-full z-30 mt-1 flex max-h-[min(28rem,60vh)] flex-col rounded-card surface-frost" data-testid="font-list">
       <div className="flex items-center gap-2 border-b border-line px-3">
         <MagnifyingGlassIcon size={14} aria-hidden className="shrink-0 text-subtle" />
         <input

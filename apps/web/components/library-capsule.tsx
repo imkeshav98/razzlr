@@ -90,7 +90,7 @@ export function LibraryCapsule({ label, links, current }: {
       aria-label={label}
       data-testid="library-capsule"
       className={cn(
-        'fixed z-40 flex gap-2 rounded-full surface-frost border p-2 shadow-panel md:p-2.5',
+        'fixed z-40 flex gap-2 rounded-full surface-frost p-2 md:p-2.5',
         // A vertical capsule at the start edge, as in the editor; on phones a tab bar at the bottom.
         'start-5 top-1/2 -translate-y-1/2 flex-col max-md:start-1/2 max-md:top-auto max-md:bottom-3 max-md:translate-y-0 max-md:flex-row max-md:-translate-x-1/2 max-md:rtl:translate-x-1/2',
       )}

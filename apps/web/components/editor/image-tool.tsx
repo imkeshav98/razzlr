@@ -85,7 +85,7 @@ export function ImageTool({ brandId, active, open, onPress, onPick, onClose }: {
           aria-label={t.imageTool.title}
           data-testid="image-picker"
           onKeyDown={(e) => e.stopPropagation()}
-          className="pop-in z-50 flex max-h-[min(26rem,60dvh)] w-72 flex-col rounded-card surface-frost border shadow-panel"
+          className="pop-in z-50 flex max-h-[min(26rem,60dvh)] w-72 flex-col rounded-card surface-frost"
         >
           <div className="flex shrink-0 flex-col gap-2 p-3 pb-2">
             <p className="font-display text-[13px] font-bold">{t.imageTool.title}</p>
