@@ -750,8 +750,11 @@ test.describe('shapes and frames', () => {
     await step(page, () => card.locator('[data-row="1"]').getByTestId('row-grip').press('ArrowDown'), async () => {
       await expect.poll(async () => (await strokes()).map((s) => s.width)).toEqual([12, 2])
     })
-    await step(page, () => card.locator('[data-row="2"]').dragTo(card.locator('[data-row="1"]')), async () => {
+    await step(page, () => card.locator('[data-row="2"]').getByTestId('row-grip').dragTo(card.locator('[data-row="1"]')), async () => {
       await expect.poll(async () => (await strokes()).map((s) => s.width)).toEqual([2, 12])
+    })
+    await step(page, () => card.locator('[data-row="2"]').getByTestId('row-grip').press('ArrowUp'), async () => {
+      await expect.poll(async () => (await strokes()).map((s) => s.width)).toEqual([12, 2])
     })
     await step(page, () => card.getByRole('button', { name: 'Remove stroke 1' }).click(), async () => { await expect.poll(async () => (await strokes()).length).toBe(1) })
     await reloads(page)
