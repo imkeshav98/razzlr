@@ -1,4 +1,4 @@
-import type { CanvasKit, FontCollection, Image, TypefaceFontProvider } from 'canvaskit-wasm'
+import type { CanvasKit, FontCollection, Image, TypefaceFontProvider } from '@razzlr/canvaskit'
 import type { Variables } from '@razzlr/schema'
 import type { Resources } from './draw.ts'
 

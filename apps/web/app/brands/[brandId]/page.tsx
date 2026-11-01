@@ -3,9 +3,10 @@
 // open under the brief from the capsule.
 import { notFound, redirect } from 'next/navigation'
 import { BriefComposer } from '../../../components/brief-composer.tsx'
-import { DesignBento, type BentoDesign } from '../../../components/design-bento.tsx'
+import { BENTO_GRID, DesignBento, SPAN, spanOfSize, TILE, TILE_SHADE, type BentoDesign } from '../../../components/design-bento.tsx'
 import { HomeStage } from '../../../components/home-stage.tsx'
 import { LibraryShell } from '../../../components/library-shell.tsx'
+import { cn } from '../../../lib/cn.ts'
 import { createDesign, designCover, getBrandKit, getWorkspace, listBrands, listDesigns, listTemplates, startFromTemplate } from '../../../lib/api.ts'
 import { briefDesign } from '../../../lib/brief.ts'
 import { showsBrandList } from '../../../lib/home.ts'
@@ -61,28 +62,34 @@ export default async function BrandPage({ params, searchParams }: { params: Prom
   const templatesBody = templates.length === 0
     ? <p className="text-sm text-muted">{t.library.noTemplates}</p>
     : (
-      <ul aria-label={t.library.templates} className="mt-2 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-        {templates.map((template, i) => (
-          <li key={template.id} data-template={template.id} className="rise" style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
-            <form action={start.bind(null, template.id)}>
-              <button type="submit" aria-label={format(t.library.useTemplate, { name: template.name })} className="group block w-full cursor-pointer rounded-card text-start focus-visible:outline-offset-4">
-                <div className="lift canvas-dots relative grid aspect-[4/3] place-items-center overflow-hidden rounded-card border border-line group-hover:border-line-strong">
-                  <img
-                    src={`/brands/${brand.id}/templates/${template.id}/thumbnail`}
-                    alt=""
-                    width={template.width}
-                    height={template.height}
-                    loading="lazy"
-                    className="max-h-[76%] max-w-[76%] rounded-[4px] object-contain shadow-[0_10px_28px_-10px_rgb(0_0_0/0.5)] transition-transform duration-[var(--chrome)] ease-[var(--ease-out)] group-hover:scale-[1.03]"
-                  />
-                </div>
-                <span className="mt-2.5 block truncate text-sm font-medium text-text">{template.name}</span>
-                <span className="block text-xs text-subtle">{template.scope === 'workspace' ? words.all : brand.name}</span>
-              </button>
-            </form>
-          </li>
-        ))}
-      </ul>
+      <div className="@container">
+        <ul aria-label={t.library.templates} className={BENTO_GRID}>
+          {templates.map((template, i) => {
+            // No large tile: a template's picture is a small copy, and blown up it would blur.
+            const span = spanOfSize(template, i + 1)
+            return (
+              <li key={template.id} data-template={template.id} data-span={span} className={cn('rise min-w-0', SPAN[span])} style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
+                <form action={start.bind(null, template.id)} className="size-full">
+                  <button type="submit" aria-label={format(t.library.useTemplate, { name: template.name })} className={cn(TILE, 'cursor-pointer')}>
+                    <img
+                      src={`/brands/${brand.id}/templates/${template.id}/thumbnail`}
+                      alt=""
+                      width={template.width}
+                      height={template.height}
+                      loading="lazy"
+                      className="absolute inset-0 size-full object-cover transition-transform duration-[var(--chrome)] ease-[var(--ease-out)] group-hover:scale-[1.02]"
+                    />
+                    <span className={TILE_SHADE}>
+                      <span className={cn('block truncate font-medium', span === 'large' ? 'text-sm' : 'text-[13px]')}>{template.name}</span>
+                      <span className="block truncate text-[11px] text-white/75">{template.scope === 'workspace' ? words.all : brand.name}</span>
+                    </span>
+                  </button>
+                </form>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
     )
 
   return (

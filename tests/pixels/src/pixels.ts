@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { FALLBACK_FAMILIES } from '@razzlr/fonts'
 import { loadFontFiles } from '@razzlr/fonts/node'
 import type { ResourceBytes } from '@razzlr/renderer'
-import type { CanvasKit } from 'canvaskit-wasm'
+import type { CanvasKit } from '@razzlr/canvaskit'
 
 export const ASSETS_DIR = join(import.meta.dirname, '..', 'assets')
 export const REFERENCE_DIR = join(import.meta.dirname, '..', 'reference')

@@ -27,18 +27,27 @@ export function zoomAt(c: Camera, at: Point, zoom: number): Camera {
 export interface Insets { top: number; right: number; bottom: number; left: number }
 export const NO_INSETS: Insets = { top: 0, right: 0, bottom: 0, left: 0 }
 
+/** Narrower than this, the stage is a phone's (#125). */
+const PHONE_WIDTH = 640
+/** On a phone, the room kept above the ads for their frame labels. */
+const PHONE_TOP = 32
+
 /**
  * The camera that shows the whole rect, centred in the part of the viewport the insets leave
- * clear, with `padding` screen pixels around it.
+ * clear, with `padding` screen pixels around it. On a phone the ads fill its width (16 px padding
+ * by default) and sit at the top of the clear part, above where the property sheet opens.
  */
-export function fit(rect: Rect, viewport: Viewport, padding = 48, insets: Insets = NO_INSETS): Camera {
+export function fit(rect: Rect, viewport: Viewport, padding?: number, insets: Insets = NO_INSETS): Camera {
+  const phone = viewport.width < PHONE_WIDTH
+  const pad = padding ?? (phone ? 16 : 48)
+  const above = phone ? Math.max(pad, PHONE_TOP) : pad
   const clear = { width: viewport.width - insets.left - insets.right, height: viewport.height - insets.top - insets.bottom }
-  const room = { width: Math.max(1, clear.width - 2 * padding), height: Math.max(1, clear.height - 2 * padding) }
+  const room = { width: Math.max(1, clear.width - 2 * pad), height: Math.max(1, clear.height - above - pad) }
   const zoom = clampZoom(Math.min(MAX_FIT_ZOOM, room.width / Math.max(1, rect.width), room.height / Math.max(1, rect.height)))
   return {
     zoom,
     x: insets.left + clear.width / 2 - (rect.x + rect.width / 2) * zoom,
-    y: insets.top + clear.height / 2 - (rect.y + rect.height / 2) * zoom,
+    y: phone ? insets.top + above - rect.y * zoom : insets.top + clear.height / 2 - (rect.y + rect.height / 2) * zoom,
   }
 }
 

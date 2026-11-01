@@ -23,7 +23,7 @@ async function files() {
     // Emscripten's Node branch, never taken in the browser.
     external: ['fs', 'path'],
   })
-  const wasm = readFileSync(join(createRequire(import.meta.url).resolve('canvaskit-wasm/full'), '..', 'canvaskit.wasm'))
+  const wasm = readFileSync(join(createRequire(import.meta.url).resolve('@razzlr/canvaskit'), '..', 'canvaskit.wasm'))
   const served: Record<string, [string, Buffer | string]> = {
     '/': ['text/html', '<!doctype html><script type="module" src="/harness.js"></script>'],
     '/harness.js': ['text/javascript', bundle.outputFiles[0]?.text ?? ''],

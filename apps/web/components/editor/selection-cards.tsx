@@ -157,6 +157,7 @@ function ColorField({ name, value, onSet }: { name: string; value: string | 'mix
   return (
     <div className="flex min-w-0 flex-1 items-center gap-1">
       <input
+        name="colour"
         type="color"
         aria-label={format(p.colourOf, { name })}
         value={hex || '#000000'}
@@ -164,6 +165,7 @@ function ColorField({ name, value, onSet }: { name: string; value: string | 'mix
         className="size-7 shrink-0 cursor-pointer rounded-row border border-line bg-surface p-0.5"
       />
       <input
+        name="colour-hex"
         aria-label={format(p.hexOf, { name })}
         value={draft ?? hex}
         placeholder={value === 'mixed' ? p.mixed : ''}
@@ -177,6 +179,7 @@ function ColorField({ name, value, onSet }: { name: string; value: string | 'mix
         className={cn(FIELD, 'uppercase')}
       />
       <input
+        name="colour-opacity"
         aria-label={format(p.alpha, { name })}
         inputMode="numeric"
         key={alpha ?? 'mixed'}
@@ -199,7 +202,7 @@ function ColorField({ name, value, onSet }: { name: string; value: string | 'mix
 function Choice<T extends string>({ name, value, options, labels, onSet }: { name: string; value: T | 'mixed' | undefined; options: readonly T[]; labels: Record<T, string>; onSet: (value: T) => void }) {
   const t = useMessages()
   return (
-    <select aria-label={name} value={value ?? ''} onChange={(event) => onSet(event.target.value as T)} className={SELECT}>
+    <select name="choice" aria-label={name} value={value ?? ''} onChange={(event) => onSet(event.target.value as T)} className={SELECT}>
       {(value === 'mixed' || value === undefined) && <option value="mixed" disabled>{t.editor.props.mixed}</option>}
       {options.map((option) => <option key={option} value={option}>{labels[option]}</option>)}
     </select>
@@ -312,25 +315,26 @@ function ListCard<T>({ id, title, p, target, field, fresh, render }: {
   target: Target
   field: string
   fresh: T
-  render: (item: T, i: number, change: (next: T) => void) => ReactNode
+  /** `change` takes the item as the document holds it when the change is made, not as last drawn. */
+  render: (item: T, i: number, change: (to: (now: T) => T) => void) => ReactNode
 }) {
   const lists = target.props.map((pr) => (pr[field] ?? []) as T[])
   const list = shared(lists)
-  const write = (next: T[]) => set(target, () => ({ [field]: next }))
+  const write = (to: (now: T[]) => T[]) => set(target, (now) => ({ [field]: to((now[field] ?? []) as T[]) }))
   return (
-    <Card id={id} title={title} action={<AddButton label={format(p.add, { name: title.toLowerCase() })} onClick={() => write([...(list === 'mixed' ? [] : list), fresh])} />}>
+    <Card id={id} title={title} action={<AddButton label={format(p.add, { name: title.toLowerCase() })} onClick={() => write((now) => [...(list === 'mixed' ? [] : now), fresh])} />}>
       {list === 'mixed'
         ? (
           <div className="flex items-center justify-between gap-2 text-xs text-muted">
             {p.mixedList}
-            <button type="button" onClick={() => write([fresh])} className="cursor-pointer font-medium text-accent-text hover:underline">{p.useOne}</button>
+            <button type="button" onClick={() => write(() => [fresh])} className="cursor-pointer font-medium text-accent-text hover:underline">{p.useOne}</button>
           </div>
         )
         : list.map((item, i) => (
           // Paints have no ids; their place in the list is what they are.
           <div key={i} className="flex items-center gap-1" data-item={`${field}-${i}`}>
-            {render(item, i, (next) => write(list.map((x, j) => (j === i ? next : x))))}
-            <RemoveButton label={format(p.remove, { name: title.toLowerCase(), n: i + 1 })} onClick={() => write(list.filter((_, j) => j !== i))} />
+            {render(item, i, (to) => write((now) => now.map((x, j) => (j === i ? to(x) : x))))}
+            <RemoveButton label={format(p.remove, { name: title.toLowerCase(), n: i + 1 })} onClick={() => write((now) => now.filter((_, j) => j !== i))} />
           </div>
         ))}
     </Card>
@@ -344,13 +348,13 @@ function PaintRow({ paint, name, p, onSet }: { paint: Paint; name: string; p: P;
 
 type Stroke = { paint: Paint; width: number; align: 'inside' | 'center' | 'outside' }
 
-function StrokeRow({ stroke, i, p, editor, onSet }: { stroke: Stroke; i: number; p: P; editor: Editor; onSet: (stroke: Stroke) => void }) {
+function StrokeRow({ stroke, i, p, editor, onSet }: { stroke: Stroke; i: number; p: P; editor: Editor; onSet: (to: (now: Stroke) => Stroke) => void }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
-      <PaintRow paint={stroke.paint} name={format(p.colour, { n: i + 1 })} p={p} onSet={(paint) => onSet({ ...stroke, paint })} />
+      <PaintRow paint={stroke.paint} name={format(p.colour, { n: i + 1 })} p={p} onSet={(paint) => onSet((now) => ({ ...now, paint }))} />
       <div className="grid grid-cols-2 gap-1">
-        <NumberField label="W" name={format(p.strokeWidth, { n: i + 1 })} value={stroke.width} min={0.5} step={0.5} editor={editor} onSet={(width) => onSet({ ...stroke, width })} onShift={(by) => onSet({ ...stroke, width: tidy(clamp(stroke.width + by, 0.5)) })} />
-        <Choice name={format(p.strokeAlign, { n: i + 1 })} value={stroke.align} options={['inside', 'center', 'outside'] as const} labels={p.aligns} onSet={(align) => onSet({ ...stroke, align })} />
+        <NumberField label="W" name={format(p.strokeWidth, { n: i + 1 })} value={stroke.width} min={0.5} step={0.5} editor={editor} onSet={(width) => onSet((now) => ({ ...now, width }))} onShift={(by) => onSet((now) => ({ ...now, width: tidy(clamp(now.width + by, 0.5)) }))} />
+        <Choice name={format(p.strokeAlign, { n: i + 1 })} value={stroke.align} options={['inside', 'center', 'outside'] as const} labels={p.aligns} onSet={(align) => onSet((now) => ({ ...now, align }))} />
       </div>
     </div>
   )
@@ -368,16 +372,20 @@ const NEW_EFFECT: Record<Effect['type'], Effect> = {
 function EffectsCard({ target, p }: { target: Target; p: P }) {
   const lists = target.props.map((pr) => (pr.effects ?? []) as Effect[])
   const list = shared(lists)
-  const write = (next: Effect[]) => set(target, () => ({ effects: next }))
+  const write = (to: (now: Effect[]) => Effect[]) => set(target, (now) => ({ effects: to((now.effects ?? []) as Effect[]) }))
   return (
     <Card
       id="effects-card"
       title={p.effects}
       action={(
         <select
+          name="add-effect"
           aria-label={p.addEffect}
           value=""
-          onChange={(event) => write([...(list === 'mixed' ? [] : list), NEW_EFFECT[event.target.value as Effect['type']]])}
+          onChange={(event) => {
+            const fresh = NEW_EFFECT[event.target.value as Effect['type']]
+            write((now) => [...(list === 'mixed' ? [] : now), fresh])
+          }}
           className="h-7 w-28 cursor-pointer rounded-full border border-line bg-bg/40 px-2 text-[12px] font-semibold text-muted hover:border-line-strong focus:border-accent focus:outline-none"
         >
           <option value="" disabled>{p.addEffect}</option>
@@ -389,17 +397,17 @@ function EffectsCard({ target, p }: { target: Target; p: P }) {
         ? (
           <div className="flex items-center justify-between gap-2 text-xs text-muted">
             {p.mixedList}
-            <button type="button" onClick={() => write([])} className="cursor-pointer font-medium text-accent-text hover:underline">{p.useOne}</button>
+            <button type="button" onClick={() => write(() => [])} className="cursor-pointer font-medium text-accent-text hover:underline">{p.useOne}</button>
           </div>
         )
         : list.map((effect, i) => {
-          const change = (next: Effect) => write(list.map((x, j) => (j === i ? next : x)))
+          const change = (to: (now: Effect) => Effect) => write((now) => now.map((x, j) => (j === i ? to(x) : x)))
           const effectName = p.effect[effect.type]
           return (
             <div key={i} className="flex flex-col gap-1.5 border-t border-line pt-2.5 first:border-t-0 first:pt-0" data-item={`effects-${i}`}>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-text">{effectName}</span>
-                <RemoveButton label={format(p.remove, { name: effectName.toLowerCase(), n: i + 1 })} onClick={() => write(list.filter((_, j) => j !== i))} />
+                <RemoveButton label={format(p.remove, { name: effectName.toLowerCase(), n: i + 1 })} onClick={() => write((now) => now.filter((_, j) => j !== i))} />
               </div>
               <div className="grid grid-cols-2 gap-1.5">
                 {EFFECT_FIELDS[effect.type].map((field) => {
@@ -413,13 +421,13 @@ function EffectsCard({ target, p }: { target: Target; p: P }) {
                       value={value}
                       min={min}
                       editor={target.editor}
-                      onSet={(v) => change({ ...effect, [field]: v } as Effect)}
-                      onShift={(by) => change({ ...effect, [field]: tidy(clamp(value + by, min)) } as Effect)}
+                      onSet={(v) => change((now) => ({ ...now, [field]: v }) as Effect)}
+                      onShift={(by) => change((now) => ({ ...now, [field]: tidy(clamp(((now as unknown as Record<string, number>)[field] ?? 0) + by, min)) }) as Effect)}
                     />
                   )
                 })}
               </div>
-              {'color' in effect && <ColorField name={effectName} value={effect.color} onSet={(color) => change({ ...effect, color })} />}
+              {'color' in effect && <ColorField name={effectName} value={effect.color} onSet={(color) => change((now) => ({ ...now, color }) as Effect)} />}
             </div>
           )
         })}
@@ -515,7 +523,7 @@ function AutoLayoutCard({ target, p }: { target: Target; p: P }) {
         <Choice name={p.alignItems} value={value('align') as string} options={['start', 'center', 'end']} labels={p.alignItemsOptions} onSet={(align) => setLayout(() => ({ align }))} />
       </div>
       <label className="flex items-center gap-2 text-[12px]">
-        <input type="checkbox" checked={value('wrap') === true} onChange={(event) => setLayout(() => ({ wrap: event.target.checked }))} />
+        <input name="wrap" type="checkbox" checked={value('wrap') === true} onChange={(event) => setLayout(() => ({ wrap: event.target.checked }))} />
         {p.wrap}
       </label>
     </Card>
@@ -581,7 +589,7 @@ export function SelectionCards({ editor, ids, arrange }: { editor: Editor; ids: 
           target={target}
           field="fills"
           fresh={NEW_FILL}
-          render={(paint, i, change) => <PaintRow paint={paint} name={format(p.colour, { n: i + 1 })} p={p} onSet={change} />}
+          render={(paint, i, change) => <PaintRow paint={paint} name={format(p.colour, { n: i + 1 })} p={p} onSet={(next) => change(() => next)} />}
         />
       )}
       {all('graphic', 'boolean') && (
