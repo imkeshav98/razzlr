@@ -17,9 +17,13 @@ test('a design made from the brand list opens in the editor and is there after a
 
   await page.getByLabel('Brief').fill(name)
   await page.getByRole('button', { name: 'Make drafts' }).click()
-  await expect(page).toHaveURL(/\/brands\/dev-brand-coffee\/designs\/[\w-]+$/)
+  await expect(page).toHaveURL(/\/brands\/dev-brand-coffee\/designs\/[\w-]+\?start=1$/)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(name)
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
+  // It opens on the new design screen; Skip starts on the blank formats and takes ?start away.
+  await page.getByTestId('start-skip').click()
+  await expect(page.getByTestId('start-chooser')).toHaveCount(0)
+  await expect(page).toHaveURL(/\/brands\/dev-brand-coffee\/designs\/[\w-]+$/)
   const design = await page.evaluate(() => window.dazbee?.design())
   expect(design?.meta.name).toBe(name)
   expect(Object.keys(design?.pages ?? {})).toHaveLength(1)
@@ -46,8 +50,8 @@ test('a design id from another brand is not found', async ({ page, allowProblems
   await page.getByRole('button', { name: 'Make drafts' }).click()
   // The design is made at once; the editor's page can take over five seconds to come on a busy
   // runner (seen at 5.4 s in the full first shard), so the move there gets longer.
-  await expect(page).toHaveURL(/\/designs\/[\w-]+$/, { timeout: 20_000 })
-  const designId = page.url().split('/').pop()
+  await expect(page).toHaveURL(/\/designs\/[\w-]+\?start=1$/, { timeout: 20_000 })
+  const designId = new URL(page.url()).pathname.split('/').pop()
   const response = await page.goto(`/brands/dev-brand-coffee/designs/${designId}`)
   expect(response?.status()).toBe(404)
 })

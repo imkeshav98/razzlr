@@ -52,6 +52,7 @@ test('an ad set rebuilt in 5 formats through real input exports PNG, JPG, PDF an
   await page.getByLabel('Brief').fill(`Trail days ${run}`)
   await page.getByRole('button', { name: 'Make drafts' }).click()
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
+  await page.getByTestId('start-blank').click()
   await page.evaluate(() => window.dazbee?.setCamera({ x: 120, y: 80, zoom: 0.7 }))
   await drawn(page)
 

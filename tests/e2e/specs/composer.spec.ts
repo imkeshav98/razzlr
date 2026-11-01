@@ -36,7 +36,7 @@ test('the Formats dropdown picks the formats Make drafts makes, and one always s
   const brief = `Two formats ${crypto.randomUUID().slice(0, 6)}`
   await page.getByLabel('Brief').fill(brief)
   await page.getByRole('button', { name: 'Make drafts' }).click()
-  await expect(page).toHaveURL(new RegExp(`/brands/${DEV_BRAND}/designs/[\\w-]+$`), { timeout: 20_000 })
+  await expect(page).toHaveURL(new RegExp(`/brands/${DEV_BRAND}/designs/[\\w-]+\\?start=1$`), { timeout: 20_000 })
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
   const design = await page.evaluate(() => window.dazbee?.design())
   expect(design?.meta.name).toBe(brief)

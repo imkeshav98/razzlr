@@ -147,7 +147,7 @@ test('Make drafts opens a design in the formats the brief picked, named by the b
   await page.keyboard.press('Escape')
   await shoot(page, 'brief')
   await page.getByRole('button', { name: 'Make drafts' }).click()
-  await expect(page).toHaveURL(/\/brands\/dev-brand-coffee\/designs\/[\w-]+$/)
+  await expect(page).toHaveURL(/\/brands\/dev-brand-coffee\/designs\/[\w-]+\?start=1$/)
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
   const design = await page.evaluate(() => window.dazbee?.design())
   expect(design?.meta.name).toBe(brief)
