@@ -2,7 +2,7 @@
 // seam, so the browser's export worker and Node make the same bytes from the same design.
 import { renderDesign, type ResourceBytes, type ResourceCache } from '@razzlr/renderer'
 import { ExportRequest, parseDesign, type Design, type ExportType } from '@razzlr/schema'
-import type { CanvasKit } from 'canvaskit-wasm'
+import type { CanvasKit } from '@razzlr/canvaskit'
 import { zip } from './zip.ts'
 
 export interface ExportedFile {

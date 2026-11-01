@@ -9,9 +9,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@razzlr/canvaskit": "workspace:*",
     "@razzlr/renderer": "workspace:*",
-    "@razzlr/schema": "workspace:*",
-    "canvaskit-wasm": "0.42.0"
+    "@razzlr/schema": "workspace:*"
   },
   "devDependencies": {
     "@razzlr/config": "workspace:*",
