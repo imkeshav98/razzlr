@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { SHAPE_TOOLS, startEditor, type Editor, type ShapeTool, type Tool } from '@razzlr/editor'
 import { fetchSyncToken } from './actions.ts'
 import { EditorShell, type ChromeInsets } from '../../../../../components/editor/shell.tsx'
@@ -68,6 +68,39 @@ async function keepForOffline() {
   registration.active?.postMessage({ type: 'keep', urls })
 }
 
+/** The camera's zoom, held outside React state so a zoom step redraws the zoom pill alone. */
+function zoomStore() {
+  let zoom: number | null = null
+  const listeners = new Set<() => void>()
+  return {
+    get: () => zoom,
+    set(next: number | null) {
+      if (next === zoom) return
+      zoom = next
+      for (const listener of listeners) listener()
+    },
+    subscribe(listener: () => void) {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
+    },
+  }
+}
+
+/** The zoom pill, reading the zoom from the store. */
+function StageZoom({ editor, store }: { editor: Editor | null; store: ReturnType<typeof zoomStore> }) {
+  const zoom = useSyncExternalStore(store.subscribe, store.get, () => null)
+  return (
+    <ZoomControl
+      zoom={editor ? zoom : null}
+      onZoomIn={() => editor?.zoomIn()}
+      onZoomOut={() => editor?.zoomOut()}
+      onFit={() => editor?.fitAll()}
+    />
+  )
+}
+
 export function EditorStage({ designId, designName, brandId, brandName, everyBrand, formatId, syncUrl, account }: {
   designId: string
   designName: string
@@ -83,7 +116,7 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
   const canvas = useRef<HTMLCanvasElement>(null)
   const overlay = useRef<HTMLDivElement>(null)
   const [status, setStatus] = useState('Starting')
-  const [zoom, setZoom] = useState<number | null>(null)
+  const [zoom] = useState(zoomStore)
   const [editor, setEditor] = useState<Editor | null>(null)
   const [removed, setRemoved] = useState<string | null>(null)
   // The dock follows the editor's tool: a key picks one, and drawing a shape goes back to select.
@@ -137,7 +170,7 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
       .then((variables) => startEditor({
         canvas: stage, overlay: layer, designId, syncUrl,
         syncToken: () => fetchSyncToken(brandId, designId), assetBytes: (assetId) => assetBytes(brandId, assetId), fontFiles: fontLoader(brandId),
-        ...(variables ? { variables } : {}), ...(formatId ? { formatId } : {}), onStatus: setStatus, onZoom: setZoom, signal: unmounted.signal,
+        ...(variables ? { variables } : {}), ...(formatId ? { formatId } : {}), onStatus: setStatus, onZoom: zoom.set, signal: unmounted.signal,
       }))
       .then((started) => {
         if (unmounted.signal.aborted) return started.destroy()
@@ -155,9 +188,9 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
       editor?.destroy()
       delete window.razzlr
       setEditor(null)
-      setZoom(null)
+      zoom.set(null)
     }
-  }, [brandId, designId, formatId, syncUrl])
+  }, [brandId, designId, formatId, syncUrl, zoom])
 
   return (
     <EditorShell
@@ -204,12 +237,7 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
           {editor && removed && <UndoToast key={removed} editor={editor} message={removed} onDone={dismissRemoved} />}
         </div>
       </div>
-      <ZoomControl
-        zoom={editor ? zoom : null}
-        onZoomIn={() => editor?.zoomIn()}
-        onZoomOut={() => editor?.zoomOut()}
-        onFit={() => editor?.fitAll()}
-      />
+      <StageZoom editor={editor} store={zoom} />
     </EditorShell>
   )
 }
