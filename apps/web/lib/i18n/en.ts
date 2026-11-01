@@ -3,17 +3,12 @@
 export const en = {
   app: { name: 'Dazbee' },
   library: {
-    // An agency's brands are its clients (ADR-0011); brandWords picks the set for a workspace.
+    // Every workspace calls its brands brands, an agency's clients included (ADR-0013).
     brands: 'Brands',
     brandsLead: 'Pick a brand to see and make its designs.',
     allBrands: 'All brands',
-    clients: 'Clients',
-    clientsLead: 'Pick a client to see and make their designs.',
-    allClients: 'All clients',
     newBrand: 'New brand',
-    newClient: 'New client',
     brandName: 'Brand name',
-    clientName: 'Client name',
     /** The one field that starts a brand (#203): an address names it and is kept, or a plain name. */
     start: 'Website or name',
     startPlaceholder: 'harbourcoffee.com or Harbour Coffee',
@@ -102,30 +97,17 @@ export const en = {
     close: 'Close',
   },
   welcome: {
-    // Onboarding (#109): who Dazbee is for, then the first brand from a website.
-    step: 'Step {n} of 2',
+    // Onboarding (#109): the first brand, from its website or its name.
     place: 'Get started',
-    title: 'Who is Dazbee for?',
-    lead: 'It changes only a few words and defaults. You can change it later in settings.',
-    kinds: {
-      solo: { title: 'Just me', body: 'One business, yours. Ads for your own brand.' },
-      company: { title: 'My company', body: 'A team making ads for our brands, product lines or regions.' },
-      agency: { title: 'My clients', body: 'An agency making ads for clients, each with its own brand kit.' },
-    },
-    next: 'Continue',
     websiteTitle: 'Paste your website',
-    websiteLead: "Or just type your {thing}'s name. Reading its colours and logo from the site arrives with AI brand kits.",
-    thing: { solo: 'brand', company: 'brand', agency: 'client' },
+    websiteLead: "Or just type your brand's name. Reading its colours and logo from the site arrives with AI brand kits.",
     needName: 'Paste a website or type a name.',
     open: 'Open it',
-    back: 'Back',
   },
   settings: {
     title: 'Settings',
     workspace: 'Workspace',
     workspaceName: 'Workspace name',
-    kind: 'Who Dazbee is for',
-    kindLead: 'It changes only a few words and defaults, never your work.',
     save: 'Save',
     saved: 'Saved',
   },
@@ -530,7 +512,7 @@ export const en = {
     dark: 'Dark',
   },
   language: { label: 'Language' },
-  account: { open: 'Your account', settings: 'Settings', kinds: { solo: 'Personal workspace', company: 'Company workspace', agency: 'Agency workspace' } },
+  account: { open: 'Your account', settings: 'Settings', workspace: 'Workspace' },
   signIn: {
     title: 'Sign in to Dazbee',
     /** The sign-in page's headline, in two lines. */

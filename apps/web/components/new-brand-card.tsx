@@ -1,6 +1,6 @@
 'use client'
 
-// The last card on the Brands or Clients page: a dashed card that opens into a website-or-name field
+// The last card on the Brands page: a dashed card that opens into a website-or-name field
 // (#203). Creating the brand opens its home.
 import { PlusIcon } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'

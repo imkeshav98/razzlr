@@ -1,8 +1,8 @@
 'use client'
 
-// The last row of the crumb's brand menu: New brand (New client in an agency). It opens into a
-// website-or-name field in place (#203); creating the brand opens its home. It is there for every kind of workspace, so a
-// solo or company workspace that opens straight on its one brand can still add another.
+// The last row of the crumb's brand menu: New brand. It opens into a
+// website-or-name field in place (#203); creating the brand opens its home. It is there on every page with the crumb, so
+// a workspace that opens straight on its one brand can still add another.
 import { PlusIcon } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
