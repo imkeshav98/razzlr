@@ -4,10 +4,11 @@ import { redirect } from 'next/navigation'
 import { BrandCard, type BrandCardData } from '../components/brand-cards.tsx'
 import { LibraryShell } from '../components/library-shell.tsx'
 import { NewBrandCard } from '../components/new-brand-card.tsx'
-import { createBrand, designCover, getBrandKit, getWorkspace, listBrands, listDesigns } from '../lib/api.ts'
+import { designCover, getBrandKit, getWorkspace, listBrands, listDesigns } from '../lib/api.ts'
 import { needsWelcome, openingBrand } from '../lib/home.ts'
 import { brandWords, format } from '../lib/i18n/index.ts'
 import { getMessages } from '../lib/i18n/server.ts'
+import { addBrand } from './actions.ts'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,14 +32,6 @@ export default async function HomePage() {
   }))
   const count = (n: number) => (n === 0 ? t.library.noDesignsCount : n === 1 ? t.library.oneDesign : format(t.library.designCount, { n }))
 
-  async function add(form: FormData) {
-    'use server'
-    const name = String(form.get('name') ?? '').trim()
-    if (!name) return
-    const brand = await createBrand(name.slice(0, 120))
-    redirect(`/brands/${brand.id}`)
-  }
-
   return (
     <LibraryShell t={t} words={words} workspace={workspace} brands={brands} place="brands">
       <h1 className="font-display text-4xl font-bold tracking-tight">{words.title}</h1>
@@ -50,7 +43,7 @@ export default async function HomePage() {
           </li>
         ))}
         <li className="rise min-w-0" style={{ animationDelay: `${Math.min(cards.length, 12) * 40}ms` }}>
-          <NewBrandCard action={add} words={{ add: words.add, name: words.name, create: t.library.create, cancel: t.library.cancel }} />
+          <NewBrandCard action={addBrand} words={{ add: words.add, name: words.name, create: t.library.create, cancel: t.library.cancel }} />
         </li>
       </ul>
     </LibraryShell>

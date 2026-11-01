@@ -14,6 +14,8 @@ import { AccountMenu } from './account-menu.tsx'
 import { BrandMark } from './brand-mark.tsx'
 import { homePanelHref } from '../lib/home-panel.ts'
 import { LibraryCapsule } from './library-capsule.tsx'
+import { NewBrandRow } from './new-brand-row.tsx'
+import { addBrand } from '../app/actions.ts'
 
 export function BrandAvatar({ name, active = false }: { name: string; active?: boolean }) {
   return (
@@ -34,7 +36,7 @@ export type LibraryPlace = 'home' | 'brands' | 'settings'
 
 /**
  * The crumb's first part: the brand you are in, or the word for them all, with a menu of the
- * workspace's brands. A <details>, so it opens before any script loads.
+ * workspace's brands that ends with New brand. A <details>, so it opens before any script loads.
  */
 function BrandSwitcher({ t, words, brands, active, showAll }: { t: Messages; words: BrandWords; brands: BrandSummary[]; active: BrandSummary | undefined; showAll: boolean }) {
   return (
@@ -64,15 +66,14 @@ function BrandSwitcher({ t, words, brands, active, showAll }: { t: Messages; wor
             </Link>
           )
         })}
+        <div className="my-1 h-px bg-line" />
         {showAll && (
-          <>
-            <div className="my-1 h-px bg-line" />
-            <Link href="/" className="flex h-9 items-center gap-2.5 rounded-row px-2 text-[13px] font-medium text-muted hover:bg-hover hover:text-text">
-              <SquaresFourIcon size={16} aria-hidden />
-              {words.all}
-            </Link>
-          </>
+          <Link href="/" className="flex h-9 items-center gap-2.5 rounded-row px-2 text-[13px] font-medium text-muted hover:bg-hover hover:text-text">
+            <SquaresFourIcon size={16} aria-hidden />
+            {words.all}
+          </Link>
         )}
+        <NewBrandRow action={addBrand} words={{ add: words.add, name: words.name, create: t.library.create }} />
       </nav>
     </details>
   )
