@@ -1,4 +1,4 @@
-import type { CanvasKit, FontCollection, Paragraph, TextStyle as CkTextStyle } from 'canvaskit-wasm'
+import type { CanvasKit, FontCollection, Paragraph, TextStyle as CkTextStyle } from '@razzlr/canvaskit'
 import { color } from './color.ts'
 import type { Resources } from './draw.ts'
 import type { SceneLayer } from './scene.ts'

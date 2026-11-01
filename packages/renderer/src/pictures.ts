@@ -1,4 +1,4 @@
-import type { Canvas, CanvasKit, SkPicture as Picture } from 'canvaskit-wasm'
+import type { Canvas, CanvasKit, SkPicture as Picture } from '@razzlr/canvaskit'
 import type { Resources } from './draw.ts'
 import type { SceneLayer } from './scene.ts'
 
