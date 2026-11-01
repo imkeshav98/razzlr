@@ -1,0 +1,20 @@
+{
+  "name": "@razzlr/canvaskit",
+  "private": true,
+  "description": "CanvasKit built from Skia with the PDF and SVG backends; every runtime loads this one build (ADR-0005).",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./bin/canvaskit.js"
+    },
+    "./canvaskit.wasm": "./bin/canvaskit.wasm"
+  },
+  "types": "./types/index.d.ts",
+  "scripts": {
+    "postinstall": "node fetch.mjs",
+    "test": "node smoke.mjs"
+  },
+  "dependencies": {
+    "@webgpu/types": "0.1.21"
+  }
+}

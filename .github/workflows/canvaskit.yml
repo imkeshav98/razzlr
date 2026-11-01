@@ -1,0 +1,71 @@
+name: CanvasKit
+
+# Builds our CanvasKit (packages/canvaskit) when its recipe changes and publishes it as a GitHub
+# release named after the recipe hash. CI and every install fetch that release by checksum
+# (packages/canvaskit/release.json), so only a recipe change ever rebuilds.
+on:
+  pull_request:
+    paths: [packages/canvaskit/build/**, .github/workflows/canvaskit.yml]
+  push:
+    branches: [main]
+    paths: [packages/canvaskit/build/**, .github/workflows/canvaskit.yml]
+  workflow_dispatch:
+
+concurrency:
+  group: canvaskit-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - id: recipe
+        run: |
+          hash=$(node packages/canvaskit/recipe.mjs)
+          echo "hash=$hash" >> "$GITHUB_OUTPUT"
+          echo "tag=canvaskit-$hash" >> "$GITHUB_OUTPUT"
+          if gh release view "canvaskit-$hash" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "built=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.recipe.outputs.built != 'true'
+        run: bash packages/canvaskit/build/build.sh dist
+        env:
+          SKIA_DIR: ${{ runner.temp }}/skia
+      - if: steps.recipe.outputs.built == 'true'
+        run: gh release download "${{ steps.recipe.outputs.tag }}" --repo "$GITHUB_REPOSITORY" --dir dist --pattern 'canvaskit.*'
+      - run: node packages/canvaskit/smoke.mjs dist
+      - if: steps.recipe.outputs.built != 'true'
+        run: |
+          gh release create "${{ steps.recipe.outputs.tag }}" dist/canvaskit.js dist/canvaskit.wasm \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --title "CanvasKit ${{ steps.recipe.outputs.hash }}" \
+            --notes "CanvasKit from Skia $(cat packages/canvaskit/build/skia-commit) with the PDF and SVG backends, built from packages/canvaskit/build at recipe ${{ steps.recipe.outputs.hash }}."
+      - run: |
+          node -e '
+            const { createHash } = require("node:crypto")
+            const { readFileSync, writeFileSync } = require("node:fs")
+            const files = {}
+            for (const name of ["canvaskit.js", "canvaskit.wasm"]) files[name] = createHash("sha256").update(readFileSync(`dist/${name}`)).digest("hex")
+            const release = { repo: process.env.GITHUB_REPOSITORY, tag: process.argv[1], recipe: process.argv[2], files }
+            writeFileSync("dist/release.json", JSON.stringify(release, null, 2) + "\n")
+          ' "${{ steps.recipe.outputs.tag }}" "${{ steps.recipe.outputs.hash }}"
+          { echo '### packages/canvaskit/release.json'; echo '```json'; cat dist/release.json; echo '```'; ls -l dist >> /dev/stdout; } >> "$GITHUB_STEP_SUMMARY"
+          cat dist/release.json
+          ls -l dist
+          gzip -9 -k dist/canvaskit.wasm dist/canvaskit.js && ls -l dist/*.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: canvaskit
+          path: dist
+          retention-days: 30

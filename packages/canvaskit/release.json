@@ -1,0 +1,9 @@
+{
+  "repo": "imkeshav98/razzlr",
+  "tag": "canvaskit-861dc4c4b1d1616f",
+  "recipe": "861dc4c4b1d1616f",
+  "files": {
+    "canvaskit.js": "be4c6e5b5661d5dd69e75a250d7d218795e70925e12d08120fbd1bd5c6c6b972",
+    "canvaskit.wasm": "a04f7dcf4c7bdd2caa9a17b6e90c3d63d9a25f27f09b928e9e324ef218fe53ef"
+  }
+}
