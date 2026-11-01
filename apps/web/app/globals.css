@@ -691,6 +691,12 @@ body {
 [data-render='software'] .aurora::before {
   animation-play-state: paused;
 }
+/* For the same reason the AI controls' sliding gradient and sheen hold still in software: each of
+   their frames redraws the page under them, the open Recent or Templates sheet included. */
+[data-render='software'] :is(.ai-glow, .ai-edge)::before,
+[data-render='software'] .ai-sheen {
+  animation-play-state: paused;
+}
 
 /* Sign in (mock screen 34): behind the whole page, three copies of a sample ad fanned out over a
    slow aurora in the end half. The page has one background; the glow fades out toward the form
