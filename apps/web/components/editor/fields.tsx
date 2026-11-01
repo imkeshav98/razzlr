@@ -17,9 +17,10 @@ export const tidy = (n: number) => Math.round(n * 100) / 100
 
 /**
  * A number: type it and press Enter, nudge it with the arrow keys (Shift for 10), or drag its label
- * sideways to scrub it, one undo step for the whole drag.
+ * sideways to scrub it, one undo step for the whole drag. With `onClear`, an emptied field calls it,
+ * for a value that can be left unset (its placeholder shows then); without, an empty field is ignored.
  */
-export function NumberField({ label, name, value, step = 1, min, max, scale = 1, placeholder, editor, onSet, onShift }: {
+export function NumberField({ label, name, value, step = 1, min, max, scale = 1, placeholder, editor, onSet, onShift, onClear }: {
   label: string
   name: string
   value: number | 'mixed' | undefined
@@ -32,6 +33,7 @@ export function NumberField({ label, name, value, step = 1, min, max, scale = 1,
   editor: Editor
   onSet: (value: number) => void
   onShift: (by: number) => void
+  onClear?: () => void
 }) {
   const t = useMessages()
   const id = useId()
@@ -40,6 +42,10 @@ export function NumberField({ label, name, value, step = 1, min, max, scale = 1,
   const scrub = useRef<{ x: number; applied: number; end: () => void } | null>(null)
   const commit = (text: string) => {
     setDraft(null)
+    if (text.trim() === '') {
+      if (onClear && shown !== '') onClear()
+      return
+    }
     const n = Number.parseFloat(text.replace(',', '.'))
     if (Number.isFinite(n) && text.trim() !== shown) onSet(clamp(n / scale, min, max))
   }

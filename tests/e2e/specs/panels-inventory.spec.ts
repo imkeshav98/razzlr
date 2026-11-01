@@ -20,7 +20,7 @@ test.describe.configure({ mode: 'parallel', timeout: 180_000 })
 test.use({ actionTimeout: 15_000 })
 
 /** Rows that fail today, with the bug filed for each. */
-const KNOWN: Record<number, number> = { 12: 243, 16: 244, 25: 246, 35: 245 }
+const KNOWN: Record<number, number> = { 12: 243, 25: 246, 35: 245 }
 
 const righteous = new Uint8Array(readFileSync(join(import.meta.dirname, '..', 'assets', 'fonts', 'Righteous-Regular.ttf')))
 const tile = new Uint8Array(readFileSync(join(import.meta.dirname, '..', '..', 'pixels', 'assets', 'tile.jpg')))
@@ -459,6 +459,14 @@ test.describe('text', () => {
     await step(page, () => enter(field, ''), async () => {
       await expect.poll(async () => (await style(page, 'headline')).lineHeight).toBeUndefined()
     })
+    await expect(field).toHaveValue('')
+    await expect(field).toHaveAttribute('placeholder', 'Auto')
+    // A field with no unset value keeps its number when emptied.
+    const before = await designOf(page)
+    const spacing = page.getByTestId('text-card').getByRole('textbox', { name: 'Letter spacing' })
+    await enter(spacing, '')
+    await expect(spacing).toHaveValue('0')
+    expect(await designOf(page)).toBe(before)
     await reloads(page)
   })
 
