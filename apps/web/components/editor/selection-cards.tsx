@@ -15,11 +15,11 @@ import { useMessages } from '../../lib/i18n/client.tsx'
 import { format, type Messages } from '../../lib/i18n/index.ts'
 import { Select } from '../ui/select.tsx'
 import { CARD, CardHeader, FineTune, PICKED_RING, SWATCHES } from './card.tsx'
-import { CHIP, DASHED_BUTTON, FOCUS_RING, KNOBS, SWATCH } from './styles.ts'
+import { CHIP, DASHED_BUTTON, FIELD, FOCUS_RING, KNOBS, SWATCH } from './styles.ts'
 import { ImagePickerButton } from './image-tool.tsx'
 import { useBrandKit } from './use-brand-kit.ts'
 import { useLiveDesign } from './use-live-design.ts'
-import { Choice, clamp, ColorField, FIELD, NumberField, tidy } from './fields.tsx'
+import { Choice, clamp, ColorField, NumberField, tidy } from './fields.tsx'
 import { AddButton, PaintRow, RemoveButton, Stack } from './paint-stack.tsx'
 
 type Props = Readonly<Record<string, unknown>>
@@ -225,8 +225,8 @@ function ShapeCard({ target, p, kind, look }: { target: Target; p: P; kind: Shap
   const setShape = (change: (now: Record<string, unknown>) => Record<string, unknown>) =>
     set(target, (now) => ({ shape: { ...(now.shape as Record<string, unknown>), ...change(now.shape as Record<string, unknown>) } }))
   /** A knob, as in the mock: its range is what designs mostly use, and the shape keeps the schema's limits. */
-  const knob = (key: string, name: string, { min, max, step = 1, scale = 1, unit }: { min: number; max: number; step?: number; scale?: number; unit?: string }) => {
-    const to = (n: number) => clamp(step === 1 ? Math.round(n) : tidy(n), min, max)
+  const knob = (key: string, name: string, { min, max, scale = 1, unit, whole = true }: { min: number; max: number; scale?: number; unit?: string; whole?: boolean }) => {
+    const to = (n: number) => clamp(whole ? Math.round(n) : tidy(n), min, max)
     return (
       <NumberField
         label={name}
@@ -234,7 +234,6 @@ function ShapeCard({ target, p, kind, look }: { target: Target; p: P; kind: Shap
         value={value(key) as number | 'mixed' | undefined}
         min={min}
         max={max}
-        step={step}
         scale={scale}
         unit={unit}
         editor={target.editor}
@@ -278,26 +277,26 @@ function ShapeCard({ target, p, kind, look }: { target: Target; p: P; kind: Shap
             <div className={cn(KNOBS, 'empty:hidden')}>
               {kind === 'polygon' && knob('sides', p.sides, { min: 3, max: 24 })}
               {kind === 'star' && knob('points', p.points, { min: 3, max: 24 })}
-              {kind === 'star' && knob('innerRadius', p.innerRadius, { min: 0.05, max: 0.95, step: 0.01, scale: 100, unit: '%' })}
+              {kind === 'star' && knob('innerRadius', p.innerRadius, { min: 0.05, max: 0.95, scale: 100, unit: '%', whole: false })}
               {!each && knob('cornerRadius', p.cornerRadius, { min: 0, max: 200 })}
             </div>
-          <div dir="ltr" className={cn(KNOBS, 'empty:hidden')}>
-            {each && CORNER_FIELDS.map((i) => CORNERS[i]).map((corner, n) => {
-              const i = CORNER_FIELDS[n] ?? 0
-              return (
-              <NumberField
-                key={corner}
-                label={p.cornersShort[corner]}
-                name={p.corners[corner]}
-                value={shared(shapes.map((s) => (s.kind === 'rect' ? s.corners?.[i] : undefined)))}
-                min={0}
-                editor={target.editor}
-                onSet={(v) => setCorner(i, () => v)}
-                onShift={(by) => setCorner(i, (r) => r + by)}
-              />
-              )
-            })}
-          </div>
+            <div dir="ltr" className={cn(KNOBS, 'empty:hidden')}>
+              {each && CORNER_FIELDS.map((i) => CORNERS[i]).map((corner, n) => {
+                const i = CORNER_FIELDS[n] ?? 0
+                return (
+                  <NumberField
+                    key={corner}
+                    label={p.cornersShort[corner]}
+                    name={p.corners[corner]}
+                    value={shared(shapes.map((s) => (s.kind === 'rect' ? s.corners?.[i] : undefined)))}
+                    min={0}
+                    editor={target.editor}
+                    onSet={(v) => setCorner(i, () => v)}
+                    onShift={(by) => setCorner(i, (r) => r + by)}
+                  />
+                )
+              })}
+            </div>
           </>
         )}
       {kind === 'rect' && (
@@ -943,7 +942,7 @@ function TextLook({ target, brandId, p }: { target: Target; brandId: string; p: 
         max={240}
         editor={target.editor}
         onSet={(fontSize) => set(target, (now) => ({ style: { ...(now.style as Style), fontSize } }))}
-        onShift={(by) => set(target, (now) => ({ style: { ...(now.style as Style), fontSize: tidy(clamp((now.style as Style).fontSize + by, 1)) } }))}
+        onShift={(by) => set(target, (now) => ({ style: { ...(now.style as Style), fontSize: tidy(clamp((now.style as Style).fontSize + by, 8, 240)) } }))}
       />
       <Swatches target={target} brandId={brandId} p={p} current={shared(styles.map((s) => s.color))} paint={(hex) => set(target, (now) => ({ style: { ...(now.style as Style), color: `${hex}${((now.style as Style).color ?? '').slice(7, 9) || 'FF'}` } }))} />
     </Card>

@@ -123,7 +123,7 @@ test('an ad set rebuilt in 5 formats through real input exports PNG, JPG, PDF an
   await page.getByTestId('font-upload').setInputFiles({ name: 'Righteous-Regular.ttf', mimeType: 'font/ttf', buffer: Buffer.from(righteous) })
   await expect.poll(async () => ((await stored(page)).nodes[headline]?.props.style as { fontFamily: string }).fontFamily).toBe('Righteous')
   // The size is a number to drag or type: 140, typed.
-  await page.getByTestId('text-look').getByRole('slider', { name: 'Size' }).click()
+  await page.getByTestId('text-look').getByRole('spinbutton', { name: 'Size' }).click()
   await page.keyboard.type('140')
   await page.keyboard.press('Enter')
   await expect.poll(async () => ((await stored(page)).nodes[headline]?.props.style as { fontSize: number }).fontSize).toBeGreaterThan(120)

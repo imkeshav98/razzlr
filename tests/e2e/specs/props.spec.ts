@@ -69,7 +69,7 @@ test('one layer: position, size, turn, opacity, blend, fill, stroke and effects'
   await expect.poll(async () => (await props(page, 'box')).rotation).toBe(15)
 
   const look = page.getByTestId('appearance-card')
-  await enter(look.getByRole('slider', { name: 'Opacity' }), '50')
+  await enter(look.getByRole('spinbutton', { name: 'Opacity' }), '50')
   await expect.poll(async () => (await props(page, 'box')).opacity).toBe(0.5)
   await choose(look.getByRole('combobox', { name: 'Blend mode' }), 'multiply')
   await expect.poll(async () => (await props(page, 'box')).blendMode).toBe('multiply')
@@ -140,13 +140,13 @@ test('several layers: mixed values, set together or each from its own; text and 
   await expect.poll(async () => [(await props(page, 'box')).fills, (await props(page, 'dot')).fills]).toEqual([[{ type: 'solid', color: '#D9D9D9FF' }], [{ type: 'solid', color: '#D9D9D9FF' }]])
   await enter(page.getByTestId('fill-card').getByRole('textbox', { name: 'Colour 1 hex' }), '#FFB020')
   await expect.poll(async () => [(await props(page, 'box')).fills, (await props(page, 'dot')).fills]).toEqual([[{ type: 'solid', color: '#FFB020FF' }], [{ type: 'solid', color: '#FFB020FF' }]])
-  await enter(page.getByTestId('appearance-card').getByRole('slider', { name: 'Opacity' }), '75')
+  await enter(page.getByTestId('appearance-card').getByRole('spinbutton', { name: 'Opacity' }), '75')
   await expect.poll(async () => [(await props(page, 'box')).opacity, (await props(page, 'dot')).opacity]).toEqual([0.75, 0.75])
 
   // Text.
   await select(page, ['headline'])
   const text = page.getByTestId('text-card')
-  await enter(page.getByTestId('text-look').getByRole('slider', { name: 'Size' }), '120')
+  await enter(page.getByTestId('text-look').getByRole('spinbutton', { name: 'Size' }), '120')
   await enter(text.getByRole('spinbutton', { name: 'Letter spacing' }), '2')
   await enter(text.getByRole('spinbutton', { name: 'Line height' }), '1.1')
   await enter(text.getByRole('textbox', { name: 'Text colour hex' }), '1f9d55')

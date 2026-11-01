@@ -44,7 +44,7 @@ test('the Shape card sets corners, sides, points and line ends', async ({ browse
 
   await select(page, ['box'])
   await expect(card.getByRole('heading')).toHaveText('Rectangle')
-  await enter(card.getByRole('slider', { name: 'Corners' }), '40')
+  await enter(card.getByRole('spinbutton', { name: 'Corners' }), '40')
   await expect.poll(() => shapeOf(page, 'box')).toEqual({ kind: 'rect', cornerRadius: 40 })
   // Each corner its own: all four start at the one radius, then one changes alone.
   await card.getByRole('checkbox', { name: 'Each corner its own radius' }).check()
@@ -60,16 +60,19 @@ test('the Shape card sets corners, sides, points and line ends', async ({ browse
   await select(page, ['hex'])
   await expect(card.getByRole('heading')).toHaveText('Polygon')
   // Sides are whole and at least three: Home takes the slider to its start.
-  await enter(card.getByRole('slider', { name: 'Sides' }), '8')
+  await enter(card.getByRole('spinbutton', { name: 'Sides' }), '8')
   await expect.poll(async () => (await shapeOf(page, 'hex')).sides).toBe(8)
-  await card.getByRole('slider', { name: 'Sides' }).press('Home')
+  await card.getByRole('spinbutton', { name: 'Sides' }).press('Home')
   await expect.poll(async () => (await shapeOf(page, 'hex')).sides).toBe(3)
 
   await select(page, ['star'])
-  await enter(card.getByRole('slider', { name: 'Points' }), '8')
-  await enter(card.getByRole('slider', { name: 'Inner' }), '60')
-  await card.getByRole('slider', { name: 'Points' }).press('ArrowUp')
+  await enter(card.getByRole('spinbutton', { name: 'Points' }), '8')
+  await enter(card.getByRole('spinbutton', { name: 'Inner' }), '60')
+  await card.getByRole('spinbutton', { name: 'Points' }).press('ArrowUp')
   await expect.poll(() => shapeOf(page, 'star')).toMatchObject({ points: 9, innerRadius: 0.6 })
+  // Its inner radius steps a percent at a time, as it shows.
+  await card.getByRole('spinbutton', { name: 'Inner' }).press('ArrowUp')
+  await expect.poll(async () => (await shapeOf(page, 'star')).innerRadius).toBe(0.61)
 
   await select(page, ['rule'])
   await choose(card.getByRole('combobox', { name: 'Line end' }), 'arrow')

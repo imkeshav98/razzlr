@@ -37,8 +37,8 @@ test('the look comes first: size and brand colour, effect tiles, and the numbers
 
   // Text: the size slider and the brand's colours, the colour it has now leading them.
   const look = page.getByTestId('text-look')
-  await look.getByRole('slider', { name: 'Size' }).fill('64')
-  await look.getByRole('slider', { name: 'Size' }).press('Enter')
+  await look.getByRole('spinbutton', { name: 'Size' }).fill('64')
+  await look.getByRole('spinbutton', { name: 'Size' }).press('Enter')
   await expect.poll(async () => (await node(page, 'headline')).props.style?.fontSize).toBe(64)
   const colours = look.getByRole('group', { name: 'Brand colours' })
   await expect(colours.getByRole('button')).toHaveCount(3)
