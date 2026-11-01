@@ -22,8 +22,9 @@ python3 tools/git-sync-deps
 cp "$here/vector_bindings.cpp" modules/canvaskit/
 sed -i 's|^    "canvaskit_bindings.cpp",$|    "canvaskit_bindings.cpp",\n    "vector_bindings.cpp",|' modules/canvaskit/BUILD.gn
 grep -q '"vector_bindings.cpp"' modules/canvaskit/BUILD.gn
-# PDF on, and expat for Skia's SVG writer; the Android font manager expat would also switch on stays off.
-sed -i -e 's|skia_enable_pdf=false|skia_enable_pdf=true skia_enable_fontmgr_android=false|' \
+# PDF on, and expat (built from source, like the other libraries) for Skia's SVG writer; the Android
+# font manager expat would also switch on stays off.
+sed -i -e 's|skia_enable_pdf=false|skia_enable_pdf=true skia_enable_fontmgr_android=false skia_use_system_expat=false|' \
   -e 's|^USE_EXPAT="false"$|USE_EXPAT="true"|' modules/canvaskit/compile.sh
 grep -q 'skia_enable_pdf=true' modules/canvaskit/compile.sh
 grep -q '^USE_EXPAT="true"$' modules/canvaskit/compile.sh
