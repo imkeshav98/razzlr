@@ -107,7 +107,7 @@ export function PropertyCards({ editor, brandId, onRemoved }: { editor: Editor; 
     return (
       <>
         <FontPanel editor={editor} brandId={brandId} />
-        <SelectionCards editor={editor} ids={selected} arrange={<ArrangePanel editor={editor} />} />
+        <SelectionCards editor={editor} brandId={brandId} ids={selected} arrange={<ArrangePanel editor={editor} />} />
         <ViewCard editor={editor} />
       </>
     )

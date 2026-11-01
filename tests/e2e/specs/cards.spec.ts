@@ -93,7 +93,7 @@ test('a selection swaps the design cards for Arrange, which aligns, distributes 
   // One layer aligns to its format; distribute and group need more.
   await expect(arrange.getByRole('button', { name: 'Align left' })).toBeEnabled()
   await expect(arrange.getByRole('button', { name: 'Distribute horizontally' })).toBeDisabled()
-  await expect(arrange.getByRole('button', { name: 'Group' })).toBeDisabled()
+  await expect(arrange.getByRole('button', { name: 'Group', exact: true })).toBeDisabled()
   // The align buttons are the big ones.
   const big = await arrange.getByRole('button', { name: 'Align left' }).boundingBox()
   const small = await arrange.getByRole('button', { name: 'Distribute horizontally' }).boundingBox()
@@ -103,7 +103,7 @@ test('a selection swaps the design cards for Arrange, which aligns, distributes 
   await expect(arrange.getByRole('button', { name: 'Distribute horizontally' })).toBeEnabled()
   await shoot(page, 'arrange')
   const before = Object.keys(JSON.parse(await designOf(page)).nodes).length
-  await arrange.getByRole('button', { name: 'Group' }).click()
+  await arrange.getByRole('button', { name: 'Group', exact: true }).click()
   await expect.poll(async () => Object.values(JSON.parse(await designOf(page)).nodes as Record<string, { type: string }>).filter((n) => n.type === 'group').length).toBe(1)
   expect(Object.keys(JSON.parse(await designOf(page)).nodes).length).toBe(before + 1)
 

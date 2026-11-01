@@ -1,18 +1,18 @@
 'use client'
 
-// The selection's property cards (#60): position and size, appearance, fill, stroke, effects, text
-// and auto layout, for one layer or several. A value the selected layers don't share shows as
+// The selection's property cards (#60): the shape's own settings (#151), position and size,
+// appearance, fill, stroke, effects, text and auto layout, for one layer or several. A value the selected layers don't share shows as
 // mixed; setting it gives them all the same one, and scrubbing or the arrow keys move each from its
 // own. With more than one format the changes go to every format or to this one only. Each change
 // is one undo step, and a scrub, however long, is one too.
-import { MinusIcon, PlusIcon } from '@phosphor-icons/react'
+import { MinusIcon, PlusIcon, XIcon } from '@phosphor-icons/react'
 import type { Editor } from '@razzlr/editor'
-import { BlendMode, ContainerBlendMode, type Design, type Effect, type Paint } from '@razzlr/schema'
+import { BlendMode, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@razzlr/schema'
 import { useId, useRef, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format, type Messages } from '../../lib/i18n/index.ts'
-import { CARD, CardHeader } from './card.tsx'
+import { CARD, CardHeader, FineTune } from './card.tsx'
 import { ICON_BUTTON } from './formats-panel.tsx'
 import { useLiveDesign } from './use-live-design.ts'
 
@@ -307,6 +307,103 @@ function AppearanceCard({ target, p }: { target: Target; p: P }) {
   )
 }
 
+type ShapeKind = 'rect' | 'polygon' | 'star' | 'line'
+/** The corners as the shape stores them, from the top left clockwise. */
+const CORNERS = ['tl', 'tr', 'br', 'bl'] as const
+/**
+ * The order the fields sit in, two by two as the corners do: top left, top right, bottom left,
+ * bottom right. They keep left to right in either direction, as the ad does.
+ */
+const CORNER_FIELDS = [0, 1, 3, 2] as const
+
+/**
+ * A shape's own settings (#151), for layers that are all the same kind: a rectangle's corner radius
+ * or each corner's own, a polygon's sides, a star's points and inner radius, a line's ends.
+ */
+function ShapeCard({ target, p, kind }: { target: Target; p: P; kind: ShapeKind }) {
+  const shapes = target.props.map((pr) => pr.shape as Shape)
+  const value = (key: string) => shared(shapes.map((s) => (s as Record<string, unknown>)[key])) as number | string | 'mixed' | undefined
+  const setShape = (change: (now: Record<string, unknown>) => Record<string, unknown>) =>
+    set(target, (now) => ({ shape: { ...(now.shape as Record<string, unknown>), ...change(now.shape as Record<string, unknown>) } }))
+  const field = (key: string, label: string, name: string, { min = 0, max, whole = false, scale = 1 }: { min?: number; max?: number; whole?: boolean; scale?: number } = {}) => {
+    const fit = (n: number) => clamp(whole ? Math.round(n) : tidy(n), min, max)
+    return (
+      <NumberField
+        label={label}
+        name={name}
+        value={value(key) as number | 'mixed' | undefined}
+        min={min}
+        max={max}
+        scale={scale}
+        step={scale === 1 ? 1 : 1 / scale}
+        editor={target.editor}
+        onSet={(v) => setShape(() => ({ [key]: fit(v) }))}
+        onShift={(by) => setShape((now) => ({ [key]: fit(((now[key] as number | undefined) ?? 0) + by) }))}
+      />
+    )
+  }
+  // A rectangle with each corner's own radius keeps them in its corners; one radius for all drops them.
+  const each = kind === 'rect' && shapes.every((s) => s.kind === 'rect' && s.corners)
+  const eachCorner = (on: boolean) => set(target, (now) => {
+    const { corners, ...rest } = now.shape as Record<string, unknown>
+    const r = (rest.cornerRadius as number | undefined) ?? 0
+    return { shape: on ? { ...rest, corners: [r, r, r, r] } : { ...rest, cornerRadius: (corners as number[] | undefined)?.[0] ?? r } }
+  })
+  const setCorner = (i: number, to: (r: number) => number) => setShape((now) => {
+    const corners = [...((now.corners as number[] | undefined) ?? [0, 0, 0, 0])]
+    corners[i] = tidy(Math.max(0, to(corners[i] ?? 0)))
+    return { corners }
+  })
+  return (
+    <Card id="shape-card" title={p.shapeKinds[kind]} note={target.names.join(', ')}>
+      {kind === 'line'
+        ? (
+          <div className="grid grid-cols-2 gap-x-3">
+            {(['start', 'end'] as const).map((end) => (
+              <Choice
+                key={end}
+                name={p.lineEnd[end]}
+                value={value(end) as LineEnd | 'mixed' | undefined}
+                options={LineEnd.options}
+                labels={p.lineEnds}
+                onSet={(v) => setShape(() => ({ [end]: v }))}
+              />
+            ))}
+          </div>
+        )
+        : (
+          <div dir={each ? 'ltr' : undefined} className="grid grid-cols-2 gap-x-3 gap-y-2">
+            {kind === 'polygon' && field('sides', '#', p.sides, { min: 3, max: 100, whole: true })}
+            {kind === 'star' && field('points', '★', p.points, { min: 3, max: 100, whole: true })}
+            {kind === 'star' && field('innerRadius', '%', p.innerRadius, { max: 1, scale: 100 })}
+            {!each && field('cornerRadius', '◜', p.cornerRadius)}
+            {each && CORNER_FIELDS.map((i) => CORNERS[i]).map((corner, n) => {
+              const i = CORNER_FIELDS[n] ?? 0
+              return (
+              <NumberField
+                key={corner}
+                label={p.cornersShort[corner]}
+                name={p.corners[corner]}
+                value={shared(shapes.map((s) => (s.kind === 'rect' ? s.corners?.[i] : undefined)))}
+                min={0}
+                editor={target.editor}
+                onSet={(v) => setCorner(i, () => v)}
+                onShift={(by) => setCorner(i, (r) => r + by)}
+              />
+              )
+            })}
+          </div>
+        )}
+      {kind === 'rect' && (
+        <label className="flex items-center gap-2 text-[12px]">
+          <input type="checkbox" name="each-corner" checked={each} onChange={(event) => eachCorner(event.target.checked)} />
+          {p.eachCorner}
+        </label>
+      )}
+    </Card>
+  )
+}
+
 /** A list of paints, strokes or effects that every selected layer has the same of, or a way to make it so. */
 function ListCard<T>({ id, title, p, target, field, fresh, render }: {
   id: string
@@ -346,15 +443,78 @@ function PaintRow({ paint, name, p, onSet }: { paint: Paint; name: string; p: P;
   return <ColorField name={name} value={paint.color} onSet={(color) => onSet({ type: 'solid', color })} />
 }
 
-type Stroke = { paint: Paint; width: number; align: 'inside' | 'center' | 'outside' }
+type Stroke = {
+  paint: Paint
+  width: number
+  align: 'inside' | 'center' | 'outside'
+  dashes?: number[]
+  dashOffset?: number
+  cap?: 'butt' | 'round' | 'square'
+  join?: 'miter' | 'round' | 'bevel'
+}
 
+/** Dash and gap lengths as typed, "8 4", or null when they aren't a pattern; nothing typed is solid. */
+function parseDashes(text: string): number[] | null {
+  const parts = text.split(/[\s,]+/).filter(Boolean)
+  const lengths = parts.map((part) => Number.parseFloat(part))
+  if (lengths.some((n) => !Number.isFinite(n) || n < 0)) return null
+  if (lengths.length > 0 && !lengths.some((n) => n > 0)) return null
+  return lengths.map(tidy)
+}
+
+/** A stroke's dash pattern, typed as lengths: dash, gap, dash and so on. */
+function DashField({ name, value, onSet }: { name: string; value: number[]; onSet: (dashes: number[]) => void }) {
+  const t = useMessages()
+  const shown = value.join(' ')
+  const [draft, setDraft] = useState<string | null>(null)
+  const commit = (text: string) => {
+    setDraft(null)
+    const dashes = parseDashes(text)
+    if (dashes && dashes.join(' ') !== shown) onSet(dashes)
+  }
+  return (
+    <input
+      name="dashes"
+      aria-label={name}
+      title={t.editor.props.dashesHint}
+      value={draft ?? shown}
+      placeholder={t.editor.props.solid}
+      spellCheck={false}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={(event) => draft !== null && commit(event.target.value)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') commit(event.currentTarget.value)
+        else if (event.key === 'Escape') {
+          setDraft(null)
+          event.currentTarget.blur()
+        }
+        event.stopPropagation()
+      }}
+      className={FIELD}
+    />
+  )
+}
+
+/** One stroke: its colour, width and position, then its dashes and the look of its ends and corners (#152). */
 function StrokeRow({ stroke, i, p, editor, onSet }: { stroke: Stroke; i: number; p: P; editor: Editor; onSet: (to: (now: Stroke) => Stroke) => void }) {
+  const n = { n: i + 1 }
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
-      <PaintRow paint={stroke.paint} name={format(p.colour, { n: i + 1 })} p={p} onSet={(paint) => onSet((now) => ({ ...now, paint }))} />
+      <PaintRow paint={stroke.paint} name={format(p.colour, n)} p={p} onSet={(paint) => onSet((now) => ({ ...now, paint }))} />
       <div className="grid grid-cols-2 gap-1">
-        <NumberField label="W" name={format(p.strokeWidth, { n: i + 1 })} value={stroke.width} min={0.5} step={0.5} editor={editor} onSet={(width) => onSet((now) => ({ ...now, width }))} onShift={(by) => onSet((now) => ({ ...now, width: tidy(clamp(now.width + by, 0.5)) }))} />
-        <Choice name={format(p.strokeAlign, { n: i + 1 })} value={stroke.align} options={['inside', 'center', 'outside'] as const} labels={p.aligns} onSet={(align) => onSet((now) => ({ ...now, align }))} />
+        <NumberField label="W" name={format(p.strokeWidth, n)} value={stroke.width} min={0.5} step={0.5} editor={editor} onSet={(width) => onSet((now) => ({ ...now, width }))} onShift={(by) => onSet((now) => ({ ...now, width: tidy(clamp(now.width + by, 0.5)) }))} />
+        <Choice name={format(p.strokeAlign, n)} value={stroke.align} options={['inside', 'center', 'outside'] as const} labels={p.aligns} onSet={(align) => onSet((now) => ({ ...now, align }))} />
+        <DashField name={format(p.strokeDashes, n)} value={stroke.dashes ?? []} onSet={(dashes) => onSet((now) => ({ ...now, dashes }))} />
+        <NumberField
+          label="⇥"
+          name={format(p.strokeDashOffset, n)}
+          value={stroke.dashOffset ?? 0}
+          editor={editor}
+          onSet={(dashOffset) => onSet((now) => ({ ...now, dashOffset }))}
+          onShift={(by) => onSet((now) => ({ ...now, dashOffset: tidy((now.dashOffset ?? 0) + by) }))}
+        />
+        <Choice name={format(p.strokeCap, n)} value={stroke.cap ?? 'butt'} options={['butt', 'round', 'square'] as const} labels={p.caps} onSet={(cap) => onSet((now) => ({ ...now, cap }))} />
+        <Choice name={format(p.strokeJoin, n)} value={stroke.join ?? 'miter'} options={['miter', 'round', 'bevel'] as const} labels={p.joins} onSet={(join) => onSet((now) => ({ ...now, join }))} />
       </div>
     </div>
   )
@@ -485,6 +645,225 @@ function TextCard({ target, p }: { target: Target; p: P }) {
   )
 }
 
+type Toggle = { name: string; label: string; on: boolean | 'mixed'; onSet: (on: boolean) => void }
+
+/** Buttons that each turn something on or off, such as underline; pressed while it is on. */
+function Toggles({ items }: { items: Toggle[] }) {
+  return (
+    <div className="flex gap-1">
+      {items.map((item) => (
+        <button
+          key={item.name}
+          type="button"
+          aria-label={item.name}
+          title={item.name}
+          aria-pressed={item.on === 'mixed' ? 'mixed' : item.on}
+          onClick={() => item.onSet(item.on !== true)}
+          className="h-7 min-w-8 cursor-pointer rounded-row border border-line px-2 text-[12px] text-muted hover:bg-hover aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent-text"
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * The text's box and paragraphs (#153): how the box sizes, lines shown at most, shrinking to fit,
+ * paragraph spacing, lists, underline and strikethrough, and an outline along the glyphs.
+ */
+function ParagraphCard({ target, p }: { target: Target; p: P }) {
+  const value = (key: string) => shared(target.props.map((pr) => pr[key])) as unknown
+  const styles = target.props.map((pr) => pr.style as Style)
+  const style = (key: string) => shared(styles.map((s) => s[key]))
+  const setStyle = (change: (now: Style) => Record<string, unknown>) => set(target, (now) => ({ style: { ...(now.style as Style), ...change(now.style as Style) } }))
+  const flag = (key: string) => {
+    const on = style(key)
+    return on === 'mixed' ? 'mixed' : on === true
+  }
+  const shrink = value('shrinkToFit') as { min: number; max: number } | undefined | 'mixed'
+  const outline = style('outline') as { width: number; color: string } | undefined | 'mixed'
+  const outlined = outline === 'mixed' || (outline !== undefined && outline.width > 0)
+  return (
+    <Card id="paragraph-card" title={p.paragraph}>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+        <Choice name={p.boxMode} value={value('boxMode') as BoxMode | 'mixed' | undefined ?? 'autoHeight'} options={['autoWidth', 'autoHeight', 'fixed'] as const} labels={p.boxModes} onSet={(boxMode) => set(target, () => ({ boxMode }))} />
+        <Choice name={p.list} value={(value('list') ?? 'none') as 'none' | 'bullet' | 'number' | 'mixed'} options={['none', 'bullet', 'number'] as const} labels={p.lists} onSet={(list) => set(target, () => ({ list: list === 'none' ? undefined : list }))} />
+        <NumberField
+          label="≡"
+          name={p.maxLines}
+          value={value('maxLines') as number | 'mixed' | undefined}
+          min={0}
+          placeholder={p.noLimit}
+          editor={target.editor}
+          // 0 lifts the limit.
+          onSet={(v) => set(target, () => ({ maxLines: Math.round(v) >= 1 ? Math.round(v) : undefined }))}
+          onShift={(by) => set(target, (now) => {
+            const next = Math.round(((now.maxLines as number | undefined) ?? 0) + by)
+            return { maxLines: next >= 1 ? next : undefined }
+          })}
+        />
+        <NumberField
+          label="¶"
+          name={p.paragraphSpacing}
+          value={(value('paragraphSpacing') ?? 0) as number | 'mixed'}
+          min={0}
+          editor={target.editor}
+          onSet={(v) => set(target, () => ({ paragraphSpacing: v }))}
+          onShift={(by) => set(target, (now) => ({ paragraphSpacing: tidy(clamp(((now.paragraphSpacing as number | undefined) ?? 0) + by, 0)) }))}
+        />
+      </div>
+      <Toggles
+        items={[
+          { name: p.underline, label: 'U', on: flag('underline'), onSet: (on) => setStyle(() => ({ underline: on })) },
+          { name: p.strikethrough, label: 'S', on: flag('strikethrough'), onSet: (on) => setStyle(() => ({ strikethrough: on })) },
+          { name: p.shrinkToFit, label: p.shrinkToFitShort, on: shrink === 'mixed' ? 'mixed' : shrink !== undefined, onSet: (on) => set(target, (now) => {
+            const size = (now.style as Style).fontSize
+            return { shrinkToFit: on ? { min: tidy(Math.max(1, size / 2)), max: size } : undefined }
+          }) },
+          { name: p.outline, label: p.outlineShort, on: outline === 'mixed' ? 'mixed' : outlined, onSet: (on) => setStyle((now) => ({ outline: on ? { width: 2, color: (now.outline as { color?: string } | undefined)?.color ?? '#000000FF' } : undefined })) },
+        ]}
+      />
+      {shrink !== undefined && shrink !== 'mixed' && (
+        <div className="grid grid-cols-2 gap-x-3">
+          {(['min', 'max'] as const).map((end) => (
+            <NumberField
+              key={end}
+              label={end === 'min' ? '↓' : '↑'}
+              name={p.shrinkSize[end]}
+              value={shrink[end]}
+              min={1}
+              editor={target.editor}
+              onSet={(v) => set(target, (now) => {
+                const was = now.shrinkToFit as { min: number; max: number } | undefined
+                if (!was) return null
+                const next = { ...was, [end]: v }
+                return { shrinkToFit: end === 'min' ? { min: Math.min(next.min, next.max), max: next.max } : { min: next.min, max: Math.max(next.min, next.max) } }
+              })}
+              onShift={(by) => set(target, (now) => {
+                const was = now.shrinkToFit as { min: number; max: number } | undefined
+                if (!was) return null
+                const v = tidy(Math.max(1, was[end] + by))
+                return { shrinkToFit: end === 'min' ? { min: Math.min(v, was.max), max: was.max } : { min: was.min, max: Math.max(v, was.min) } }
+              })}
+            />
+          ))}
+        </div>
+      )}
+      {outlined && outline !== 'mixed' && outline && (
+        <div className="flex items-center gap-1">
+          <div className="w-20 shrink-0">
+            <NumberField
+              label="W"
+              name={p.outlineWidth}
+              value={outline.width}
+              min={0}
+              step={0.5}
+              editor={target.editor}
+              onSet={(width) => setStyle((now) => ({ outline: { ...(now.outline as object), width } }))}
+              onShift={(by) => setStyle((now) => {
+                const was = now.outline as { width: number; color: string } | undefined
+                return was ? { outline: { ...was, width: tidy(clamp(was.width + by, 0)) } } : {}
+              })}
+            />
+          </div>
+          <ColorField name={p.outline} value={outline.color} onSet={(color) => setStyle((now) => ({ outline: { ...(now.outline as object), color } }))} />
+        </div>
+      )}
+    </Card>
+  )
+}
+
+type BoxMode = 'autoWidth' | 'autoHeight' | 'fixed'
+
+type ImageFill = Extract<Paint, { type: 'image' }>
+const ADJUSTMENTS = ['exposure', 'contrast', 'saturation', 'temperature', 'tint'] as const
+/** Each filter's tile: the image's picture with a CSS look near the one the renderer draws. */
+const FILTER_LOOK: Record<ImageFilter, string> = {
+  none: 'none',
+  mono: 'grayscale(1)',
+  sepia: 'sepia(0.85)',
+  vivid: 'saturate(1.7) contrast(1.1)',
+  fade: 'contrast(0.75) brightness(1.12) saturate(0.75)',
+  warm: 'sepia(0.3) saturate(1.35) hue-rotate(-12deg)',
+  cool: 'saturate(0.9) hue-rotate(18deg) brightness(1.04)',
+}
+
+/**
+ * An image fill's own settings (#154): its filter as tiles of the picture itself, how it fits the
+ * layer, and behind Fine-tune its opacity and adjustments (exposure, contrast, saturation,
+ * temperature, tint). It acts on the first image fill the selected layers share.
+ */
+function ImageCard({ target, p, brandId, index, paint }: { target: Target; p: P; brandId: string; index: number; paint: ImageFill }) {
+  const [fine, setFine] = useState(false)
+  const setPaint = (change: (now: ImageFill) => Partial<ImageFill>) => set(target, (now) => {
+    const fills = (now.fills ?? []) as Paint[]
+    const at = fills[index]
+    if (at?.type !== 'image') return null
+    return { fills: fills.map((f, i) => (i === index ? { ...at, ...change(at) } : f)) }
+  })
+  const setAdjust = (key: keyof ImageAdjust, to: (n: number) => number) => setPaint((now) => {
+    const adjust = { exposure: 0, contrast: 0, saturation: 0, temperature: 0, tint: 0, ...now.adjust }
+    return { adjust: { ...adjust, [key]: Math.round(clamp(to(adjust[key]), -100, 100)) } }
+  })
+  const picture = `/brands/${encodeURIComponent(brandId)}/assets/${encodeURIComponent(paint.assetId)}/thumbnail`
+  const filter = paint.filter ?? 'none'
+  return (
+    <section aria-labelledby="image-card-title" className={CARD} data-testid="image-card">
+      <CardHeader id="image-card-title" title={p.image} note={target.names.join(', ')} />
+      <div className="flex flex-col gap-3 px-[18px] pb-3">
+        <div role="radiogroup" aria-label={p.filter} className="grid grid-cols-4 gap-1.5">
+          {ImageFilter.options.map((name) => (
+            <button
+              key={name}
+              type="button"
+              role="radio"
+              aria-checked={filter === name}
+              onClick={() => setPaint(() => ({ filter: name === 'none' ? undefined : name }))}
+              className="group flex min-w-0 cursor-pointer flex-col items-center gap-1 text-[10px] font-semibold text-muted aria-checked:text-text"
+            >
+              <span className="block aspect-square w-full overflow-hidden rounded-[8px] border border-line group-aria-checked:shadow-[0_0_0_2px_var(--surface),0_0_0_4px_var(--accent)]">
+                <img src={picture} alt="" draggable={false} loading="lazy" style={{ filter: FILTER_LOOK[name] }} className="size-full object-cover" />
+              </span>
+              <span className="w-full truncate text-center">{p.filters[name]}</span>
+            </button>
+          ))}
+        </div>
+        <Choice name={p.fit} value={paint.fit} options={['fill', 'fit', 'crop', 'tile'] as const} labels={p.fits} onSet={(fit) => setPaint(() => ({ fit }))} />
+      </div>
+      <FineTune open={fine} onToggle={() => setFine(!fine)} label={p.fineTune} />
+      {fine && (
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2 px-[18px] pb-4">
+          <NumberField
+            label="%"
+            name={p.imageOpacity}
+            value={paint.opacity}
+            scale={100}
+            min={0}
+            max={1}
+            editor={target.editor}
+            onSet={(v) => setPaint(() => ({ opacity: tidy(v) }))}
+            onShift={(by) => setPaint((now) => ({ opacity: tidy(clamp(now.opacity + by, 0, 1)) }))}
+          />
+          {ADJUSTMENTS.map((key) => (
+            <NumberField
+              key={key}
+              label={p.adjustShort[key]}
+              name={p.adjust[key]}
+              value={paint.adjust?.[key] ?? 0}
+              min={-100}
+              max={100}
+              editor={target.editor}
+              onSet={(v) => setAdjust(key, () => v)}
+              onShift={(by) => setAdjust(key, (n) => n + by)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
 type Layout = { direction: 'row' | 'column'; gap: number; padding: Record<'top' | 'right' | 'bottom' | 'left', number>; justify: string; align: string; wrap: boolean; lineGap: number }
 
 function AutoLayoutCard({ target, p }: { target: Target; p: P }) {
@@ -530,8 +909,106 @@ function AutoLayoutCard({ target, p }: { target: Target; p: P }) {
   )
 }
 
+type Sizing = 'fixed' | 'hug' | 'fill'
+
+/** How a layer sizes on each axis, as the renderer reads it: left unsaid, text hugs as its box mode says and the rest is fixed. */
+function sizingOf(type: string, props: Props): { width: Sizing; height: Sizing } {
+  const own = props.sizing as { width: Sizing; height: Sizing } | undefined
+  if (own) return own
+  if (type === 'text') return { width: props.boxMode === 'autoWidth' ? 'hug' : 'fixed', height: props.boxMode === 'fixed' ? 'fixed' : 'hug' }
+  return { width: 'fixed', height: 'fixed' }
+}
+
+/**
+ * How layers size and sit in an auto layout (#155): fixed, hugging what they hold or filling the
+ * room on each axis, and, for children of an auto layout frame, kept out of the flow where they
+ * are put.
+ */
+function FlowCard({ target, p, inFlow }: { target: Target; p: P; inFlow: boolean }) {
+  const sizings = target.props.map((pr, i) => sizingOf(target.types[i] ?? '', pr))
+  return (
+    <Card id="flow-card" title={inFlow ? p.inAutoLayout : p.sizing}>
+      <div className="grid grid-cols-2 gap-x-3">
+        {(['width', 'height'] as const).map((axis) => (
+          <Choice
+            key={axis}
+            name={p.sizingAxis[axis]}
+            value={shared(sizings.map((s) => s[axis]))}
+            options={['fixed', 'hug', 'fill'] as const}
+            labels={p.sizings}
+            onSet={(to) => set(target, (now, i) => ({ sizing: { ...sizingOf(target.types[i] ?? '', now), [axis]: to } }))}
+          />
+        ))}
+      </div>
+      {inFlow && (
+        <label className="flex items-center gap-2 text-[12px]">
+          <input
+            type="checkbox"
+            name="absolute"
+            checked={target.props.every((pr) => pr.absolute === true)}
+            onChange={(event) => set(target, () => ({ absolute: event.target.checked ? true : undefined }))}
+          />
+          {p.absolute}
+        </label>
+      )}
+    </Card>
+  )
+}
+
+type OwnGroup = keyof P['ownGroups']
+/** Which card's words name a property a format can have of its own. */
+const OWN_GROUP: Record<string, OwnGroup> = {
+  x: 'layout', y: 'layout', width: 'layout', height: 'layout', rotation: 'layout', sizing: 'layout', absolute: 'layout',
+  opacity: 'appearance', blendMode: 'appearance', visible: 'appearance',
+  fills: 'fill', strokes: 'stroke', effects: 'effects', shape: 'shape',
+  text: 'text', runs: 'text', style: 'text', align: 'text', verticalAlign: 'text', direction: 'text', boxMode: 'text', list: 'text', paragraphSpacing: 'text', maxLines: 'text', shrinkToFit: 'text',
+  layout: 'autoLayout',
+}
+
+/**
+ * What the format shown has of its own for the selected layers (#157), grouped as the cards are;
+ * each group, or all of them, goes back to following the other formats in one undo step.
+ */
+function OwnChanges({ design, ids, formatId, editor, p }: { design: Design; ids: string[]; formatId: string; editor: Editor; p: P }) {
+  const scope = `format:${formatId}` as const
+  const byNode = design.overrides[scope] ?? {}
+  const paths = [...new Set(ids.flatMap((id) => Object.keys(byNode[id] ?? {})))]
+  if (paths.length === 0) return null
+  const groups = new Map<OwnGroup, string[]>()
+  for (const path of paths) {
+    const group = OWN_GROUP[path] ?? 'other'
+    groups.set(group, [...groups.get(group) ?? [], path])
+  }
+  const reset = (only?: string[]) => editor.session.run('override.reset', { ids, scope, ...(only ? { paths: only } : {}) })
+  const name = design.formats[formatId]?.name ?? ''
+  return (
+    <div data-testid="own-changes" className="flex flex-col gap-1.5 px-1.5 pt-2">
+      <div className="flex items-center justify-between gap-2 text-[11px] text-subtle">
+        <span className="min-w-0 truncate">{format(p.ownChanges, { format: name })}</span>
+        <button type="button" onClick={() => reset()} className="shrink-0 cursor-pointer font-semibold text-accent-text hover:underline">{p.resetAll}</button>
+      </div>
+      <ul className="flex flex-wrap gap-1">
+        {[...groups].map(([group, groupPaths]) => (
+          <li key={group}>
+            <button
+              type="button"
+              onClick={() => reset(groupPaths)}
+              aria-label={format(p.resetOwn, { name: p.ownGroups[group] })}
+              title={format(p.resetOwn, { name: p.ownGroups[group] })}
+              className="group flex h-6 cursor-pointer items-center gap-1 rounded-full border border-accent/50 bg-accent-soft px-2 text-[11px] font-medium text-accent-text hover:border-accent"
+            >
+              {p.ownGroups[group]}
+              <XIcon size={10} weight="bold" aria-hidden className="opacity-70 group-hover:opacity-100" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 /** Where changes go when a design has more than one format: the one shown (as a canvas drag does), or every format. */
-function ScopeSwitch({ everyFormat, onChange, p }: { everyFormat: boolean; onChange: (every: boolean) => void; p: P }) {
+function ScopeSwitch({ everyFormat, onChange, p, children }: { everyFormat: boolean; onChange: (every: boolean) => void; p: P; children?: ReactNode }) {
   return (
     <section aria-label={p.applyTo} className={cn(CARD, 'p-1.5')} data-testid="scope-card">
       <div role="radiogroup" aria-label={p.applyTo} className="grid grid-cols-2 gap-1">
@@ -549,6 +1026,7 @@ function ScopeSwitch({ everyFormat, onChange, p }: { everyFormat: boolean; onCha
         ))}
       </div>
       {everyFormat && <p className="px-1.5 pt-1.5 text-[11px] leading-snug text-subtle">{p.everyFormatHint}</p>}
+      {children}
     </section>
   )
 }
@@ -557,7 +1035,7 @@ function ScopeSwitch({ everyFormat, onChange, p }: { everyFormat: boolean; onCha
  * The selection's cards, after the font: the look first, then Arrange (first of all for several
  * layers, as the mock's "3 selected"), then position, size and the rest.
  */
-export function SelectionCards({ editor, ids, arrange }: { editor: Editor; ids: string[]; arrange: ReactNode }) {
+export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Editor; brandId: string; ids: string[]; arrange: ReactNode }) {
   const t = useMessages()
   const p = t.editor.props
   const { design } = useLiveDesign(editor)
@@ -576,11 +1054,33 @@ export function SelectionCards({ editor, ids, arrange }: { editor: Editor; ids: 
   }
   const all = (...kinds: string[]) => types.every((type) => kinds.includes(type))
   const several = live.length > 1
+  const shapeKinds = new Set(live.map((id) => {
+    const node = design.nodes[id]
+    return node?.type === 'graphic' ? node.props.shape.kind : null
+  }))
+  const [shapeKind] = shapeKinds
+  // Children of an auto layout frame, every one of them.
+  const inFlow = live.every((id) => {
+    const parent = design.nodes[design.nodes[id]?.parentId ?? '']
+    return parent?.type === 'frame' && parent.props.layout !== undefined
+  })
+  // The first image fill, when every selected layer has the same fills.
+  const fills = shared(target.props.map((pr) => (pr.fills ?? []) as Paint[]))
+  const imageIndex = fills === 'mixed' ? -1 : fills.findIndex((f) => f.type === 'image')
+  const imageFill = fills !== 'mixed' && imageIndex >= 0 ? { index: imageIndex, paint: fills[imageIndex] as ImageFill } : null
+  const ownShape = shapeKinds.size === 1 && (shapeKind === 'rect' || shapeKind === 'polygon' || shapeKind === 'star' || shapeKind === 'line') ? shapeKind : null
   return (
     <>
       {several && arrange}
-      {Object.keys(design.formats).length > 1 && <ScopeSwitch everyFormat={everyFormat} onChange={setEveryFormat} p={p} />}
+      {Object.keys(design.formats).length > 1 && (
+        <ScopeSwitch everyFormat={everyFormat} onChange={setEveryFormat} p={p}>
+          <OwnChanges design={design} ids={live} formatId={formatId} editor={editor} p={p} />
+        </ScopeSwitch>
+      )}
       {all('text') && <TextCard target={target} p={p} />}
+      {all('text') && <ParagraphCard target={target} p={p} />}
+      {ownShape && <ShapeCard target={target} p={p} kind={ownShape} />}
+      {all('graphic', 'frame', 'boolean') && imageFill && <ImageCard target={target} p={p} brandId={brandId} index={imageFill.index} paint={imageFill.paint} />}
       {all('graphic', 'frame', 'boolean') && (
         <ListCard<Paint>
           id="fill-card"
@@ -608,6 +1108,7 @@ export function SelectionCards({ editor, ids, arrange }: { editor: Editor; ids: 
       <LayoutCard target={target} p={p} />
       <AppearanceCard target={target} p={p} />
       {all('frame') && <AutoLayoutCard target={target} p={p} />}
+      {(inFlow || all('frame') && target.props.every((pr) => pr.layout)) && <FlowCard target={target} p={p} inFlow={inFlow} />}
     </>
   )
 }
