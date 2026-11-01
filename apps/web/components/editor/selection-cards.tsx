@@ -440,15 +440,77 @@ function PaintRow({ paint, name, p, onSet }: { paint: Paint; name: string; p: P;
   return <ColorField name={name} value={paint.color} onSet={(color) => onSet({ type: 'solid', color })} />
 }
 
-type Stroke = { paint: Paint; width: number; align: 'inside' | 'center' | 'outside' }
+type Stroke = {
+  paint: Paint
+  width: number
+  align: 'inside' | 'center' | 'outside'
+  dashes?: number[]
+  dashOffset?: number
+  cap?: 'butt' | 'round' | 'square'
+  join?: 'miter' | 'round' | 'bevel'
+}
 
+/** Dash and gap lengths as typed, "8 4", or null when they aren't a pattern; nothing typed is solid. */
+function parseDashes(text: string): number[] | null {
+  const parts = text.split(/[\s,]+/).filter(Boolean)
+  const lengths = parts.map((part) => Number.parseFloat(part))
+  if (lengths.some((n) => !Number.isFinite(n) || n < 0)) return null
+  if (lengths.length > 0 && !lengths.some((n) => n > 0)) return null
+  return lengths.map(tidy)
+}
+
+/** A stroke's dash pattern, typed as lengths: dash, gap, dash and so on. */
+function DashField({ name, value, onSet }: { name: string; value: number[]; onSet: (dashes: number[]) => void }) {
+  const t = useMessages()
+  const shown = value.join(' ')
+  const [draft, setDraft] = useState<string | null>(null)
+  const commit = (text: string) => {
+    setDraft(null)
+    const dashes = parseDashes(text)
+    if (dashes && dashes.join(' ') !== shown) onSet(dashes)
+  }
+  return (
+    <input
+      aria-label={name}
+      title={t.editor.props.dashesHint}
+      value={draft ?? shown}
+      placeholder={t.editor.props.solid}
+      spellCheck={false}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={(event) => draft !== null && commit(event.target.value)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') commit(event.currentTarget.value)
+        else if (event.key === 'Escape') {
+          setDraft(null)
+          event.currentTarget.blur()
+        }
+        event.stopPropagation()
+      }}
+      className={FIELD}
+    />
+  )
+}
+
+/** One stroke: its colour, width and position, then its dashes and the look of its ends and corners (#152). */
 function StrokeRow({ stroke, i, p, editor, onSet }: { stroke: Stroke; i: number; p: P; editor: Editor; onSet: (to: (now: Stroke) => Stroke) => void }) {
+  const n = { n: i + 1 }
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
-      <PaintRow paint={stroke.paint} name={format(p.colour, { n: i + 1 })} p={p} onSet={(paint) => onSet((now) => ({ ...now, paint }))} />
+      <PaintRow paint={stroke.paint} name={format(p.colour, n)} p={p} onSet={(paint) => onSet((now) => ({ ...now, paint }))} />
       <div className="grid grid-cols-2 gap-1">
-        <NumberField label="W" name={format(p.strokeWidth, { n: i + 1 })} value={stroke.width} min={0.5} step={0.5} editor={editor} onSet={(width) => onSet((now) => ({ ...now, width }))} onShift={(by) => onSet((now) => ({ ...now, width: tidy(clamp(now.width + by, 0.5)) }))} />
-        <Choice name={format(p.strokeAlign, { n: i + 1 })} value={stroke.align} options={['inside', 'center', 'outside'] as const} labels={p.aligns} onSet={(align) => onSet((now) => ({ ...now, align }))} />
+        <NumberField label="W" name={format(p.strokeWidth, n)} value={stroke.width} min={0.5} step={0.5} editor={editor} onSet={(width) => onSet((now) => ({ ...now, width }))} onShift={(by) => onSet((now) => ({ ...now, width: tidy(clamp(now.width + by, 0.5)) }))} />
+        <Choice name={format(p.strokeAlign, n)} value={stroke.align} options={['inside', 'center', 'outside'] as const} labels={p.aligns} onSet={(align) => onSet((now) => ({ ...now, align }))} />
+        <DashField name={format(p.strokeDashes, n)} value={stroke.dashes ?? []} onSet={(dashes) => onSet((now) => ({ ...now, dashes }))} />
+        <NumberField
+          label="⇥"
+          name={format(p.strokeDashOffset, n)}
+          value={stroke.dashOffset ?? 0}
+          editor={editor}
+          onSet={(dashOffset) => onSet((now) => ({ ...now, dashOffset }))}
+          onShift={(by) => onSet((now) => ({ ...now, dashOffset: tidy((now.dashOffset ?? 0) + by) }))}
+        />
+        <Choice name={format(p.strokeCap, n)} value={stroke.cap ?? 'butt'} options={['butt', 'round', 'square'] as const} labels={p.caps} onSet={(cap) => onSet((now) => ({ ...now, cap }))} />
+        <Choice name={format(p.strokeJoin, n)} value={stroke.join ?? 'miter'} options={['miter', 'round', 'bevel'] as const} labels={p.joins} onSet={(join) => onSet((now) => ({ ...now, join }))} />
       </div>
     </div>
   )
