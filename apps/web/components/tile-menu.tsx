@@ -67,8 +67,9 @@ export function TileMenu({ name, rename, duplicate, remove }: {
         <div role="menu" aria-label={format(t.moreFor, { name })} className="pop-in-end absolute end-0 top-full mt-1.5 flex w-44 flex-col rounded-card border surface-frost p-1 shadow-panel">
           <button type="button" role="menuitem" className={row} onClick={() => setStep('rename')}>{t.rename}</button>
           {duplicate && (
-            <form action={duplicate}>
-              <button type="submit" role="menuitem" className={row} onClick={() => setStep(null)}>{t.duplicate}</button>
+            // The menu closes once the copy is made: closing it on the click would take the form away before it sends.
+            <form action={async () => { await duplicate(); setStep(null) }}>
+              <button type="submit" role="menuitem" className={row}>{t.duplicate}</button>
             </form>
           )}
           <button type="button" role="menuitem" className={cn(row, 'text-danger')} onClick={() => setStep('delete')}>{t.delete}</button>
