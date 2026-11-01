@@ -1,9 +1,9 @@
 // The geometry of moving, resizing and rotating layers (#40), kept free of the editor so it can be
 // tested on its own. Boxes are in one page's design pixels; a box's rotation turns it about its
 // centre, as the renderer draws it.
-import { centreOf, turn, type Box, type Point } from '@razzlr/doc'
+import { centreOf, turn, type Box, type Point } from '@dazbee/doc'
 
-export { boundsOf, centreOf, cornersOf, normalAngle, round, turn, type Box } from '@razzlr/doc'
+export { boundsOf, centreOf, cornersOf, normalAngle, round, turn, type Box } from '@dazbee/doc'
 export type Handle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
 export const HANDLES: readonly Handle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']
 

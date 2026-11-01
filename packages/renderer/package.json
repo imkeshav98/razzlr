@@ -1,5 +1,5 @@
 {
-  "name": "@razzlr/renderer",
+  "name": "@dazbee/renderer",
   "private": true,
   "type": "module",
   "exports": {
@@ -12,12 +12,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@razzlr/canvaskit": "workspace:*",
-    "@razzlr/doc": "workspace:*",
-    "@razzlr/schema": "workspace:*"
+    "@dazbee/canvaskit": "workspace:*",
+    "@dazbee/doc": "workspace:*",
+    "@dazbee/schema": "workspace:*"
   },
   "devDependencies": {
-    "@razzlr/config": "workspace:*",
+    "@dazbee/config": "workspace:*",
     "@types/node": "^22.20.0",
     "eslint": "^9.39.0",
     "typescript": "~5.9.3",

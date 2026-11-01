@@ -1,8 +1,8 @@
 // Brand kits (#53) at the render seam: a layer bound to a brand colour or font draws with the
 // brand's value, so changing the brand colour changes the drawn design; without a value it draws
 // as stored. Exports pass through the same seam, in Node and in the browser alike.
-import { renderDesign } from '@razzlr/renderer'
-import { loadCanvasKit } from '@razzlr/renderer/node'
+import { renderDesign } from '@dazbee/renderer'
+import { loadCanvasKit } from '@dazbee/renderer/node'
 import { describe, expect, it } from 'vitest'
 import { fixtureResources } from './pixels.ts'
 

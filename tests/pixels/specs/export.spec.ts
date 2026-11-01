@@ -2,9 +2,9 @@
 // SVG in Chromium and in Node, gives the same file byte for byte.
 import { createHash } from 'node:crypto'
 import { expect } from '@playwright/test'
-import { exportDesign } from '@razzlr/export'
-import { loadCanvasKit } from '@razzlr/renderer/node'
-import { parseDesign } from '@razzlr/schema'
+import { exportDesign } from '@dazbee/export'
+import { loadCanvasKit } from '@dazbee/renderer/node'
+import { parseDesign } from '@dazbee/schema'
 import { loadFixtures } from '../src/fixtures.ts'
 import { fixtureResources } from '../src/pixels.ts'
 import { test } from './support/harness.ts'

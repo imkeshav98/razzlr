@@ -1,4 +1,4 @@
-import { BINDING_TARGETS, BooleanOp, canBind, canHold, fitsTarget, Paint, VariableRef, Format, LayerTree, FormatId, formatIdOf, formatSizeProblem, Layer, LAYER_PROPS, LayerLock, LOCK_FLAGS, type Layer as LayerT, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@razzlr/schema'
+import { BINDING_TARGETS, BooleanOp, canBind, canHold, fitsTarget, Paint, VariableRef, Format, LayerTree, FormatId, formatIdOf, formatSizeProblem, Layer, LAYER_PROPS, LayerLock, LOCK_FLAGS, type Layer as LayerT, NodeId, Page, PageId, parseLayer, parseOverrideValues, RunStyle, Scope as FormatScope, type Design } from '@dazbee/schema'
 import { generateKeyBetween } from 'fractional-indexing'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'

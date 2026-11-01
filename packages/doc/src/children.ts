@@ -1,4 +1,4 @@
-import type { Design, Layer } from '@razzlr/schema'
+import type { Design, Layer } from '@dazbee/schema'
 
 /** The ids of the layers directly under a page or layer, back to front. */
 export type ChildIndex = (parentId: string) => readonly string[]

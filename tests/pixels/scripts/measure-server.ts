@@ -3,9 +3,9 @@
 // `taskset -c 0 node scripts/measure-server.ts` stands in for the one-core phase 0 server.
 // Renders keep fonts and images in one resource cache, as a long-lived worker would (#30);
 // `--no-cache` decodes them again for every render, as phase 0 measured.
-import { renderDesign, resourceCache } from '@razzlr/renderer'
-import { loadCanvasKit } from '@razzlr/renderer/node'
-import { parseDesign } from '@razzlr/schema'
+import { renderDesign, resourceCache } from '@dazbee/renderer'
+import { loadCanvasKit } from '@dazbee/renderer/node'
+import { parseDesign } from '@dazbee/schema'
 import { bigCarousel } from '../src/big-carousel.ts'
 import { loadFixtures } from '../src/fixtures.ts'
 import { fixtureResources } from '../src/pixels.ts'

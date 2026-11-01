@@ -13,7 +13,7 @@ const DATABASE = 'razzlr_e2e'
 
 /** Makes the suite's database once; the API brings it up to the latest migration as it starts. */
 async function ensureDatabase() {
-  // pg comes with @razzlr/db; the suite doesn't depend on it directly.
+  // pg comes with @dazbee/db; the suite doesn't depend on it directly.
   const pg = createRequire(new URL('../../../packages/db/package.json', import.meta.url))('pg') as {
     Client: new (options: { connectionString: string }) => {
       connect(): Promise<void>
@@ -35,7 +35,7 @@ const env = {
   ...process.env,
   DATABASE_URL: `${SERVER}/${DATABASE}`,
   SYNC_TOKEN_SECRET: 'local-only-sync-token-secret-0000',
-  RAZZLR_DEV_SESSION: 'on',
+  DAZBEE_DEV_SESSION: 'on',
   API_PORT: String(LOCAL.api),
   SYNC_PORT: String(LOCAL.sync),
   STORAGE_ENDPOINT: 'http://127.0.0.1:59000',

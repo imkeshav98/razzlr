@@ -1,5 +1,5 @@
 {
-  "name": "@razzlr/sync",
+  "name": "@dazbee/sync",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,13 +11,13 @@
   "dependencies": {
     "@hocuspocus/extension-database": "4.8.0",
     "@hocuspocus/server": "4.8.0",
-    "@razzlr/db": "workspace:*",
-    "@razzlr/doc": "workspace:*",
-    "@razzlr/sync-token": "workspace:*"
+    "@dazbee/db": "workspace:*",
+    "@dazbee/doc": "workspace:*",
+    "@dazbee/sync-token": "workspace:*"
   },
   "devDependencies": {
     "@hocuspocus/provider": "4.8.0",
-    "@razzlr/config": "workspace:*",
+    "@dazbee/config": "workspace:*",
     "@types/node": "^22.20.0",
     "eslint": "^9.39.0",
     "typescript": "~5.9.3",

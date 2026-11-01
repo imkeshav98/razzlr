@@ -1,7 +1,7 @@
-import type { Effect, Paint } from '@razzlr/schema'
+import type { Effect, Paint } from '@dazbee/schema'
 import type {
   Canvas, CanvasKit, FontCollection, Image, ImageFilter, Paint as CkPaint, Path, Shader,
-} from '@razzlr/canvaskit'
+} from '@dazbee/canvaskit'
 import { imageColorMatrix, LUMA_TO_ALPHA } from './adjust.ts'
 import { color } from './color.ts'
 import type { LayerPictures } from './pictures.ts'

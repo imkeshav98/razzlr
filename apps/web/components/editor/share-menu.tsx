@@ -4,7 +4,7 @@
 // holds what leaves the editor, Export (#55) and Save as template (#54), and each opens its form
 // in the same place.
 import { BookmarkSimpleIcon, CaretRightIcon, DownloadSimpleIcon, ShareFatIcon } from '@phosphor-icons/react'
-import type { Editor } from '@razzlr/editor'
+import type { Editor } from '@dazbee/editor'
 import { useEffect, useId, useRef, useState } from 'react'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'

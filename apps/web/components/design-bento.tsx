@@ -2,7 +2,7 @@
 // The latest design is large, a tall format (a story) takes a tall tile and a wide one (a banner)
 // a wide tile; a dense grid packs the rest around them.
 import Link from 'next/link'
-import { shapeOf, type DesignSummary } from '@razzlr/schema'
+import { shapeOf, type DesignSummary } from '@dazbee/schema'
 import { cn } from '../lib/cn.ts'
 import { tileOf } from '../lib/tile.ts'
 import { TileMenu } from './tile-menu.tsx'

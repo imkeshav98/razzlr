@@ -2,7 +2,7 @@
 // buttons in a form, so they work before any script loads. Onboarding asks once; settings shows
 // the same cards to change it later. The answer changes only words and defaults (ADR-0011).
 import { BuildingsIcon, CheckIcon, UserIcon, UsersThreeIcon } from '@phosphor-icons/react/ssr'
-import type { WorkspaceKind } from '@razzlr/schema'
+import type { WorkspaceKind } from '@dazbee/schema'
 import type { ReactNode } from 'react'
 import { cn } from '../lib/cn.ts'
 import type { Messages } from '../lib/i18n/index.ts'

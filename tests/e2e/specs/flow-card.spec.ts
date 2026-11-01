@@ -2,7 +2,7 @@
 // fills the room, hugs or stays fixed on each axis, and can be kept out of the flow where it is put;
 // the frame itself hugs its children. A layer outside any auto layout has no such card.
 import { expect, test, type Page } from '../support/test.ts'
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { writeOutput } from '../support/editor.ts'
 import { openStage, unfoldAll } from '../support/stage.ts'
 
@@ -29,10 +29,10 @@ const design = (): DesignInput => ({
   overrides: {},
 })
 
-const boxOf = (page: Page, id: string) => page.evaluate((id) => window.razzlr?.boxOf(id), id) as Promise<{ x: number; y: number; width: number; height: number }>
-const propsOf = (page: Page, id: string) => page.evaluate((id) => window.razzlr?.design().nodes[id]?.props, id) as Promise<Record<string, unknown>>
+const boxOf = (page: Page, id: string) => page.evaluate((id) => window.dazbee?.boxOf(id), id) as Promise<{ x: number; y: number; width: number; height: number }>
+const propsOf = (page: Page, id: string) => page.evaluate((id) => window.dazbee?.design().nodes[id]?.props, id) as Promise<Record<string, unknown>>
 const select = async (page: Page, ids: string[]) => {
-  await page.evaluate((ids) => window.razzlr?.select(ids), ids)
+  await page.evaluate((ids) => window.dazbee?.select(ids), ids)
   await expect(page.getByTestId('layout-card')).toBeVisible()
   await unfoldAll(page)
 }
@@ -51,7 +51,7 @@ test('a child of an auto layout fills, hugs or keeps its size, and can leave the
   await expect.poll(() => propsOf(page, 'two')).toMatchObject({ sizing: { width: 'fill', height: 'fixed' } })
   // Filling the row, Two takes what One and the gap leave: 920 - 40 padding - 160 - 20.
   await expect.poll(async () => (await boxOf(page, 'two')).width).toBe(700)
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('flow-card-fill.png', await page.screenshot())
 
   await card.getByRole('checkbox', { name: 'Keep where it is, out of the flow' }).check()

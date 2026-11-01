@@ -1,5 +1,5 @@
-import type { Paint } from '@razzlr/schema'
-import type { Canvas, CanvasKit } from '@razzlr/canvaskit'
+import type { Paint } from '@dazbee/schema'
+import type { Canvas, CanvasKit } from '@dazbee/canvaskit'
 import { drawLayers, drawScene, fillPath, layerReach, rectPath, type Box, type Resources } from './draw.ts'
 import type { Scene, SceneLayer } from './scene.ts'
 

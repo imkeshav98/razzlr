@@ -3,8 +3,8 @@
 // `node scripts/measure-doc.ts [cards]` (20 by default); pin it to one core with `taskset -c 0`
 // to match the server.
 import { gzipSync } from 'node:zlib'
-import { loadDesign, openSession, readDesign } from '@razzlr/doc'
-import { parseDesign } from '@razzlr/schema'
+import { loadDesign, openSession, readDesign } from '@dazbee/doc'
+import { parseDesign } from '@dazbee/schema'
 import * as Y from 'yjs'
 import { bigCarousel } from '../src/big-carousel.ts'
 

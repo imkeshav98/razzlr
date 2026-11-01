@@ -8,7 +8,7 @@
 // any script loads.
 import { ArrowLeftIcon, CaretDownIcon, CheckIcon, CircleNotchIcon, LayoutIcon, PlusIcon, SparkleIcon, UploadSimpleIcon, XIcon } from '@phosphor-icons/react'
 import * as Popover from '@radix-ui/react-popover'
-import { FORMAT_PRESETS, type AssetSummary, type BrandKit } from '@razzlr/schema'
+import { FORMAT_PRESETS, type AssetSummary, type BrandKit } from '@dazbee/schema'
 import { useRef, useState, type ReactNode } from 'react'
 import { BRIEF_FORMATS, type BriefFormat } from '../lib/brief.ts'
 import { cn } from '../lib/cn.ts'

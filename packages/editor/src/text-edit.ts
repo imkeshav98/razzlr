@@ -1,7 +1,7 @@
 // Editing inside a text layer (#47): the ranges a double or triple click selects, where the arrow
 // keys go, and what a style key does to a range. Kept free of the editor so it can be tested on
 // its own. Offsets count UTF-16 units, as the document's text does.
-import type { Design } from '@razzlr/schema'
+import type { Design } from '@dazbee/schema'
 
 type TextNode = Extract<Design['nodes'][string], { type: 'text' }>
 type Style = TextNode['props']['style']

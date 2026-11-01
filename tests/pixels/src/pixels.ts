@@ -1,9 +1,9 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { FALLBACK_FAMILIES } from '@razzlr/fonts'
-import { loadFontFiles } from '@razzlr/fonts/node'
-import type { ResourceBytes } from '@razzlr/renderer'
-import type { CanvasKit } from '@razzlr/canvaskit'
+import { FALLBACK_FAMILIES } from '@dazbee/fonts'
+import { loadFontFiles } from '@dazbee/fonts/node'
+import type { ResourceBytes } from '@dazbee/renderer'
+import type { CanvasKit } from '@dazbee/canvaskit'
 
 export const ASSETS_DIR = join(import.meta.dirname, '..', 'assets')
 export const REFERENCE_DIR = join(import.meta.dirname, '..', 'reference')

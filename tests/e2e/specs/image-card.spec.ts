@@ -1,7 +1,7 @@
 // The Image card (#154) in Chromium, with real input: a filter picked from tiles of the picture
 // itself, how the image fits the layer, and behind Fine-tune its opacity and adjustments.
 import { expect, test, type Locator, type Page } from '../support/test.ts'
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { photo, upload } from '../support/assets.ts'
 import { writeOutput } from '../support/editor.ts'
 import { openStage } from '../support/stage.ts'
@@ -26,7 +26,7 @@ const design = (assetId: string): DesignInput => ({
 })
 
 const imageOf = async (page: Page) =>
-  (await page.evaluate(() => window.razzlr?.design().nodes.photo?.props) as { fills: Record<string, unknown>[] }).fills[0]
+  (await page.evaluate(() => window.dazbee?.design().nodes.photo?.props) as { fills: Record<string, unknown>[] }).fills[0]
 const enter = async (field: Locator, value: string) => {
   await field.fill(value)
   await field.press('Enter')
@@ -37,11 +37,11 @@ test('the Image card sets the filter, the fit, the opacity and the adjustments',
   const { page, errors } = await openStage(browser, design(asset.id))
 
   // A plain shape has no Image card.
-  await page.evaluate(() => window.razzlr?.select(['box']))
+  await page.evaluate(() => window.dazbee?.select(['box']))
   await expect(page.getByTestId('fill-card')).toBeVisible()
   await expect(page.getByTestId('image-card')).toHaveCount(0)
 
-  await page.evaluate(() => window.razzlr?.select(['photo']))
+  await page.evaluate(() => window.dazbee?.select(['photo']))
   const card = page.getByTestId('image-card')
   const filters = card.getByRole('radiogroup', { name: 'Filter' })
   await expect(filters.getByRole('radio')).toHaveCount(7)
@@ -59,7 +59,7 @@ test('the Image card sets the filter, the fit, the opacity and the adjustments',
   await enter(card.getByRole('textbox', { name: 'Saturation' }), '-250')
   await card.getByRole('textbox', { name: 'Exposure' }).press('Shift+ArrowUp')
   await expect.poll(() => imageOf(page)).toMatchObject({ opacity: 0.8, adjust: { exposure: 10, contrast: 30, saturation: -100, temperature: 0, tint: 0 } })
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('image-card.png', await page.screenshot())
 
   // Original takes the filter off again.

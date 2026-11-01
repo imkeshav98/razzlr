@@ -1,6 +1,6 @@
 // Autosave and offline edits (#37): the design is kept in the browser, an edit made offline
 // survives a reload without a connection, and it reaches the other tab once the connection is back.
-import { WASM_FILE } from '@razzlr/canvaskit/wasm'
+import { WASM_FILE } from '@dazbee/canvaskit/wasm'
 import { expect, test, type Page } from '../support/test.ts'
 import { designOf, openTabs, settle, writeOutput } from '../support/editor.ts'
 
@@ -17,7 +17,7 @@ const recordStatuses = (page: Page) => page.evaluate(() => {
 const statuses = (page: Page) => page.evaluate(() => (window as unknown as { statuses: string[] }).statuses)
 
 const typeAtEnd = (page: Page, text: string) => page.evaluate(async (text) => {
-  const editor = window.razzlr
+  const editor = window.dazbee
   if (!editor) throw new Error('no editor')
   for (const ch of text) {
     const node = editor.design().nodes.headline

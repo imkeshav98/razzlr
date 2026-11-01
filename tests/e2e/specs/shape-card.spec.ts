@@ -2,7 +2,7 @@
 // own, a polygon's sides, a star's points and inner radius, and a line's ends. Layers of different
 // shapes have no Shape card.
 import { expect, test, type Locator, type Page } from '../support/test.ts'
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { writeOutput } from '../support/editor.ts'
 import { openStage } from '../support/stage.ts'
 
@@ -27,9 +27,9 @@ const design = (): DesignInput => ({
 } as unknown as DesignInput)
 
 const shapeOf = async (page: Page, id: string) =>
-  (await page.evaluate((id) => window.razzlr?.design().nodes[id]?.props, id) as { shape: Record<string, unknown> }).shape
+  (await page.evaluate((id) => window.dazbee?.design().nodes[id]?.props, id) as { shape: Record<string, unknown> }).shape
 const select = async (page: Page, ids: string[]) => {
-  await page.evaluate((ids) => window.razzlr?.select(ids), ids)
+  await page.evaluate((ids) => window.dazbee?.select(ids), ids)
   await expect(page.getByTestId('layout-card')).toBeVisible()
 }
 const enter = async (field: Locator, value: string) => {
@@ -50,7 +50,7 @@ test('the Shape card sets corners, sides, points and line ends', async ({ browse
   await expect.poll(() => shapeOf(page, 'box')).toMatchObject({ corners: [40, 40, 40, 40] })
   await enter(card.getByRole('textbox', { name: 'Bottom right radius' }), '120')
   await expect.poll(() => shapeOf(page, 'box')).toMatchObject({ corners: [40, 40, 120, 40] })
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('shape-card-rect.png', await page.screenshot())
   // Back to one radius: the corners go and the first corner's radius stays.
   await card.getByRole('checkbox', { name: 'Each corner its own radius' }).uncheck()
@@ -74,7 +74,7 @@ test('the Shape card sets corners, sides, points and line ends', async ({ browse
   await card.getByRole('combobox', { name: 'Line end' }).selectOption('arrow')
   await card.getByRole('combobox', { name: 'Line start' }).selectOption('circle')
   await expect.poll(() => shapeOf(page, 'rule')).toEqual({ kind: 'line', start: 'circle', end: 'arrow' })
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('shape-card-line.png', await page.screenshot())
 
   // Two kinds of shape at once have no Shape card; two stars share one.

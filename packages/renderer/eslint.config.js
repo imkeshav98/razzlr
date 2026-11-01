@@ -1,1 +1,1 @@
-export { default } from '@razzlr/config/eslint'
+export { default } from '@dazbee/config/eslint'

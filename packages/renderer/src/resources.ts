@@ -1,5 +1,5 @@
-import type { CanvasKit, FontCollection, Image, TypefaceFontProvider } from '@razzlr/canvaskit'
-import type { Variables } from '@razzlr/schema'
+import type { CanvasKit, FontCollection, Image, TypefaceFontProvider } from '@dazbee/canvaskit'
+import type { Variables } from '@dazbee/schema'
 import type { Resources } from './draw.ts'
 
 export interface ResourceBytes {

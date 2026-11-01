@@ -1,5 +1,5 @@
 // The brand's kit for the editor (#53): read it, and save it whole.
-import { BrandKit } from '@razzlr/schema'
+import { BrandKit } from '@dazbee/schema'
 import { ApiFailure, getBrandKit, saveBrandKit } from '../../../../lib/api.ts'
 
 const failure = (e: unknown) => {

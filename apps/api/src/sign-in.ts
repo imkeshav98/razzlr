@@ -2,8 +2,8 @@
 // sign-in link, swaps the code WorkOS sends back for the person, and makes their session. A first
 // sign-in makes a workspace (one WorkOS organization) with the person as its Owner (ADR-0011).
 import { randomUUID } from 'node:crypto'
-import { memberships, users, workspaces, type Db } from '@razzlr/db'
-import type { SignedIn } from '@razzlr/schema'
+import { memberships, users, workspaces, type Db } from '@dazbee/db'
+import type { SignedIn } from '@dazbee/schema'
 import { WorkOS } from '@workos-inc/node'
 import { asc, eq } from 'drizzle-orm'
 import { signSessionToken } from './session.ts'

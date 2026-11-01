@@ -1,4 +1,4 @@
-import preset from '@razzlr/config/eslint'
+import preset from '@dazbee/config/eslint'
 import react from 'eslint-plugin-react'
 import globals from 'globals'
 

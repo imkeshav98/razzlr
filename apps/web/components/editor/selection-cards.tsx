@@ -7,8 +7,8 @@
 // arrow keys move each from its own. With more than one format the changes go to every format or to
 // this one only. Each change is one undo step, and a scrub or a slider drag, however long, is one too.
 import { CaretRightIcon, MinusIcon, PlusIcon, XIcon } from '@phosphor-icons/react'
-import type { Editor } from '@razzlr/editor'
-import { BlendMode, brandRef, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@razzlr/schema'
+import type { Editor } from '@dazbee/editor'
+import { BlendMode, brandRef, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@dazbee/schema'
 import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'

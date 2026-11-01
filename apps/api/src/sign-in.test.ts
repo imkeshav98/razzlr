@@ -1,9 +1,9 @@
 // Sign-in (#58) against Postgres from Docker Compose, with a stand-in for WorkOS that never calls out.
 // Signing in against WorkOS itself is the Playwright suite's (tests/e2e/specs/sign-in.spec.ts).
 import { randomUUID } from 'node:crypto'
-import { memberships, openDatabase, users, workspaces } from '@razzlr/db'
-import { ApiError, SignedIn, SignedOut, SignInLink, WorkspaceSummary } from '@razzlr/schema'
-import { openStorage, storageSettings } from '@razzlr/storage'
+import { memberships, openDatabase, users, workspaces } from '@dazbee/db'
+import { ApiError, SignedIn, SignedOut, SignInLink, WorkspaceSummary } from '@dazbee/schema'
+import { openStorage, storageSettings } from '@dazbee/storage'
 import { and, eq } from 'drizzle-orm'
 import { afterAll, describe, expect, it } from 'vitest'
 import { createApp } from './app.ts'

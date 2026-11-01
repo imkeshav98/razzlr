@@ -1,6 +1,6 @@
 // Schema version 2 at the commands seam (#43): node.update sets every new property, and a
 // document saved at version 1 is migrated when a tab opens it, outside its undo history.
-import { parseDesign, type DesignInput } from '@razzlr/schema'
+import { parseDesign, type DesignInput } from '@dazbee/schema'
 import { describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
 import { loadDesign, migrateDoc, openSession, readDesign } from './index.ts'

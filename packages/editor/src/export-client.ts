@@ -1,8 +1,8 @@
 // The main thread's side of the export worker (#55). It sends the design as the tab holds it, and
 // fonts and images only the first time the worker needs them.
-import type { ExportedFile } from '@razzlr/export'
-import type { ResourceBytes } from '@razzlr/renderer'
-import type { Design, ExportRequestInput, Variables } from '@razzlr/schema'
+import type { ExportedFile } from '@dazbee/export'
+import type { ResourceBytes } from '@dazbee/renderer'
+import type { Design, ExportRequestInput, Variables } from '@dazbee/schema'
 
 export interface ExportJob {
   id: number

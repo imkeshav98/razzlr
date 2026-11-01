@@ -1,9 +1,9 @@
 import { execFileSync } from 'node:child_process'
 import { join } from 'node:path'
-import { FALLBACK_FAMILY, FONT_FACES } from '@razzlr/fonts'
-import { FONT_FILES_DIR, loadFontFiles } from '@razzlr/fonts/node'
-import { makeResources } from '@razzlr/renderer'
-import { loadCanvasKit } from '@razzlr/renderer/node'
+import { FALLBACK_FAMILY, FONT_FACES } from '@dazbee/fonts'
+import { FONT_FILES_DIR, loadFontFiles } from '@dazbee/fonts/node'
+import { makeResources } from '@dazbee/renderer'
+import { loadCanvasKit } from '@dazbee/renderer/node'
 import { afterAll, describe, expect, it } from 'vitest'
 import { SAMPLES } from './text-samples.ts'
 

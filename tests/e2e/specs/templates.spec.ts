@@ -3,7 +3,7 @@
 // design, and the template is unchanged: a second design started from it is the original again.
 import { randomUUID } from 'node:crypto'
 import { expect, test, type Page } from '../support/test.ts'
-import { TemplateSummary, type DesignInput } from '@razzlr/schema'
+import { TemplateSummary, type DesignInput } from '@dazbee/schema'
 import { exportHashOf, placed, writeOutput } from '../support/editor.ts'
 import { API_URL, DEV_BRAND } from '../support/seed.ts'
 import { drag, openStage, read } from '../support/stage.ts'
@@ -32,8 +32,8 @@ const design = (): DesignInput => ({
 async function ready(page: Page) {
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
   await page.setViewportSize({ width: 1440, height: 1000 })
-  await page.evaluate(() => window.razzlr?.setCamera({ x: 100, y: 60, zoom: 0.8 }))
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.setCamera({ x: 100, y: 60, zoom: 0.8 }))
+  await page.evaluate(() => window.dazbee?.drawn())
 }
 
 /** Every id a design holds: its own, its formats', pages' and layers'. */

@@ -1,5 +1,5 @@
-import { loadDesign, readDesign } from '@razzlr/doc'
-import { parseDesign } from '@razzlr/schema'
+import { loadDesign, readDesign } from '@dazbee/doc'
+import { parseDesign } from '@dazbee/schema'
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'

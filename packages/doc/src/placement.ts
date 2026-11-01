@@ -1,4 +1,4 @@
-import type { Design } from '@razzlr/schema'
+import type { Design } from '@dazbee/schema'
 import type * as Y from 'yjs'
 import type { CommandContext } from './command.ts'
 import { overrideKey } from './design-doc.ts'

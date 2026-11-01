@@ -2,17 +2,17 @@
 // click to select, drag to move, typing into text, pan and zoom. It has no framework in it; the
 // page only hands it a canvas and an overlay the size of the stage.
 import { HocuspocusProvider, WebSocketStatus } from '@hocuspocus/provider'
-import { anchorOffset, childrenOf, CommandError, openSession, readDesign, textAnchor, type Session, type TextAnchor } from '@razzlr/doc'
-import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
+import { anchorOffset, childrenOf, CommandError, openSession, readDesign, textAnchor, type Session, type TextAnchor } from '@dazbee/doc'
+import { FALLBACK_FAMILIES, FONT_FACES } from '@dazbee/fonts'
 import {
   caretAt, caretPosition, drawPage, layerPictures, paragraphCache, selectionBoxes, render, renderDesign, resourceCache, sceneMemo, textMeasure, type MeasureText, type ResourceCache, type Resources, type Scene, type SceneLayer,
-} from '@razzlr/renderer'
+} from '@dazbee/renderer'
 import {
   canBind, canHold, fontFamilies, imageAssetIds, isContainer, LAYER_CLIPBOARD_TYPE, LayerClipboard, LOCK_FLAGS, SCHEMA_VERSION, type BindingTarget, type Design, type ExportRequestInput, type Layer, type LayerTree, type Paint, type Variables, type VariableRef,
-} from '@razzlr/schema'
-import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from '@razzlr/canvaskit'
-import canvasKitModule from '@razzlr/canvaskit'
-import { WASM_FILE } from '@razzlr/canvaskit/wasm'
+} from '@dazbee/schema'
+import type { CanvasKit, GrDirectContext, Image, SkPicture, Surface } from '@dazbee/canvaskit'
+import canvasKitModule from '@dazbee/canvaskit'
+import { WASM_FILE } from '@dazbee/canvaskit/wasm'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
 import { fit, NO_INSETS, toScreen, toWorld, visibleRect, zoomAt, type Camera, type Insets, type Viewport } from './camera.ts'
@@ -35,7 +35,7 @@ import {
 } from './transform.ts'
 
 // CommonJS whose types claim an ES default export; the bundler hands over the init function itself.
-const CanvasKitInit = canvasKitModule as unknown as typeof import('@razzlr/canvaskit').default
+const CanvasKitInit = canvasKitModule as unknown as typeof import('@dazbee/canvaskit').default
 
 export interface EditorOptions {
   canvas: HTMLCanvasElement
@@ -2351,14 +2351,14 @@ function live(
       for (const [child] of childrenOf(now, id)) add(child)
     }
     for (const id of tops) add(id)
-    return { kind: 'razzlr.layers', schemaVersion: SCHEMA_VERSION, designId: options.designId, tree: { nodes, roots: tops } }
+    return { kind: 'dazbee.layers', schemaVersion: SCHEMA_VERSION, designId: options.designId, tree: { nodes, roots: tops } }
   }
   /**
    * The last layers copied, kept in this browser too with the plain text the copy wrote: a paste
    * that brings that text but not our own type (Mod+Shift+V pastes plain text only, and Safari
    * drops custom types) still pastes the layers.
    */
-  const REMEMBERED = 'razzlr.copiedLayers'
+  const REMEMBERED = 'dazbee.copiedLayers'
   function putOnClipboard(data: DataTransfer, copied: LayerClipboard) {
     const json = JSON.stringify(copied)
     const plain = copied.tree.roots.map((id) => copied.tree.nodes[id]?.name || 'Layer').join('\n')

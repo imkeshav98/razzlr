@@ -1,8 +1,8 @@
 // The API server: migrates the database, then serves. Settings come from the environment only.
 import { serve } from '@hono/node-server'
-import { migrateDatabase, openDatabase, workspaces, brands } from '@razzlr/db'
-import { openStorage, storageSettings } from '@razzlr/storage'
-import { syncTokenSecret } from '@razzlr/sync-token'
+import { migrateDatabase, openDatabase, workspaces, brands } from '@dazbee/db'
+import { openStorage, storageSettings } from '@dazbee/storage'
+import { syncTokenSecret } from '@dazbee/sync-token'
 import { createApp } from './app.ts'
 import { DEV_BRANDS, DEV_WORKSPACE, devSession, firstSession, sessionSecret, tokenSession } from './session.ts'
 import { workosProvider, workosSettings } from './sign-in.ts'
@@ -16,8 +16,8 @@ const storage = openStorage(storageSettings())
 if (process.env.STORAGE_CREATE_BUCKET === 'on') await storage.ensureBucket()
 // Sign-in with WorkOS (#58) when its settings are given; the development session only when asked for.
 const workos = workosSettings()
-const dev = process.env.RAZZLR_DEV_SESSION === 'on'
-if (dev && process.env.NODE_ENV === 'production') throw new Error('RAZZLR_DEV_SESSION is never on in production')
+const dev = process.env.DAZBEE_DEV_SESSION === 'on'
+if (dev && process.env.NODE_ENV === 'production') throw new Error('DAZBEE_DEV_SESSION is never on in production')
 const signIn = workos ? { provider: workosProvider(workos), secret: sessionSecret() } : null
 
 const { db, close } = openDatabase(databaseUrl)

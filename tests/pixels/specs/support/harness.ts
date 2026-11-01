@@ -2,9 +2,9 @@ import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { test as base, type Page } from '@playwright/test'
-import { FONT_FACES } from '@razzlr/fonts'
-import { FONT_FILES_DIR } from '@razzlr/fonts/node'
-import type { ExportType } from '@razzlr/schema'
+import { FONT_FACES } from '@dazbee/fonts'
+import { FONT_FILES_DIR } from '@dazbee/fonts/node'
+import type { ExportType } from '@dazbee/schema'
 import { build } from 'esbuild'
 import { ASSETS_DIR, type Pixels } from '../../src/pixels.ts'
 
@@ -24,7 +24,7 @@ async function files() {
     // Emscripten's Node branch, never taken in the browser.
     external: ['fs', 'path'],
   })
-  const wasm = readFileSync(join(createRequire(import.meta.url).resolve('@razzlr/canvaskit'), '..', 'canvaskit.wasm'))
+  const wasm = readFileSync(join(createRequire(import.meta.url).resolve('@dazbee/canvaskit'), '..', 'canvaskit.wasm'))
   const served: Record<string, [string, Buffer | string]> = {
     '/': ['text/html', '<!doctype html><script type="module" src="/harness.js"></script>'],
     '/harness.js': ['text/javascript', bundle.outputFiles[0]?.text ?? ''],

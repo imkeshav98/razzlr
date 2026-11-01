@@ -1,5 +1,5 @@
 // Live booleans and preset shapes at the commands seam (#44).
-import { parseDesign, type DesignInput, type Shape } from '@razzlr/schema'
+import { parseDesign, type DesignInput, type Shape } from '@dazbee/schema'
 import { describe, expect, it } from 'vitest'
 import type { z } from 'zod'
 import { childrenOf, loadDesign, openSession, readDesign } from './index.ts'

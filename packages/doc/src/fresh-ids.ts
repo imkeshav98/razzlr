@@ -1,7 +1,7 @@
 // A copy of a design that shares no ids with it (#54): every format, page and layer gets a new id,
 // and everything naming them (parents, the primary format, overrides) follows. Starting a design
 // from a template makes one, so the two never collide when layers are copied between them.
-import type { Design } from '@razzlr/schema'
+import type { Design } from '@dazbee/schema'
 import { nanoid } from 'nanoid'
 
 export function withFreshIds(design: Design, newId: () => string = nanoid): Design {

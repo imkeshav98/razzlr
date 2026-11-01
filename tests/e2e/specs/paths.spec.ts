@@ -1,7 +1,7 @@
 // The pen and path editing (#45), with real pointer and keyboard input: draw a closed curved path
 // with clicks and drags, go into its points, drag one, and undo the drag in one step; then an open
 // path with Shift, a point added on a segment, a handle dragged, and a point deleted.
-import { parsePath, pathBounds, type Anchor, type PenPath } from '@razzlr/editor/path'
+import { parsePath, pathBounds, type Anchor, type PenPath } from '@dazbee/editor/path'
 import { expect, test, type Page } from '../support/test.ts'
 import { exportHashOf, writeOutput } from '../support/editor.ts'
 import { liveDesign } from '../support/seed.ts'
@@ -34,10 +34,10 @@ async function dotAt(page: Page, kind: 'anchor' | 'control', key: string) {
   if (!box) throw new Error(`no ${kind} ${key}`)
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 }
-const toolOf = (page: Page) => page.evaluate(() => window.razzlr?.tool())
+const toolOf = (page: Page) => page.evaluate(() => window.dazbee?.tool())
 const undo = async (page: Page) => {
   await press(page, 'undo')
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
 }
 
 test('the pen draws a closed curved path, a point of it is dragged, and undo takes the drag back in one step', async ({ browser }) => {
@@ -50,7 +50,7 @@ test('the pen draws a closed curved path, a point of it is dragged, and undo tak
   await expect(page.locator('[role="toolbar"] [data-tool="pen"]')).toHaveAttribute('aria-pressed', 'true')
   await click(page, 150, 850)
   await drag(page, { x: 400, y: 850 }, { x: 460, y: 850 })
-  const hover = await page.evaluate(() => window.razzlr?.screenPoint(380, 980)) as { x: number; y: number }
+  const hover = await page.evaluate(() => window.dazbee?.screenPoint(380, 980)) as { x: number; y: number }
   await page.mouse.move(hover.x, hover.y, { steps: 4 })
   writeOutput('paths-0-drawing.png', await page.screenshot({ animations: 'disabled' }))
   await drag(page, { x: 380, y: 1000 }, { x: 330, y: 1000 })
@@ -90,7 +90,7 @@ test('the pen draws a closed curved path, a point of it is dragged, and undo tak
   await press(page, 'editPoints')
   await expect(page.locator('.path-anchor')).toHaveCount(3)
   const point = await dotAt(page, 'anchor', '0:1')
-  const zoom = await page.evaluate(() => window.razzlr?.camera().zoom ?? 1)
+  const zoom = await page.evaluate(() => window.dazbee?.camera().zoom ?? 1)
   await dragScreen(page, point, { x: point.x + 60 * zoom, y: point.y - 40 * zoom })
   await expect(page.locator('.path-anchor[data-anchor="0:1"]')).toHaveAttribute('data-selected', '')
   d = await read(page)
@@ -132,11 +132,11 @@ test('Shift keeps the pen to 45°, a click on a segment adds a point, a handle d
   expect(await toolOf(page)).toBe('select')
 
   // Double-click goes into its points. A press on the segment adds a point and drags it down.
-  const middle = await page.evaluate(() => window.razzlr?.screenPoint(250, 900)) as { x: number; y: number }
+  const middle = await page.evaluate(() => window.dazbee?.screenPoint(250, 900)) as { x: number; y: number }
   await page.mouse.dblclick(middle.x, middle.y)
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   await expect(page.locator('.path-anchor')).toHaveCount(2)
-  const zoom = await page.evaluate(() => window.razzlr?.camera().zoom ?? 1)
+  const zoom = await page.evaluate(() => window.dazbee?.camera().zoom ?? 1)
   await dragScreen(page, middle, { x: middle.x, y: middle.y + 100 * zoom })
   d = await read(page)
   const bent = anchorsOf(d, id)
@@ -164,7 +164,7 @@ test('Shift keeps the pen to 45°, a click on a segment adds a point, a handle d
 
   // Escape leaves the points; the path stays selected.
   await page.keyboard.press('Escape')
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   await expect(page.locator('.path-anchor')).toHaveCount(0)
   expect(await selection(page)).toEqual([id])
   expect(errors).toEqual([])
@@ -183,9 +183,9 @@ test('a smooth point\'s handles turn together, and Alt lets one go alone', async
   // Select the smooth point to show its handles, then drag its out handle down.
   const point = await dotAt(page, 'anchor', '0:1')
   await page.mouse.click(point.x, point.y)
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   await expect(page.locator('.path-control')).toHaveCount(2)
-  const zoom = await page.evaluate(() => window.razzlr?.camera().zoom ?? 1)
+  const zoom = await page.evaluate(() => window.dazbee?.camera().zoom ?? 1)
   const out = await dotAt(page, 'control', '0:1:out')
   await dragScreen(page, out, { x: out.x, y: out.y + 60 * zoom })
   let smooth = anchorsOf(await read(page), id)[1]

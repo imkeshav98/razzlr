@@ -1,5 +1,5 @@
 // Path layers reshaped by the pen and point editing, at the commands seam (#45).
-import { parseDesign, type DesignInput } from '@razzlr/schema'
+import { parseDesign, type DesignInput } from '@dazbee/schema'
 import { describe, expect, it } from 'vitest'
 import { loadDesign, openSession, readDesign } from './index.ts'
 import { centreOf, turn, type Box } from './geometry.ts'

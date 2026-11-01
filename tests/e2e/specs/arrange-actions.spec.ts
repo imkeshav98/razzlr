@@ -1,7 +1,7 @@
 // The Arrange card's layer actions (#156) in Chromium: duplicate, the four order moves, ungroup and
 // use as mask, by click, each with its shortcut in its tooltip.
 import { expect, test, type Page } from '../support/test.ts'
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { writeOutput } from '../support/editor.ts'
 import { openStage } from '../support/stage.ts'
 
@@ -21,10 +21,10 @@ const design = (): DesignInput => ({
 })
 
 type Nodes = Record<string, { parentId: string; index: string; type: string; name: string; props: Record<string, unknown> }>
-const nodes = (page: Page) => page.evaluate(() => window.razzlr?.design().nodes) as Promise<Nodes>
+const nodes = (page: Page) => page.evaluate(() => window.dazbee?.design().nodes) as Promise<Nodes>
 /** The page's layers from back to front, by name. */
 const order = async (page: Page) => Object.values(await nodes(page)).filter((n) => n.parentId === 'p1').sort((x, y) => (x.index < y.index ? -1 : 1)).map((n) => n.name)
-const select = (page: Page, ids: string[]) => page.evaluate((ids) => window.razzlr?.select(ids), ids)
+const select = (page: Page, ids: string[]) => page.evaluate((ids) => window.dazbee?.select(ids), ids)
 
 test('the Arrange card duplicates, reorders, ungroups and masks by click', async ({ browser }) => {
   const { page, errors } = await openStage(browser, design())
@@ -60,7 +60,7 @@ test('the Arrange card duplicates, reorders, ungroups and masks by click', async
   await layer.getByRole('button', { name: 'Use as mask' }).click()
   await expect.poll(async () => (await nodes(page)).a?.props.mask).toBe('alpha')
   await expect(layer.getByRole('button', { name: 'Use as mask' })).toHaveAttribute('aria-pressed', 'true')
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('arrange-actions.png', await page.screenshot())
   await layer.getByRole('button', { name: 'Use as mask' }).click()
   await expect.poll(async () => (await nodes(page)).a?.props.mask).toBeFalsy()

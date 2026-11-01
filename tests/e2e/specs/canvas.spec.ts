@@ -1,7 +1,7 @@
 // The infinite canvas (#36): every page in every format, per-format drags, shared text, pan, zoom
 // and the frame budget. Needs the API and the sync server: `docker compose up -d --wait`.
 import { expect, test, type Page } from '../support/test.ts'
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { designOf, editorPath, placed, screenPoint, settle, stageShot, writeOutput } from '../support/editor.ts'
 import { seed } from '../support/seed.ts'
 
@@ -106,10 +106,10 @@ async function open(page: Page, design: DesignInput) {
 }
 
 /** Waits until the screen shows the latest camera and design. */
-const nextDraw = (page: Page) => page.evaluate(() => window.razzlr?.drawn())
+const nextDraw = (page: Page) => page.evaluate(() => window.dazbee?.drawn())
 
 const hashOf = (page: Page, formatId: string) => page.evaluate(async (formatId) => {
-  const pixels = window.razzlr?.exportPixels(undefined, formatId)
+  const pixels = window.dazbee?.exportPixels(undefined, formatId)
   if (!pixels) throw new Error('no editor')
   const digest = await crypto.subtle.digest('SHA-256', pixels.slice())
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
@@ -137,7 +137,7 @@ test('a drag in the second format moves the layer there only; undo and override.
   await drag(page, await screenPoint(page, 200, 180, story), await screenPoint(page, 300, 230, story), ['Control'])
   await expect(page.locator('.selection[data-layer="p1-box"][data-frame="p1/story"]')).toBeVisible()
   await settle([page])
-  const zoom = await page.evaluate(() => window.razzlr?.camera().zoom ?? 1)
+  const zoom = await page.evaluate(() => window.dazbee?.camera().zoom ?? 1)
   let design = JSON.parse(await designOf(page))
   const moved = placed(design, 'p1-box', 'story') as { x: number; y: number }
   // One screen pixel is 1/zoom design pixels; the mouse lands on whole screen pixels.
@@ -157,7 +157,7 @@ test('a drag in the second format moves the layer there only; undo and override.
   await drag(page, await screenPoint(page, 200, 180, story), await screenPoint(page, 300, 230, story))
   await settle([page])
   expect(JSON.parse(await designOf(page)).overrides['format:story']?.['p1-box']).toMatchObject({ x: expect.any(Number) })
-  await page.evaluate(() => window.razzlr?.session.run('override.reset', { ids: ['p1-box'], scope: 'format:story' }))
+  await page.evaluate(() => window.dazbee?.session.run('override.reset', { ids: ['p1-box'], scope: 'format:story' }))
   await settle([page])
   expect(JSON.parse(await designOf(page)).overrides['format:story']?.['p1-box']).toBeUndefined()
   await page.keyboard.press('Escape')
@@ -198,7 +198,7 @@ const differenceBox = (page: Page, a: Buffer, b: Buffer) =>
 test('typing into the headline in one format changes it in every format', async ({ page }) => {
   const { errors } = await open(page, fiveFormats(10))
   const hashes = await Promise.all(FORMAT_IDS.map((f) => hashOf(page, f)))
-  await page.evaluate(() => window.razzlr?.fitFrame('p1', 'land'))
+  await page.evaluate(() => window.dazbee?.fitFrame('p1', 'land'))
   await nextDraw(page)
 
   // Past the end of the headline in Landscape, where it sits at 360, 260 and is 800 wide.
@@ -224,7 +224,7 @@ test('typing into the headline in one format changes it in every format', async 
 test('zooming keeps the point under the cursor still, panning follows the wheel and space, and fit all shows every frame', async ({ page }) => {
   const { errors } = await open(page, fiveFormats(10))
   const camera = () => page.evaluate(() => {
-    const editor = window.razzlr
+    const editor = window.dazbee
     if (!editor) throw new Error('no editor')
     return editor.camera()
   })
@@ -267,7 +267,7 @@ test('zooming keeps the point under the cursor still, panning follows the wheel 
   await page.keyboard.press('Shift+1')
   await nextDraw(page)
   for (const formatId of FORMAT_IDS) {
-    const frame = (await page.evaluate((f) => window.razzlr?.frames().find((x) => x.formatId === f), formatId))
+    const frame = (await page.evaluate((f) => window.dazbee?.frames().find((x) => x.formatId === f), formatId))
     if (!frame) throw new Error(`no frame for ${formatId}`)
     const topLeft = await screenPoint(page, 0, 0, { pageId: 'p1', formatId })
     const bottomRight = await screenPoint(page, frame.width, frame.height, { pageId: 'p1', formatId })
@@ -315,7 +315,7 @@ function withinFrame(budget: Budget) {
 
 async function frameBudget(page: Page, opts: { pan: { dx: number; dy: number }; dragId: string; textId: string }) {
   return page.evaluate(async ({ pan, dragId, textId }) => {
-    const editor = window.razzlr
+    const editor = window.dazbee
     if (!editor) throw new Error('no editor')
     const next = () => new Promise<{ ms: number; drawn: number; frames: number; recorded: number }>((resolve) => {
       const stop = editor.onDraw((_d, _at, info) => {
@@ -360,7 +360,7 @@ async function frameBudget(page: Page, opts: { pan: { dx: number; dy: number }; 
 
 test('five formats of a 120-layer page draw within a 60 fps frame', async ({ page }) => {
   const { errors } = await open(page, fiveFormats(118))
-  const layers = await page.evaluate(() => Object.keys(window.razzlr?.design().nodes ?? {}).length)
+  const layers = await page.evaluate(() => Object.keys(window.dazbee?.design().nodes ?? {}).length)
   expect(layers).toBe(120)
   writeOutput('canvas-3-five-formats-120-layers.png', await page.screenshot())
   const budget = await settledBudget(page, { pan: { dx: 6, dy: 3 }, dragId: 'p1-box', textId: 'p1-headline' })
@@ -376,11 +376,11 @@ test('five formats of a 120-layer page draw within a 60 fps frame', async ({ pag
 
 test('a 20-card carousel in five formats culls the frames out of view', async ({ page }) => {
   const { errors } = await open(page, carousel(20))
-  expect(await page.evaluate(() => window.razzlr?.frames().length)).toBe(100)
+  expect(await page.evaluate(() => window.dazbee?.frames().length)).toBe(100)
   writeOutput('canvas-4-carousel-fit-all.png', await page.screenshot())
   // Close enough to read a card: two or three rows on screen.
   await page.evaluate(() => {
-    const editor = window.razzlr
+    const editor = window.dazbee
     if (!editor) throw new Error('no editor')
     editor.fitFrame('c3', 'story')
   })

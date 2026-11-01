@@ -24,10 +24,10 @@ export default defineConfig({
       timeout: 120_000,
     }]),
     {
-      command: `pnpm --filter @razzlr/web start --port ${PORT}`,
+      command: `pnpm --filter @dazbee/web start --port ${PORT}`,
       url: `http://localhost:${PORT}`,
       reuseExistingServer: !CI,
-      env: CI ? {} : { API_URL: `http://localhost:${LOCAL.api}`, NEXT_PUBLIC_SYNC_URL: `ws://localhost:${LOCAL.sync}`, RAZZLR_DEV_SESSION: 'on' },
+      env: CI ? {} : { API_URL: `http://localhost:${LOCAL.api}`, NEXT_PUBLIC_SYNC_URL: `ws://localhost:${LOCAL.sync}`, DAZBEE_DEV_SESSION: 'on' },
     },
   ],
 })

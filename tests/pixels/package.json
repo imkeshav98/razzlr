@@ -1,5 +1,5 @@
 {
-  "name": "@razzlr/pixels",
+  "name": "@dazbee/pixels",
   "private": true,
   "type": "module",
   "exports": {
@@ -15,13 +15,13 @@
   "devDependencies": {
     "@hyzyla/pdfium": "3.0.0",
     "@playwright/test": "1.63.0",
-    "@razzlr/canvaskit": "workspace:*",
-    "@razzlr/config": "workspace:*",
-    "@razzlr/doc": "workspace:*",
-    "@razzlr/export": "workspace:*",
-    "@razzlr/fonts": "workspace:*",
-    "@razzlr/renderer": "workspace:*",
-    "@razzlr/schema": "workspace:*",
+    "@dazbee/canvaskit": "workspace:*",
+    "@dazbee/config": "workspace:*",
+    "@dazbee/doc": "workspace:*",
+    "@dazbee/export": "workspace:*",
+    "@dazbee/fonts": "workspace:*",
+    "@dazbee/renderer": "workspace:*",
+    "@dazbee/schema": "workspace:*",
     "@resvg/resvg-js": "2.6.2",
     "@types/node": "^22.20.0",
     "esbuild": "^0.28.2",

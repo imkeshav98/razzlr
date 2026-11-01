@@ -1,14 +1,14 @@
 // Runs in Chromium. Bundled by specs/parity.fixture.ts and served from memory, with the
 // CanvasKit wasm, the font files and the fixture images beside it.
-import { exportDesign } from '@razzlr/export'
-import { FALLBACK_FAMILIES, FONT_FACES } from '@razzlr/fonts'
-import { drawDesign, renderDesign, type ResourceBytes } from '@razzlr/renderer'
-import type { ExportType } from '@razzlr/schema'
-import type { Surface } from '@razzlr/canvaskit'
-import canvasKitModule from '@razzlr/canvaskit'
+import { exportDesign } from '@dazbee/export'
+import { FALLBACK_FAMILIES, FONT_FACES } from '@dazbee/fonts'
+import { drawDesign, renderDesign, type ResourceBytes } from '@dazbee/renderer'
+import type { ExportType } from '@dazbee/schema'
+import type { Surface } from '@dazbee/canvaskit'
+import canvasKitModule from '@dazbee/canvaskit'
 
 // CommonJS whose types claim an ES default export; the bundler hands over the init function itself.
-const CanvasKitInit = canvasKitModule as unknown as typeof import('@razzlr/canvaskit').default
+const CanvasKitInit = canvasKitModule as unknown as typeof import('@dazbee/canvaskit').default
 
 async function bytes(url: string) {
   const res = await fetch(url)

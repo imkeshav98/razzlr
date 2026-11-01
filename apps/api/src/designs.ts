@@ -1,8 +1,8 @@
 // The workspace, its brands and their designs, always read and written within one workspace.
 import { randomUUID } from 'node:crypto'
-import { brands, designs, designStates, workspaces, type Db } from '@razzlr/db'
-import { loadDesign } from '@razzlr/doc'
-import { parseDesign, SCHEMA_VERSION, type BrandSummary, type DesignInput, type DesignSummary, type UpdateWorkspace, type WorkspaceSummary } from '@razzlr/schema'
+import { brands, designs, designStates, workspaces, type Db } from '@dazbee/db'
+import { loadDesign } from '@dazbee/doc'
+import { parseDesign, SCHEMA_VERSION, type BrandSummary, type DesignInput, type DesignSummary, type UpdateWorkspace, type WorkspaceSummary } from '@dazbee/schema'
 import { and, asc, desc, eq } from 'drizzle-orm'
 import * as Y from 'yjs'
 

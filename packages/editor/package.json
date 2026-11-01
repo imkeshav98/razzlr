@@ -1,5 +1,5 @@
 {
-  "name": "@razzlr/editor",
+  "name": "@dazbee/editor",
   "private": true,
   "type": "module",
   "exports": {
@@ -14,17 +14,17 @@
   },
   "dependencies": {
     "@hocuspocus/provider": "4.8.0",
-    "@razzlr/canvaskit": "workspace:*",
-    "@razzlr/doc": "workspace:*",
-    "@razzlr/export": "workspace:*",
-    "@razzlr/fonts": "workspace:*",
-    "@razzlr/renderer": "workspace:*",
-    "@razzlr/schema": "workspace:*",
+    "@dazbee/canvaskit": "workspace:*",
+    "@dazbee/doc": "workspace:*",
+    "@dazbee/export": "workspace:*",
+    "@dazbee/fonts": "workspace:*",
+    "@dazbee/renderer": "workspace:*",
+    "@dazbee/schema": "workspace:*",
     "y-indexeddb": "9.0.12",
     "yjs": "^13.6.27"
   },
   "devDependencies": {
-    "@razzlr/config": "workspace:*",
+    "@dazbee/config": "workspace:*",
     "@types/node": "^22.20.0",
     "eslint": "^9.39.0",
     "typescript": "~5.9.3",

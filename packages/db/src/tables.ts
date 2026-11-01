@@ -1,6 +1,6 @@
 // The database's tables. Every row has a workspace, and every design and asset a brand of that
 // workspace (ADR-0011); the API scopes every query by them. Change these, then write a migration with
-// `pnpm --filter @razzlr/db migration`.
+// `pnpm --filter @dazbee/db migration`.
 import { sql } from 'drizzle-orm'
 import { check, customType, foreignKey, index, integer, jsonb, pgTable, primaryKey, text, timestamp, unique } from 'drizzle-orm/pg-core'
 

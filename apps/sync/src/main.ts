@@ -1,6 +1,6 @@
 // Starts the sync server; settings come from the environment only.
-import { openDatabase } from '@razzlr/db'
-import { syncTokenSecret } from '@razzlr/sync-token'
+import { openDatabase } from '@dazbee/db'
+import { syncTokenSecret } from '@dazbee/sync-token'
 import { createSyncServer } from './server.ts'
 
 const databaseUrl = process.env.DATABASE_URL

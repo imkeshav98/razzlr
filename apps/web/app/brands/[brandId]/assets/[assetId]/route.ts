@@ -1,7 +1,7 @@
 // An image asset's original bytes, for the editor (#35). The API checks workspace and brand and hands
 // back a short-lived signed URL; the bytes pass through here, so the browser needs no storage
 // address or credentials. PATCH renames it or sets its tags (#52).
-import { UpdateAsset } from '@razzlr/schema'
+import { UpdateAsset } from '@dazbee/schema'
 import { ApiFailure, assetLink, updateAsset } from '../../../../../lib/api.ts'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ brandId: string; assetId: string }> }) {

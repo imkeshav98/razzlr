@@ -2,7 +2,7 @@
 // button and pushes what follows it along the row; and Shift+A turns a frame laid out by hand into
 // auto layout without moving anything, after which deleting a child closes the gap.
 import { expect, test, type Page } from '../support/test.ts'
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { exportHashOf, writeOutput } from '../support/editor.ts'
 import { click, openStage, press, read, selection } from '../support/stage.ts'
 
@@ -43,10 +43,10 @@ const design = (): DesignInput => ({
   overrides: {},
 })
 
-const boxOf = (page: Page, id: string) => page.evaluate((id) => window.razzlr?.boxOf(id), id) as Promise<{ x: number; y: number; width: number; height: number }>
+const boxOf = (page: Page, id: string) => page.evaluate((id) => window.dazbee?.boxOf(id), id) as Promise<{ x: number; y: number; width: number; height: number }>
 const undo = async (page: Page) => {
   await press(page, 'undo')
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
 }
 
 test('typing into a button\'s label grows the button and moves the tile after it along', async ({ browser }) => {
@@ -67,16 +67,16 @@ test('typing into a button\'s label grows the button and moves the tile after it
   // Double-clicks go into the bar, then the button, then the label, where a caret lands at its end.
   const end = { x: before.label.x + before.label.width - 2, y: before.label.y + before.label.height / 2 }
   for (let i = 0; i < 3; i++) {
-    const at = await page.evaluate(({ x, y }) => window.razzlr?.screenPoint(x, y), end) as { x: number; y: number }
+    const at = await page.evaluate(({ x, y }) => window.dazbee?.screenPoint(x, y), end) as { x: number; y: number }
     await page.mouse.dblclick(at.x, at.y)
-    await page.evaluate(() => window.razzlr?.drawn())
+    await page.evaluate(() => window.dazbee?.drawn())
   }
   await expect(page.locator('.caret')).toBeVisible()
   await page.keyboard.type(' now')
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('auto-layout-1-typing.png', await page.screenshot({ animations: 'disabled' }))
   await page.keyboard.press('Escape')
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
 
   expect((await read(page)).nodes.label?.props.text).toBe('Buy now')
   const after = { btn: await boxOf(page, 'btn'), label: await boxOf(page, 'label'), tile: await boxOf(page, 'tile') }
@@ -118,9 +118,9 @@ test('Shift+A turns a frame into auto layout without moving anything, and a dele
   writeOutput('auto-layout-3-switched.png', await page.screenshot({ animations: 'disabled' }))
 
   // Double-click into the shelf picks the middle tile; deleting it brings the last one over.
-  const middle = await page.evaluate(() => window.razzlr?.screenPoint(400, 600)) as { x: number; y: number }
+  const middle = await page.evaluate(() => window.dazbee?.screenPoint(400, 600)) as { x: number; y: number }
   await page.mouse.dblclick(middle.x, middle.y)
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   expect(await selection(page)).toEqual(['two'])
   await press(page, 'delete')
   expect((await read(page)).nodes.two).toBeUndefined()

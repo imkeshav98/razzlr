@@ -1,4 +1,4 @@
-import type { Design } from '@razzlr/schema'
+import type { Design } from '@dazbee/schema'
 import type { z } from 'zod'
 import { root, type DesignDoc } from './design-doc.ts'
 

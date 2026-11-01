@@ -1,5 +1,5 @@
 {
-  "name": "@razzlr/db",
+  "name": "@dazbee/db",
   "private": true,
   "type": "module",
   "exports": { ".": "./src/index.ts" },
@@ -13,7 +13,7 @@
     "pg": "^8.16.0"
   },
   "devDependencies": {
-    "@razzlr/config": "workspace:*",
+    "@dazbee/config": "workspace:*",
     "@types/node": "^22.20.0",
     "@types/pg": "^8.15.0",
     "drizzle-kit": "^0.31.0",

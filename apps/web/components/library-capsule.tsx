@@ -20,7 +20,7 @@ export type CapsuleLink = { entry: CapsuleEntry; href: string; label: string; ba
 
 const ICONS: Record<CapsuleEntry, Icon> = { home: HouseIcon, recent: ClockIcon, templates: SquaresFourIcon, settings: GearSixIcon }
 
-const LIT_KEY = 'razzlr.library-capsule'
+const LIT_KEY = 'dazbee.library-capsule'
 
 /** The editor capsule's spring (components/editor/shell.tsx). */
 const BLOB = { type: 'spring', stiffness: 520, damping: 34, mass: 0.9 } as const

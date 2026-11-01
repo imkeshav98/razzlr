@@ -4,7 +4,7 @@
 // with each key as this computer names it. It opens from the View card's keyboard button, or with
 // ? anywhere but a text field.
 import { KeyboardIcon, XIcon } from '@phosphor-icons/react'
-import { SHORTCUTS, type ShortcutAction } from '@razzlr/editor'
+import { SHORTCUTS, type ShortcutAction } from '@dazbee/editor'
 import { useEffect, useRef, useState } from 'react'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import type { Messages } from '../../lib/i18n/index.ts'

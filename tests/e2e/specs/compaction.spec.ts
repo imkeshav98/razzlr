@@ -19,7 +19,7 @@ const designWithoutEmptyScopes = async (page: Page) => {
 
 /** Makes `count` layers, overrides each in the banner format and deletes it, as commands in the tab. */
 const makeAndDelete = (page: Page, count: number) => page.evaluate((count) => {
-  const editor = window.razzlr
+  const editor = window.dazbee
   if (!editor) throw new Error('no editor')
   for (let i = 0; i < count; i++) {
     const id = editor.session.run('node.create', { parentId: 'p1', layer: { type: 'graphic', name: `Try ${i}`, props: { x: 10 * i, y: 40, width: 200, height: 200, shape: { kind: 'ellipse' }, fills: [{ type: 'solid', color: '#FFC400FF' }] } } })
@@ -37,7 +37,7 @@ test('undo of a delete still works with another tab connected; once both leave t
   await makeAndDelete(a, 300)
   // The two-tab check: B deletes a layer and undoes it while A is connected, and both see it back.
   const kept = await b.evaluate(() => {
-    const editor = window.razzlr
+    const editor = window.dazbee
     if (!editor) throw new Error('no editor')
     const id = editor.session.run('node.create', { parentId: 'p1', layer: { type: 'graphic', name: 'Kept', props: { x: 600, y: 600, width: 120, height: 120, shape: { kind: 'rect' }, fills: [{ type: 'solid', color: '#1E88E5FF' }] } } })
     editor.session.run('node.delete', { ids: [id] })

@@ -20,7 +20,7 @@ test('a design made from the brand list opens in the editor and is there after a
   await expect(page).toHaveURL(/\/brands\/dev-brand-coffee\/designs\/[\w-]+$/)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(name)
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
-  const design = await page.evaluate(() => window.razzlr?.design())
+  const design = await page.evaluate(() => window.dazbee?.design())
   expect(design?.meta.name).toBe(name)
   expect(Object.keys(design?.pages ?? {})).toHaveLength(1)
   writeOutput('designs-2-editor.png', await page.screenshot())

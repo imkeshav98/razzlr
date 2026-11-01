@@ -1,6 +1,6 @@
 'use client'
 
-import type { Editor } from '@razzlr/editor'
+import type { Editor } from '@dazbee/editor'
 import { useEffect, useState } from 'react'
 
 /**

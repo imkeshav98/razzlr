@@ -1,4 +1,4 @@
-import type { CanvasKit } from '@razzlr/canvaskit'
+import type { CanvasKit } from '@dazbee/canvaskit'
 
 /** A CanvasKit colour from the schema's `#RRGGBBAA`. */
 export function color(ck: CanvasKit, hex: string) {

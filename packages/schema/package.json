@@ -1,5 +1,5 @@
 {
-  "name": "@razzlr/schema",
+  "name": "@dazbee/schema",
   "private": true,
   "type": "module",
   "exports": { ".": "./src/index.ts" },
@@ -12,7 +12,7 @@
     "zod": "^4.6.0"
   },
   "devDependencies": {
-    "@razzlr/config": "workspace:*",
+    "@dazbee/config": "workspace:*",
     "@types/node": "^22.20.0",
     "eslint": "^9.39.0",
     "typescript": "~5.9.3",

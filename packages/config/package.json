@@ -1,5 +1,5 @@
 {
-  "name": "@razzlr/config",
+  "name": "@dazbee/config",
   "private": true,
   "type": "module",
   "exports": {
@@ -8,7 +8,7 @@
     "./vitest": "./vitest.preset.js"
   },
   "bin": {
-    "razzlr-check-deps": "./bin/check-deps.js"
+    "dazbee-check-deps": "./bin/check-deps.js"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

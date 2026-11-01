@@ -1,7 +1,7 @@
 // The brief's toolbar (#136) in Chromium: the Formats dropdown picks what Make drafts makes and
 // keeps one picked, + adds a reference ad or images uploaded to the brand's assets as thumbnails
 // above the brief, and Brand kit opens the whole kit to pick from. Each choice is a form field.
-import { AssetSummary, EMPTY_BRAND_KIT, type BrandKit } from '@razzlr/schema'
+import { AssetSummary, EMPTY_BRAND_KIT, type BrandKit } from '@dazbee/schema'
 import { expect, test } from '../support/test.ts'
 import { photo } from '../support/assets.ts'
 import { writeOutput } from '../support/editor.ts'
@@ -38,7 +38,7 @@ test('the Formats dropdown picks the formats Make drafts makes, and one always s
   await page.getByRole('button', { name: 'Make drafts' }).click()
   await expect(page).toHaveURL(new RegExp(`/brands/${DEV_BRAND}/designs/[\\w-]+$`), { timeout: 20_000 })
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
-  const design = await page.evaluate(() => window.razzlr?.design())
+  const design = await page.evaluate(() => window.dazbee?.design())
   expect(design?.meta.name).toBe(brief)
   expect(Object.values(design?.formats ?? {}).map((f) => [f.width, f.height])).toEqual([[1080, 1080], [1080, 1920]])
 })

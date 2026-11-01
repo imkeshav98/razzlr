@@ -2,7 +2,7 @@
 // drafts. The capsule opens recent work (a bento of real pictures, the latest large, stories tall,
 // banners wide) and the templates under the brief, one at a time, kept in the address (?show=).
 import { expect, test, type Page } from '../support/test.ts'
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { writeOutput } from '../support/editor.ts'
 import { seed } from '../support/seed.ts'
 
@@ -149,7 +149,7 @@ test('Make drafts opens a design in the formats the brief picked, named by the b
   await page.getByRole('button', { name: 'Make drafts' }).click()
   await expect(page).toHaveURL(/\/brands\/dev-brand-coffee\/designs\/[\w-]+$/)
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
-  const design = await page.evaluate(() => window.razzlr?.design())
+  const design = await page.evaluate(() => window.dazbee?.design())
   expect(design?.meta.name).toBe(brief)
   expect(Object.values(design?.formats ?? {}).map((f) => [f.name, f.width, f.height])).toEqual([['Feed square', 1080, 1080], ['Story', 1080, 1920]])
   expect(design?.meta.primaryFormatId).toBe('f1')

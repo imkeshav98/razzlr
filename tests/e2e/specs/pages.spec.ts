@@ -37,7 +37,7 @@ test('a page is duplicated with its layers, reordered, renamed, deleted and brou
   const propsOf = (nodes: Design['nodes'][string][]) => nodes.map((n) => JSON.stringify(n.props)).sort()
   expect(propsOf(copied)).toEqual(propsOf(layersOf(design, 'p1')))
   await expect(pages.locator(`[data-page="${copy}"]`)).toHaveAttribute('aria-current', 'page')
-  expect(await page.evaluate(() => new Set(window.razzlr?.frames().map((f) => f.pageId)).size)).toBe(2)
+  expect(await page.evaluate(() => new Set(window.dazbee?.frames().map((f) => f.pageId)).size)).toBe(2)
   writeOutput('pages-0-duplicated.png', await page.screenshot())
 
   // Reorder: the copy goes first, and the stage puts its row on top.
@@ -46,7 +46,7 @@ test('a page is duplicated with its layers, reordered, renamed, deleted and brou
   await row.getByRole('button', { name: 'Move up' }).click()
   await expect.poll(async () => pageNames(await designIn(page))).toEqual(['Page 1 copy', 'Page 1'])
   await expect(pages.getByRole('listitem').first()).toHaveAttribute('data-page', copy)
-  expect(await page.evaluate(() => window.razzlr?.frames().sort((a, b) => a.y - b.y)[0]?.pageId)).toBe(copy)
+  expect(await page.evaluate(() => window.dazbee?.frames().sort((a, b) => a.y - b.y)[0]?.pageId)).toBe(copy)
 
   // Rename in place.
   await row.getByRole('button', { name: 'Show Page 1 copy' }).dblclick()

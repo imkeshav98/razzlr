@@ -1,7 +1,7 @@
 // The editor keeps laid-out text and recorded layers between redraws (#36); drawing from those caches must not change a pixel.
-import { drawScene, layerPictures, paragraphCache, render, renderDesign, resourceCache, sceneMemo, textMeasure } from '@razzlr/renderer'
-import { loadCanvasKit } from '@razzlr/renderer/node'
-import { parseDesign } from '@razzlr/schema'
+import { drawScene, layerPictures, paragraphCache, render, renderDesign, resourceCache, sceneMemo, textMeasure } from '@dazbee/renderer'
+import { loadCanvasKit } from '@dazbee/renderer/node'
+import { parseDesign } from '@dazbee/schema'
 import { afterAll, describe, expect, it, vi } from 'vitest'
 import { loadFixtures } from './fixtures.ts'
 import { comparePixels, fixtureResources } from './pixels.ts'

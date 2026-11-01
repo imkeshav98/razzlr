@@ -1,4 +1,4 @@
-import type { CanvasKit, FontCollection, Paragraph, TextStyle as CkTextStyle } from '@razzlr/canvaskit'
+import type { CanvasKit, FontCollection, Paragraph, TextStyle as CkTextStyle } from '@dazbee/canvaskit'
 import { color } from './color.ts'
 import type { Resources } from './draw.ts'
 import type { SceneLayer } from './scene.ts'

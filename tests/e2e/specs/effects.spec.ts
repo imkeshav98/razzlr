@@ -5,11 +5,11 @@
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { FALLBACK_FAMILIES } from '@razzlr/fonts'
-import { loadFontFiles } from '@razzlr/fonts/node'
-import { renderDesign } from '@razzlr/renderer'
-import { loadCanvasKit } from '@razzlr/renderer/node'
-import type { DesignInput } from '@razzlr/schema'
+import { FALLBACK_FAMILIES } from '@dazbee/fonts'
+import { loadFontFiles } from '@dazbee/fonts/node'
+import { renderDesign } from '@dazbee/renderer'
+import { loadCanvasKit } from '@dazbee/renderer/node'
+import type { DesignInput } from '@dazbee/schema'
 import { expect, test, type Page } from '../support/test.ts'
 import { editorPath, exportHashOf, writeOutput } from '../support/editor.ts'
 import { seed } from '../support/seed.ts'
@@ -26,7 +26,7 @@ async function open(page: Page, content: DesignInput) {
   await page.goto(editorPath(designId))
   await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 60_000 })
   await page.keyboard.press('Escape')
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   return { designId, errors }
 }
 
@@ -42,7 +42,7 @@ async function nodeHash(content: DesignInput) {
 }
 
 const run = (page: Page, name: string, input: unknown) =>
-  page.evaluate(([name, input]) => (window.razzlr?.session.run as (n: string, i: unknown) => unknown)(name, input), [name, input] as const)
+  page.evaluate(([name, input]) => (window.dazbee?.session.run as (n: string, i: unknown) => unknown)(name, input), [name, input] as const)
 
 test('every new paint, stroke and effect draws on the stage and exports as Node renders it', async ({ page }) => {
   const content = fixture('strokes-and-effects')
@@ -56,12 +56,12 @@ test('every new paint, stroke and effect draws on the stage and exports as Node 
   await run(page, 'node.update', { ids: ['dashed'], patch: { strokes: [{ paint: { type: 'solid', color: '#263238FF' }, width: 8, dashes: [2, 14], cap: 'round' }] } })
   await run(page, 'node.update', { ids: ['orb'], patch: { effects: [{ type: 'glow', blur: 80, spread: 20, color: '#00E5FFFF' }] } })
   await run(page, 'node.update', { ids: ['through'], patch: { blendMode: 'normal' } })
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('effects-1-edited.png', await page.screenshot())
   hashes.push(await exportHashOf(page))
   expect(hashes[1]).not.toBe(hashes[0])
-  for (let i = 0; i < 3; i++) await page.evaluate(() => window.razzlr?.session.undo())
-  await page.evaluate(() => window.razzlr?.drawn())
+  for (let i = 0; i < 3; i++) await page.evaluate(() => window.dazbee?.session.undo())
+  await page.evaluate(() => window.dazbee?.drawn())
   expect(await exportHashOf(page)).toBe(browser)
   expect(errors).toEqual([])
 })
@@ -70,7 +70,7 @@ test('a design sent at version 1 is stored at version 2 and draws as it did', as
   const content = fixture('groups-and-frames')
   expect(content.meta.schemaVersion as number).toBe(1)
   const { errors } = await open(page, content)
-  const design = await page.evaluate(() => window.razzlr?.design()) as { meta: { schemaVersion: number }; nodes: Record<string, { type: string; props: { blendMode: string } }> }
+  const design = await page.evaluate(() => window.dazbee?.design()) as { meta: { schemaVersion: number }; nodes: Record<string, { type: string; props: { blendMode: string } }> }
   expect(design.meta.schemaVersion).toBe(2)
   const containers = Object.values(design.nodes).filter((n) => n.type === 'group' || n.type === 'frame')
   expect(containers.length).toBeGreaterThan(0)

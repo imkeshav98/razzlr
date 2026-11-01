@@ -3,11 +3,11 @@
 // or hundreds of layers takes long enough to stall every request queued behind it. The thread
 // keeps CanvasKit, the fonts we ship and its resource cache for its whole life.
 import { parentPort } from 'node:worker_threads'
-import { FALLBACK_FAMILIES } from '@razzlr/fonts'
-import { loadFontFiles } from '@razzlr/fonts/node'
-import { drawDesign, resourceCache, type ResourceBytes, type ResourceCache } from '@razzlr/renderer'
-import { loadCanvasKit } from '@razzlr/renderer/node'
-import type { Design } from '@razzlr/schema'
+import { FALLBACK_FAMILIES } from '@dazbee/fonts'
+import { loadFontFiles } from '@dazbee/fonts/node'
+import { drawDesign, resourceCache, type ResourceBytes, type ResourceCache } from '@dazbee/renderer'
+import { loadCanvasKit } from '@dazbee/renderer/node'
+import type { Design } from '@dazbee/schema'
 
 /** One picture to draw: the page in the format, scaled to the picture's size. */
 export interface DrawJob {

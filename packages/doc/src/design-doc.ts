@@ -1,4 +1,4 @@
-import { parseDesign, type Design } from '@razzlr/schema'
+import { parseDesign, type Design } from '@dazbee/schema'
 import * as Y from 'yjs'
 import { repair } from './repair.ts'
 

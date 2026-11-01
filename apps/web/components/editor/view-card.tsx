@@ -3,7 +3,7 @@
 // The View card, as in the final mock: rulers are off until asked for, and snapping can be turned
 // off for every drag. Shift+R turns the rulers on and off too, and the card follows it. The
 // keyboard button lists every shortcut (#158).
-import type { Editor } from '@razzlr/editor'
+import type { Editor } from '@dazbee/editor'
 import { useEffect, useState } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'

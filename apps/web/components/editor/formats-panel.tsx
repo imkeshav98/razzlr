@@ -7,10 +7,10 @@ import {
   ArrowsInSimpleIcon, CaretDownIcon, CaretUpIcon, PlusIcon, StarIcon, TrashIcon,
 } from '@phosphor-icons/react'
 import * as Popover from '@radix-ui/react-popover'
-import type { Editor } from '@razzlr/editor'
+import type { Editor } from '@dazbee/editor'
 import {
   FORMAT_LIMITS, FORMAT_PRESETS, FORMAT_SHAPES, formatSizeIssue, shapeOf, type Design,
-} from '@razzlr/schema'
+} from '@dazbee/schema'
 import { useEffect, useId, useState, type FormEvent } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'

@@ -2,7 +2,7 @@
 // several, see mixed values, write a change to the format shown only, as a canvas drag does (and an
 // every-format one as the base, with the override gone), and scrub a number as one undo step.
 import { expect, test, type Locator, type Page } from '../support/test.ts'
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { writeOutput } from '../support/editor.ts'
 import { openStage, unfoldAll } from '../support/stage.ts'
 
@@ -36,13 +36,13 @@ const design = (): DesignInput => ({
 })
 
 type Node = { props: Record<string, unknown> }
-const nodes = (page: Page) => page.evaluate(() => window.razzlr?.design().nodes) as Promise<Record<string, Node>>
+const nodes = (page: Page) => page.evaluate(() => window.dazbee?.design().nodes) as Promise<Record<string, Node>>
 const base = async (page: Page, id: string) => (await nodes(page))[id]?.props ?? {}
-const overrides = (page: Page) => page.evaluate(() => JSON.parse(JSON.stringify(window.razzlr?.design().overrides ?? {}))) as Promise<Record<string, Record<string, Record<string, unknown>>>>
+const overrides = (page: Page) => page.evaluate(() => JSON.parse(JSON.stringify(window.dazbee?.design().overrides ?? {}))) as Promise<Record<string, Record<string, Record<string, unknown>>>>
 /** A layer's props as the Square format shows them: the base with Square's own on top. */
 const props = async (page: Page, id: string) => ({ ...await base(page, id), ...(await overrides(page))['format:sq']?.[id] })
 const select = async (page: Page, ids: string[]) => {
-  await page.evaluate((ids) => window.razzlr?.select(ids), ids)
+  await page.evaluate((ids) => window.dazbee?.select(ids), ids)
   await expect(page.getByTestId('layout-card')).toBeVisible()
   await unfoldAll(page)
 }
@@ -96,7 +96,7 @@ test('one layer: position, size, turn, opacity, blend, fill, stroke and effects'
   await stroke.getByRole('combobox', { name: 'Stroke 1 ends' }).selectOption('round')
   await stroke.getByRole('combobox', { name: 'Stroke 1 corners' }).selectOption('bevel')
   await expect.poll(async () => (await props(page, 'box')).strokes).toMatchObject([{ width: 6, align: 'inside', dashes: [12, 6], dashOffset: 3, cap: 'round', join: 'bevel' }])
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('props-dashed-stroke.png', await page.screenshot())
   await enter(stroke.getByRole('textbox', { name: 'Stroke 1 dashes' }), '0 0')
   await expect(stroke.getByRole('textbox', { name: 'Stroke 1 dashes' })).toHaveValue('12 6')
@@ -114,7 +114,7 @@ test('one layer: position, size, turn, opacity, blend, fill, stroke and effects'
   expect(o['format:sq']?.box).toMatchObject({ x: 140, width: 311, rotation: 15, opacity: 0.5, blendMode: 'multiply' })
   expect(await base(page, 'box')).toMatchObject({ ...rect(80, 80, 300, 200, '#E0262BFF'), rotation: 0, opacity: 1, blendMode: 'normal', strokes: [], effects: [] })
   expect(o['format:story']?.box ?? {}).toEqual({})
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('props-0-one-layer.png', await page.screenshot())
   expect(errors).toEqual([])
 })
@@ -155,7 +155,7 @@ test('several layers: mixed values, set together or each from its own; text and 
     const p = await props(page, 'headline')
     return { style: p.style, align: p.align }
   }).toMatchObject({ style: { fontSize: 120, letterSpacing: 2, lineHeight: 1.1, color: '#1F9D55FF', textCase: 'upper', fontFamily: 'Noto Sans', fontWeight: 800 }, align: 'center' })
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('props-2-text.png', await page.screenshot())
 
   // Auto layout.
@@ -165,7 +165,7 @@ test('several layers: mixed values, set together or each from its own; text and 
   await auto.getByRole('combobox', { name: 'Direction' }).selectOption('column')
   await enter(auto.getByRole('textbox', { name: 'Padding left' }), '40')
   await expect.poll(async () => (await props(page, 'stack')).layout).toMatchObject({ direction: 'column', gap: 32, padding: { left: 40, top: 20 } })
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('props-3-auto-layout.png', await page.screenshot())
   expect(errors).toEqual([])
 })
@@ -213,10 +213,10 @@ test('scrubbing a number is one undo step', async ({ browser }) => {
   // 60 px to the end at a step per 2 px: each 30 further on, from its own.
   await expect.poll(async () => [(await props(page, 'box')).x, (await props(page, 'dot')).x]).toEqual([110, 730])
   writeOutput('props-5-scrubbed.png', await page.screenshot())
-  await page.evaluate(() => window.razzlr?.perform('undo'))
+  await page.evaluate(() => window.dazbee?.perform('undo'))
   await expect.poll(async () => [(await props(page, 'box')).x, (await props(page, 'dot')).x]).toEqual([80, 700])
   // And redo brings the whole scrub back.
-  await page.evaluate(() => window.razzlr?.perform('redo'))
+  await page.evaluate(() => window.dazbee?.perform('redo'))
   await expect.poll(async () => [(await props(page, 'box')).x, (await props(page, 'dot')).x]).toEqual([110, 730])
   expect(errors).toEqual([])
 })

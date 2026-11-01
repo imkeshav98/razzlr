@@ -2,8 +2,8 @@
 // They are committed; rerun only to change them: node scripts/make-assets.ts [name ...] (only those named).
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { loadCanvasKit } from '@razzlr/renderer/node'
-import type { Canvas, CanvasKit } from '@razzlr/canvaskit'
+import { loadCanvasKit } from '@dazbee/renderer/node'
+import type { Canvas, CanvasKit } from '@dazbee/canvaskit'
 
 const ck: CanvasKit = await loadCanvasKit()
 const ASSETS_DIR = join(import.meta.dirname, '..', 'assets')

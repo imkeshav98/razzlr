@@ -2,7 +2,7 @@
 // lifting the limit, paragraph spacing, lists, underline and strikethrough, shrinking to fit with
 // its sizes, and an outline with its width and colour.
 import { expect, test, type Locator, type Page } from '../support/test.ts'
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { writeOutput } from '../support/editor.ts'
 import { openStage, unfoldAll } from '../support/stage.ts'
 
@@ -26,7 +26,7 @@ const design = (): DesignInput => ({
 })
 
 type TextProps = Record<string, unknown> & { style: Record<string, unknown> }
-const copy = (page: Page) => page.evaluate(() => window.razzlr?.design().nodes.copy?.props) as Promise<TextProps>
+const copy = (page: Page) => page.evaluate(() => window.dazbee?.design().nodes.copy?.props) as Promise<TextProps>
 const enter = async (field: Locator, value: string) => {
   await field.fill(value)
   await field.press('Enter')
@@ -34,7 +34,7 @@ const enter = async (field: Locator, value: string) => {
 
 test('the Box and paragraphs card sets the box, lines, lists, decoration, fit and outline', async ({ browser }) => {
   const { page, errors } = await openStage(browser, design())
-  await page.evaluate(() => window.razzlr?.select(['copy']))
+  await page.evaluate(() => window.dazbee?.select(['copy']))
   await unfoldAll(page)
   const card = page.getByTestId('paragraph-card')
   await expect(card).toBeVisible()
@@ -55,7 +55,7 @@ test('the Box and paragraphs card sets the box, lines, lists, decoration, fit an
   await enter(card.getByRole('textbox', { name: 'Outline width' }), '4')
   await enter(card.getByRole('textbox', { name: 'Outline hex' }), 'ff3d6e')
   await expect.poll(async () => (await copy(page)).style.outline).toEqual({ width: 4, color: '#FF3D6EFF' })
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('paragraph-card.png', await page.screenshot())
 
   // Shrink to fit starts from half the size up to the size; the smallest can't pass the largest.
@@ -76,7 +76,7 @@ test('the Box and paragraphs card sets the box, lines, lists, decoration, fit an
   await expect(card.getByRole('textbox', { name: 'Lines at most' })).toHaveValue('')
 
   // One undo takes the outline back.
-  await page.evaluate(() => window.razzlr?.perform('undo'))
+  await page.evaluate(() => window.dazbee?.perform('undo'))
   await expect.poll(async () => (await copy(page)).style.outline).toEqual({ width: 4, color: '#FF3D6EFF' })
   expect(errors).toEqual([])
 })

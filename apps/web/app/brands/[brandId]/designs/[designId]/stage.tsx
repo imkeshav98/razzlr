@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { SHAPE_TOOLS, startEditor, type Editor, type ShapeTool, type Tool } from '@razzlr/editor'
+import { SHAPE_TOOLS, startEditor, type Editor, type ShapeTool, type Tool } from '@dazbee/editor'
 import { fetchSyncToken, renameFromEditor } from './actions.ts'
 import { EditorShell, type ChromeInsets } from '../../../../../components/editor/shell.tsx'
 import { FocusChip, UndoToast } from '../../../../../components/editor/formats-panel.tsx'
@@ -11,11 +11,11 @@ import { ASSET_DRAG_TYPE, AssetLibrary, draggedAsset } from '../../../../../comp
 import { BrandKitPanel } from '../../../../../components/editor/brand-kit-panel.tsx'
 import { ShareMenu } from '../../../../../components/editor/share-menu.tsx'
 import { LayersPanel } from '../../../../../components/editor/layers-panel.tsx'
-import { BrandKit, brandVariables, FontFamily, type Variables } from '@razzlr/schema'
+import { BrandKit, brandVariables, FontFamily, type Variables } from '@dazbee/schema'
 import { useValue, valueStore, type ValueStore } from '../../../../../lib/value-store.ts'
 
 declare global {
-  interface Window { razzlr?: Editor }
+  interface Window { dazbee?: Editor }
 }
 
 async function assetBytes(brandId: string, assetId: string) {
@@ -166,7 +166,7 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
       .then((started) => {
         if (unmounted.signal.aborted) return started.destroy()
         editor = started
-        window.razzlr = started
+        window.dazbee = started
         setEditor(started)
         // CanvasKit and the fonts may have loaded before the worker was in charge.
         void keepForOffline()
@@ -177,7 +177,7 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
     return () => {
       unmounted.abort()
       editor?.destroy()
-      delete window.razzlr
+      delete window.dazbee
       setEditor(null)
       zoom.set(null)
     }

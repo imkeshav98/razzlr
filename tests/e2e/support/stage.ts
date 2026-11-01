@@ -1,8 +1,8 @@
 // Driving the editor stage with real pointer and keyboard input, for the selection and group
 // checks (#40, #41): drags with modifiers pressed as a hand would, shortcut presses from the one
 // table, and reading layers back from the document.
-import { pressFor, type ShortcutAction } from '@razzlr/editor/shortcuts'
-import type { DesignInput } from '@razzlr/schema'
+import { pressFor, type ShortcutAction } from '@dazbee/editor/shortcuts'
+import type { DesignInput } from '@dazbee/schema'
 import type { Browser, Page } from '@playwright/test'
 import { designOf, openTabs, placed, screenPoint } from './editor.ts'
 import { seed } from './seed.ts'
@@ -15,8 +15,8 @@ export async function openStage(browser: Browser, content: DesignInput) {
   const { tabs, errors } = await openTabs(browser, 1, await seed(content))
   const page = tabs[0] as Page
   await page.setViewportSize({ width: 1440, height: 1000 })
-  await page.evaluate(() => window.razzlr?.setCamera({ x: 100, y: 60, zoom: 0.8 }))
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.setCamera({ x: 100, y: 60, zoom: 0.8 }))
+  await page.evaluate(() => window.dazbee?.drawn())
   return { page, errors }
 }
 
@@ -26,11 +26,11 @@ export interface Design {
 }
 export const read = async (page: Page) => JSON.parse(await designOf(page)) as Design
 export const props = async (page: Page, id: string) => placed(await read(page), id, 'sq') as { x: number; y: number; width: number; height: number; rotation?: number; visible?: boolean }
-export const selection = (page: Page) => page.evaluate(() => window.razzlr?.selection() ?? [])
+export const selection = (page: Page) => page.evaluate(() => window.dazbee?.selection() ?? [])
 /** Presses an action's shortcut and waits for the redraw, so the handles stand where the box now is. */
 export const press = async (page: Page, action: ShortcutAction) => {
   await page.keyboard.press(pressFor(action))
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
 }
 export const order = async (page: Page) => Object.entries((await read(page)).nodes)
   .filter(([, n]) => n.parentId === 'p1').sort(([a, x], [b, y]) => (x.index < y.index ? -1 : x.index > y.index ? 1 : a < b ? -1 : 1)).map(([id]) => id)
@@ -54,14 +54,14 @@ export async function dragScreen(page: Page, a: { x: number; y: number }, b: { x
   await page.mouse.move(b.x, b.y, { steps: 6 })
   await page.mouse.up()
   for (const key of modifiers) await page.keyboard.up(key)
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
 }
 export async function click(page: Page, x: number, y: number, modifiers: 'Shift'[] = []) {
   const at = await screenPoint(page, x, y)
   for (const key of modifiers) await page.keyboard.down(key)
   await page.mouse.click(at.x, at.y)
   for (const key of modifiers) await page.keyboard.up(key)
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
 }
 /** Where a handle of the selection box is on screen now. */
 export async function handle(page: Page, which: string) {
@@ -69,7 +69,7 @@ export async function handle(page: Page, which: string) {
   if (!box) throw new Error(`no ${which} handle`)
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 }
-export const zoomOf = (page: Page) => page.evaluate(() => window.razzlr?.camera().zoom ?? 1)
+export const zoomOf = (page: Page) => page.evaluate(() => window.dazbee?.camera().zoom ?? 1)
 
 /**
  * Opens every folded row of the Details card and the effects' Fine-tune, as a person clicks them,

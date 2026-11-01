@@ -1,6 +1,6 @@
 // The brand home's brief (#84): the formats it offers, and the blank design Make drafts opens
 // until AI drafts arrive (phase 2).
-import { FORMAT_PRESETS, SCHEMA_VERSION, type DesignInput } from '@razzlr/schema'
+import { FORMAT_PRESETS, SCHEMA_VERSION, type DesignInput } from '@dazbee/schema'
 
 /** The formats offered on the brief, the everyday ones; the editor adds any other. */
 export const BRIEF_FORMATS = ['feed-square', 'feed-portrait', 'story', 'link-image'] as const

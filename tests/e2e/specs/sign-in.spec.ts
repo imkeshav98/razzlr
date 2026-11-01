@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { expect, test } from '../support/test.ts'
 import { OUTPUT } from '../support/editor.ts'
 
-const SESSION_COOKIE = 'razzlr_session'
+const SESSION_COOKIE = 'dazbee_session'
 
 test('the sign-in page offers one button, and says when sign-in is not set up', async ({ page }) => {
   await page.goto('/login')

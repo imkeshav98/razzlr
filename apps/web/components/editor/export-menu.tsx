@@ -3,8 +3,8 @@
 // Export (#55, #56): pick pages, formats and PNG, JPG, PDF or SVG, and the editor's export worker
 // draws them while the stage stays responsive. One file downloads as itself, more as a zip
 // with a folder per format.
-import type { Editor } from '@razzlr/editor'
-import type { Design, ExportType } from '@razzlr/schema'
+import type { Editor } from '@dazbee/editor'
+import type { Design, ExportType } from '@dazbee/schema'
 import { useState } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'

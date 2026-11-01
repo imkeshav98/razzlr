@@ -1,6 +1,6 @@
 // Where each frame of the infinite canvas sits (#36): an auto grid with pages as rows and formats
 // as columns, so nothing about placement is stored and a new page or format slots in by itself.
-import type { Design } from '@razzlr/schema'
+import type { Design } from '@dazbee/schema'
 
 /** One page in one format, placed on the canvas in world units (design pixels at 100%). */
 export interface Frame {

@@ -2,7 +2,7 @@
 // a drag near another layer snaps and shows a guide, Ctrl turns snapping off, the inspector's
 // buttons align and distribute three layers in one undo step each, the rulers mark the selection,
 // and a drag among 300 layers keeps each pointer move's work inside a 60 Hz frame.
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { expect, test, type Page } from '../support/test.ts'
 import { screenPoint, writeOutput } from '../support/editor.ts'
 import { liveDesign } from '../support/seed.ts'
@@ -31,12 +31,12 @@ async function hold(page: Page, from: { x: number; y: number }, to: { x: number;
   await page.mouse.down()
   for (const key of keys) await page.keyboard.down(key)
   await page.mouse.move(b.x, b.y, { steps: 8 })
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
 }
 async function release(page: Page, keys: string[] = []) {
   await page.mouse.up()
   for (const key of keys) await page.keyboard.up(key)
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
 }
 const guides = (page: Page) => page.locator('.stage-overlay .guide').evaluateAll((els) => els.map((el) => (el as HTMLElement).dataset.axis))
 
@@ -92,11 +92,11 @@ test('the inspector aligns and distributes three layers, one undo step each', as
   await expect(arrange.locator('[data-action="distributeHorizontal"]')).toBeEnabled()
 
   await arrange.locator('[data-action="alignTop"]').click()
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   expect([(await props(page, 'box')).y, (await props(page, 'tag')).y, (await props(page, 'dot')).y]).toEqual([80, 80, 80])
   // Box 80–380, tag 120 wide, dot 700–940: 860 across, 660 of it layers, so 100 between each.
   await arrange.locator('[data-action="distributeHorizontal"]').click()
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   expect([(await props(page, 'box')).x, (await props(page, 'tag')).x, (await props(page, 'dot')).x]).toEqual([80, 480, 700])
   writeOutput('snapping-2-aligned-distributed.png', await page.screenshot())
 
@@ -153,7 +153,7 @@ test('dragging among 300 layers keeps each pointer move, snapping included, insi
     let started = 0
     window.addEventListener('pointermove', () => { started = performance.now() }, { capture: true })
     window.addEventListener('pointermove', () => { times.handle.push(performance.now() - started) })
-    window.razzlr?.onDraw((_design, _at, info) => times.draw.push(info.ms))
+    window.dazbee?.onDraw((_design, _at, info) => times.draw.push(info.ms))
     ;(window as unknown as { times: typeof times }).times = times
   })
   const a = await screenPoint(page, 820, 240)
@@ -161,7 +161,7 @@ test('dragging among 300 layers keeps each pointer move, snapping included, insi
   await page.mouse.down()
   for (let i = 1; i <= 60; i++) {
     await page.mouse.move(a.x - i * 4, a.y + i * 5)
-    await page.evaluate(() => window.razzlr?.drawn())
+    await page.evaluate(() => window.dazbee?.drawn())
   }
   await page.mouse.up()
   const times = await page.evaluate(() => (window as unknown as { times: { handle: number[]; draw: number[] } }).times)

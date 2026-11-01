@@ -1,5 +1,5 @@
 {
-  "extends": "@razzlr/config/tsconfig.base.json",
+  "extends": "@dazbee/config/tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",

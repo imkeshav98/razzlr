@@ -2,7 +2,7 @@
 // a range across an Arabic and Latin boundary whose boxes sit where the caret and word selection
 // say; the text tool, line breaks, copy, cut and paste; each typing session one undo step.
 import { expect, test, type Page } from '../support/test.ts'
-import type { DesignInput } from '@razzlr/schema'
+import type { DesignInput } from '@dazbee/schema'
 import { exportHashOf, writeOutput } from '../support/editor.ts'
 import { openStage, press, read, selection } from '../support/stage.ts'
 
@@ -28,8 +28,8 @@ const design = (): DesignInput => ({
 type Rect = { x: number; y: number; width: number; height: number }
 const textRuns = async (page: Page, id: string) => ((await read(page)).nodes[id]?.props as { runs: unknown[] }).runs
 const textOf = async (page: Page, id: string) => ((await read(page)).nodes[id]?.props as { text: string }).text
-const drawn = (page: Page) => page.evaluate(() => window.razzlr?.drawn())
-const at = (page: Page, x: number, y: number) => page.evaluate(({ x, y }) => window.razzlr?.screenPoint(x, y), { x, y }) as Promise<{ x: number; y: number }>
+const drawn = (page: Page) => page.evaluate(() => window.dazbee?.drawn())
+const at = (page: Page, x: number, y: number) => page.evaluate(({ x, y }) => window.dazbee?.screenPoint(x, y), { x, y }) as Promise<{ x: number; y: number }>
 const boxes = async (page: Page) => (await page.locator('.text-selection').evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON() as Rect)))
   .sort((a, b) => a.x - b.x)
 const caretX = async (page: Page) => {

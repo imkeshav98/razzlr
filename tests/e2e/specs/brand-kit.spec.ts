@@ -3,7 +3,7 @@
 // colour opens in the new one, and one undo lets the layer go of the brand again. The flyout opens
 // as a picker: its colour tiles and font rows apply the kit, and the Page card shows the colours.
 import { expect, test, type Page } from '../support/test.ts'
-import { BrandKit, EMPTY_BRAND_KIT, type DesignInput } from '@razzlr/schema'
+import { BrandKit, EMPTY_BRAND_KIT, type DesignInput } from '@dazbee/schema'
 import { editorPath, writeOutput } from '../support/editor.ts'
 import { API_URL, DEV_BRAND, seed } from '../support/seed.ts'
 import { openStage, read } from '../support/stage.ts'
@@ -27,7 +27,7 @@ const design = (bindings?: Record<string, string>): DesignInput => ({
 const kitNow = async () => BrandKit.parse(await (await fetch(`${API_URL}/brands/${DEV_BRAND}/kit`)).json())
 /** The colour the export render draws in the middle of the box. */
 const boxColor = (page: Page) => page.evaluate(() => {
-  const pixels = window.razzlr?.exportPixels()
+  const pixels = window.dazbee?.exportPixels()
   const at = (290 * 1080 + 790) * 4
   return pixels ? [pixels[at], pixels[at + 1], pixels[at + 2]] : null
 })
@@ -66,12 +66,12 @@ test('a layer bound to a brand colour changes when the brand colour does', async
   // Apply it to the box: the box follows brand:colour-1 and stores its value too.
   const apply = row.getByRole('button', { name: 'Apply Harbour red to the selection' })
   await expect(apply).toBeDisabled()
-  await page.evaluate(() => window.razzlr?.select(['box']))
+  await page.evaluate(() => window.dazbee?.select(['box']))
   await apply.click()
   await expect.poll(() => storedFill(page)).toEqual({ bindings: { fill: 'brand:colour-1' }, color: '#E0262BFF' })
   await expect(row.getByRole('button', { name: 'Stop following Harbour red' })).toHaveAttribute('aria-pressed', 'true')
   await expect.poll(() => boxColor(page)).toEqual([224, 38, 43])
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('brand-kit-1-applied.png', await page.screenshot())
 
   // Change the brand colour: the box redraws green, and the design itself is as it was.
@@ -81,12 +81,12 @@ test('a layer bound to a brand colour changes when the brand colour does', async
   await expect.poll(() => boxColor(page)).toEqual([31, 157, 85])
   expect(await read(page)).toEqual(before)
   await expect.poll(async () => (await kitNow()).colors[0]?.value).toBe('#1F9D55FF')
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('brand-kit-2-changed.png', await page.screenshot())
 
   // The export the user downloads is drawn in the new colour too.
   const exported = await page.evaluate(async () => {
-    const file = await window.razzlr?.exportFiles({ pageIds: ['p1'], formatIds: ['sq'], type: 'png' })
+    const file = await window.dazbee?.exportFiles({ pageIds: ['p1'], formatIds: ['sq'], type: 'png' })
     const bitmap = await createImageBitmap(new Blob([new Uint8Array(file?.bytes ?? [])], { type: 'image/png' }))
     const canvas = new OffscreenCanvas(bitmap.width, bitmap.height)
     const context = canvas.getContext('2d')
@@ -96,7 +96,7 @@ test('a layer bound to a brand colour changes when the brand colour does', async
   expect(exported).toEqual([31, 157, 85])
 
   // One undo: the box no longer follows the brand and is navy again.
-  await page.evaluate(() => window.razzlr?.perform('undo'))
+  await page.evaluate(() => window.dazbee?.perform('undo'))
   await expect.poll(() => storedFill(page)).toEqual({ bindings: undefined, color: navy })
   await expect.poll(() => boxColor(page)).toEqual([20, 33, 61])
   expect(errors).toEqual([])
@@ -123,16 +123,16 @@ test('the picker applies a colour tile and a font row, and the Page card shows t
   await expect(picker).toHaveAttribute('data-mode', 'pick')
   const sun = picker.getByRole('button', { name: 'Apply Sun to the selection' })
   await expect(sun).toBeDisabled()
-  await page.evaluate(() => window.razzlr?.select(['box']))
+  await page.evaluate(() => window.dazbee?.select(['box']))
   await sun.click()
   await expect.poll(() => storedFill(page)).toEqual({ bindings: { fill: 'brand:sun' }, color: '#FF8A3DFF' })
   await expect(picker.getByRole('button', { name: 'Stop following Sun' })).toHaveAttribute('aria-pressed', 'true')
   // The font rows need text selected.
   await expect(picker.getByRole('button', { name: 'Apply Body to the selection' })).toBeDisabled()
-  await page.evaluate(() => window.razzlr?.select(['title']))
+  await page.evaluate(() => window.dazbee?.select(['title']))
   await picker.getByRole('button', { name: 'Apply Body to the selection' }).click()
   await expect.poll(async () => ((await read(page)).nodes.title as unknown as { bindings?: Record<string, string> }).bindings).toMatchObject({ fontFamily: 'brand:body' })
-  await page.evaluate(() => window.razzlr?.drawn())
+  await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('brand-kit-3-picker.png', await page.screenshot())
   expect(errors).toEqual([])
 })

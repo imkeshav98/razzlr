@@ -1,5 +1,5 @@
-import { childrenOf } from '@razzlr/doc'
-import { bindProps, type Design, type Layer, type Paint, type Variables } from '@razzlr/schema'
+import { childrenOf } from '@dazbee/doc'
+import { bindProps, type Design, type Layer, type Paint, type Variables } from '@dazbee/schema'
 import { applyLayout, type MeasureText } from './layout.ts'
 
 /** One layer as a scene draws it: its props with the format's overrides applied, and its visible children. */

@@ -9,7 +9,7 @@ import {
   CloudArrowUpIcon, CloudCheckIcon, CloudSlashIcon, CursorIcon, FrameCornersIcon, HandIcon, ImageIcon, ImagesIcon, PaletteIcon, PenNibIcon, ShapesIcon,
   SlidersHorizontalIcon, SparkleIcon, StackIcon, TextTIcon, XIcon, type Icon,
 } from '@phosphor-icons/react'
-import type { ShapeTool } from '@razzlr/editor'
+import type { ShapeTool } from '@dazbee/editor'
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'

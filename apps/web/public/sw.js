@@ -1,7 +1,7 @@
 // Keeps what the editor needs to open without a connection (#37): the editor pages themselves,
 // the app's built scripts and styles, CanvasKit and our fonts, and the images designs use. The
 // design itself lives in IndexedDB (see packages/editor); this only lets the page load to read it.
-const CACHE = 'razzlr-editor-v3'
+const CACHE = 'dazbee-editor-v1'
 
 const EDITOR_PAGE = /^\/brands\/[^/]+\/designs\/[^/]+$/
 const ASSET = /^\/brands\/[^/]+\/assets\/[^/]+$/

@@ -2,7 +2,7 @@
 // with its initials large and faint behind, its latest design's picture, its name and how many
 // designs it has. The last card adds a brand.
 import Link from 'next/link'
-import type { BrandSummary } from '@razzlr/schema'
+import type { BrandSummary } from '@dazbee/schema'
 import { initialsOf } from '../lib/initials.ts'
 import { tileOf } from '../lib/tile.ts'
 

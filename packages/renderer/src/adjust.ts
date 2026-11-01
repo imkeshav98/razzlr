@@ -1,7 +1,7 @@
 // An image fill's adjustments and filter (#48) as one colour matrix: the adjustments in their
 // order, then the filter. Each slider runs -100…100 and 0 leaves the image as it is. The matrix is
 // Skia's: four rows of five, red, green, blue and alpha out, the last column added in 0…1 units.
-import type { ImageAdjust, ImageFilter } from '@razzlr/schema'
+import type { ImageAdjust, ImageFilter } from '@dazbee/schema'
 
 export type ColorMatrix = number[]
 

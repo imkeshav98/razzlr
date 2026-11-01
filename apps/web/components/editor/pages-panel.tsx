@@ -3,8 +3,8 @@
 // The design's pages in the inspector (#39): add, duplicate, rename, reorder and delete them, and
 // bring one into view. Every change is a command, so it is one undo step and reaches the other tabs.
 import { CaretDownIcon, CaretUpIcon, CopyIcon, PlusIcon, TrashIcon } from '@phosphor-icons/react'
-import type { Editor } from '@razzlr/editor'
-import type { Design } from '@razzlr/schema'
+import type { Editor } from '@dazbee/editor'
+import type { Design } from '@dazbee/schema'
 import { useState } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'

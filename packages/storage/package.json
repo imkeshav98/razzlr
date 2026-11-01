@@ -1,5 +1,5 @@
 {
-  "name": "@razzlr/storage",
+  "name": "@dazbee/storage",
   "private": true,
   "type": "module",
   "exports": { ".": "./src/index.ts" },
@@ -12,7 +12,7 @@
     "aws4fetch": "^1.0.20"
   },
   "devDependencies": {
-    "@razzlr/config": "workspace:*",
+    "@dazbee/config": "workspace:*",
     "@types/node": "^22.20.0",
     "eslint": "^9.39.0",
     "typescript": "~5.9.3",
