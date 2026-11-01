@@ -48,7 +48,8 @@ export default async function BrandPage({ params, searchParams }: { params: Prom
     const name = (firstLine.length > 60 ? `${firstLine.slice(0, 59).trimEnd()}…` : firstLine) || untitled
     const formats = form.getAll('format').map(String)
     const design = await createDesign(brandId, name, briefDesign(name, formats, (id) => presetName[id] ?? id))
-    redirect(`/brands/${brandId}/designs/${design.id}`)
+    // It opens on the new design screen: AI drafts (soon), a template, or the blank formats.
+    redirect(`/brands/${brandId}/designs/${design.id}?start=1`)
   }
 
   /** Starts a design from a template (#54): the brand's own copy, with fresh ids. */

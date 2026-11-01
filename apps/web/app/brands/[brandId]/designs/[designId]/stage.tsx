@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { SHAPE_TOOLS, startEditor, type Editor, type ShapeTool, type Tool } from '@dazbee/editor'
-import { fetchSyncToken, renameFromEditor } from './actions.ts'
+import { fetchSyncToken, renameFromEditor, startDesignFromTemplate } from './actions.ts'
 import { EditorShell, type ChromeInsets } from '../../../../../components/editor/shell.tsx'
 import { FocusChip, UndoToast } from '../../../../../components/editor/formats-panel.tsx'
 import { PropertyCards } from '../../../../../components/editor/property-cards.tsx'
@@ -11,6 +11,7 @@ import { ASSET_DRAG_TYPE, AssetLibrary, draggedAsset } from '../../../../../comp
 import { BrandKitPanel } from '../../../../../components/editor/brand-kit-panel.tsx'
 import { ShareMenu } from '../../../../../components/editor/share-menu.tsx'
 import { LayersPanel } from '../../../../../components/editor/layers-panel.tsx'
+import { StartChooser, type StartTemplate } from '../../../../../components/editor/start-chooser.tsx'
 import { BrandKit, brandVariables, FontFamily, type Variables } from '@dazbee/schema'
 import { useValue, valueStore, type ValueStore } from '../../../../../lib/value-store.ts'
 
@@ -82,7 +83,7 @@ function StageZoom({ editor, store }: { editor: Editor | null; store: ValueStore
   )
 }
 
-export function EditorStage({ designId, designName, brandId, brandName, everyBrand, formatId, syncUrl, account }: {
+export function EditorStage({ designId, designName, brandId, brandName, everyBrand, formatId, start, syncUrl, account }: {
   designId: string
   designName: string
   brandId: string
@@ -90,6 +91,8 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
   /** How the workspace says "every brand", for a template's scope (#54). */
   everyBrand: string
   formatId: string | undefined
+  /** For a design just made from the brief, the templates its new design screen offers; null otherwise. */
+  start: StartTemplate[] | null
   syncUrl: string
   /** The account avatar and its menu, at the top end after Share. */
   account?: ReactNode
@@ -119,6 +122,14 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
   }, [editor])
   const dockTool = tool === 'hand' || tool === 'select' || tool === 'pen' || tool === 'text' ? tool : 'shape'
   const dismissRemoved = useCallback(() => setRemoved(null), [])
+  // The new design screen shows once: closing it takes ?start out of the address, so a reload opens the editor.
+  const [starting, setStarting] = useState(start !== null)
+  const closeStart = useCallback(() => {
+    setStarting(false)
+    const url = new URL(window.location.href)
+    url.searchParams.delete('start')
+    window.history.replaceState(window.history.state, '', url)
+  }, [])
 
   // The stage's edges the capsule, cards and dock cover (#83): the editor fits the ads between
   // them. The first time they are known the design is fitted again, since it opened fitted to the
@@ -229,6 +240,15 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
           {editor && removed && <UndoToast key={removed} editor={editor} message={removed} onDone={dismissRemoved} />}
         </div>
       </div>
+      {editor && starting && start && (
+        <StartChooser
+          editor={editor}
+          brandId={brandId}
+          templates={start}
+          onClose={closeStart}
+          onTemplate={(templateId) => startDesignFromTemplate(brandId, designId, templateId)}
+        />
+      )}
       <StageZoom editor={editor} store={zoom} />
     </EditorShell>
   )

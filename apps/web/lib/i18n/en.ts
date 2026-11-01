@@ -367,6 +367,23 @@ export const en = {
     },
     share: { open: 'Share', title: 'Share and export', exportHint: 'PNG or JPG, any page and format', templateHint: 'For {brand} or {all}' },
     view: { title: 'View', snap: 'Snap', rulers: 'Rulers', rulersKey: 'Shift+R' },
+    /** The new design screen (the final mock's "How do you want to start?"). */
+    start: {
+      title: 'How do you want to start?',
+      describe: 'Describe it',
+      describeBody: 'AI drafts four options in the brand.',
+      soon: 'Soon',
+      template: 'Template',
+      templateBody: 'Ready layouts made for this brand.',
+      noTemplates: 'No templates yet. Save a design as a template from Share.',
+      blank: 'Blank sizes',
+      blankBody: 'Start on the empty formats you picked.',
+      recent: 'Or pick up a recent template',
+      templatesTitle: 'Pick a template',
+      use: 'Start from {name}',
+      skip: 'Skip',
+      back: 'Back',
+    },
     shortcuts: {
       title: 'Keyboard shortcuts',
       open: 'Keyboard shortcuts',
