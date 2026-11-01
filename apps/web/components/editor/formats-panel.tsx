@@ -19,12 +19,8 @@ import { Button } from '../ui/button.tsx'
 import { overlayScroll } from '../ui/overlay-scroll.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { CARD, CardHeader } from './card.tsx'
+import { ICON_BUTTON, POPOVER } from './styles.ts'
 import { useLiveDesign } from './use-live-design.ts'
-
-/** A small pill button, as the mock's chips under a list. */
-export const CHIP = 'inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border border-line px-3 text-xs font-semibold text-muted transition-colors duration-[var(--chrome-fast)] hover:border-line-strong hover:text-text disabled:pointer-events-none disabled:opacity-40'
-
-export const ICON_BUTTON = 'grid size-7 shrink-0 cursor-pointer place-items-center rounded-row text-subtle transition-colors duration-[var(--chrome-fast)] hover:bg-hover hover:text-text disabled:pointer-events-none disabled:opacity-30'
 
 /** The design as the editor holds it, kept current: every redraw hands over the latest one. */
 export function useEditorDesign(editor: Editor) {
@@ -234,7 +230,7 @@ function AddFormat({ editor }: { editor: Editor }) {
           sideOffset={12}
           aria-label={t.editor.formats.add}
           onKeyDown={(e) => e.stopPropagation()}
-          className="z-50 flex max-h-[min(560px,var(--radix-popover-content-available-height))] w-72 flex-col overflow-hidden rounded-card surface-frost border shadow-panel pop-in"
+          className={cn(POPOVER, 'flex max-h-[min(560px,var(--radix-popover-content-available-height))] w-72 flex-col overflow-hidden')}
         >
           <div ref={overlayScroll} className="min-h-0 flex-1 overflow-y-auto py-1" role="group" aria-label={t.editor.formats.presets}>
             {FORMAT_SHAPES.map((shape) => {

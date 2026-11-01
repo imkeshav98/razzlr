@@ -21,7 +21,8 @@ import { BrandMark } from '../brand-mark.tsx'
 import { useOverlayScroll } from '../ui/overlay-scroll.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { ImageTool } from './image-tool.tsx'
-import { DOCK_BUTTON, dockColours, ShapeTools } from './shape-menu.tsx'
+import { ShapeTools } from './shape-menu.tsx'
+import { dockTool } from './styles.ts'
 
 export type Panel = 'layers' | 'assets' | 'ai' | 'brand' | 'properties'
 export type Tool = 'select' | 'frame' | 'shape' | 'text' | 'pen' | 'image' | 'hand'
@@ -455,7 +456,7 @@ export function EditorShell({ brandId, brandName, designName, onRename, status, 
                           setTool(id)
                           onToolChange?.(id, shape)
                         }}
-                        className={cn(DOCK_BUTTON, 'w-10', dockColours(on))}
+                        className={dockTool(on)}
                       >
                         <ToolIcon size={20} weight={on ? 'fill' : 'regular'} aria-hidden />
                       </button>

@@ -21,7 +21,7 @@ import { hitTest, type Point } from './hit-test.ts'
 import { align, distribute, type Alignment, type Distribution, type Offset } from './arrange.ts'
 import { coverCrop, cornersOfRect, cropOf, imageRect, panned, scaled } from './crop.ts'
 import { exportClient } from './export-client.ts'
-import { clickedBox, drawnBox, imageIn, isDrawTool, newDrawn, newImage, newText, type DrawTool, type ShapeTool } from './draw-tools.ts'
+import { clickedBox, drawnBox, imageIn, isDrawTool, newDrawn, newImage, newText, withImage, type DrawTool, type ShapeTool } from './draw-tools.ts'
 import {
   anchorOf, constrain, deleteAnchors, formatPath, hitPath, isSmooth, moveAnchors, moveControl, offsetPath, parsePath, pathBounds, sameRef, segmentsOf, splitSegment,
   type Anchor, type AnchorRef, type PenPath, type Side,
@@ -135,11 +135,13 @@ function runQuietly(run: () => unknown) {
 }
 
 
-/** An image fill with its crop taken off: it shows the image as its fit places it. */
-function withoutCrop(fill: Extract<Paint, { type: 'image' }>) {
-  const rest = { ...fill }
-  delete rest.crop
-  return rest
+/**
+ * Whether two fill lists have the same topmost solid fill: the one a brand colour binding colours,
+ * so a change that leaves it be (an image added or swapped) keeps the binding.
+ */
+function sameTopSolid(a: unknown, b: unknown) {
+  const top = (fills: unknown) => (Array.isArray(fills) ? (fills as Paint[]).findLast((f) => f.type === 'solid') : undefined)
+  return JSON.stringify(top(a)) === JSON.stringify(top(b))
 }
 
 /** The page a layer is on. */
@@ -2716,7 +2718,7 @@ function live(
           const style = patch.style as { color?: string; fontFamily?: string } | undefined
           const was = at.style as { color?: string; fontFamily?: string } | undefined
           const unbind: BindingTarget[] = [
-            ...(node?.bindings?.fill && 'fills' in patch ? ['fill' as const] : []),
+            ...(node?.bindings?.fill && 'fills' in patch && !sameTopSolid(patch.fills, at.fills) ? ['fill' as const] : []),
             ...(node?.bindings?.textColor && style && style.color !== was?.color ? ['textColor' as const] : []),
             ...(node?.bindings?.fontFamily && style && style.fontFamily !== was?.fontFamily ? ['fontFamily' as const] : []),
           ]
@@ -2949,26 +2951,25 @@ function live(
     /**
      * Puts an image into a layer as its fill, in every format, as one undo step: in place of its
      * topmost image fill (keeping its fit, adjustments and filter, the crop reset), or on top of its
-     * fills when it has none. The layer is selected. False when it can't take one.
+     * fills when it has none. A format with fills of its own gets the image in them too, keeping its
+     * colours; a fill bound to a brand colour stays bound. The layer is selected. False when it
+     * can't take one, such as a layer whose style is locked.
      */
     fillWithImage(id: string, asset: PlacedAsset): boolean {
       const now = session.design()
       const node = now.nodes[id]
-      if (!node || !('fills' in node.props)) return false
+      if (!node || !('fills' in node.props) || node.lock?.style) return false
       const fills = node.props.fills as Paint[]
-      const at = fills.findLastIndex((f) => f.type === 'image')
-      const was = fills[at]
-      const next: Paint[] = was?.type === 'image'
-        ? fills.map((f, i) => (i === at && f.type === 'image' ? { ...withoutCrop(f), assetId: asset.id } : f))
-        : [...fills, { type: 'image', assetId: asset.id, fit: 'fill', opacity: 1 }]
-      const frame = frameOf(dropTarget?.id === id ? dropTarget.frame : selection?.frame) ?? grid.frames.find((f) => f.pageId === pageOf(now, id))
+      const page = pageOf(now, id)
+      const near = [dropTarget?.id === id ? dropTarget.frame : undefined, selection?.frame].map(frameOf).find((f) => f?.pageId === page)
+      const frame = near ?? frameOf(`${page}/${now.meta.primaryFormatId}`)
       dropTarget = null
       stopEditing()
       const ok = runQuietly(() => session.gesture(() => {
-        if (node.bindings?.fill) session.run('node.bind', { ids: [id], target: 'fill', ref: null })
-        session.run('node.update', { ids: [id], patch: { fills: next } })
-        for (const [scope, byNode] of Object.entries(session.design().overrides)) {
-          if (byNode[id] && 'fills' in byNode[id]) session.run('override.reset', { ids: [id], scope: scope as `format:${string}`, paths: ['fills'] })
+        session.run('node.update', { ids: [id], patch: { fills: withImage(fills, asset.id) } })
+        for (const [scope, byNode] of Object.entries(now.overrides)) {
+          const own = byNode[id]?.fills as Paint[] | undefined
+          if (own) session.run('node.update', { ids: [id], scope: scope as `format:${string}`, patch: { fills: withImage(own, asset.id) } })
         }
       }))
       if (ok && frame) select([id], frame.key)

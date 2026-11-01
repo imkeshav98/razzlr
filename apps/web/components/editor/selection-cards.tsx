@@ -7,15 +7,15 @@
 // arrow keys move each from its own. With more than one format the changes go to every format or to
 // this one only. Each change is one undo step, and a scrub or a slider drag, however long, is one too.
 import { ArrowsClockwiseIcon, CaretRightIcon, ImageSquareIcon, MinusIcon, PlusIcon, XIcon } from '@phosphor-icons/react'
-import type { Editor } from '@dazbee/editor'
+import { withImage, type Editor } from '@dazbee/editor'
 import { BlendMode, brandRef, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@dazbee/schema'
 import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format, type Messages } from '../../lib/i18n/index.ts'
 import { Select } from '../ui/select.tsx'
-import { CARD, CardHeader, DASHED_BUTTON, FineTune, FOCUS_RING, PICKED_RING, SWATCHES } from './card.tsx'
-import { CHIP, ICON_BUTTON } from './formats-panel.tsx'
+import { CARD, CardHeader, FineTune, PICKED_RING, SWATCHES } from './card.tsx'
+import { CHIP, DASHED_BUTTON, FOCUS_RING, ICON_BUTTON } from './styles.ts'
 import { ImagePickerButton } from './image-tool.tsx'
 import { useBrandKit } from './use-brand-kit.ts'
 import { useLiveDesign } from './use-live-design.ts'
@@ -872,15 +872,7 @@ function ImageCard({ target, p, brandId, index, paint }: { target: Target; p: P;
           title={p.replaceImageTitle}
           testId="replace-image"
           className={cn(CHIP, FOCUS_RING, 'shrink-0')}
-          onPick={(asset) => set(target, (now) => {
-            const fills = (now.fills ?? []) as Paint[]
-            const at = fills[index]
-            if (at?.type !== 'image') return null
-            // The new picture keeps the fit, adjustments and filter; the old crop doesn't fit it.
-            const kept = { ...at, assetId: asset.id }
-            delete kept.crop
-            return { fills: fills.map((f, i) => (i === index ? kept : f)) }
-          })}
+          onPick={(asset) => set(target, (now) => ({ fills: withImage((now.fills ?? []) as Paint[], asset.id) }))}
         >
           <ArrowsClockwiseIcon size={12} aria-hidden />
           <span aria-hidden>{p.replaceImage}</span>
@@ -1190,19 +1182,21 @@ function FillLook({ target, brandId, p }: { target: Target; brandId: string; p: 
     const color = `${hex}FF`
     return { fills: i < 0 ? [...fills, { type: 'solid', color }] : fills.map((f, j) => (j === i ? { type: 'solid' as const, color } : f)) }
   })
+  // A picture goes into layers that have none; one that has a picture changes it from the Image card.
+  const pictureless = target.props.every((pr) => !((pr.fills ?? []) as Paint[]).some((f) => f.type === 'image'))
   return (
     <div className="flex flex-col gap-3">
       <Swatches target={target} brandId={brandId} p={p} current={current} paint={paint} />
-      <ImagePickerButton
+      {pictureless && <ImagePickerButton
         brandId={brandId}
         title={p.addImageTitle}
         testId="add-image"
         className={DASHED_BUTTON}
-        onPick={(asset) => set(target, (now) => ({ fills: [...((now.fills ?? []) as Paint[]), { type: 'image', assetId: asset.id, fit: 'fill', opacity: 1 }] }))}
+        onPick={(asset) => set(target, (now) => ({ fills: withImage((now.fills ?? []) as Paint[], asset.id) }))}
       >
         <ImageSquareIcon size={14} aria-hidden />
         <span aria-hidden>{p.addImage}</span>
-      </ImagePickerButton>
+      </ImagePickerButton>}
     </div>
   )
 }
@@ -1361,9 +1355,9 @@ export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Edit
     const parent = design.nodes[design.nodes[id]?.parentId ?? '']
     return parent?.type === 'frame' && parent.props.layout !== undefined
   })
-  // The first image fill, when every selected layer has the same fills.
+  // The topmost image fill, the one showing, when every selected layer has the same fills.
   const fills = shared(target.props.map((pr) => (pr.fills ?? []) as Paint[]))
-  const imageIndex = fills === 'mixed' ? -1 : fills.findIndex((f) => f.type === 'image')
+  const imageIndex = fills === 'mixed' ? -1 : fills.findLastIndex((f) => f.type === 'image')
   const imageFill = fills !== 'mixed' && imageIndex >= 0 ? { index: imageIndex, paint: fills[imageIndex] as ImageFill } : null
   const ownShape = shapeKinds.size === 1 && (shapeKind === 'rect' || shapeKind === 'polygon' || shapeKind === 'star' || shapeKind === 'line') ? shapeKind : null
   return (

@@ -15,8 +15,7 @@ import { dirOf, format } from '../../lib/i18n/index.ts'
 import { ASSET_ACCEPT, sendAsset } from '../../lib/upload-asset.ts'
 import { overlayScroll } from '../ui/overlay-scroll.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
-import { ASSET_TILE, DASHED_BUTTON, FOCUS_RING, POPOVER } from './card.tsx'
-import { DOCK_BUTTON, dockColours } from './shape-menu.tsx'
+import { ASSET_TILE, DASHED_BUTTON, dockTool, FOCUS_RING, POPOVER } from './styles.ts'
 
 const base = (brandId: string) => `/brands/${encodeURIComponent(brandId)}/assets`
 
@@ -33,6 +32,9 @@ function ImagePickerPanel({ brandId, open, title, hint, onPick }: { brandId: str
   const showing = useRef(open)
   useEffect(() => {
     showing.current = open
+    return () => {
+      showing.current = false
+    }
   }, [open])
 
   useEffect(() => {
@@ -143,7 +145,7 @@ export function ImageTool({ brandId, active, open, onPress, onPick, onClose }: {
             aria-label={label}
             aria-pressed={active}
             data-tool="image"
-            className={cn(DOCK_BUTTON, 'w-10', dockColours(active))}
+            className={dockTool(active)}
           >
             <ImageIcon size={20} weight={active ? 'fill' : 'regular'} aria-hidden />
           </button>

@@ -12,7 +12,7 @@ import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { ASSET_ACCEPT, sendAsset } from '../../lib/upload-asset.ts'
 import { Select } from '../ui/select.tsx'
-import { DASHED_BUTTON } from './card.tsx'
+import { DASHED_BUTTON } from './styles.ts'
 import { useFontCatalog } from './font-panel.tsx'
 import { saveKit, showKit } from './use-brand-kit.ts'
 

@@ -13,7 +13,7 @@ import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { ASSET_ACCEPT as ACCEPT, sendAsset as send } from '../../lib/upload-asset.ts'
 import { overlayScroll } from '../ui/overlay-scroll.ts'
-import { ASSET_TILE, DASHED_BUTTON } from './card.tsx'
+import { ASSET_TILE, DASHED_BUTTON } from './styles.ts'
 
 /** What an asset dragged from the library carries, for the stage to place it. */
 export const ASSET_DRAG_TYPE = 'application/x-dazbee-asset'

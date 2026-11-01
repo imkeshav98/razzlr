@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { expect, test, type Page } from '../support/test.ts'
 import type { DesignInput } from '@dazbee/schema'
 import { photo, upload } from '../support/assets.ts'
-import { screenPoint, writeOutput } from '../support/editor.ts'
+import { placed, screenPoint, writeOutput } from '../support/editor.ts'
 import { click, openStage, press, read, selection } from '../support/stage.ts'
 
 test.describe.configure({ timeout: 120_000 })
@@ -16,17 +16,20 @@ const card = new Uint8Array(readFileSync(join(import.meta.dirname, '..', '..', '
 
 const design = (): DesignInput => ({
   meta: { schemaVersion: 2, designId: 'replaced-by-the-api', name: 'Image into a shape', kind: 'single', primaryFormatId: 'sq' },
-  formats: { sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' } },
+  formats: { sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' }, wide: { name: 'Wide', width: 1920, height: 1080, order: 'a1' } },
   pages: { p1: { name: 'Page 1', order: 'a0', fills: [{ type: 'solid', color: '#FFF8F0FF' }] } },
   nodes: {
     star: { type: 'graphic', parentId: 'p1', index: 'a0', name: 'Star', props: { x: 600, y: 120, width: 420, height: 420, shape: { kind: 'star', points: 5 }, fills: [{ type: 'solid', color: '#FF2E7EFF' }] } },
     box: { type: 'graphic', parentId: 'p1', index: 'a1', name: 'Box', props: { x: 640, y: 640, width: 320, height: 240, shape: { kind: 'rect', cornerRadius: 24 }, fills: [{ type: 'solid', color: '#2F6BFFFF' }] } },
   },
-  overrides: {},
+  // The wide format paints the star green: it keeps its own colour when an image goes in.
+  overrides: { 'format:wide': { star: { fills: [{ type: 'solid', color: '#00A88AFF' }] } } },
 })
 
 type Fill = { type: string; assetId?: string; fit?: string; filter?: string; crop?: unknown }
-const fillsOf = async (page: Page, id: string) => ((await read(page)).nodes[id]?.props.fills ?? []) as Fill[]
+/** A layer's fills as the square shows them: the base with the square's own, which the cards write. */
+const fillsOf = async (page: Page, id: string) => (placed(await read(page), id, 'sq').fills ?? []) as Fill[]
+const wideFillsOf = async (page: Page, id: string) => ((await read(page)).overrides['format:wide']?.[id]?.fills ?? []) as Fill[]
 const undo = async (page: Page) => {
   await press(page, 'undo')
   await page.evaluate(() => window.dazbee?.drawn())
@@ -50,8 +53,9 @@ async function dragTile(page: Page, assetId: string, to: { x: number; y: number 
   await page.evaluate(() => window.dazbee?.drawn())
 }
 
-test('an image dragged onto a star goes into it; on empty space it makes a new layer; one undo step each', async ({ browser }) => {
+test('an image dragged onto a star goes into it, the Image card replaces it, and on empty space it makes a new layer; one undo step each', async ({ browser }) => {
   const sneaker = await upload(photo)
+  const other = await upload(card)
   const { page, errors } = await openStage(browser, design())
   await page.locator('[data-panel="assets"]').click()
   await expect(page.locator(`[data-testid="asset-library"] li[data-asset="${sneaker.id}"]`)).toBeVisible({ timeout: 30_000 })
@@ -60,12 +64,26 @@ test('an image dragged onto a star goes into it; on empty space it makes a new l
   // Over the star it lights up; dropped, the photo is the star's fill on top of its pink.
   await dragTile(page, sneaker.id, { x: 810, y: 330 }, 'into-shape-1-over-star.png')
   expect(await fillsOf(page, 'star')).toEqual([{ type: 'solid', color: '#FF2E7EFF' }, { type: 'image', assetId: sneaker.id, fit: 'fill', opacity: 1 }])
+  // In the wide format the photo goes over its own green.
+  expect(await wideFillsOf(page, 'star')).toEqual([{ type: 'solid', color: '#00A88AFF' }, { type: 'image', assetId: sneaker.id, fit: 'fill', opacity: 1 }])
   expect(Object.keys((await read(page)).nodes)).toHaveLength(layers)
   expect(await selection(page)).toEqual(['star'])
   await expect(page.locator('.stage-overlay .drop-target')).toHaveCount(0)
   writeOutput('into-shape-2-star-photo.png', await page.screenshot({ animations: 'disabled' }))
+
+  // Replace from the Image card: the other picture, in the star the drag filled.
+  await page.getByTestId('image-card').getByTestId('replace-image').click()
+  const picker = page.getByTestId('replace-image-picker')
+  await expect(picker.locator(`li[data-asset="${other.id}"]`)).toBeVisible({ timeout: 30_000 })
+  await picker.locator(`li[data-asset="${other.id}"] button`).click()
+  await page.evaluate(() => window.dazbee?.drawn())
+  expect((await fillsOf(page, 'star')).at(-1)).toMatchObject({ type: 'image', assetId: other.id })
+  // Each is one undo step: the first photo, then the star's own pink.
+  await undo(page)
+  expect((await fillsOf(page, 'star')).at(-1)).toMatchObject({ type: 'image', assetId: sneaker.id })
   await undo(page)
   expect(await fillsOf(page, 'star')).toEqual([{ type: 'solid', color: '#FF2E7EFF' }])
+  expect(await wideFillsOf(page, 'star')).toEqual([{ type: 'solid', color: '#00A88AFF' }])
 
   // On empty space, a new layer as before.
   await dragTile(page, sneaker.id, { x: 800, y: 980 })

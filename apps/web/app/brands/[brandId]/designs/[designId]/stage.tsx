@@ -241,8 +241,7 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
           if (!asset) return
           e.preventDefault()
           const into = editor.imageTarget({ x: e.clientX, y: e.clientY })
-          if (into) editor.fillWithImage(into, asset)
-          else editor.placeImage(asset, { x: e.clientX, y: e.clientY })
+          if (!into || !editor.fillWithImage(into, asset)) editor.placeImage(asset, { x: e.clientX, y: e.clientY })
           editor.imageTarget(null)
         }}
       >

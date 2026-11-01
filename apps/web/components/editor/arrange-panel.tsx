@@ -16,7 +16,8 @@ import { format } from '../../lib/i18n/index.ts'
 import { cn } from '../../lib/cn.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { CARD, CardHeader } from './card.tsx'
-import { CHIP, ICON_BUTTON, useEditorDesign } from './formats-panel.tsx'
+import { useEditorDesign } from './formats-panel.tsx'
+import { CHIP, ICON_BUTTON } from './styles.ts'
 
 type Action = Extract<ShortcutAction, `align${string}` | `distribute${string}` | `boolean${string}` | 'group' | 'frameSelection' | 'ungroup' | 'duplicate' | 'mask' | 'bringToFront' | 'bringForward' | 'sendBackward' | 'sendToBack'>
 const ALIGN: { action: Action; icon: Icon }[] = [

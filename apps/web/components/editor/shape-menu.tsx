@@ -12,7 +12,7 @@ import { useRef, useState, type KeyboardEvent } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
-import { FOCUS_RING, POPOVER } from './card.tsx'
+import { DOCK_BUTTON, DOCK_OFF, DOCK_ON, POPOVER } from './styles.ts'
 
 export const SHAPES: { id: ShapeTool; icon: Icon; key?: string }[] = [
   { id: 'rect', icon: RectangleIcon, key: 'R' },
@@ -23,9 +23,6 @@ export const SHAPES: { id: ShapeTool; icon: Icon; key?: string }[] = [
   { id: 'arrow', icon: ArrowUpRightIcon, key: 'Shift+L' },
 ]
 
-/** A tool dock button's shape, and its colours in use or not. */
-export const DOCK_BUTTON = `grid h-10 cursor-pointer place-items-center rounded-[12px] transition-colors duration-[var(--chrome-fast)] ${FOCUS_RING}`
-export const dockColours = (on: boolean) => (on ? 'bg-accent-solid text-on-accent' : 'text-muted hover:bg-hover hover:text-text')
 
 export function ShapeTools({ active, shape, onPick }: { active: boolean; shape: ShapeTool; onPick: (shape: ShapeTool) => void }) {
   const t = useMessages()
@@ -44,7 +41,7 @@ export function ShapeTools({ active, shape, onPick }: { active: boolean; shape: 
   }
 
   return (
-    <div role="group" aria-label={t.editor.shapes.menu} className={cn('flex items-center rounded-[12px] transition-colors duration-[var(--chrome-fast)]', active && 'bg-accent-solid text-on-accent')}>
+    <div role="group" aria-label={t.editor.shapes.menu} className={cn('flex items-center rounded-[12px] transition-colors duration-[var(--chrome-fast)]', active && DOCK_ON)}>
       <Tooltip label={current.key ? `${label} · ${current.key}` : label}>
         <button
           type="button"
@@ -53,7 +50,7 @@ export function ShapeTools({ active, shape, onPick }: { active: boolean; shape: 
           data-tool="shape"
           data-shape={current.id}
           onClick={() => onPick(current.id)}
-          className={cn(DOCK_BUTTON, 'w-9 ps-0.5', active ? 'text-on-accent' : 'text-muted hover:bg-hover hover:text-text')}
+          className={cn(DOCK_BUTTON, 'w-9 ps-0.5', active ? 'text-on-accent' : DOCK_OFF)}
         >
           <current.icon size={20} weight={active ? 'fill' : 'regular'} aria-hidden />
         </button>

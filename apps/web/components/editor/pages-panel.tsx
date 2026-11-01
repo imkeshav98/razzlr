@@ -11,7 +11,8 @@ import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { Tooltip } from '../ui/tooltip.tsx'
 import { CARD, CardHeader } from './card.tsx'
-import { CHIP, ICON_BUTTON, useEditorDesign } from './formats-panel.tsx'
+import { useEditorDesign } from './formats-panel.tsx'
+import { CHIP, ICON_BUTTON } from './styles.ts'
 
 const ordered = (design: Design) =>
   Object.entries(design.pages).sort(([a, x], [b, y]) => (x.order < y.order ? -1 : x.order > y.order ? 1 : a < b ? -1 : 1))
