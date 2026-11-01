@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
+import { overlayScroll } from '../ui/overlay-scroll.ts'
 import { Select } from '../ui/select.tsx'
 import { FontPreview, useFontCatalog } from './font-panel.tsx'
 import { useEditorDesign } from './formats-panel.tsx'
@@ -125,7 +126,7 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
   if (!editing) {
     const logo = kit.logoAssetId ? `/brands/${encodeURIComponent(brandId)}/assets/${encodeURIComponent(kit.logoAssetId)}/thumbnail` : null
     return (
-      <div data-testid="brand-kit" data-mode="pick" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div ref={overlayScroll} data-testid="brand-kit" data-mode="pick" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="flex items-start gap-3 px-[18px] pb-3">
           <p className="min-w-0 flex-1 text-xs leading-snug text-muted">{t.pickHint}</p>
           <button type="button" onClick={() => setEditing(true)} className={modeButton}>
@@ -221,7 +222,7 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
   }
 
   return (
-    <div data-testid="brand-kit" data-mode="edit" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+    <div ref={overlayScroll} data-testid="brand-kit" data-mode="edit" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
       <div className="flex items-start gap-3 px-[18px] pb-3">
         <p className="min-w-0 flex-1 text-xs leading-snug text-muted">{t.applyHint}</p>
         <button type="button" onClick={() => setEditing(false)} className={modeButton}>

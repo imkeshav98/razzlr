@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { shapeOf, type DesignSummary } from '@razzlr/schema'
 import { cn } from '../lib/cn.ts'
 import { tileOf } from '../lib/tile.ts'
+import { TileMenu } from './tile-menu.tsx'
 import { format, type Messages } from '../lib/i18n/index.ts'
 
 export interface BentoDesign extends DesignSummary {
@@ -36,7 +37,16 @@ export const BENTO_GRID = 'grid grid-flow-dense auto-rows-[calc((100cqw-0.75rem)
 export const TILE = 'lift group relative block size-full overflow-hidden rounded-[16px] bg-raised shadow-panel focus-visible:outline-offset-4'
 export const TILE_SHADE = 'absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-3 pt-6 pb-2 text-start text-white'
 
-export function DesignBento({ t, locale, brandId, designs, eager = true }: {
+/** What a tile's menu does to a design (#159), as server actions. */
+export interface DesignActions {
+  rename: (designId: string, form: FormData) => Promise<void>
+  duplicate: (designId: string) => Promise<void>
+  remove: (designId: string) => Promise<void>
+}
+
+export function DesignBento({ t, locale, brandId, designs, eager = true, actions }: {
+  /** Rename, Duplicate and Delete on each tile; left out, the tiles have no menu. */
+  actions?: DesignActions
   t: Messages
   locale: string
   brandId: string
@@ -53,7 +63,7 @@ export function DesignBento({ t, locale, brandId, designs, eager = true }: {
       {designs.map((design, i) => {
         const span = spanOf(design, i)
         return (
-          <li key={design.id} data-span={span} data-testid="bento-tile" className={cn('rise min-w-0', SPAN[span])} style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
+          <li key={design.id} data-design={design.id} data-span={span} data-testid="bento-tile" className={cn('rise group/tile relative min-w-0', SPAN[span])} style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
             <Link
               href={`/brands/${brandId}/designs/${design.id}`}
               // Not prefetched: up to 24 editor pages, each a design read, for the one that gets opened.
@@ -84,6 +94,14 @@ export function DesignBento({ t, locale, brandId, designs, eager = true }: {
                 <span className={cn('block truncate font-medium', span === 'large' ? 'text-sm' : 'text-[13px]')}>{design.name}</span>
               </span>
             </Link>
+            {actions && (
+              <TileMenu
+                name={design.name}
+                rename={actions.rename.bind(null, design.id)}
+                duplicate={actions.duplicate.bind(null, design.id)}
+                remove={actions.remove.bind(null, design.id)}
+              />
+            )}
           </li>
         )
       })}

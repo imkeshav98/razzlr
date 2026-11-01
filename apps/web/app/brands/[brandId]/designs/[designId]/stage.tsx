@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { SHAPE_TOOLS, startEditor, type Editor, type ShapeTool, type Tool } from '@razzlr/editor'
-import { fetchSyncToken } from './actions.ts'
+import { fetchSyncToken, renameFromEditor } from './actions.ts'
 import { EditorShell, type ChromeInsets } from '../../../../../components/editor/shell.tsx'
 import { FocusChip, UndoToast } from '../../../../../components/editor/formats-panel.tsx'
 import { PropertyCards } from '../../../../../components/editor/property-cards.tsx'
@@ -96,6 +96,8 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
 }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const overlay = useRef<HTMLDivElement>(null)
+  // The name as last saved from the crumb, so it shows at once without reloading the page.
+  const [name, setName] = useState(designName)
   // The save state and zoom change on every edit and zoom step; held outside this component's state,
   // they re-render the status and the zoom pill alone, not the whole editor.
   const [status] = useState(() => valueStore('Starting'))
@@ -185,7 +187,8 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
     <EditorShell
       brandId={brandId}
       brandName={brandName}
-      designName={designName}
+      designName={name}
+      onRename={async (next) => setName(await renameFromEditor(brandId, designId, next))}
       status={status}
       tool={dockTool}
       shape={shape}
@@ -195,7 +198,7 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
       }}
       onInsets={onInsets}
       fitted={editor !== null && fittedTo === editor}
-      actions={editor ? <ShareMenu editor={editor} brandId={brandId} brandName={brandName} designName={designName} everyBrand={everyBrand} /> : undefined}
+      actions={editor ? <ShareMenu editor={editor} brandId={brandId} brandName={brandName} designName={name} everyBrand={everyBrand} /> : undefined}
       account={account}
       panels={editor ? { layers: <LayersPanel editor={editor} />, assets: <AssetLibrary editor={editor} brandId={brandId} />, brand: <BrandKitPanel editor={editor} brandId={brandId} /> } : {}}
       inspector={editor ? <PropertyCards editor={editor} brandId={brandId} onRemoved={setRemoved} /> : undefined}

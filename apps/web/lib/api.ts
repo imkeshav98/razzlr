@@ -3,7 +3,7 @@ import 'server-only'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignCover, DesignSummary, DesignThumbnail, FontFace, FontFamily, FontLink, FontUploadTicket, SignedIn, SignedLink, SignedOut, SignInLink, SyncToken, TemplateSummary, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type SaveTemplate, type UpdateAsset, type UpdateWorkspace } from '@razzlr/schema'
-import type { z } from 'zod'
+import { z } from 'zod'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8787'
 
@@ -33,7 +33,7 @@ async function call<T extends z.ZodType>(schema: T, path: string, init?: { metho
     ...(init ? { method: init.method, ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }) } : {}),
   })
   if (response.status === 401 && signIn) redirect('/login')
-  const json: unknown = await response.json()
+  const json: unknown = response.status === 204 ? null : await response.json()
   if (!response.ok) throw new ApiFailure(response.status, ApiError.safeParse(json).data?.error ?? `The API answered ${response.status}`)
   return schema.parse(json)
 }
@@ -62,6 +62,26 @@ export const updateWorkspace = (patch: UpdateWorkspace) => call(WorkspaceSummary
 export const listBrands = () => call(BrandSummary.array(), '/brands')
 
 export const createBrand = (name: string) => call(BrandSummary, '/brands', { method: 'POST', body: { name } })
+
+/** Renames a design (#159). */
+export const renameDesign = (brandId: string, designId: string, name: string) =>
+  call(DesignSummary, `/brands/${encodeURIComponent(brandId)}/designs/${encodeURIComponent(designId)}`, { method: 'PATCH', body: { name } })
+
+/** Copies a design as it is stored now, named after it with "copy" (#159). */
+export const duplicateDesign = (brandId: string, designId: string) =>
+  call(DesignSummary, `/brands/${encodeURIComponent(brandId)}/designs/${encodeURIComponent(designId)}/duplicate`, { method: 'POST', body: {} })
+
+/** Deletes a design for good (#159). */
+export const deleteDesign = (brandId: string, designId: string) =>
+  call(z.null(), `/brands/${encodeURIComponent(brandId)}/designs/${encodeURIComponent(designId)}`, { method: 'DELETE' })
+
+/** Renames a template (#159). */
+export const renameTemplate = (brandId: string, templateId: string, name: string) =>
+  call(TemplateSummary, `/brands/${encodeURIComponent(brandId)}/templates/${encodeURIComponent(templateId)}`, { method: 'PATCH', body: { name } })
+
+/** Deletes a template for good (#159). */
+export const deleteTemplate = (brandId: string, templateId: string) =>
+  call(z.null(), `/brands/${encodeURIComponent(brandId)}/templates/${encodeURIComponent(templateId)}`, { method: 'DELETE' })
 
 export const listDesigns = (brandId: string) => call(DesignSummary.array(), `/brands/${encodeURIComponent(brandId)}/designs`)
 

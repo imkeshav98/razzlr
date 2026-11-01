@@ -8,6 +8,7 @@ import { CaretDownIcon, CheckIcon } from '@phosphor-icons/react'
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '../../lib/cn.ts'
+import { useOverlayScroll } from './overlay-scroll.ts'
 
 export interface SelectOption {
   value: string
@@ -35,6 +36,7 @@ export function Select({ name, label, value, options, onChange, placeholder, dis
   const id = useId()
   const field = useRef<HTMLButtonElement>(null)
   const list = useRef<HTMLUListElement>(null)
+  const listRef = useOverlayScroll(list)
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
   const [place, setPlace] = useState<{ top: number; left: number; width: number; up: boolean } | null>(null)
@@ -102,7 +104,7 @@ export function Select({ name, label, value, options, onChange, placeholder, dis
   // The active option stays in view, scrolling the list alone: scrollIntoView would scroll the page too.
   useEffect(() => {
     const box = list.current
-    const option = open && active >= 0 ? box?.children[active] as HTMLElement | undefined : undefined
+    const option = open && active >= 0 ? box?.querySelectorAll<HTMLElement>('[role="option"]')[active] : undefined
     if (!box || !option) return
     if (option.offsetTop < box.scrollTop) box.scrollTop = option.offsetTop
     else if (option.offsetTop + option.offsetHeight > box.scrollTop + box.clientHeight) box.scrollTop = option.offsetTop + option.offsetHeight - box.clientHeight
@@ -165,7 +167,7 @@ export function Select({ name, label, value, options, onChange, placeholder, dis
       </button>
       {open && createPortal(
         <ul
-          ref={list}
+          ref={listRef}
           id={`${id}-list`}
           role="listbox"
           aria-label={label}

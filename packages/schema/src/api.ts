@@ -268,6 +268,14 @@ export const SaveTemplate = z.object({
 })
 export type SaveTemplate = z.infer<typeof SaveTemplate>
 
+/** A design's or a template's new name. */
+export const Rename = z.object({ name: z.string().trim().min(1).max(120) })
+export type Rename = z.infer<typeof Rename>
+
+/** Copies a design; named after it with "copy" when no name is given. */
+export const DuplicateDesign = z.object({ name: z.string().trim().min(1).max(120).optional() })
+export type DuplicateDesign = z.infer<typeof DuplicateDesign>
+
 /** Starts a design of the brand from a template; named after the template when no name is given. */
 export const StartFromTemplate = z.object({ name: z.string().trim().min(1).max(120).optional() })
 export type StartFromTemplate = z.infer<typeof StartFromTemplate>

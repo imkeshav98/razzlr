@@ -80,7 +80,7 @@ test('the editor has no top bar: two islands float over the canvas and the ads f
 
   // The cards and a flyout start below the end island.
   expect((await box(page, 'cards')).y).toBeGreaterThan(end.y + end.height)
-  await page.getByRole('button', { name: 'Layers' }).click()
+  await page.getByRole('button', { name: 'Layers', exact: true }).click()
   expect((await box(page, 'flyout')).y).toBeGreaterThan(start.y + start.height)
 })
 

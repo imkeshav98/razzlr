@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { cookies } from 'next/headers'
 import type { ReactNode } from 'react'
 import { RenderProbe } from '../components/render-probe.tsx'
+import { PageScroll } from '../components/ui/overlay-scroll.ts'
 import { TooltipProvider } from '../components/ui/tooltip.tsx'
 import { fontVariables } from '../lib/fonts.ts'
 import { I18nProvider } from '../lib/i18n/client.tsx'
@@ -25,6 +26,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <I18nProvider locale={locale}>
           <TooltipProvider>{children}</TooltipProvider>
           <RenderProbe />
+          <PageScroll />
         </I18nProvider>
       </body>
     </html>

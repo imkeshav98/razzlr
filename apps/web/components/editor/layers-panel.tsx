@@ -15,6 +15,7 @@ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import { cn } from '../../lib/cn.ts'
 import { useLocale, useMessages } from '../../lib/i18n/client.tsx'
 import { dirOf, format } from '../../lib/i18n/index.ts'
+import { useOverlayScroll } from '../ui/overlay-scroll.ts'
 import { useFlyoutNote } from './shell.tsx'
 import { useLiveDesign } from './use-live-design.ts'
 
@@ -104,6 +105,7 @@ export function LayersPanel({ editor }: { editor: Editor }) {
 
   // Which rows are in view.
   const scroller = useRef<HTMLDivElement>(null)
+  const scrollerRef = useOverlayScroll(scroller)
   // Kept in rows, not pixels: a scroll that shows no new row renders nothing.
   const [view, setView] = useState({ from: 0, to: Math.ceil(400 / LAYER_ROW) + OVERSCAN })
   const follow = useCallback((el: HTMLElement) => {
@@ -300,7 +302,7 @@ export function LayersPanel({ editor }: { editor: Editor }) {
         ? <p className="p-4 text-[13px] text-muted">{t.editor.layersPanel.empty}</p>
         : (
           <div
-            ref={scroller}
+            ref={scrollerRef}
             onScroll={(event) => follow(event.currentTarget)}
             className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1.5 pb-2"
             data-testid="layers-scroller"
