@@ -490,6 +490,9 @@ importers:
 
   tests/e2e:
     devDependencies:
+      '@hyzyla/pdfium':
+        specifier: 3.0.0
+        version: 3.0.0
       '@playwright/test':
         specifier: 1.63.0
         version: 1.63.0
@@ -511,6 +514,9 @@ importers:
       '@razzlr/fonts':
         specifier: workspace:*
         version: link:../../packages/fonts
+      '@razzlr/pixels':
+        specifier: workspace:*
+        version: link:../pixels
       '@razzlr/renderer':
         specifier: workspace:*
         version: link:../../packages/renderer
