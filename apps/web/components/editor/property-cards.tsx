@@ -6,15 +6,17 @@
 // as in the final mock, what changes how it looks comes first. Several layers show Arrange first. Each card is only as tall as what it
 // holds, and controls are visual first, with numbers behind "Fine-tune".
 import type { Editor } from '@dazbee/editor'
-import type { Design } from '@dazbee/schema'
+import type { Design, Paint } from '@dazbee/schema'
 import { useState } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
+import { format } from '../../lib/i18n/index.ts'
 import { ArrangePanel, useSelection } from './arrange-panel.tsx'
 import { CARD, CardHeader, FineTune, PICKED_RING, SWATCHES } from './card.tsx'
 import { FontPanel } from './font-panel.tsx'
 import { FormatsPanel, useEditorDesign } from './formats-panel.tsx'
 import { PagesPanel } from './pages-panel.tsx'
+import { AddButton, PaintRow, Stack } from './paint-stack.tsx'
 import { SelectionCards } from './selection-cards.tsx'
 import { useBrandKit } from './use-brand-kit.ts'
 import { ViewCard } from './view-card.tsx'
@@ -54,6 +56,9 @@ function PageCard({ editor, brandId, pageId }: { editor: Editor; brandId: string
   const [fine, setFine] = useState(false)
   const current = solidOf(design, pageId)
   const name = design.pages[pageId]?.name ?? ''
+  const fills = design.pages[pageId]?.fills ?? []
+  // Each change runs on the page's fills as the document holds them then.
+  const writeFills = (to: (now: Paint[]) => Paint[]) => editor.session.run('page.update', { id: pageId, fills: to(editor.design().pages[pageId]?.fills ?? []) })
   const paint = (hex: string) => {
     const color = hex.toUpperCase()
     if (/^#[0-9A-F]{6}$/.test(color) && color !== current) editor.session.run('page.update', { id: pageId, fills: [{ type: 'solid', color: `${color}FF` }] })
@@ -74,7 +79,8 @@ function PageCard({ editor, brandId, pageId }: { editor: Editor; brandId: string
       </div>
       <FineTune open={fine} onToggle={() => setFine(!fine)} label={t.editor.page.fineTune} />
       {fine && (
-        <label className="flex items-center gap-2 px-[18px] pb-4 text-xs text-muted">
+        <div className="flex flex-col gap-2.5 px-[18px] pb-4">
+        <label className="flex items-center gap-2 text-xs text-muted">
           {t.editor.page.hex}
           <input
             name="page-colour"
@@ -89,6 +95,22 @@ function PageCard({ editor, brandId, pageId }: { editor: Editor; brandId: string
             className="h-8 min-w-0 flex-1 rounded-row border border-line bg-surface px-2 font-mono text-[13px] text-text uppercase outline-none focus:border-accent"
           />
         </label>
+        {/* The page's background as a stack of paints, as a layer's fill: colours, gradients, images. */}
+        <div className="flex flex-col gap-2 border-t border-line pt-2.5" data-testid="page-fills">
+          <div className="flex items-center justify-between text-xs font-semibold text-muted">
+            {t.editor.page.layers}
+            <AddButton label={t.editor.page.addLayer} onClick={() => writeFills((now) => [...now, now.length === 0 ? { type: 'solid', color: '#FFFFFFFF' } : { type: 'solid', color: '#00000033' }])} />
+          </div>
+          <Stack
+            items={fills}
+            field="fills"
+            topFirst
+            removeLabel={(n) => format(t.editor.props.remove, { name: t.editor.page.layer, n })}
+            onWrite={writeFills}
+            render={(item, n, change) => <PaintRow paint={item} name={format(t.editor.page.layerName, { n })} brandId={brandId} editor={editor} p={t.editor.props} onSet={change} />}
+          />
+        </div>
+        </div>
       )}
     </section>
   )
