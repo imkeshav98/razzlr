@@ -172,7 +172,7 @@ function GradientBar({ paint, picked, onPick, editor, p, onSet }: {
               // In order again, the stop dragged still picked.
               const moved = paint.stops[i]
               const order = sorted(paint.stops)
-              onSet((now) => ({ ...now, stops: sorted(now.stops) }))
+              if (order.some((s, j) => s !== paint.stops[j])) onSet((now) => ({ ...now, stops: sorted(now.stops) }))
               drag.current.end()
               drag.current = null
               if (moved) onPick(order.indexOf(moved))
@@ -203,7 +203,7 @@ function PaintEditor({ paint, brandId, editor, p, onSet }: { paint: Paint; brand
   const pct = (n: number) => tidy(n * 100)
   return (
     <div className="flex flex-col gap-3 p-3" data-testid="paint-editor">
-      <div role="radiogroup" aria-label={p.paintType} className={cn(SEGMENTED, 'self-start')}>
+      <div role="radiogroup" aria-label={p.paintType} className={cn(SEGMENTED, 'justify-between')}>
         {PAINT_TYPES.map((type) => {
           const on = paint.type === type
           const label = type === 'solid' ? p.solid : p.paint[type]
@@ -298,7 +298,7 @@ export function PaintRow({ paint, name, brandId, editor, p, onSet }: { paint: Pa
           </button>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content side={side} align="start" sideOffset={12} collisionPadding={12} aria-label={format(p.editPaint, { name })} onKeyDown={(e) => e.stopPropagation()} className={cn(POPOVER, 'w-72')}>
+          <Popover.Content side={side} align="start" sideOffset={12} collisionPadding={12} aria-label={format(p.editPaint, { name })} onKeyDown={(e) => e.stopPropagation()} className={cn(POPOVER, 'w-80')}>
             <PaintEditor paint={paint} brandId={brandId} editor={editor} p={p} onSet={onSet} />
           </Popover.Content>
         </Popover.Portal>

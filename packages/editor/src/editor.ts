@@ -2077,6 +2077,8 @@ function live(
   /** Keys typed into the page's own fields belong to them. */
   const inField = (target: EventTarget | null) =>
     target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
+  /** Keys pressed in a popover or dialog, such as Escape to close it, are its own, not the stage's. */
+  const inDialog = (target: EventTarget | null) => target instanceof Element && target.closest('[role="dialog"], dialog') !== null
 
   /** Groups fit what they hold again after a change inside them, in the same undo step (#41). */
   function hug(ids: string[]) {
@@ -2371,7 +2373,7 @@ function live(
   }
 
   function onKey(e: KeyboardEvent) {
-    if (inField(e.target)) return
+    if (inField(e.target) || inDialog(e.target)) return
     // The paste event that follows doesn't say whether Shift was down.
     if ((e.metaKey || e.ctrlKey) && e.code === 'KeyV') pasteAtPointer = e.shiftKey
     const action = shortcutFor(e)

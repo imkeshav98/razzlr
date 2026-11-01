@@ -1,0 +1,165 @@
+{
+ "meta": {
+  "schemaVersion": 3,
+  "designId": "fill-stacks",
+  "name": "Fill stacks",
+  "kind": "single",
+  "primaryFormatId": "sq"
+ },
+ "formats": {
+  "sq": {
+   "name": "Square 1:1",
+   "width": 1080,
+   "height": 1080,
+   "order": "a0"
+  }
+ },
+ "pages": {
+  "p1": {
+   "name": "Page 1",
+   "order": "a0",
+   "fills": [
+    {
+     "type": "linear",
+     "from": { "x": 0, "y": 0 },
+     "to": { "x": 1, "y": 1 },
+     "stops": [
+      { "offset": 0, "color": "#FFF2E0FF" },
+      { "offset": 1, "color": "#E8E0FFFF" }
+     ]
+    },
+    {
+     "type": "image",
+     "assetId": "tile",
+     "fit": "tile",
+     "opacity": 0.12
+    },
+    {
+     "type": "solid",
+     "color": "#000000FF",
+     "visible": false
+    }
+   ]
+  }
+ },
+ "nodes": {
+  "photoUnderGradient": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a0",
+   "name": "A photo under a linear gradient at 70%",
+   "props": {
+    "x": 60,
+    "y": 60,
+    "width": 460,
+    "height": 460,
+    "shape": { "kind": "rect", "cornerRadius": 36 },
+    "fills": [
+     { "type": "image", "assetId": "sneaker", "fit": "fill" },
+     {
+      "type": "linear",
+      "from": { "x": 0.5, "y": 0 },
+      "to": { "x": 0.5, "y": 1 },
+      "stops": [
+       { "offset": 0, "color": "#00000000" },
+       { "offset": 0.55, "color": "#FF2E7E59" },
+       { "offset": 1, "color": "#3D1A6BFF" }
+      ],
+      "opacity": 0.7
+     }
+    ]
+   }
+  },
+  "radialOverHidden": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a1",
+   "name": "A radial gradient over a photo, a hidden black on top",
+   "props": {
+    "x": 560,
+    "y": 60,
+    "width": 460,
+    "height": 460,
+    "shape": { "kind": "ellipse" },
+    "fills": [
+     { "type": "image", "assetId": "card-1", "fit": "fill" },
+     {
+      "type": "radial",
+      "center": { "x": 0.35, "y": 0.35 },
+      "radius": 0.7,
+      "stops": [
+       { "offset": 0, "color": "#FFFFFF00" },
+       { "offset": 1, "color": "#1F6BFFE6" }
+      ]
+     },
+     { "type": "solid", "color": "#000000FF", "visible": false }
+    ]
+   }
+  },
+  "seeThroughSolid": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a2",
+   "name": "A star: a photo with a solid at half its own opacity, then an angular at 40%",
+   "props": {
+    "x": 60,
+    "y": 560,
+    "width": 460,
+    "height": 460,
+    "rotation": -6,
+    "shape": { "kind": "star", "points": 6, "innerRadius": 0.55, "cornerRadius": 10 },
+    "fills": [
+     { "type": "image", "assetId": "card-2", "fit": "fill", "opacity": 0.9 },
+     { "type": "solid", "color": "#FFB020FF", "opacity": 0.5 },
+     {
+      "type": "angular",
+      "center": { "x": 0.5, "y": 0.5 },
+      "angle": 30,
+      "stops": [
+       { "offset": 0, "color": "#FF2E7EFF" },
+       { "offset": 0.5, "color": "#2F6BFFFF" },
+       { "offset": 1, "color": "#FF2E7EFF" }
+      ],
+      "opacity": 0.4
+     }
+    ]
+   }
+  },
+  "gradientStrokes": {
+   "type": "graphic",
+   "parentId": "p1",
+   "index": "a3",
+   "name": "Strokes: an angular at 60%, a hidden red, a solid at its own 50% over an image fill hidden",
+   "props": {
+    "x": 610,
+    "y": 610,
+    "width": 360,
+    "height": 360,
+    "shape": { "kind": "rect", "cornerRadius": 60 },
+    "fills": [
+     { "type": "image", "assetId": "card-3", "fit": "fill", "visible": false },
+     { "type": "solid", "color": "#FFFFFFFF" }
+    ],
+    "strokes": [
+     {
+      "paint": {
+       "type": "angular",
+       "center": { "x": 0.5, "y": 0.5 },
+       "angle": 0,
+       "stops": [
+        { "offset": 0, "color": "#00A88AFF" },
+        { "offset": 1, "color": "#9747FFFF" }
+       ],
+       "opacity": 0.6
+      },
+      "width": 36,
+      "align": "inside"
+     },
+     { "paint": { "type": "solid", "color": "#FF0000FF", "visible": false }, "width": 60, "align": "outside" },
+     { "paint": { "type": "solid", "color": "#1F2329FF", "opacity": 0.5 }, "width": 8, "align": "center", "dashes": [24, 12] }
+    ]
+   }
+  }
+ },
+ "overrides": {}
+}

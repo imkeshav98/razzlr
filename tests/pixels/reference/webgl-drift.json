@@ -80,6 +80,15 @@
       "maxDelta": 17
     }
   },
+  "fill-stacks p1.sq": {
+    "differing": 329827,
+    "percent": 28.277,
+    "maxDelta": 44,
+    "limit": {
+      "percent": 35.397,
+      "maxDelta": 60
+    }
+  },
   "groups-and-frames p1.sq": {
     "differing": 5333,
     "percent": 0.457,

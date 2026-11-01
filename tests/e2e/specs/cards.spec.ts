@@ -74,7 +74,7 @@ test('the Page card paints the page, and Fine-tune takes any colour', async ({ p
   await expect(card.getByRole('button', { name: '#FF48B0' })).toHaveAttribute('aria-pressed', 'false')
 
   await card.getByRole('button', { name: 'Fine-tune' }).click()
-  const hex = card.getByRole('textbox', { name: 'Hex' })
+  const hex = card.getByRole('textbox', { name: 'Hex', exact: true })
   await expect(hex).toHaveValue('#FFF8F0')
   await hex.fill('3d6bff')
   await hex.press('Enter')

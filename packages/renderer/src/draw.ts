@@ -564,9 +564,19 @@ function drawLine(ck: CanvasKit, canvas: Canvas, box: Box, line: LineShape, stro
 }
 
 export function fillPath(ck: CanvasKit, canvas: Canvas, path: Path, fill: Paint, box: Box, resources: Resources) {
-  const paint = paintFor(ck, fill, box, resources)
+  // A PDF reader can drop a see-through image pattern's alpha, so a vector export draws the image
+  // whole inside a layer that holds its opacity instead.
+  const faded = resources.vector && fill.type === 'image' && fill.opacity < 1
+  const paint = paintFor(ck, faded ? { ...fill, opacity: 1 } : fill, box, resources)
   if (!paint) return
+  if (faded) {
+    const layer = new ck.Paint()
+    layer.setAlphaf(fill.opacity)
+    canvas.saveLayer(layer, path.getBounds())
+    layer.delete()
+  }
   canvas.drawPath(path, paint)
+  if (faded) canvas.restore()
   paint.delete()
 }
 
