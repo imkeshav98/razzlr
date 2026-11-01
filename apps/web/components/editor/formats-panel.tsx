@@ -128,6 +128,7 @@ export function FormatsPanel({ editor, onRemoved }: { editor: Editor; onRemoved:
               <Proportion width={f.width} height={f.height} className="text-subtle" />
               {renaming === id ? (
                 <input
+                  name="format-name"
                   aria-label={t.editor.formats.rename}
                   defaultValue={f.name}
                   autoFocus
