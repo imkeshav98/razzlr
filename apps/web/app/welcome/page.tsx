@@ -111,7 +111,7 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
               <h1 className={HEADLINE}>{w.title}</h1>
               <p className={LEAD}>{w.lead}</p>
               <div className="mt-8">
-                <KindCards t={t} current={revisit ? workspace.kind : undefined} action={pickKind} legend={w.title}>
+                <KindCards t={t} {...(revisit ? { current: workspace.kind } : {})} action={pickKind} legend={w.title}>
                   <div className="mt-8 flex justify-center">
                     {/* Dim until a card is picked: the form is invalid while its required radio is empty. */}
                     <button type="submit" className={cn(buttonStyles({ variant: 'primary', size: 'lg' }), 'h-12 px-8 text-base font-semibold transition-opacity duration-[var(--chrome)] in-invalid:opacity-40')}>
