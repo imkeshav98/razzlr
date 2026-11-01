@@ -135,6 +135,20 @@ function runQuietly(run: () => unknown) {
 }
 
 
+/** An image fill with its crop taken off: it shows the image as its fit places it. */
+function withoutCrop(fill: Extract<Paint, { type: 'image' }>) {
+  const rest = { ...fill }
+  delete rest.crop
+  return rest
+}
+
+/** The page a layer is on. */
+function pageOf(design: Design, id: string) {
+  let up = id
+  while (design.nodes[up]) up = design.nodes[up]?.parentId ?? ''
+  return up
+}
+
 async function bytes(url: string) {
   const res = await fetch(url)
   if (!res.ok) throw new Error(`${url}: ${res.status}`)
@@ -779,6 +793,10 @@ function live(
     const hoverFrame = hover && frameOf(hover.frame)
     const hoverBox = hoverFrame && hover && drawnBoxOf(hoverFrame, hover.id, design)
     if (hoverFrame && hoverBox) parts.push(outline('hover', hoverFrame, hoverBox))
+    // The layer an image dragged over the stage would go into.
+    const dropFrame = dropTarget && frameOf(dropTarget.frame)
+    const dropBox = dropFrame && dropTarget && drawnBoxOf(dropFrame, dropTarget.id, design)
+    if (dropFrame && dropBox) parts.push(outline('drop-target', dropFrame, dropBox))
     parts.push(...(pathEditing || cropping ? [] : selectionParts()), ...pathParts(), ...cropParts())
     if (gesture?.kind === 'textBox' || gesture?.kind === 'imageBox') {
       // The box the text tool (#47) or the image tool is drawing, drawn as a marquee is.
@@ -1511,6 +1529,26 @@ function live(
     gesture = { kind: 'move', frame, around, from: localTo(at.p, around), roots: ids, boxes: startBoxes(frame, ids), targets: targetsFor(frame, ids, around), end: session.beginGesture() }
     drawOverlay()
   }, on)
+
+  /** The layer an image dragged over the stage would be put into, outlined while it is over it. */
+  let dropTarget: Picked | null = null
+  /**
+   * The layer under a point, in client coordinates, that an image dropped there goes into as its
+   * fill: a shape, frame or boolean (a shape inside a boolean gives the boolean, whose paint shows),
+   * not a line, and not one whose style is locked. Null over text, a group's gaps or empty space.
+   */
+  function imageTargetAt(client: Point): Picked | null {
+    const rect = canvas.getBoundingClientRect()
+    const world = toWorld(camera, { x: client.x - rect.left, y: client.y - rect.top })
+    const frame = frameAt(grid.frames, world)
+    const hit = frame && hitTest(cached(frame).scene.layers, { x: world.x - frame.x, y: world.y - frame.y }, pickable)
+    if (!frame || !hit) return null
+    let id = hit.id
+    for (let up = design.nodes[id]?.parentId; up && design.nodes[up]; up = design.nodes[up]?.parentId) if (design.nodes[up]?.type === 'boolean') id = up
+    const node = design.nodes[id]
+    const takes = node?.type === 'frame' || node?.type === 'boolean' || (node?.type === 'graphic' && node.props.shape.kind !== 'line')
+    return takes && !node.lock?.style ? { id, frame: frame.key } : null
+  }
 
   /** Where the pointer last was over the stage, so the hover outline follows edits under it. */
   let pointer: MouseEvent | null = null
@@ -2895,6 +2933,47 @@ function live(
       setTool('select')
       select([id], frame.key)
       return id
+    },
+    /**
+     * Outlines the layer an image dragged over the stage at `client` would go into, or clears the
+     * outline with null. Returns that layer's id, or null where a drop makes a new layer.
+     */
+    imageTarget(client: Point | null): string | null {
+      const next = client ? imageTargetAt(client) : null
+      if (next?.id !== dropTarget?.id || next?.frame !== dropTarget?.frame) {
+        dropTarget = next
+        drawOverlay()
+      }
+      return next?.id ?? null
+    },
+    /**
+     * Puts an image into a layer as its fill, in every format, as one undo step: in place of its
+     * topmost image fill (keeping its fit, adjustments and filter, the crop reset), or on top of its
+     * fills when it has none. The layer is selected. False when it can't take one.
+     */
+    fillWithImage(id: string, asset: PlacedAsset): boolean {
+      const now = session.design()
+      const node = now.nodes[id]
+      if (!node || !('fills' in node.props)) return false
+      const fills = node.props.fills as Paint[]
+      const at = fills.findLastIndex((f) => f.type === 'image')
+      const was = fills[at]
+      const next: Paint[] = was?.type === 'image'
+        ? fills.map((f, i) => (i === at && f.type === 'image' ? { ...withoutCrop(f), assetId: asset.id } : f))
+        : [...fills, { type: 'image', assetId: asset.id, fit: 'fill', opacity: 1 }]
+      const frame = frameOf(dropTarget?.id === id ? dropTarget.frame : selection?.frame) ?? grid.frames.find((f) => f.pageId === pageOf(now, id))
+      dropTarget = null
+      stopEditing()
+      const ok = runQuietly(() => session.gesture(() => {
+        if (node.bindings?.fill) session.run('node.bind', { ids: [id], target: 'fill', ref: null })
+        session.run('node.update', { ids: [id], patch: { fills: next } })
+        for (const [scope, byNode] of Object.entries(session.design().overrides)) {
+          if (byNode[id] && 'fills' in byNode[id]) session.run('override.reset', { ids: [id], scope: scope as `format:${string}`, paths: ['fills'] })
+        }
+      }))
+      if (ok && frame) select([id], frame.key)
+      drawOverlay()
+      return ok
     },
     synced: () => provider.synced && provider.unsyncedChanges === 0,
     destroy() {

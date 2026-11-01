@@ -12,6 +12,7 @@ import { useRef, useState, type KeyboardEvent } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { Tooltip } from '../ui/tooltip.tsx'
+import { FOCUS_RING, POPOVER } from './card.tsx'
 
 export const SHAPES: { id: ShapeTool; icon: Icon; key?: string }[] = [
   { id: 'rect', icon: RectangleIcon, key: 'R' },
@@ -22,7 +23,9 @@ export const SHAPES: { id: ShapeTool; icon: Icon; key?: string }[] = [
   { id: 'arrow', icon: ArrowUpRightIcon, key: 'Shift+L' },
 ]
 
-const DOCK_BUTTON = 'grid h-10 cursor-pointer place-items-center rounded-[12px] transition-colors duration-[var(--chrome-fast)] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent'
+/** A tool dock button's shape, and its colours in use or not. */
+export const DOCK_BUTTON = `grid h-10 cursor-pointer place-items-center rounded-[12px] transition-colors duration-[var(--chrome-fast)] ${FOCUS_RING}`
+export const dockColours = (on: boolean) => (on ? 'bg-accent-solid text-on-accent' : 'text-muted hover:bg-hover hover:text-text')
 
 export function ShapeTools({ active, shape, onPick }: { active: boolean; shape: ShapeTool; onPick: (shape: ShapeTool) => void }) {
   const t = useMessages()
@@ -82,7 +85,7 @@ export function ShapeTools({ active, shape, onPick }: { active: boolean; shape: 
               e.stopPropagation()
               move(e)
             }}
-            className="pop-in z-50 w-52 rounded-card surface-frost border p-1 shadow-panel"
+            className={cn(POPOVER, 'w-52 p-1')}
           >
             <div role="menu" aria-label={t.editor.shapes.menu}>
               {SHAPES.map(({ id, icon: ShapeIcon, key }, i) => (

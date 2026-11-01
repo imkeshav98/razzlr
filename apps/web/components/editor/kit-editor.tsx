@@ -12,6 +12,7 @@ import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { ASSET_ACCEPT, sendAsset } from '../../lib/upload-asset.ts'
 import { Select } from '../ui/select.tsx'
+import { DASHED_BUTTON } from './card.tsx'
 import { useFontCatalog } from './font-panel.tsx'
 import { saveKit, showKit } from './use-brand-kit.ts'
 
@@ -124,7 +125,6 @@ export function KitEditor({ brandId, kit, change, error, binding, wide = false }
     : 'flex flex-col gap-2.5 border-t border-line px-[18px] py-4'
   const field = 'h-8 min-w-0 rounded-[8px] border border-line bg-bg/40 px-2 text-[13px] hover:border-line-strong focus:border-accent focus:outline-none'
   const iconButton = 'grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-subtle hover:bg-hover hover:text-text disabled:cursor-default disabled:opacity-40 aria-pressed:bg-accent-soft aria-pressed:text-accent-text'
-  const addButton = 'flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-[10px] border border-dashed border-line-strong text-xs font-semibold text-muted hover:border-accent hover:text-text'
 
   const colours = (
     <section key="colours" aria-labelledby="kit-colors" className={section}>
@@ -193,7 +193,7 @@ export function KitEditor({ brandId, kit, change, error, binding, wide = false }
           const name = format(t.newColor, { n: kit.colors.length + 1 })
           change({ ...kit, colors: [...kit.colors, { token: newToken(kit, name), name, value: '#000000FF' }] })
         }}
-        className={addButton}
+        className={DASHED_BUTTON}
       >
         <PlusIcon size={13} aria-hidden />
         {t.addColor}
@@ -254,7 +254,7 @@ export function KitEditor({ brandId, kit, change, error, binding, wide = false }
           const name = format(t.newFont, { n: kit.fonts.length + 1 })
           change({ ...kit, fonts: [...kit.fonts, { token: newToken(kit, name), name, family: families[0] ?? 'Noto Sans' }] })
         }}
-        className={addButton}
+        className={DASHED_BUTTON}
       >
         <PlusIcon size={13} aria-hidden />
         {t.addFont}

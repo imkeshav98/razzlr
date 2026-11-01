@@ -13,6 +13,7 @@ import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { ASSET_ACCEPT as ACCEPT, sendAsset as send } from '../../lib/upload-asset.ts'
 import { overlayScroll } from '../ui/overlay-scroll.ts'
+import { ASSET_TILE, DASHED_BUTTON } from './card.tsx'
 
 /** What an asset dragged from the library carries, for the stage to place it. */
 export const ASSET_DRAG_TYPE = 'application/x-dazbee-asset'
@@ -119,7 +120,7 @@ export function AssetLibrary({ editor, brandId }: { editor: Editor; brandId: str
             className="h-full min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-subtle"
           />
         </label>
-        <label className="flex h-8 cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-dashed border-line-strong text-xs font-semibold text-muted hover:border-accent hover:text-text focus-within:border-accent">
+        <label className={DASHED_BUTTON}>
           <UploadSimpleIcon size={14} aria-hidden />
           {dropping ? t.dropHere : t.upload}
           <input
@@ -200,7 +201,7 @@ export function AssetLibrary({ editor, brandId }: { editor: Editor; brandId: str
                       e.dataTransfer.effectAllowed = 'copy'
                     }}
                     className={cn(
-                      'grid aspect-square cursor-grab place-items-center overflow-hidden rounded-[10px] border border-line bg-bg/40 transition-colors duration-[var(--chrome-fast)] hover:border-line-strong active:cursor-grabbing',
+                      ASSET_TILE, 'cursor-grab hover:border-line-strong active:cursor-grabbing',
                       editing === asset.id && 'border-accent',
                     )}
                   >

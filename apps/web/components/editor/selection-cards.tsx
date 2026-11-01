@@ -6,7 +6,7 @@
 // layers don't share shows as mixed; setting it gives them all the same one, and scrubbing or the
 // arrow keys move each from its own. With more than one format the changes go to every format or to
 // this one only. Each change is one undo step, and a scrub or a slider drag, however long, is one too.
-import { CaretRightIcon, MinusIcon, PlusIcon, XIcon } from '@phosphor-icons/react'
+import { ArrowsClockwiseIcon, CaretRightIcon, ImageSquareIcon, MinusIcon, PlusIcon, XIcon } from '@phosphor-icons/react'
 import type { Editor } from '@dazbee/editor'
 import { BlendMode, brandRef, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@dazbee/schema'
 import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react'
@@ -14,8 +14,9 @@ import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format, type Messages } from '../../lib/i18n/index.ts'
 import { Select } from '../ui/select.tsx'
-import { CARD, CardHeader, FineTune, PICKED_RING, SWATCHES } from './card.tsx'
-import { ICON_BUTTON } from './formats-panel.tsx'
+import { CARD, CardHeader, DASHED_BUTTON, FineTune, FOCUS_RING, PICKED_RING, SWATCHES } from './card.tsx'
+import { CHIP, ICON_BUTTON } from './formats-panel.tsx'
+import { ImagePickerButton } from './image-tool.tsx'
 import { useBrandKit } from './use-brand-kit.ts'
 import { useLiveDesign } from './use-live-design.ts'
 
@@ -865,7 +866,26 @@ function ImageCard({ target, p, brandId, index, paint }: { target: Target; p: P;
   const filter = paint.filter ?? 'none'
   return (
     <section aria-labelledby="image-card-title" className={CARD} data-testid="image-card">
-      <CardHeader id="image-card-title" title={p.image} note={target.names.join(', ')} />
+      <CardHeader id="image-card-title" title={p.image} note={target.names.join(', ')}>
+        <ImagePickerButton
+          brandId={brandId}
+          title={p.replaceImageTitle}
+          testId="replace-image"
+          className={cn(CHIP, FOCUS_RING, 'shrink-0')}
+          onPick={(asset) => set(target, (now) => {
+            const fills = (now.fills ?? []) as Paint[]
+            const at = fills[index]
+            if (at?.type !== 'image') return null
+            // The new picture keeps the fit, adjustments and filter; the old crop doesn't fit it.
+            const kept = { ...at, assetId: asset.id }
+            delete kept.crop
+            return { fills: fills.map((f, i) => (i === index ? kept : f)) }
+          })}
+        >
+          <ArrowsClockwiseIcon size={12} aria-hidden />
+          <span aria-hidden>{p.replaceImage}</span>
+        </ImagePickerButton>
+      </CardHeader>
       <div className="flex flex-col gap-3 px-[18px] pb-3">
         <div role="radiogroup" aria-label={p.filter} className="grid grid-cols-4 gap-1.5">
           {ImageFilter.options.map((name) => (
@@ -1170,7 +1190,21 @@ function FillLook({ target, brandId, p }: { target: Target; brandId: string; p: 
     const color = `${hex}FF`
     return { fills: i < 0 ? [...fills, { type: 'solid', color }] : fills.map((f, j) => (j === i ? { type: 'solid' as const, color } : f)) }
   })
-  return <Swatches target={target} brandId={brandId} p={p} current={current} paint={paint} />
+  return (
+    <div className="flex flex-col gap-3">
+      <Swatches target={target} brandId={brandId} p={p} current={current} paint={paint} />
+      <ImagePickerButton
+        brandId={brandId}
+        title={p.addImageTitle}
+        testId="add-image"
+        className={DASHED_BUTTON}
+        onPick={(asset) => set(target, (now) => ({ fills: [...((now.fills ?? []) as Paint[]), { type: 'image', assetId: asset.id, fit: 'fill', opacity: 1 }] }))}
+      >
+        <ImageSquareIcon size={14} aria-hidden />
+        <span aria-hidden>{p.addImage}</span>
+      </ImagePickerButton>
+    </div>
+  )
 }
 
 /** The letters each effect tile shows its effect on; the same in every language, as a font sample is. */
