@@ -687,6 +687,10 @@ body {
     animation: aurora-turn 14s linear infinite;
   }
 }
+/* Drawn in software, each turn of the blurred blob is a full redraw, so it holds still where it is (#144). */
+[data-render='software'] .aurora::before {
+  animation-play-state: paused;
+}
 
 /* Sign in (mock screen 34): behind the whole page, three copies of a sample ad fanned out over a
    slow aurora in the end half. The page has one background; the glow fades out toward the form
