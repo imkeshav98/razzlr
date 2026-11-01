@@ -1,4 +1,4 @@
-// The brand's home (#84): "What are we making for <brand>?" as a brief with Format chips and Make
+// The brand's home (#84): "What are we making today?" as a brief with Format chips and Make
 // drafts, alone. The capsule's Recent, Templates and Brand kit are pages of their own; Recent shows
 // every design as the earlier mock's masonry, each picture in its own shape.
 import { expect, test, type Page } from '../support/test.ts'
@@ -82,11 +82,11 @@ test('the brief is alone on the home, and the capsule goes to Recent, Templates 
   await page.goto('/brands/dev-brand-coffee')
   const capsule = page.getByTestId('library-capsule')
   const brief = page.getByRole('heading', { level: 1 })
-  // As in the final mock: one line, the brand's name in the AI gradient, the editor's top bar
-  // (the brand switcher in the crumb, the account avatar), no list beside the page.
-  await expect(brief).toHaveText('What are we making for Harbour Coffee?')
+  // One line, "today" in the AI gradient, the editor's top bar (the brand switcher in the crumb,
+  // the account avatar), no list beside the page.
+  await expect(brief).toHaveText('What are we making today?')
   expect((await brief.boundingBox())?.height).toBeLessThan(70)
-  expect(await brief.getByText('Harbour Coffee').evaluate((el) => getComputedStyle(el).backgroundImage)).toContain('linear-gradient')
+  expect(await brief.getByText('today').evaluate((el) => getComputedStyle(el).backgroundImage)).toContain('linear-gradient')
   await expect(page.getByTestId('brand-switcher')).toContainText('Harbour Coffee')
   await expect(page.getByTestId('account-open')).toBeVisible()
   await expect(page.getByRole('list', { name: 'Recent' })).toHaveCount(0)
@@ -105,6 +105,17 @@ test('the brief is alone on the home, and the capsule goes to Recent, Templates 
   // The old panel links still land, on the pages.
   await page.goto('/brands/dev-brand-coffee?show=templates')
   await expect(page).toHaveURL(/\/brands\/dev-brand-coffee\/templates$/)
+})
+
+test('a size under the brief opens a blank design in that size', async ({ page }) => {
+  test.setTimeout(60_000)
+  await page.goto('/brands/dev-brand-coffee')
+  await page.getByRole('button', { name: 'Start a blank Story' }).click()
+  await expect(page).toHaveURL(/\/brands\/dev-brand-coffee\/designs\/[\w-]+$/)
+  await expect(page.getByTestId('status')).toHaveAttribute('data-ready', '', { timeout: 30_000 })
+  const design = await page.evaluate(() => window.dazbee?.design())
+  expect(design?.meta.name).toBe('Untitled design')
+  expect(Object.values(design?.formats ?? {}).map((f) => [f.width, f.height])).toEqual([[1080, 1920]])
 })
 
 test('Make drafts opens a design in the formats the brief picked, named by the brief', async ({ page }) => {

@@ -21,7 +21,7 @@ test('the web app lists the brands of the development workspace', async ({ page 
   writeOutput('workspace-0-brands.png', await page.screenshot())
   await page.getByRole('main').getByRole('link', { name: 'Harbour Coffee' }).click()
   await expect(page).toHaveURL(/\/brands\/dev-brand-coffee$/)
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('What are we making for Harbour Coffee?')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('What are we making today?')
 })
 
 test('the crumb switches brand on a phone, and goes back to them all', async ({ page }) => {

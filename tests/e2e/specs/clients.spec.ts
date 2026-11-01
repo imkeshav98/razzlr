@@ -22,7 +22,8 @@ test('each brand has a card with its design count, and New brand adds one', asyn
   await clients.getByRole('textbox', { name: 'Website or name' }).fill(name)
   writeOutput('clients-2-new.png', await page.screenshot())
   await clients.getByRole('button', { name: 'Create' }).click()
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(`What are we making for ${name}?`)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('What are we making today?')
+  await expect(page.getByTestId('brand-switcher')).toContainText(name)
   await expect(page).toHaveURL(/\/brands\/[\w-]+$/)
 
   await page.goto('/')

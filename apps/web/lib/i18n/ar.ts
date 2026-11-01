@@ -49,7 +49,11 @@ export const ar: Messages = {
     useTemplate: 'استخدم {name}',
   },
   home: {
-    prompt: 'ماذا نصنع لـ {brand}؟',
+    prompt: 'ماذا نصنع {today}؟',
+    promptToday: 'اليوم',
+    startBlank: 'أو ابدأ فارغًا',
+    startIn: 'ابدأ {name} فارغًا',
+    fromTemplate: 'قالب',
     brief: 'الموجز',
     briefPlaceholder: 'لماذا، ولمن، والطابع والعرض. مثلًا: تخفيضات نهاية الأسبوع، جريئة ومرحة، خصم 20٪',
     formats: 'الصيغ',
@@ -93,7 +97,6 @@ export const ar: Messages = {
     count: '{count} تصاميم',
     noDesigns: 'لا شيء بعد. اكتب موجزًا في الأعلى لتبدأ.',
     switchBrand: 'بدّل العلامة',
-    panelHint: 'تصاميمك وقوالبك وهوية علامتك في الشريط.',
   },
   welcome: {
     place: 'لنبدأ',

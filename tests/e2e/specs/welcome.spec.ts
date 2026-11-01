@@ -15,7 +15,8 @@ test('a pasted website names the first brand and opens its home', async ({ page 
   await page.getByRole('button', { name: 'Open it' }).click()
   await expect(page).toHaveURL(/\/brands\/[\w-]+$/)
   const name = slug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(`What are we making for ${name}?`)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('What are we making today?')
+  await expect(page.getByTestId('brand-switcher')).toContainText(name)
 
   // Neither a website nor a name: it asks for one.
   await page.goto('/welcome')

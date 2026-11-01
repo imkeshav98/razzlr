@@ -1,11 +1,12 @@
-// A brand's home (#84), as in the final mock: "What are we making for <brand>?" as a brief under a
-// slow aurora, and nothing else. The brand's designs, templates and kit are pages of their own,
-// from the capsule.
+// A brand's home (#84), as in the final mock: "What are we making today?" as a brief under a slow
+// aurora, and under it a row of sizes to start blank in, or a template. The brand's designs,
+// templates and kit are pages of their own, from the capsule.
 import { notFound, redirect } from 'next/navigation'
 import { BriefComposer } from '../../../components/brief-composer.tsx'
 import { LibraryShell } from '../../../components/library-shell.tsx'
+import { StartBlank } from '../../../components/start-blank.tsx'
 import { createDesign, designCover, getBrandKit, getWorkspace, listBrands, listDesigns } from '../../../lib/api.ts'
-import { briefDesign } from '../../../lib/brief.ts'
+import { briefDesign, type BriefFormat } from '../../../lib/brief.ts'
 import { brandPage, showsBrandList } from '../../../lib/home.ts'
 import { brandWords } from '../../../lib/i18n/index.ts'
 import { getMessages } from '../../../lib/i18n/server.ts'
@@ -42,11 +43,18 @@ export default async function BrandPage({ params, searchParams }: { params: Prom
     redirect(`/brands/${brandId}/designs/${design.id}`)
   }
 
+  /** An empty design in one size, named Untitled design. */
+  async function startBlank(formatId: BriefFormat) {
+    'use server'
+    const design = await createDesign(brandId, untitled, briefDesign(untitled, [formatId], (id) => presetName[id] ?? id))
+    redirect(`/brands/${brandId}/designs/${design.id}`)
+  }
+
   return (
     <LibraryShell t={t} words={brandWords(t)} workspace={workspace} brands={brands} activeBrandId={brand.id} showBrands={showsBrandList(brands)} glow recentCount={designs.length}>
       <div className="pt-[8vh] md:pt-[14vh]">
         <BriefComposer t={t} brandId={brand.id} brandName={brand.name} kit={kit} references={references} action={make} />
-        <p className="-mt-4 text-center text-[13px] text-subtle max-md:hidden">{t.home.panelHint}</p>
+        <StartBlank t={t} brandId={brand.id} start={startBlank} />
       </div>
     </LibraryShell>
   )
