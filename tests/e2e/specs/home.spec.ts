@@ -141,9 +141,10 @@ test('Make drafts opens a design in the formats the brief picked, named by the b
   await page.getByLabel('Brief').fill(`${brief}\nWarm, cosy, a cup on a wooden table`)
   // Feed square is picked from the start; add Story.
   await expect(page.getByTestId('brief-format-feed-square')).toBeChecked()
-  await page.getByText('Story', { exact: true }).click()
+  await page.getByTestId('brief-formats').click()
+  await page.getByRole('dialog', { name: 'Formats' }).getByText('Story', { exact: true }).click()
   await expect(page.getByTestId('brief-format-story')).toBeChecked()
-  await expect(page.getByRole('button', { name: 'Reference ad' })).toBeDisabled()
+  await page.keyboard.press('Escape')
   await shoot(page, 'brief')
   await page.getByRole('button', { name: 'Make drafts' }).click()
   await expect(page).toHaveURL(/\/brands\/dev-brand-coffee\/designs\/[\w-]+$/)

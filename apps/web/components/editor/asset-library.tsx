@@ -11,11 +11,10 @@ import { useCallback, useEffect, useRef, useState, type DragEvent, type Keyboard
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
+import { ASSET_ACCEPT as ACCEPT, sendAsset as send } from '../../lib/upload-asset.ts'
 
 /** What an asset dragged from the library carries, for the stage to place it. */
 export const ASSET_DRAG_TYPE = 'application/x-razzlr-asset'
-/** The image types the library uploads; the API checks the bytes again. */
-const ACCEPT = 'image/png,image/jpeg,image/webp'
 /** How long typing pauses before the library searches. */
 const SEARCH_DELAY_MS = 150
 
@@ -32,32 +31,6 @@ export function draggedAsset(e: DragEvent): DraggedAsset | null {
 interface Upload { key: string; name: string; progress: number; error?: string }
 
 const base = (brandId: string) => `/brands/${encodeURIComponent(brandId)}/assets`
-
-/** Sends one file to the web app, which uploads it to storage and records it, telling how much has gone. */
-function send(brandId: string, file: File, onProgress: (share: number) => void): Promise<AssetSummary> {
-  return new Promise((resolve, reject) => {
-    const request = new XMLHttpRequest()
-    request.open('POST', base(brandId))
-    request.upload.onprogress = (e) => {
-      if (e.lengthComputable) onProgress(e.loaded / e.total)
-    }
-    request.onload = () => {
-      let body: unknown = null
-      try {
-        body = JSON.parse(request.responseText)
-      } catch {
-        // Not JSON: the status says what went wrong.
-      }
-      if (request.status === 201) return resolve(AssetSummary.parse(body))
-      const reason = body && typeof body === 'object' && 'error' in body && typeof body.error === 'string' ? body.error : `${request.status}`
-      reject(new Error(reason))
-    }
-    request.onerror = () => reject(new Error('no connection'))
-    const form = new FormData()
-    form.append('file', file)
-    request.send(form)
-  })
-}
 
 async function save(brandId: string, id: string, update: UpdateAsset): Promise<AssetSummary> {
   const response = await fetch(`${base(brandId)}/${encodeURIComponent(id)}`, {
