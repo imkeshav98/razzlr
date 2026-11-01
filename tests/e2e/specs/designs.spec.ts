@@ -12,7 +12,7 @@ test('a design made from the brand list opens in the editor and is there after a
 
   await page.goto('/')
   await page.getByRole('main').getByRole('link', { name: 'Harbour Coffee' }).click()
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('What are we making for Harbour Coffee?')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('What are we making today?')
   writeOutput('designs-1-brand.png', await page.screenshot())
 
   await page.getByLabel('Brief').fill(name)

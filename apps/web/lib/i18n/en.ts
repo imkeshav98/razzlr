@@ -52,7 +52,12 @@ export const en = {
   },
   home: {
     // The brand's home (#84): a brief, its formats, and the brand's recent work as a bento.
-    prompt: 'What are we making for {brand}?',
+    prompt: 'What are we making {today}?',
+    promptToday: 'today',
+    /** Under the brief: a blank design in one size, or a template. */
+    startBlank: 'Or start blank',
+    startIn: 'Start a blank {name}',
+    fromTemplate: 'Template',
     brief: 'Brief',
     briefPlaceholder: 'What it is for, who it speaks to, the feel and the offer. Say, a weekend sale: bold, playful, 20% off',
     formats: 'Formats',
@@ -100,8 +105,6 @@ export const en = {
     count: '{count} designs',
     noDesigns: 'Nothing made yet. Write a brief above to start.',
     switchBrand: 'Switch brand',
-    /** Under the brief: where the brand's work is. */
-    panelHint: 'Your designs, templates and brand kit are in the bar.',
   },
   welcome: {
     // Onboarding (#109): the first brand, from its website or its name.
