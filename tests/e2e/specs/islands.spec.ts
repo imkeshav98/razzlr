@@ -36,10 +36,11 @@ test('the editor has no top bar: two islands float over the canvas and the ads f
   }
   expect(start.x).toBeLessThan(48)
   expect(1440 - (end.x + end.width)).toBeLessThan(16)
-  // No surface of their own.
-  for (const id of ['island-start', 'island-end']) {
-    expect(await page.getByTestId(id).evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)')
-  }
+  // The start island sits on a small frosted pill, so the design's name reads over an ad under it;
+  // the end island has no surface of its own.
+  expect(await page.getByTestId('island-start').evaluate((el) => getComputedStyle(el).backdropFilter)).toContain('blur(18px)')
+  expect(start.height).toBeLessThan(48)
+  expect(await page.getByTestId('island-end').evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgba(0, 0, 0, 0)')
   await expect(page.getByTestId('island-start').getByRole('heading', { level: 1 })).toBeVisible()
   // The end island is the mock's: a pink Share button and the account avatar, nothing else.
   const end_ = page.getByTestId('island-end')
