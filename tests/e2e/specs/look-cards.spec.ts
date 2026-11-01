@@ -72,7 +72,8 @@ test('the look comes first: size and brand colour, effect tiles, and the numbers
   const details = page.getByTestId('details-card')
   const position = details.getByTestId('layout-card')
   await expect(position.locator('[data-fold]')).toHaveAttribute('aria-expanded', 'false')
-  await expect(position).toContainText('76, 162 · 610×204')
+  // The headline's box grows to its words: at size 64 it is one line tall.
+  await expect(position).toContainText('76, 162 · 610×87')
   await expect(position.getByRole('spinbutton', { name: 'X position' })).toHaveCount(0)
   await position.locator('[data-fold]').click()
   await expect(position.getByRole('spinbutton', { name: 'X position' })).toHaveValue('76')

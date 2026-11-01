@@ -863,7 +863,7 @@ function OwnChanges({ design, ids, formatId, editor, p }: { design: Design; ids:
     const group = OWN_GROUP[path] ?? 'other'
     groups.set(group, [...groups.get(group) ?? [], path])
   }
-  const reset = (only?: string[]) => editor.session.run('override.reset', { ids, scope, ...(only ? { paths: only } : {}) })
+  const reset = (only?: string[]) => editor.resetOwn(ids, scope, only)
   const name = design.formats[formatId]?.name ?? ''
   return (
     <div data-testid="own-changes" className="flex flex-col gap-1.5 px-1.5 pt-2">
@@ -1187,6 +1187,7 @@ export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Edit
               target={target}
               field="strokes"
               fresh={NEW_STROKE}
+              topFirst
               summaryOf={(list) => list.filter((stroke) => stroke.paint.visible !== false).map((stroke) => `${stroke.width} px`).join(', ') || p.none}
               render={(stroke, n, change) => <StrokeRow stroke={stroke} place={n} brandId={brandId} p={p} editor={editor} onSet={change} />}
             />
