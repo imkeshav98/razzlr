@@ -2,9 +2,12 @@ name: CanvasKit
 
 # Builds our CanvasKit (packages/canvaskit) when its recipe changes and publishes it as a GitHub
 # release named after the recipe hash. CI and every install fetch that release by checksum
-# (packages/canvaskit/release.json), so only a recipe change ever rebuilds.
+# (packages/canvaskit/release.json), so only a recipe change ever rebuilds. A pull request's
+# builds are published so its own CI can fetch them; when it closes, the ones main doesn't use
+# are deleted.
 on:
   pull_request:
+    types: [opened, synchronize, reopened, closed]
     paths: [packages/canvaskit/build/**, .github/workflows/canvaskit.yml]
   push:
     branches: [main]
@@ -20,6 +23,7 @@ permissions:
 
 jobs:
   build:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-24.04
     timeout-minutes: 300
     env:
@@ -50,7 +54,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "${{ github.event.pull_request.head.sha || github.sha }}" \
             --title "CanvasKit ${{ steps.recipe.outputs.hash }}" \
-            --notes "CanvasKit from Skia $(cat packages/canvaskit/build/skia-commit) with the PDF and SVG backends, built from packages/canvaskit/build at recipe ${{ steps.recipe.outputs.hash }}."
+            --notes "CanvasKit from Skia $(cat packages/canvaskit/build/skia-commit) with the PDF and SVG backends, built from packages/canvaskit/build at recipe ${{ steps.recipe.outputs.hash }}${{ github.event.pull_request.number && format(' for pull request #{0}', github.event.pull_request.number) || '' }}."
       - run: |
           node -e '
             const { createHash } = require("node:crypto")
@@ -69,3 +73,21 @@ jobs:
           name: canvaskit
           path: dist
           retention-days: 30
+
+  # A closed pull request's builds, except the one main's release.json names.
+  prune:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - run: |
+          keep=$(node -p 'require("./packages/canvaskit/release.json").tag')
+          gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.body | endswith(\" for pull request #$PR.\")) | .tag_name" |
+          while read -r tag; do
+            if [ "$tag" != "$keep" ]; then gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag; fi
+          done

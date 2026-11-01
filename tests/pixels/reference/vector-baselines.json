@@ -1,0 +1,192 @@
+{
+  "arabic-ad p1.sq": {
+    "pdf": {
+      "percent": 0.35,
+      "limit": 0.487
+    },
+    "svg": {
+      "percent": 0.308,
+      "limit": 0.435
+    }
+  },
+  "auto-layout p1.sq": {
+    "pdf": {
+      "percent": 0.743,
+      "limit": 0.979
+    },
+    "svg": {
+      "percent": 0.3,
+      "limit": 0.425
+    }
+  },
+  "carousel p1.pt": {
+    "pdf": {
+      "percent": 0.086,
+      "limit": 0.157
+    },
+    "svg": {
+      "percent": 0.078,
+      "limit": 0.148
+    }
+  },
+  "carousel p1.sq": {
+    "pdf": {
+      "percent": 0.141,
+      "limit": 0.226
+    },
+    "svg": {
+      "percent": 0.098,
+      "limit": 0.172
+    }
+  },
+  "carousel p2.pt": {
+    "pdf": {
+      "percent": 0.093,
+      "limit": 0.167
+    },
+    "svg": {
+      "percent": 0.085,
+      "limit": 0.156
+    }
+  },
+  "carousel p2.sq": {
+    "pdf": {
+      "percent": 0.141,
+      "limit": 0.226
+    },
+    "svg": {
+      "percent": 0.106,
+      "limit": 0.182
+    }
+  },
+  "carousel p3.pt": {
+    "pdf": {
+      "percent": 0.068,
+      "limit": 0.135
+    },
+    "svg": {
+      "percent": 0.058,
+      "limit": 0.123
+    }
+  },
+  "carousel p3.sq": {
+    "pdf": {
+      "percent": 0.119,
+      "limit": 0.199
+    },
+    "svg": {
+      "percent": 0.086,
+      "limit": 0.157
+    }
+  },
+  "english-sale-ad p1.sq": {
+    "pdf": {
+      "percent": 0.559,
+      "limit": 0.748
+    },
+    "svg": {
+      "percent": 0.27,
+      "limit": 0.388
+    }
+  },
+  "groups-and-frames p1.sq": {
+    "pdf": {
+      "percent": 0.025,
+      "limit": 0.081
+    },
+    "svg": {
+      "percent": 0.033,
+      "limit": 0.091
+    }
+  },
+  "hindi-ad p1.sq": {
+    "pdf": {
+      "percent": 0.441,
+      "limit": 0.601
+    },
+    "svg": {
+      "percent": 0.396,
+      "limit": 0.545
+    }
+  },
+  "image-fills p1.sq": {
+    "pdf": {
+      "percent": 0.424,
+      "limit": 0.58
+    },
+    "svg": {
+      "percent": 0,
+      "limit": 0.05
+    }
+  },
+  "layer-bounds p1.sq": {
+    "pdf": {
+      "percent": 0.001,
+      "limit": 0.052
+    },
+    "svg": {
+      "percent": 0,
+      "limit": 0.05
+    }
+  },
+  "shapes-and-booleans p1.sq": {
+    "pdf": {
+      "percent": 0.113,
+      "limit": 0.191
+    },
+    "svg": {
+      "percent": 0.098,
+      "limit": 0.173
+    }
+  },
+  "shapes-and-effects p1.sq": {
+    "pdf": {
+      "percent": 0.047,
+      "limit": 0.109
+    },
+    "svg": {
+      "percent": 0.001,
+      "limit": 0.051
+    }
+  },
+  "stress p1.sq": {
+    "pdf": {
+      "percent": 5.127,
+      "limit": 6.459
+    },
+    "svg": {
+      "percent": 3.566,
+      "limit": 4.508
+    }
+  },
+  "strokes-and-effects p1.sq": {
+    "pdf": {
+      "percent": 0.088,
+      "limit": 0.16
+    },
+    "svg": {
+      "percent": 0.981,
+      "limit": 1.276
+    }
+  },
+  "text-and-group-bounds p1.sq": {
+    "pdf": {
+      "percent": 0.268,
+      "limit": 0.385
+    },
+    "svg": {
+      "percent": 0,
+      "limit": 0.05
+    }
+  },
+  "text-styles p1.pt": {
+    "pdf": {
+      "percent": 2.683,
+      "limit": 3.404
+    },
+    "svg": {
+      "percent": 1.883,
+      "limit": 2.404
+    }
+  }
+}

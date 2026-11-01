@@ -207,7 +207,7 @@ _Avoid_: Cleanup, garbage collection (that is Yjs's own, which compaction relies
 The renderer's output for one page, format and variant: a resolved tree ready to draw. `render(design, pageId, formatId, variant?, translations?, assets) → scene` is a pure function.
 
 **Surface**:
-Where a scene is drawn: the WebGL surface for the editor screen, or the CPU surface for every export.
+Where a scene is drawn: the WebGL surface for the editor screen, or the CPU surface for every PNG and JPG export. A PDF or SVG export draws the scene on Skia's PDF or SVG canvas instead, with the parts the file can't hold as vectors drawn on the CPU surface as images.
 
 **Canvas**:
 The editor's one infinite view of a design: every page in every format, placed by an auto grid with pages as rows and formats as columns, so no position is stored.
@@ -218,7 +218,7 @@ One page in one format as the canvas shows it (`Frame` in `packages/editor`). No
 _Avoid_: Artboard, tile, cell
 
 **Export parity**:
-CPU renders of the same design in the browser and in Node being pixel-identical (0 differing pixels).
+CPU renders of the same design in the browser and in Node being pixel-identical (0 differing pixels). PDF and SVG exports are byte-identical in both; drawn by pdfium and resvg, they match the CPU render within a recorded share of pixels (the vector baselines).
 
 ## AI flow
 

@@ -1,7 +1,7 @@
 'use client'
 
-// Export (#55): pick pages, formats and PNG or JPG, and the editor's export worker draws them on
-// the CPU surface while the stage stays responsive. One file downloads as itself, more as a zip
+// Export (#55, #56): pick pages, formats and PNG, JPG, PDF or SVG, and the editor's export worker
+// draws them while the stage stays responsive. One file downloads as itself, more as a zip
 // with a folder per format.
 import type { Editor } from '@razzlr/editor'
 import type { Design, ExportType } from '@razzlr/schema'
@@ -105,8 +105,8 @@ export function ExportForm({ id, editor, design }: { id: string; editor: Editor;
 
       <fieldset className="flex flex-col gap-1.5">
         <legend className={cn(LABEL, 'mb-1.5')}>{t.editor.exports.type}</legend>
-        <div role="radiogroup" className="grid grid-cols-2 gap-1 rounded-row border border-line p-0.5">
-          {(['png', 'jpg'] as const).map((value) => (
+        <div role="radiogroup" className="grid grid-cols-4 gap-1 rounded-row border border-line p-0.5">
+          {(['png', 'jpg', 'pdf', 'svg'] as const).map((value) => (
             <button
               key={value}
               type="button"

@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { FormatId, PageId } from './primitives.ts'
 
 /** The image files an export makes (#55). JPG has no transparency, so it is drawn over white. */
-export const ExportType = z.enum(['png', 'jpg'])
+export const ExportType = z.enum(['png', 'jpg', 'pdf', 'svg'])
 export type ExportType = z.infer<typeof ExportType>
 
 /** The tokens a file name is built from. */
@@ -10,7 +10,7 @@ export const EXPORT_NAME_TOKENS = ['design', 'page', 'format'] as const
 export const DEFAULT_EXPORT_NAME = '{design} - {page} - {format}'
 
 /**
- * What to export from a design: some pages in some formats, as one image type. The same request
+ * What to export from a design: some pages in some formats, as one file type. The same request
  * runs in the browser's export worker and in Node. More than one file comes as a zip with a
  * folder per format.
  */
