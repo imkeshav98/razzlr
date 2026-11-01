@@ -88,6 +88,19 @@ test('one layer: position, size, turn, opacity, blend, fill, stroke and effects'
   await enter(stroke.getByRole('textbox', { name: 'Stroke 1 width' }), '6')
   await stroke.getByRole('combobox', { name: 'Stroke 1 position' }).selectOption('inside')
   await expect.poll(async () => (await props(page, 'box')).strokes).toMatchObject([{ width: 6, align: 'inside' }])
+  // Dashes typed as lengths, an offset, and the look of the ends and corners (#152); a pattern
+  // that isn't one is refused, and clearing it makes the line solid again.
+  await enter(stroke.getByRole('textbox', { name: 'Stroke 1 dashes' }), '12, 6')
+  await enter(stroke.getByRole('textbox', { name: 'Stroke 1 dash offset' }), '3')
+  await stroke.getByRole('combobox', { name: 'Stroke 1 ends' }).selectOption('round')
+  await stroke.getByRole('combobox', { name: 'Stroke 1 corners' }).selectOption('bevel')
+  await expect.poll(async () => (await props(page, 'box')).strokes).toMatchObject([{ width: 6, align: 'inside', dashes: [12, 6], dashOffset: 3, cap: 'round', join: 'bevel' }])
+  await page.evaluate(() => window.razzlr?.drawn())
+  writeOutput('props-dashed-stroke.png', await page.screenshot())
+  await enter(stroke.getByRole('textbox', { name: 'Stroke 1 dashes' }), '0 0')
+  await expect(stroke.getByRole('textbox', { name: 'Stroke 1 dashes' })).toHaveValue('12 6')
+  await enter(stroke.getByRole('textbox', { name: 'Stroke 1 dashes' }), '')
+  await expect.poll(async () => (await props(page, 'box')).strokes).toMatchObject([{ dashes: [] }])
 
   const effects = page.getByTestId('effects-card')
   await effects.getByRole('combobox', { name: 'Add effect' }).selectOption('dropShadow')
