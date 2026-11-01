@@ -33,7 +33,7 @@ test('a design tile renames, duplicates and deletes its design', async ({ page }
   await tile.getByRole('textbox', { name: 'Name' }).fill(`Autumn ${run}`)
   await tile.getByRole('button', { name: 'Save' }).click()
   await expect.poll(async () => (await designs()).find((d) => d.id === id)?.name).toBe(`Autumn ${run}`)
-  const renamed = page.getByTestId('bento-tile').filter({ hasText: `Autumn ${run}` })
+  const renamed = page.locator(`[data-design="${id}"]`)
   await expect(renamed).toBeVisible()
 
   await renamed.hover()
@@ -54,7 +54,7 @@ test('a design tile renames, duplicates and deletes its design', async ({ page }
   await renamed.getByRole('menuitem', { name: 'Delete' }).click()
   await renamed.getByRole('button', { name: 'Delete' }).click()
   await expect.poll(async () => (await designs()).some((d) => d.id === id)).toBe(false)
-  await expect(page.getByTestId('bento-tile').filter({ hasText: new RegExp(`^Autumn ${run}$`) })).toHaveCount(0)
+  await expect(renamed).toHaveCount(0)
 })
 
 test('a template tile renames and deletes its template', async ({ page }) => {

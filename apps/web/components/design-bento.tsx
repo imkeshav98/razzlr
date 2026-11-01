@@ -63,7 +63,7 @@ export function DesignBento({ t, locale, brandId, designs, eager = true, actions
       {designs.map((design, i) => {
         const span = spanOf(design, i)
         return (
-          <li key={design.id} data-span={span} data-testid="bento-tile" className={cn('rise group/tile relative min-w-0', SPAN[span])} style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
+          <li key={design.id} data-design={design.id} data-span={span} data-testid="bento-tile" className={cn('rise group/tile relative min-w-0', SPAN[span])} style={{ animationDelay: `${Math.min(i, 12) * 30}ms` }}>
             <Link
               href={`/brands/${brandId}/designs/${design.id}`}
               // Not prefetched: up to 24 editor pages, each a design read, for the one that gets opened.
