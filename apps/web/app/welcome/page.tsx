@@ -1,6 +1,7 @@
 // Onboarding (#109): who Dazbee is for, as three big cards, then "Paste your website" for the
 // first brand (or client), named from the site's address. The app opens here until the workspace
-// has a brand; the kind can be changed later in settings. It looks like the final mock's
+// has a brand; the kind can be changed later in settings. No card is picked on the first visit, so
+// the kind is always a choice; Back from the website step (?step=kind) shows the one picked. It looks like the final mock's
 // onboarding: the library's top bar, progress dashes over a bold headline, and the website in one
 // wide field with its button at the end.
 import { ArrowLeftIcon, ArrowRightIcon, GlobeIcon } from '@phosphor-icons/react/ssr'
@@ -42,6 +43,7 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
   const [t, workspace] = await Promise.all([getMessages(), getWorkspace()])
   const w = t.welcome
   const brandStep = step === 'brand'
+  const revisit = step === 'kind'
 
   async function pickKind(form: FormData) {
     'use server'
@@ -89,7 +91,7 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
                 </label>
                 {error === 'name' && <p role="alert" className="col-span-2 row-start-3 mt-3 text-sm text-danger md:mx-5">{w.needName}</p>}
                 <div className="col-span-2 row-start-4 mt-6 flex justify-center">
-                  <Link href="/welcome" className={buttonStyles({ variant: 'ghost', size: 'lg' })}>
+                  <Link href="/welcome?step=kind" className={buttonStyles({ variant: 'ghost', size: 'lg' })}>
                     <ArrowLeftIcon size={16} aria-hidden className="rtl:-scale-x-100" />
                     {w.back}
                   </Link>
@@ -109,9 +111,10 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
               <h1 className={HEADLINE}>{w.title}</h1>
               <p className={LEAD}>{w.lead}</p>
               <div className="mt-8">
-                <KindCards t={t} current={workspace.kind} action={pickKind} legend={w.title}>
+                <KindCards t={t} current={revisit ? workspace.kind : undefined} action={pickKind} legend={w.title}>
                   <div className="mt-8 flex justify-center">
-                    <button type="submit" className={cn(buttonStyles({ variant: 'primary', size: 'lg' }), 'h-12 px-8 text-base font-semibold')}>
+                    {/* Dim until a card is picked: the form is invalid while its required radio is empty. */}
+                    <button type="submit" className={cn(buttonStyles({ variant: 'primary', size: 'lg' }), 'h-12 px-8 text-base font-semibold transition-opacity duration-[var(--chrome)] in-invalid:opacity-40')}>
                       {w.next}
                       <ArrowRightIcon size={18} aria-hidden className="rtl:-scale-x-100" />
                     </button>
