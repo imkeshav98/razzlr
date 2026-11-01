@@ -904,6 +904,52 @@ function AutoLayoutCard({ target, p }: { target: Target; p: P }) {
   )
 }
 
+type Sizing = 'fixed' | 'hug' | 'fill'
+
+/** How a layer sizes on each axis, as the renderer reads it: left unsaid, text hugs as its box mode says and the rest is fixed. */
+function sizingOf(type: string, props: Props): { width: Sizing; height: Sizing } {
+  const own = props.sizing as { width: Sizing; height: Sizing } | undefined
+  if (own) return own
+  if (type === 'text') return { width: props.boxMode === 'autoWidth' ? 'hug' : 'fixed', height: props.boxMode === 'fixed' ? 'fixed' : 'hug' }
+  return { width: 'fixed', height: 'fixed' }
+}
+
+/**
+ * How layers size and sit in an auto layout (#155): fixed, hugging what they hold or filling the
+ * room on each axis, and, for children of an auto layout frame, kept out of the flow where they
+ * are put.
+ */
+function FlowCard({ target, p, inFlow }: { target: Target; p: P; inFlow: boolean }) {
+  const sizings = target.props.map((pr, i) => sizingOf(target.types[i] ?? '', pr))
+  return (
+    <Card id="flow-card" title={inFlow ? p.inAutoLayout : p.sizing}>
+      <div className="grid grid-cols-2 gap-x-3">
+        {(['width', 'height'] as const).map((axis) => (
+          <Choice
+            key={axis}
+            name={p.sizingAxis[axis]}
+            value={shared(sizings.map((s) => s[axis]))}
+            options={['fixed', 'hug', 'fill'] as const}
+            labels={p.sizings}
+            onSet={(to) => set(target, (now, i) => ({ sizing: { ...sizingOf(target.types[i] ?? '', now), [axis]: to } }))}
+          />
+        ))}
+      </div>
+      {inFlow && (
+        <label className="flex items-center gap-2 text-[12px]">
+          <input
+            type="checkbox"
+            name="absolute"
+            checked={target.props.every((pr) => pr.absolute === true)}
+            onChange={(event) => set(target, () => ({ absolute: event.target.checked ? true : undefined }))}
+          />
+          {p.absolute}
+        </label>
+      )}
+    </Card>
+  )
+}
+
 /** Where changes go when a design has more than one format: the one shown (as a canvas drag does), or every format. */
 function ScopeSwitch({ everyFormat, onChange, p }: { everyFormat: boolean; onChange: (every: boolean) => void; p: P }) {
   return (
@@ -955,6 +1001,11 @@ export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Edit
     return node?.type === 'graphic' ? node.props.shape.kind : null
   }))
   const [shapeKind] = shapeKinds
+  // Children of an auto layout frame, every one of them.
+  const inFlow = live.every((id) => {
+    const parent = design.nodes[design.nodes[id]?.parentId ?? '']
+    return parent?.type === 'frame' && parent.props.layout !== undefined
+  })
   // The first image fill, when every selected layer has the same fills.
   const fills = shared(target.props.map((pr) => (pr.fills ?? []) as Paint[]))
   const imageIndex = fills === 'mixed' ? -1 : fills.findIndex((f) => f.type === 'image')
@@ -995,6 +1046,7 @@ export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Edit
       <LayoutCard target={target} p={p} />
       <AppearanceCard target={target} p={p} />
       {all('frame') && <AutoLayoutCard target={target} p={p} />}
+      {(inFlow || all('frame') && target.props.every((pr) => pr.layout)) && <FlowCard target={target} p={p} inFlow={inFlow} />}
     </>
   )
 }
