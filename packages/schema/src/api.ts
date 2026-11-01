@@ -19,9 +19,11 @@ export const WorkspaceSummary = z.object({
 })
 export type WorkspaceSummary = z.infer<typeof WorkspaceSummary>
 
+/** Who the workspace is for, its name, or both. */
 export const UpdateWorkspace = z.object({
-  kind: WorkspaceKind,
-})
+  kind: WorkspaceKind.optional(),
+  name: z.string().trim().min(1).max(120).optional(),
+}).refine((input) => input.kind !== undefined || input.name !== undefined, 'give a kind, a name or both')
 export type UpdateWorkspace = z.infer<typeof UpdateWorkspace>
 
 export const BrandSummary = z.object({

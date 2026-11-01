@@ -1,4 +1,4 @@
-import type { CanvasKit } from 'canvaskit-wasm'
+import type { CanvasKit } from '@razzlr/canvaskit'
 
 /** A CanvasKit colour from the schema's `#RRGGBBAA`. */
 export function color(ck: CanvasKit, hex: string) {
