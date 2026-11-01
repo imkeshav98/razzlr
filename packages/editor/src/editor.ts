@@ -1196,17 +1196,20 @@ function live(
     const now = session.design()
     const wrote = written.get(start) ?? new Set<string>()
     written.set(start, wrote)
-    for (const [id, box] of next) {
-      const was = start.get(id)
-      const current = boxIn(frame, id, now)
-      const patch: Partial<Box> = {}
-      for (const key of ['x', 'y', 'width', 'height', 'rotation'] as const) {
-        if ((box[key] !== was?.[key] || wrote.has(`${id}|${key}`)) && box[key] !== current?.[key]) patch[key] = box[key]
+    // One update for the whole step, not one per layer: a drag of many layers sends and stores once a move.
+    session.batch(() => {
+      for (const [id, box] of next) {
+        const was = start.get(id)
+        const current = boxIn(frame, id, now)
+        const patch: Partial<Box> = {}
+        for (const key of ['x', 'y', 'width', 'height', 'rotation'] as const) {
+          if ((box[key] !== was?.[key] || wrote.has(`${id}|${key}`)) && box[key] !== current?.[key]) patch[key] = box[key]
+        }
+        for (const key of Object.keys(patch)) wrote.add(`${id}|${key}`)
+        // Another tab may delete or lock a layer mid-drag; the drag then just leaves it be.
+        if (Object.keys(patch).length > 0) runQuietly(() => session.run('node.update', { ids: [id], scope: scope(frame), patch }))
       }
-      for (const key of Object.keys(patch)) wrote.add(`${id}|${key}`)
-      // Another tab may delete or lock a layer mid-drag; the drag then just leaves it be.
-      if (Object.keys(patch).length > 0) runQuietly(() => session.run('node.update', { ids: [id], scope: scope(frame), patch }))
-    }
+    })
   }
   /** Every layer under `id` in the document, nearest first. */
   const under = (id: string, from: Design): string[] => childrenOf(from, id).flatMap(([child]) => [child, ...under(child, from)])
