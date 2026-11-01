@@ -58,10 +58,10 @@ test('the Shape card sets corners, sides, points and line ends', async ({ browse
 
   await select(page, ['hex'])
   await expect(card.getByRole('heading')).toHaveText('Polygon')
-  // Sides are whole and at least three: the slider stops there, and the arrow keys step by one.
+  // Sides are whole and at least three: Home takes the slider to its start.
   await card.getByRole('slider', { name: 'Sides' }).fill('8')
   await expect.poll(async () => (await shapeOf(page, 'hex')).sides).toBe(8)
-  await card.getByRole('slider', { name: 'Sides' }).fill('1')
+  await card.getByRole('slider', { name: 'Sides' }).press('Home')
   await expect.poll(async () => (await shapeOf(page, 'hex')).sides).toBe(3)
 
   await select(page, ['star'])
