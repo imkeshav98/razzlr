@@ -35,7 +35,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         </div>
         <section aria-labelledby="kind-title" className="mt-6 rounded-[20px] border border-line bg-surface p-5 shadow-panel md:mt-8 md:p-7">
           <h2 id="kind-title" className="font-display text-2xl font-bold tracking-tight md:text-[2rem] md:leading-tight">{t.settings.kind}</h2>
-          <p className="mt-2 text-sm text-muted">{t.welcome.lead}</p>
+          <p className="mt-2 text-sm text-muted">{t.settings.kindLead}</p>
           <div className="mt-6">
             <KindCards t={t} current={workspace.kind} action={save} legend={t.settings.kind}>
               <div className="mt-6 flex items-center gap-4 border-t border-line pt-5">

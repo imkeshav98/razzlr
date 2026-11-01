@@ -257,7 +257,7 @@ export function BriefForm({ brandId, brandName, kit, references, action }: {
                               }}
                               className="relative block aspect-square w-full cursor-pointer overflow-hidden rounded-[8px] border border-line bg-hover transition-colors hover:border-line-strong aria-pressed:border-accent"
                             >
-                              {design.cover && <img src={designThumbnail(brandId, design)} alt="" loading="lazy" className="size-full object-cover" />}
+                              {design.cover && <img src={designThumbnail(brandId, design)} alt="" width={design.cover.width} height={design.cover.height} loading="lazy" className="size-full object-cover" />}
                             </button>
                           </li>
                         ))}
@@ -268,6 +268,7 @@ export function BriefForm({ brandId, brandName, kit, references, action }: {
           </Popover.Content>
         </Popover.Root>
         <input
+          id="brief-images"
           ref={files}
           type="file"
           accept={ASSET_ACCEPT}
