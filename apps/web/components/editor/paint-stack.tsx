@@ -17,7 +17,7 @@ import { SEGMENTED, segment } from '../ui/segmented.tsx'
 import { PICKED_RING } from './card.tsx'
 import { Choice, clamp, ColorField, NumberField, tidy } from './fields.tsx'
 import { ImagePickerButton } from './image-tool.tsx'
-import { CHIP, FOCUS_RING, ICON_BUTTON, POPOVER, SWATCH } from './styles.ts'
+import { CHIP, FOCUS_RING, ICON_BUTTON, KNOBS, POPOVER, SWATCH } from './styles.ts'
 import { useBrandKit } from './use-brand-kit.ts'
 
 type P = Messages['editor']['props']
@@ -272,21 +272,21 @@ function PaintEditor({ paint, brandId, editor, p, onSet }: { paint: Paint; brand
             </button>
           </div>
           <BrandColours brandId={brandId} label={p.brandColours} onPick={(color) => setStopColour(() => color)} />
-          <div className="grid grid-cols-3 gap-x-2">
+          <div className={KNOBS}>
             {paint.type === 'linear' && (
-              <NumberField label="°" name={p.gradientAngle} value={angleOf(paint)} editor={editor} onSet={(v) => setGradient((now) => ({ ...now, ...linearAt(v) }))} onShift={(by) => setGradient((now) => (now.type === 'linear' ? { ...now, ...linearAt(angleOf(now) + by) } : now))} />
+              <NumberField label="∠" name={p.gradientAngle} value={angleOf(paint)} unit="°" editor={editor} onSet={(v) => setGradient((now) => ({ ...now, ...linearAt(v) }))} onShift={(by) => setGradient((now) => (now.type === 'linear' ? { ...now, ...linearAt(angleOf(now) + by) } : now))} />
             )}
             {(paint.type === 'radial' || paint.type === 'angular') && (
               <>
-                <NumberField label="X" name={p.gradientX} value={pct(paint.center.x)} min={0} max={100} editor={editor} onSet={(v) => setGradient((now) => (now.type === 'linear' ? now : { ...now, center: { ...now.center, x: tidy(v / 100) } }))} onShift={(by) => setGradient((now) => (now.type === 'linear' ? now : { ...now, center: { ...now.center, x: tidy(clamp(now.center.x + by / 100, 0, 1)) } }))} />
-                <NumberField label="Y" name={p.gradientY} value={pct(paint.center.y)} min={0} max={100} editor={editor} onSet={(v) => setGradient((now) => (now.type === 'linear' ? now : { ...now, center: { ...now.center, y: tidy(v / 100) } }))} onShift={(by) => setGradient((now) => (now.type === 'linear' ? now : { ...now, center: { ...now.center, y: tidy(clamp(now.center.y + by / 100, 0, 1)) } }))} />
+                <NumberField label="X" name={p.gradientX} value={pct(paint.center.x)} min={0} max={100} unit="%" editor={editor} onSet={(v) => setGradient((now) => (now.type === 'linear' ? now : { ...now, center: { ...now.center, x: tidy(v / 100) } }))} onShift={(by) => setGradient((now) => (now.type === 'linear' ? now : { ...now, center: { ...now.center, x: tidy(clamp(now.center.x + by / 100, 0, 1)) } }))} />
+                <NumberField label="Y" name={p.gradientY} value={pct(paint.center.y)} min={0} max={100} unit="%" editor={editor} onSet={(v) => setGradient((now) => (now.type === 'linear' ? now : { ...now, center: { ...now.center, y: tidy(v / 100) } }))} onShift={(by) => setGradient((now) => (now.type === 'linear' ? now : { ...now, center: { ...now.center, y: tidy(clamp(now.center.y + by / 100, 0, 1)) } }))} />
               </>
             )}
             {paint.type === 'radial' && (
-              <NumberField label="R" name={p.gradientSize} value={pct(paint.radius)} min={1} editor={editor} onSet={(v) => setGradient((now) => (now.type === 'radial' ? { ...now, radius: tidy(Math.max(1, v) / 100) } : now))} onShift={(by) => setGradient((now) => (now.type === 'radial' ? { ...now, radius: tidy(Math.max(0.01, now.radius + by / 100)) } : now))} />
+              <NumberField label="R" name={p.gradientSize} value={pct(paint.radius)} min={1} unit="%" editor={editor} onSet={(v) => setGradient((now) => (now.type === 'radial' ? { ...now, radius: tidy(Math.max(1, v) / 100) } : now))} onShift={(by) => setGradient((now) => (now.type === 'radial' ? { ...now, radius: tidy(Math.max(0.01, now.radius + by / 100)) } : now))} />
             )}
             {paint.type === 'angular' && (
-              <NumberField label="°" name={p.gradientAngle} value={paint.angle} editor={editor} onSet={(v) => setGradient((now) => (now.type === 'angular' ? { ...now, angle: v } : now))} onShift={(by) => setGradient((now) => (now.type === 'angular' ? { ...now, angle: now.angle + by } : now))} />
+              <NumberField label="∠" name={p.gradientAngle} value={paint.angle} unit="°" editor={editor} onSet={(v) => setGradient((now) => (now.type === 'angular' ? { ...now, angle: v } : now))} onShift={(by) => setGradient((now) => (now.type === 'angular' ? { ...now, angle: now.angle + by } : now))} />
             )}
           </div>
         </>

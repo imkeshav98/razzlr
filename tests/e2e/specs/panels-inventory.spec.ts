@@ -180,7 +180,7 @@ test.describe('every selection', () => {
     const page = await open(true)
     await select(page, ['box'])
     const scope = page.getByTestId('scope-card')
-    const x = page.getByTestId('layout-card').getByRole('textbox', { name: 'X position' })
+    const x = page.getByTestId('layout-card').getByRole('spinbutton', { name: 'X position' })
     await expect(scope.getByRole('radio', { name: 'This format' })).toHaveAttribute('aria-checked', 'true')
     await step(page, () => enter(x, '500'), async () => {
       await expect.poll(async () => (await doc(page)).overrides['format:sq']?.box?.x).toBe(500)
@@ -197,7 +197,7 @@ test.describe('every selection', () => {
   row(2, 'own changes: reset one, reset all', async (open) => {
     const page = await open(true)
     await select(page, ['box'])
-    await enter(page.getByTestId('layout-card').getByRole('textbox', { name: 'X position' }), '200')
+    await enter(page.getByTestId('layout-card').getByRole('spinbutton', { name: 'X position' }), '200')
     await enter(page.getByTestId('fill-card').getByRole('textbox', { name: 'Colour 1 hex' }), '14213d')
     const own = page.getByTestId('own-changes')
     await expect(own.getByRole('listitem')).toHaveText(['Position and size', 'Fill'])
@@ -216,7 +216,7 @@ test.describe('every selection', () => {
     await select(page, ['box'])
     const card = page.getByTestId('layout-card')
     for (const [name, key, value] of [['X position', 'x', 140], ['Y position', 'y', 120], ['Width', 'width', 320], ['Height', 'height', 220]] as const) {
-      await step(page, () => enter(card.getByRole('textbox', { name }), String(value)), async () => {
+      await step(page, () => enter(card.getByRole('spinbutton', { name }), String(value)), async () => {
         await expect.poll(async () => (await props(page, 'box'))[key]).toBe(value)
       })
     }
@@ -226,7 +226,7 @@ test.describe('every selection', () => {
   row(4, 'rotation', async (open) => {
     const page = await open()
     await select(page, ['box'])
-    await step(page, () => enter(page.getByTestId('layout-card').getByRole('textbox', { name: 'Rotation in degrees' }), '15'), async () => {
+    await step(page, () => enter(page.getByTestId('layout-card').getByRole('spinbutton', { name: 'Rotation in degrees' }), '15'), async () => {
       await expect.poll(async () => (await props(page, 'box')).rotation).toBe(15)
     })
     await reloads(page)
@@ -235,7 +235,7 @@ test.describe('every selection', () => {
   row(5, 'opacity', async (open) => {
     const page = await open()
     await select(page, ['box'])
-    await step(page, () => enter(page.getByTestId('appearance-card').getByRole('textbox', { name: 'Opacity' }), '50'), async () => {
+    await step(page, () => enter(page.getByTestId('appearance-card').getByRole('spinbutton', { name: 'Opacity' }), '50'), async () => {
       await expect.poll(async () => (await props(page, 'box')).opacity).toBe(0.5)
     })
     await reloads(page)
@@ -270,7 +270,7 @@ test.describe('every selection', () => {
   row(7, 'mixed values on a multi-selection', async (open) => {
     const page = await open()
     await select(page, ['box', 'dot'])
-    const x = page.getByTestId('layout-card').getByRole('textbox', { name: 'X position' })
+    const x = page.getByTestId('layout-card').getByRole('spinbutton', { name: 'X position' })
     await expect(x).toHaveValue('')
     await expect(x).toHaveAttribute('placeholder', 'Mixed')
     await expect(page.getByTestId('fill-card')).toContainText('The selected layers differ.')
@@ -326,22 +326,22 @@ test.describe('every selection', () => {
     await choose(card.getByRole('combobox', { name: 'Add effect' }), 'layerBlur')
     await expect.poll(async () => (await effects()).length).toBe(4)
     for (const [field, key, value] of [['X', 'x', 30], ['Y', 'y', -20], ['Blur', 'blur', 40], ['Spread', 'spread', 12]] as const) {
-      await step(page, () => enter(card.getByRole('textbox', { name: `Drop shadow 1 ${field}` }), String(value)), async () => {
+      await step(page, () => enter(card.getByRole('spinbutton', { name: `Drop shadow 1 ${field}` }), String(value)), async () => {
         await expect.poll(async () => (await effects())[0]?.[key]).toBe(value)
       })
     }
     // The second shadow has its own numbers and colour.
     const second = card.locator('[data-item="effects-1"]')
-    await step(page, () => enter(second.getByRole('textbox', { name: 'Drop shadow 2 Blur' }), '8'), async () => {
+    await step(page, () => enter(second.getByRole('spinbutton', { name: 'Drop shadow 2 Blur' }), '8'), async () => {
       await expect.poll(async () => (await effects())[1]?.blur).toBe(8)
     })
     await step(page, () => enter(second.getByRole('textbox', { name: /hex$/ }), '2f6bff'), async () => {
       await expect.poll(async () => String((await effects())[1]?.color)).toMatch(/^#2F6BFF/)
     })
-    await step(page, () => enter(card.getByRole('textbox', { name: 'Glow 3 Spread' }), '10'), async () => {
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Glow 3 Spread' }), '10'), async () => {
       await expect.poll(async () => (await effects())[2]?.spread).toBe(10)
     })
-    await step(page, () => enter(card.getByRole('textbox', { name: 'Layer blur 4 Radius' }), '6'), async () => {
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Layer blur 4 Radius' }), '6'), async () => {
       await expect.poll(async () => (await effects())[3]?.radius).toBe(6)
     })
     await step(page, () => card.getByRole('button', { name: 'Remove drop shadow 1' }).click(), async () => {
@@ -440,16 +440,16 @@ test.describe('text', () => {
   row(14, 'size', async (open) => {
     const page = await open()
     await select(page, ['headline'])
-    await step(page, () => page.getByTestId('text-look').getByRole('slider', { name: 'Size' }).fill('64'), async () => {
+    await step(page, () => enter(page.getByTestId('text-look').getByRole('spinbutton', { name: 'Size' }), '64'), async () => {
       await expect.poll(async () => (await style(page, 'headline')).fontSize).toBe(64)
     })
-    await step(page, () => enter(page.getByTestId('text-card').getByRole('textbox', { name: 'Size' }), '90'), async () => {
+    await step(page, () => enter(page.getByTestId('text-card').getByRole('spinbutton', { name: 'Size' }), '90'), async () => {
       await expect.poll(async () => (await style(page, 'headline')).fontSize).toBe(90)
     })
     // A box that grows with its words follows the size.
     await autoBox(page, 'autoHeight')
     const tall = (await boxOf(page, 'headline')).height
-    await step(page, () => enter(page.getByTestId('text-card').getByRole('textbox', { name: 'Size' }), '140'), async () => {
+    await step(page, () => enter(page.getByTestId('text-card').getByRole('spinbutton', { name: 'Size' }), '140'), async () => {
       await expect.poll(async () => (await boxOf(page, 'headline')).height).toBeGreaterThan(tall)
     })
     await reloads(page)
@@ -470,7 +470,7 @@ test.describe('text', () => {
   row(16, 'line height, and back to Auto', async (open) => {
     const page = await open()
     await select(page, ['headline'])
-    const field = page.getByTestId('text-card').getByRole('textbox', { name: 'Line height' })
+    const field = page.getByTestId('text-card').getByRole('spinbutton', { name: 'Line height' })
     await step(page, () => enter(field, '1.6'), async () => {
       await expect.poll(async () => (await style(page, 'headline')).lineHeight).toBe(1.6)
     })
@@ -507,7 +507,7 @@ test.describe('text', () => {
     await select(page, ['headline'])
     // A field with no unset value keeps its number when emptied.
     const before = await designOf(page)
-    const spacing = page.getByTestId('text-card').getByRole('textbox', { name: 'Letter spacing' })
+    const spacing = page.getByTestId('text-card').getByRole('spinbutton', { name: 'Letter spacing' })
     await enter(spacing, '')
     await expect(spacing).toHaveValue('0')
     expect(await designOf(page)).toBe(before)
@@ -517,13 +517,13 @@ test.describe('text', () => {
   row(17, 'letter spacing', async (open) => {
     const page = await open()
     await select(page, ['headline'])
-    await step(page, () => enter(page.getByTestId('text-card').getByRole('textbox', { name: 'Letter spacing' }), '4'), async () => {
+    await step(page, () => enter(page.getByTestId('text-card').getByRole('spinbutton', { name: 'Letter spacing' }), '4'), async () => {
       await expect.poll(async () => (await style(page, 'headline')).letterSpacing).toBe(4)
     })
     // A box as wide as its words widens with them.
     await autoBox(page, 'autoWidth')
     const wide = (await boxOf(page, 'headline')).width
-    await step(page, () => enter(page.getByTestId('text-card').getByRole('textbox', { name: 'Letter spacing' }), '20'), async () => {
+    await step(page, () => enter(page.getByTestId('text-card').getByRole('spinbutton', { name: 'Letter spacing' }), '20'), async () => {
       await expect.poll(async () => (await boxOf(page, 'headline')).width).toBeGreaterThan(wide)
     })
     await reloads(page)
@@ -532,7 +532,7 @@ test.describe('text', () => {
   row(18, 'paragraph spacing', async (open) => {
     const page = await open()
     await select(page, ['headline'])
-    await step(page, () => enter(page.getByTestId('paragraph-card').getByRole('textbox', { name: 'Paragraph spacing' }), '24'), async () => {
+    await step(page, () => enter(page.getByTestId('paragraph-card').getByRole('spinbutton', { name: 'Paragraph spacing' }), '24'), async () => {
       await expect.poll(async () => (await props(page, 'headline')).paragraphSpacing).toBe(24)
     })
     await reloads(page)
@@ -607,7 +607,7 @@ test.describe('text', () => {
     await step(page, () => card.getByRole('button', { name: 'Outline', exact: true }).click(), async () => {
       await expect.poll(async () => (await style(page, 'headline')).outline).toBeTruthy()
     })
-    await step(page, () => enter(card.getByRole('textbox', { name: 'Outline width' }), '6'), async () => {
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Outline width' }), '6'), async () => {
       await expect.poll(async () => (await style(page, 'headline')).outline).toMatchObject({ width: 6 })
     })
     await step(page, () => card.getByRole('button', { name: 'Outline', exact: true }).click(), async () => {
@@ -646,10 +646,10 @@ test.describe('text', () => {
     await step(page, () => card.getByRole('button', { name: 'Shrink to fit' }).click(), async () => {
       await expect.poll(async () => (await props(page, 'headline')).shrinkToFit).toBeTruthy()
     }, { draws: false })
-    await step(page, () => enter(card.getByRole('textbox', { name: 'Largest size' }), '200'), async () => {
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Largest size' }), '200'), async () => {
       await expect.poll(async () => (await props(page, 'headline')).shrinkToFit).toMatchObject({ max: 200 })
     })
-    await step(page, () => enter(card.getByRole('textbox', { name: 'Smallest size' }), '120'), async () => {
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Smallest size' }), '120'), async () => {
       await expect.poll(async () => (await props(page, 'headline')).shrinkToFit).toMatchObject({ min: 120, max: 200 })
     })
     await reloads(page)
@@ -658,7 +658,7 @@ test.describe('text', () => {
   row(27, 'lines at most', async (open) => {
     const page = await open()
     await select(page, ['headline'])
-    await step(page, () => enter(page.getByTestId('paragraph-card').getByRole('textbox', { name: 'Lines at most' }), '1'), async () => {
+    await step(page, () => enter(page.getByTestId('paragraph-card').getByRole('spinbutton', { name: 'Lines at most' }), '1'), async () => {
       await expect.poll(async () => (await props(page, 'headline')).maxLines).toBe(1)
     })
     await reloads(page)
@@ -750,17 +750,17 @@ test.describe('shapes and frames', () => {
     })
     const ends = async () => { const paint = (await fills(page, 'box'))[0]; return JSON.stringify([paint?.from, paint?.to]) }
     const along = await ends()
-    await step(page, () => enter(editor.getByRole('textbox', { name: 'Gradient angle' }), '45'), async () => {
+    await step(page, () => enter(editor.getByRole('spinbutton', { name: 'Gradient angle' }), '45'), async () => {
       await expect.poll(ends).not.toBe(along)
     })
     await editor.getByRole('radio', { name: 'Radial gradient' }).click()
-    await step(page, () => enter(editor.getByRole('textbox', { name: 'Gradient centre across' }), '20'), async () => {
+    await step(page, () => enter(editor.getByRole('spinbutton', { name: 'Gradient centre across' }), '20'), async () => {
       await expect.poll(async () => (await fills(page, 'box'))[0]?.center).toMatchObject({ x: 0.2 })
     })
-    await step(page, () => enter(editor.getByRole('textbox', { name: 'Gradient centre down' }), '70'), async () => {
+    await step(page, () => enter(editor.getByRole('spinbutton', { name: 'Gradient centre down' }), '70'), async () => {
       await expect.poll(async () => (await fills(page, 'box'))[0]?.center).toMatchObject({ x: 0.2, y: 0.7 })
     })
-    await step(page, () => enter(editor.getByRole('textbox', { name: 'Gradient size' }), '30'), async () => {
+    await step(page, () => enter(editor.getByRole('spinbutton', { name: 'Gradient size' }), '30'), async () => {
       await expect.poll(async () => (await fills(page, 'box'))[0]?.radius).toBe(0.3)
     })
     await reloads(page)
@@ -779,7 +779,7 @@ test.describe('shapes and frames', () => {
     await card.locator('[data-row="1"]').getByTestId('paint-swatch').click()
     await page.getByTestId('paint-editor').getByRole('radio', { name: 'Linear gradient' }).click()
     await page.keyboard.press('Escape')
-    await step(page, () => enter(card.getByRole('textbox', { name: 'Colour 1 opacity' }), '50'), async () => {
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Colour 1 opacity' }), '50'), async () => {
       await expect.poll(async () => (await fills(page, 'box'))[0]?.opacity).toBe(0.5)
     })
     await reloads(page)
@@ -805,7 +805,7 @@ test.describe('shapes and frames', () => {
     await step(page, () => card.getByRole('button', { name: 'Add stroke' }).click(), async () => { await expect.poll(async () => (await strokes()).length).toBe(1) })
     await step(page, () => card.getByRole('button', { name: 'Add stroke' }).click(), async () => { await expect.poll(async () => (await strokes()).length).toBe(2) })
     // Top first: Stroke 1 is the newest, drawn on top; a colour of its own shows which is on top.
-    await enter(card.getByRole('textbox', { name: 'Stroke 1 width' }), '12')
+    await enter(card.getByRole('spinbutton', { name: 'Stroke 1 width' }), '12')
     await enter(card.getByRole('textbox', { name: 'Stroke 1 colour hex' }), 'ff48b0')
     await expect.poll(async () => (await strokes()).map((s) => s.width)).toEqual([2, 12])
     await step(page, () => card.locator('[data-row="1"]').getByTestId('row-grip').press('ArrowDown'), async () => {
@@ -830,7 +830,7 @@ test.describe('shapes and frames', () => {
     await step(page, () => enter(card.getByRole('textbox', { name: 'Stroke 1 colour hex' }), '2f6bff'), async () => {
       await expect.poll(stroke).toMatchObject({ paint: { type: 'solid', color: '#2F6BFFFF' } })
     })
-    await step(page, () => enter(card.getByRole('textbox', { name: 'Stroke 1 width' }), '10'), async () => { await expect.poll(stroke).toMatchObject({ width: 10 }) })
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Stroke 1 width' }), '10'), async () => { await expect.poll(stroke).toMatchObject({ width: 10 }) })
     for (const align of ['inside', 'outside', 'center']) {
       await step(page, () => choose(card.getByRole('combobox', { name: 'Stroke 1 position' }), align), async () => { await expect.poll(stroke).toMatchObject({ align }) })
     }
@@ -842,13 +842,13 @@ test.describe('shapes and frames', () => {
     await select(page, ['poly'])
     const card = page.getByTestId('stroke-card')
     await card.getByRole('button', { name: 'Add stroke' }).click()
-    await enter(card.getByRole('textbox', { name: 'Stroke 1 width' }), '16')
+    await enter(card.getByRole('spinbutton', { name: 'Stroke 1 width' }), '16')
     const stroke = async () => (await props(page, 'poly')).strokes?.[0] ?? {}
     for (const join of ['round', 'bevel', 'miter']) {
       await step(page, () => choose(card.getByRole('combobox', { name: 'Stroke 1 corners' }), join), async () => { await expect.poll(stroke).toMatchObject({ join }) })
     }
     await step(page, () => enter(card.getByRole('textbox', { name: 'Stroke 1 dashes' }), '30, 12'), async () => { await expect.poll(stroke).toMatchObject({ dashes: [30, 12] }) })
-    await step(page, () => enter(card.getByRole('textbox', { name: 'Stroke 1 dash offset' }), '9'), async () => { await expect.poll(stroke).toMatchObject({ dashOffset: 9 }) })
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Stroke 1 dash offset' }), '9'), async () => { await expect.poll(stroke).toMatchObject({ dashOffset: 9 }) })
     for (const cap of ['round', 'square', 'butt']) {
       await step(page, () => choose(card.getByRole('combobox', { name: 'Stroke 1 ends' }), cap), async () => { await expect.poll(stroke).toMatchObject({ cap }) })
     }
@@ -860,13 +860,13 @@ test.describe('shapes and frames', () => {
     await select(page, ['box'])
     const card = page.getByTestId('shape-card')
     const shape = async () => (await props(page, 'box')).shape as Record<string, unknown>
-    await step(page, () => card.getByRole('slider', { name: 'Corners' }).fill('60'), async () => { await expect.poll(shape).toMatchObject({ cornerRadius: 60 }) })
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Corners' }), '60'), async () => { await expect.poll(shape).toMatchObject({ cornerRadius: 60 }) })
     // Each corner starts at the radius all four had.
     await step(page, () => card.getByRole('checkbox', { name: 'Each corner its own radius' }).click(), async () => {
       await expect.poll(async () => (await shape()).corners).toEqual([60, 60, 60, 60])
     }, { draws: false })
     for (const [i, corner, radius] of [[0, 'Top left', 0], [1, 'Top right', 20], [2, 'Bottom right', 90], [3, 'Bottom left', 40]] as const) {
-      await step(page, () => enter(card.getByRole('textbox', { name: `${corner} radius` }), String(radius)), async () => {
+      await step(page, () => enter(card.getByRole('spinbutton', { name: `${corner} radius` }), String(radius)), async () => {
         await expect.poll(async () => ((await shape()).corners as number[])[i]).toBe(radius)
       })
     }
@@ -878,8 +878,8 @@ test.describe('shapes and frames', () => {
     await select(page, ['poly'])
     const card = page.getByTestId('shape-card')
     const shape = async () => (await props(page, 'poly')).shape
-    await step(page, () => card.getByRole('slider', { name: 'Sides' }).fill('8'), async () => { await expect.poll(shape).toMatchObject({ sides: 8 }) })
-    await step(page, () => card.getByRole('slider', { name: 'Corners' }).fill('20'), async () => { await expect.poll(shape).toMatchObject({ cornerRadius: 20 }) })
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Sides' }), '8'), async () => { await expect.poll(shape).toMatchObject({ sides: 8 }) })
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Corners' }), '20'), async () => { await expect.poll(shape).toMatchObject({ cornerRadius: 20 }) })
     await reloads(page)
   })
 
@@ -888,9 +888,9 @@ test.describe('shapes and frames', () => {
     await select(page, ['star'])
     const card = page.getByTestId('shape-card')
     const shape = async () => (await props(page, 'star')).shape
-    await step(page, () => card.getByRole('slider', { name: 'Points' }).fill('8'), async () => { await expect.poll(shape).toMatchObject({ points: 8 }) })
-    await step(page, () => card.getByRole('slider', { name: 'Inner' }).fill('0.7'), async () => { await expect.poll(shape).toMatchObject({ innerRadius: 0.7 }) })
-    await step(page, () => card.getByRole('slider', { name: 'Corners' }).fill('10'), async () => { await expect.poll(shape).toMatchObject({ cornerRadius: 10 }) })
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Points' }), '8'), async () => { await expect.poll(shape).toMatchObject({ points: 8 }) })
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Inner' }), '70'), async () => { await expect.poll(shape).toMatchObject({ innerRadius: 0.7 }) })
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Corners' }), '10'), async () => { await expect.poll(shape).toMatchObject({ cornerRadius: 10 }) })
     await reloads(page)
   })
 
@@ -974,7 +974,7 @@ test.describe('photos', () => {
     const card = page.getByTestId('image-card')
     await card.getByRole('button', { name: 'Fine-tune' }).click()
     for (const [name, key] of [['Exposure', 'exposure'], ['Contrast', 'contrast'], ['Saturation', 'saturation'], ['Temperature', 'temperature'], ['Tint', 'tint']] as const) {
-      await step(page, () => enter(card.getByRole('textbox', { name }), '40'), async () => {
+      await step(page, () => enter(card.getByRole('spinbutton', { name }), '40'), async () => {
         await expect.poll(async () => ((await image(page)).adjust as Record<string, number> | undefined)?.[key]).toBe(40)
       })
     }
@@ -986,7 +986,7 @@ test.describe('photos', () => {
     await select(page, ['photo'])
     const card = page.getByTestId('image-card')
     await card.getByRole('button', { name: 'Fine-tune' }).click()
-    await step(page, () => enter(card.getByRole('textbox', { name: 'Image opacity' }), '50'), async () => {
+    await step(page, () => enter(card.getByRole('spinbutton', { name: 'Image opacity' }), '50'), async () => {
       await expect.poll(async () => (await image(page)).opacity).toBe(0.5)
     })
     await reloads(page)
@@ -1020,7 +1020,7 @@ test.describe('frames and auto layout', () => {
     const card = page.getByTestId('auto-layout-card')
     await step(page, () => choose(card.getByRole('combobox', { name: 'Direction' }), 'column'), async () => { await expect.poll(() => layout(page)).toMatchObject({ direction: 'column' }) })
     await choose(card.getByRole('combobox', { name: 'Direction' }), 'row')
-    await enter(card.getByRole('textbox', { name: 'Gap', exact: true }), '400')
+    await enter(card.getByRole('spinbutton', { name: 'Gap', exact: true }), '400')
     await step(page, () => card.getByRole('checkbox', { name: 'Wrap' }).click(), async () => { await expect.poll(() => layout(page)).toMatchObject({ wrap: true }) })
     await reloads(page)
   })
@@ -1028,7 +1028,7 @@ test.describe('frames and auto layout', () => {
   row(52, 'gap', async (open) => {
     const page = await open()
     await select(page, ['stack'])
-    await step(page, () => enter(page.getByTestId('auto-layout-card').getByRole('textbox', { name: 'Gap', exact: true }), '48'), async () => {
+    await step(page, () => enter(page.getByTestId('auto-layout-card').getByRole('spinbutton', { name: 'Gap', exact: true }), '48'), async () => {
       await expect.poll(() => layout(page)).toMatchObject({ gap: 48 })
     })
     await reloads(page)
@@ -1040,7 +1040,7 @@ test.describe('frames and auto layout', () => {
     const card = page.getByTestId('auto-layout-card')
     for (const side of ['top', 'right', 'bottom', 'left']) {
       // The stack is wider than its row: padding on the end side moves nothing.
-      await step(page, () => enter(card.getByRole('textbox', { name: `Padding ${side}` }), '8'), async () => {
+      await step(page, () => enter(card.getByRole('spinbutton', { name: `Padding ${side}` }), '8'), async () => {
         await expect.poll(async () => ((await layout(page))?.padding as Record<string, number>)[side]).toBe(8)
       }, { draws: side === 'top' || side === 'left' })
     }
@@ -1061,8 +1061,8 @@ test.describe('frames and auto layout', () => {
     const page = await open()
     await select(page, ['stack'])
     const card = page.getByTestId('auto-layout-card')
-    await enter(card.getByRole('textbox', { name: 'Padding top' }), '0')
-    await enter(card.getByRole('textbox', { name: 'Padding bottom' }), '0')
+    await enter(card.getByRole('spinbutton', { name: 'Padding top' }), '0')
+    await enter(card.getByRole('spinbutton', { name: 'Padding bottom' }), '0')
     const field = card.getByRole('combobox', { name: 'Align', exact: true })
     for (const align of ['center', 'end', 'start']) {
       await step(page, () => choose(field, align), async () => { await expect.poll(() => layout(page)).toMatchObject({ align }) })
@@ -1377,7 +1377,7 @@ test.describe('left panels and export', () => {
     await expect(page.getByTestId('export-run')).toHaveText('Export 1 file')
     const jpgAt = async (quality: string) => {
       await opened()
-      await page.getByTestId('export-quality').fill(quality)
+      await enter(page.getByTestId('export-quality'), quality)
       const [jpg] = await Promise.all([page.waitForEvent('download'), page.getByTestId('export-run').click()])
       expect(jpg.suggestedFilename()).toMatch(/Square\.jpg$/)
       return readFileSync(await jpg.path()).length

@@ -5,21 +5,21 @@
 // tiles, then Details, one folded row per card of numbers (#151 to #157). A value the selected
 // layers don't share shows as mixed; setting it gives them all the same one, and scrubbing or the
 // arrow keys move each from its own. With more than one format the changes go to every format or to
-// this one only. Each change is one undo step, and a scrub or a slider drag, however long, is one too.
+// this one only. Each change is one undo step, and a drag on a number, however long, is one too.
 import { ArrowsClockwiseIcon, CaretRightIcon, ImageSquareIcon, XIcon } from '@phosphor-icons/react'
 import { withImage, type Editor } from '@dazbee/editor'
 import { BlendMode, boundFillIndex, brandRef, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@dazbee/schema'
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format, type Messages } from '../../lib/i18n/index.ts'
 import { Select } from '../ui/select.tsx'
 import { CARD, CardHeader, FineTune, PICKED_RING, SWATCHES } from './card.tsx'
-import { CHIP, DASHED_BUTTON, FOCUS_RING, SWATCH } from './styles.ts'
+import { CHIP, DASHED_BUTTON, FIELD, FOCUS_RING, KNOBS, SWATCH } from './styles.ts'
 import { ImagePickerButton } from './image-tool.tsx'
 import { useBrandKit } from './use-brand-kit.ts'
 import { useLiveDesign } from './use-live-design.ts'
-import { Choice, clamp, ColorField, FIELD, NumberField, tidy } from './fields.tsx'
+import { Choice, clamp, ColorField, NumberField, tidy } from './fields.tsx'
 import { AddButton, PaintRow, RemoveButton, Stack } from './paint-stack.tsx'
 
 type Props = Readonly<Record<string, unknown>>
@@ -137,7 +137,7 @@ function LayoutCard({ target, p }: { target: Target; p: P }) {
   }
   return (
     <Card id="layout-card" title={p.layout} summary={`${one('x')}, ${one('y')} · ${one('width')}×${one('height')}`}>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+      <div className={KNOBS}>
         {fields.map((f) => (
           (f.key === 'width' || f.key === 'height') && !sized
             ? null
@@ -156,7 +156,8 @@ function LayoutCard({ target, p }: { target: Target; p: P }) {
         ))}
         {sized && (
           <NumberField
-            label="°"
+            label="↻"
+            unit="°"
             name={p.rotationName}
             value={shared(target.props.map((pr) => num(pr, 'rotation') ?? 0))}
             editor={target.editor}
@@ -180,9 +181,10 @@ function AppearanceCard({ target, p }: { target: Target; p: P }) {
       title={p.appearance}
       summary={`${opacity === 'mixed' ? '–' : Math.round(opacity * 100)}% · ${blend === 'mixed' ? p.mixed : (p.blends as Record<string, string>)[blend] ?? blend}`}
     >
-      <div className="grid grid-cols-2 gap-x-3">
+      <div className={KNOBS}>
         <NumberField
-          label="%"
+          label={p.opacity}
+          unit="%"
           name={p.opacity}
           value={shared(target.props.map((pr) => num(pr, 'opacity') ?? 1))}
           scale={100}
@@ -222,19 +224,21 @@ function ShapeCard({ target, p, kind, look }: { target: Target; p: P; kind: Shap
   const value = (key: string) => shared(shapes.map((s) => (s as Record<string, unknown>)[key])) as number | string | 'mixed' | undefined
   const setShape = (change: (now: Record<string, unknown>) => Record<string, unknown>) =>
     set(target, (now) => ({ shape: { ...(now.shape as Record<string, unknown>), ...change(now.shape as Record<string, unknown>) } }))
-  /** A slider, as in the mock: its range is what designs mostly use, and the shape keeps the schema's limits. */
-  const slider = (key: string, name: string, { min, max, step = 1, show = (n: number) => String(Math.round(n)) }: { min: number; max: number; step?: number; show?: (n: number) => string }) => {
-    const v = value(key) as number | 'mixed' | undefined
+  /** A knob, as in the mock: its range is what designs mostly use, and the shape keeps the schema's limits. */
+  const knob = (key: string, name: string, { min, max, scale = 1, unit, whole = true }: { min: number; max: number; scale?: number; unit?: string; whole?: boolean }) => {
+    const to = (n: number) => clamp(whole ? Math.round(n) : tidy(n), min, max)
     return (
-      <Slider
+      <NumberField
+        label={name}
         name={name}
-        value={v}
+        value={value(key) as number | 'mixed' | undefined}
         min={min}
         max={max}
-        step={step}
-        display={v === undefined || v === 'mixed' ? '–' : show(v)}
+        scale={scale}
+        unit={unit}
         editor={target.editor}
-        onSet={(n) => setShape(() => ({ [key]: step === 1 ? Math.round(n) : tidy(n) }))}
+        onSet={(n) => setShape(() => ({ [key]: to(n) }))}
+        onShift={(by) => setShape((now) => ({ [key]: to(((now[key] as number | undefined) ?? min) + by) }))}
       />
     )
   }
@@ -270,27 +274,29 @@ function ShapeCard({ target, p, kind, look }: { target: Target; p: P; kind: Shap
         )
         : (
           <>
-            {kind === 'polygon' && slider('sides', p.sides, { min: 3, max: 24 })}
-            {kind === 'star' && slider('points', p.points, { min: 3, max: 24 })}
-            {kind === 'star' && slider('innerRadius', p.innerRadius, { min: 0.05, max: 0.95, step: 0.01, show: (n) => `${Math.round(n * 100)}%` })}
-            {!each && slider('cornerRadius', p.cornerRadius, { min: 0, max: 200 })}
-          <div dir="ltr" className="grid grid-cols-2 gap-x-3 gap-y-2 empty:hidden">
-            {each && CORNER_FIELDS.map((i) => CORNERS[i]).map((corner, n) => {
-              const i = CORNER_FIELDS[n] ?? 0
-              return (
-              <NumberField
-                key={corner}
-                label={p.cornersShort[corner]}
-                name={p.corners[corner]}
-                value={shared(shapes.map((s) => (s.kind === 'rect' ? s.corners?.[i] : undefined)))}
-                min={0}
-                editor={target.editor}
-                onSet={(v) => setCorner(i, () => v)}
-                onShift={(by) => setCorner(i, (r) => r + by)}
-              />
-              )
-            })}
-          </div>
+            <div className={cn(KNOBS, 'empty:hidden')}>
+              {kind === 'polygon' && knob('sides', p.sides, { min: 3, max: 24 })}
+              {kind === 'star' && knob('points', p.points, { min: 3, max: 24 })}
+              {kind === 'star' && knob('innerRadius', p.innerRadius, { min: 0.05, max: 0.95, scale: 100, unit: '%', whole: false })}
+              {!each && knob('cornerRadius', p.cornerRadius, { min: 0, max: 200 })}
+            </div>
+            <div dir="ltr" className={cn(KNOBS, 'empty:hidden')}>
+              {each && CORNER_FIELDS.map((i) => CORNERS[i]).map((corner, n) => {
+                const i = CORNER_FIELDS[n] ?? 0
+                return (
+                  <NumberField
+                    key={corner}
+                    label={p.cornersShort[corner]}
+                    name={p.corners[corner]}
+                    value={shared(shapes.map((s) => (s.kind === 'rect' ? s.corners?.[i] : undefined)))}
+                    min={0}
+                    editor={target.editor}
+                    onSet={(v) => setCorner(i, () => v)}
+                    onShift={(by) => setCorner(i, (r) => r + by)}
+                  />
+                )
+              })}
+            </div>
           </>
         )}
       {kind === 'rect' && (
@@ -400,7 +406,7 @@ function StrokeRow({ stroke, place, brandId, p, editor, onSet }: { stroke: Strok
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
       <PaintRow paint={stroke.paint} name={format(p.strokeColour, n)} brandId={brandId} editor={editor} p={p} onSet={(to) => onSet((now) => ({ ...now, paint: to(now.paint) }))} />
-      <div className="grid grid-cols-2 gap-1">
+      <div className={KNOBS}>
         <NumberField label="W" name={format(p.strokeWidth, n)} value={stroke.width} min={0.5} step={0.5} editor={editor} onSet={(width) => onSet((now) => ({ ...now, width }))} onShift={(by) => onSet((now) => ({ ...now, width: tidy(clamp(now.width + by, 0.5)) }))} />
         <Choice name={format(p.strokeAlign, n)} value={stroke.align} options={['inside', 'center', 'outside'] as const} labels={p.aligns} onSet={(align) => onSet((now) => ({ ...now, align }))} />
         <DashField name={format(p.strokeDashes, n)} value={stroke.dashes ?? []} onSet={(dashes) => onSet((now) => ({ ...now, dashes }))} />
@@ -438,7 +444,7 @@ function EffectRow({ effect, i, target, p, write }: { effect: Effect; i: number;
         <span className="text-xs font-bold text-text">{effectName}</span>
         <RemoveButton label={format(p.remove, { name: effectName.toLowerCase(), n: i + 1 })} onClick={() => write((now) => now.filter((_, j) => j !== i))} />
       </div>
-      <div className="grid grid-cols-2 gap-1.5">
+      <div className={KNOBS}>
         {EFFECT_FIELDS[effect.type].map((field) => {
           const value = (effect as unknown as Record<string, number>)[field] ?? 0
           const min = field === 'x' || field === 'y' || (field === 'spread' && effect.type === 'dropShadow') ? undefined : 0
@@ -474,7 +480,7 @@ function TextCard({ target, p }: { target: Target; p: P }) {
     })
   return (
     <Card id="text-card" title={p.textNumbers} summary={[style('fontSize'), style('color')].map((v) => (v === 'mixed' ? '–' : typeof v === 'string' ? v.slice(0, 7) : String(v))).join(' · ')}>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+      <div className={KNOBS}>
         <NumberField label="Aa" name={p.fontSize} value={style('fontSize') as number | 'mixed'} min={1} editor={target.editor} onSet={(v) => setStyle('fontSize', v)} onShift={(by) => shiftStyle('fontSize', by, 1)} />
         <NumberField
           label="↕"
@@ -553,7 +559,7 @@ function ParagraphCard({ target, p }: { target: Target; p: P }) {
   const outlined = outline === 'mixed' || (outline !== undefined && outline.width > 0)
   return (
     <Card id="paragraph-card" title={p.paragraph}>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+      <div className={KNOBS}>
         <Choice name={p.boxMode} value={value('boxMode') as BoxMode | 'mixed' | undefined ?? 'autoHeight'} options={['autoWidth', 'autoHeight', 'fixed'] as const} labels={p.boxModes} onSet={(boxMode) => set(target, () => ({ boxMode }))} />
         <Choice name={p.list} value={(value('list') ?? 'none') as 'none' | 'bullet' | 'number' | 'mixed'} options={['none', 'bullet', 'number'] as const} labels={p.lists} onSet={(list) => set(target, () => ({ list: list === 'none' ? undefined : list }))} />
         <NumberField
@@ -592,7 +598,7 @@ function ParagraphCard({ target, p }: { target: Target; p: P }) {
         ]}
       />
       {shrink !== undefined && shrink !== 'mixed' && (
-        <div className="grid grid-cols-2 gap-x-3">
+        <div className={KNOBS}>
           {(['min', 'max'] as const).map((end) => (
             <NumberField
               key={end}
@@ -711,9 +717,10 @@ function ImageCard({ target, p, brandId, index, paint }: { target: Target; p: P;
       </div>
       <FineTune open={fine} onToggle={() => setFine(!fine)} label={p.fineTune} />
       {fine && (
-        <div className="grid grid-cols-2 gap-x-3 gap-y-2 px-[18px] pb-4">
+        <div className={cn(KNOBS, 'px-[18px] pb-4')}>
           <NumberField
-            label="%"
+            label={p.opacity}
+            unit="%"
             name={p.imageOpacity}
             value={paint.opacity}
             scale={100}
@@ -762,7 +769,7 @@ function AutoLayoutCard({ target, p }: { target: Target; p: P }) {
   })
   return (
     <Card id="auto-layout-card" title={p.autoLayout}>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+      <div className={KNOBS}>
         <Choice name={p.direction} value={value('direction') as Layout['direction'] | 'mixed'} options={['row', 'column'] as const} labels={p.directions} onSet={(direction) => setLayout(() => ({ direction }))} />
         <NumberField label="↔" name={p.gap} value={value('gap') as number | 'mixed'} editor={target.editor} onSet={(gap) => setLayout(() => ({ gap }))} onShift={(by) => setLayout((l) => ({ gap: tidy(l.gap + by) }))} />
         {(['top', 'right', 'bottom', 'left'] as const).map((side) => (
@@ -921,62 +928,21 @@ function Swatches({ target, brandId, p, current, paint }: { target: Target; bran
   )
 }
 
-/** A slider for a number, as in the mock; a drag is one undo step. */
-function Slider({ name, value, min, max, step = 1, display, editor, onSet }: {
-  name: string
-  value: number | 'mixed' | undefined
-  min: number
-  max: number
-  step?: number
-  /** The value as the row shows it at its end. */
-  display: string
-  editor: Editor
-  onSet: (value: number) => void
-}) {
-  const drag = useRef<(() => void) | null>(null)
-  const end = () => {
-    drag.current?.()
-    drag.current = null
-  }
-  const shown = value === 'mixed' || value === undefined ? min : clamp(value, min, max)
-  return (
-    <label className="grid grid-cols-[3.5rem_1fr_2.25rem] items-center gap-2 text-[12px] text-muted">
-      <span className="truncate">{name}</span>
-      <input
-        type="range"
-        name={name}
-        min={min}
-        max={max}
-        step={step}
-        value={shown}
-        onPointerDown={() => {
-          drag.current = editor.beginGesture()
-        }}
-        onPointerUp={end}
-        onPointerCancel={end}
-        onChange={(event) => onSet(Number(event.target.value))}
-        style={{ '--fill': `${((shown - min) / (max - min)) * 100}%` } as React.CSSProperties}
-        className="slider"
-      />
-      <span className="text-end font-mono text-[11px] text-text tabular-nums">{value === 'mixed' ? '–' : display}</span>
-    </label>
-  )
-}
-
-/** Text's look, as in the mock: its size on a slider and its colour from the brand. */
+/** Text's look, as in the mock: its size and its colour from the brand. */
 function TextLook({ target, brandId, p }: { target: Target; brandId: string; p: P }) {
   const styles = target.props.map((pr) => pr.style as Style)
   const size = shared(styles.map((s) => s.fontSize))
   return (
     <Card id="text-look" title={p.text} note={target.names.join(', ')}>
-      <Slider
+      <NumberField
+        label={p.fontSize}
         name={p.fontSize}
         value={size}
         min={8}
         max={240}
-        display={size === 'mixed' ? '–' : String(Math.round(size))}
         editor={target.editor}
         onSet={(fontSize) => set(target, (now) => ({ style: { ...(now.style as Style), fontSize } }))}
+        onShift={(by) => set(target, (now) => ({ style: { ...(now.style as Style), fontSize: tidy(clamp((now.style as Style).fontSize + by, 8, 240)) } }))}
       />
       <Swatches target={target} brandId={brandId} p={p} current={shared(styles.map((s) => s.color))} paint={(hex) => set(target, (now) => ({ style: { ...(now.style as Style), color: `${hex}${((now.style as Style).color ?? '').slice(7, 9) || 'FF'}` } }))} />
     </Card>

@@ -2,26 +2,41 @@
 
 // The property cards' fields, shared by every card that edits a value: a number that types, nudges
 // and scrubs, a colour with its hex and opacity, and a choice from a list.
-import { useId, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import type { Editor } from '@dazbee/editor'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { Select } from '../ui/select.tsx'
-
-export const FIELD = 'h-7 min-w-0 w-full rounded-row border border-line bg-surface px-1.5 font-mono text-[12px] tabular-nums text-text outline-none placeholder:text-subtle focus:border-accent'
-export const SELECT = 'h-7 w-full bg-surface px-1.5 text-[12px]'
+import { FIELD, KNOB, SELECT, VALUE_TEXT } from './styles.ts'
 
 export const clamp = (n: number, min = Number.NEGATIVE_INFINITY, max = Number.POSITIVE_INFINITY) => Math.min(max, Math.max(min, n))
 export const tidy = (n: number) => Math.round(n * 100) / 100
 
 /**
- * A number: type it and press Enter, nudge it with the arrow keys (Shift for 10), or drag its label
- * sideways to scrub it, one undo step for the whole drag. With `onClear`, emptying the field calls it,
- * for a value that can be left unset (its placeholder shows then), mixed values too once something
- * was typed; without, an empty field is ignored.
+ * What is being typed into a field, null when nothing is: `typed.current` has it as soon as it is
+ * typed, before the field draws again, for a key or a blur that comes right after.
  */
-export function NumberField({ label, name, value, step = 1, min, max, scale = 1, placeholder, editor, onSet, onShift, onClear }: {
+function useDraft() {
+  const [draft, setState] = useState<string | null>(null)
+  const typed = useRef<string | null>(null)
+  const setDraft = (to: string | null) => {
+    typed.current = to
+    setState(to)
+  }
+  return [draft, setDraft, typed] as const
+}
+
+/**
+ * A number, as a knob: drag it sideways to scrub the value (Shift for 10 times, Alt for a tenth on a
+ * field with fractional steps), one undo step for the whole drag; click it, or tab to it, and type a
+ * value and press Enter; nudge it with the arrow keys (Shift for 10). With `min` and `max` a fill
+ * behind it shows where the value sits between them, and Home and End go to them. Steps are in the
+ * value as shown, after `scale`.
+ * With `onClear`, emptying the field calls it, for a value that can be left unset (its placeholder
+ * shows then), mixed values too once something was typed; without, an empty field is ignored.
+ */
+export function NumberField({ label, name, value, step = 1, min, max, scale = 1, unit = '', placeholder, editor, testId, onSet, onShift, onClear }: {
   label: string
   name: string
   value: number | 'mixed' | undefined
@@ -30,19 +45,28 @@ export function NumberField({ label, name, value, step = 1, min, max, scale = 1,
   max?: number | undefined
   /** Shown as the value times this, such as 100 for a percentage. */
   scale?: number
+  /** Shown after the value: %, ° or px. */
+  unit?: string | undefined
   placeholder?: string
-  editor: Editor
+  /** Makes a drag one undo step; without one, a drag is as many changes as it makes. */
+  editor?: Editor
+  testId?: string
   onSet: (value: number) => void
   onShift: (by: number) => void
   onClear?: () => void
 }) {
   const t = useMessages()
-  const id = useId()
+  const input = useRef<HTMLInputElement>(null)
   const shown = value === undefined || value === 'mixed' ? '' : String(tidy(value * scale))
-  const [draft, setDraft] = useState<string | null>(null)
-  const scrub = useRef<{ x: number; applied: number; end: () => void } | null>(null)
+  const [draft, setDraft, typedNow] = useDraft()
+  const [typing, setTyping] = useState(false)
+  const press = useRef<{ x: number; applied: number; end: (() => void) | null } | null>(null)
+  const ranged = min !== undefined && max !== undefined && Number.isFinite(min) && Number.isFinite(max) && max > min
+  const fill = ranged && typeof value === 'number' ? ((clamp(value, min, max) - min) / (max - min)) * 100 : 0
+  /** One step, or ten with Shift, or a tenth with Alt where the steps are fractions. */
+  const stepOf = (event: { shiftKey: boolean; altKey: boolean }) => step * (event.shiftKey ? 10 : event.altKey && step < 1 ? 0.1 : 1)
   const commit = (text: string) => {
-    const typed = draft !== null
+    const typed = typedNow.current !== null
     setDraft(null)
     if (text.trim() === '') {
       if (onClear && (shown !== '' || (value === 'mixed' && typed))) onClear()
@@ -51,46 +75,70 @@ export function NumberField({ label, name, value, step = 1, min, max, scale = 1,
     const n = Number.parseFloat(text.replace(',', '.'))
     if (Number.isFinite(n) && text.trim() !== shown) onSet(clamp(n / scale, min, max))
   }
+  const release = (focus: boolean) => {
+    const p = press.current
+    press.current = null
+    if (!p) return
+    if (p.end) p.end()
+    else if (focus) input.current?.focus()
+  }
+  // A drag the card is taken away in the middle of still ends its undo step.
+  useEffect(() => () => press.current?.end?.(), [])
   return (
-    <div className="flex min-w-0 items-center gap-1">
-      <label
-        htmlFor={id}
-        title={format(t.editor.props.scrub, { name })}
-        onPointerDown={(event) => {
-          if (event.button !== 0) return
-          event.preventDefault()
-          event.currentTarget.setPointerCapture(event.pointerId)
-          scrub.current = { x: event.clientX, applied: 0, end: editor.beginGesture() }
-        }}
-        onPointerMove={(event) => {
-          const s = scrub.current
-          if (!s) return
-          const by = Math.round((event.clientX - s.x) / 2) * step * (event.shiftKey ? 10 : 1)
-          if (by === s.applied) return
-          onShift((by - s.applied) / scale)
-          s.applied = by
-        }}
-        onPointerUp={() => {
-          scrub.current?.end()
-          scrub.current = null
-        }}
-        onPointerCancel={() => {
-          scrub.current?.end()
-          scrub.current = null
-        }}
-        data-scrub={name}
-        className="w-5 shrink-0 cursor-ew-resize text-center text-[11px] font-medium text-subtle select-none hover:text-text"
-      >
-        {label}
-      </label>
+    <div
+      data-scrub={name}
+      title={format(t.editor.props.scrub, { name })}
+      style={{ '--fill': `${fill}%` } as CSSProperties}
+      onPointerDown={(event) => {
+        // A press on the field being typed in places the caret; anywhere else it starts a drag.
+        if (event.button !== 0 || (typing && event.target === input.current)) return
+        event.preventDefault()
+        event.currentTarget.setPointerCapture(event.pointerId)
+        press.current = { x: event.clientX, applied: 0, end: null }
+      }}
+      onMouseDown={(event) => {
+        // Some browsers focus on the mouse press even when the pointer press was taken.
+        if (!(typing && event.target === input.current)) event.preventDefault()
+      }}
+      onPointerMove={(event) => {
+        const p = press.current
+        if (!p || (!p.end && Math.abs(event.clientX - p.x) < 3)) return
+        if (!p.end) setDraft(null)
+        p.end ??= editor?.beginGesture() ?? (() => undefined)
+        const by = Math.round((event.clientX - p.x) / 2) * stepOf(event)
+        if (by === p.applied) return
+        onShift((by - p.applied) / scale)
+        p.applied = by
+      }}
+      onPointerUp={() => release(true)}
+      onPointerCancel={() => release(false)}
+      onLostPointerCapture={() => release(false)}
+      className={KNOB}
+    >
+      <span className="relative min-w-0 truncate">{label}</span>
       <input
-        id={id}
+        ref={input}
+        name={name}
+        role="spinbutton"
         aria-label={name}
+        aria-valuenow={typeof value === 'number' ? tidy(value * scale) : undefined}
+        aria-valuemin={min === undefined || !Number.isFinite(min) ? undefined : tidy(min * scale)}
+        aria-valuemax={max === undefined || !Number.isFinite(max) ? undefined : tidy(max * scale)}
+        aria-valuetext={value === 'mixed' ? t.editor.props.mixed : shown ? `${shown}${unit}` : placeholder}
+        data-testid={testId}
         inputMode="decimal"
         value={draft ?? shown}
         placeholder={value === 'mixed' ? t.editor.props.mixed : placeholder}
+        onFocus={(event) => {
+          setTyping(true)
+          // What is typed replaces the value.
+          event.currentTarget.select()
+        }}
         onChange={(event) => setDraft(event.target.value)}
-        onBlur={(event) => draft !== null && commit(event.target.value)}
+        onBlur={(event) => {
+          setTyping(false)
+          if (typedNow.current !== null) commit(event.target.value)
+        }}
         onKeyDown={(event) => {
           if (event.key === 'Enter') commit(event.currentTarget.value)
           else if (event.key === 'Escape') {
@@ -99,13 +147,18 @@ export function NumberField({ label, name, value, step = 1, min, max, scale = 1,
           } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
             event.preventDefault()
             setDraft(null)
-            onShift(((event.key === 'ArrowUp' ? 1 : -1) * step * (event.shiftKey ? 10 : 1)) / scale)
+            onShift(((event.key === 'ArrowUp' ? 1 : -1) * stepOf(event)) / scale)
+          } else if ((event.key === 'Home' || event.key === 'End') && ranged && draft === null) {
+            // A range's ends, as a slider's; while a value is being typed they move the caret.
+            event.preventDefault()
+            onSet(event.key === 'Home' ? min : max)
           } else return
           // Keys typed into a field are the field's, not the stage's.
           event.stopPropagation()
         }}
-        className={FIELD}
+        className={cn(VALUE_TEXT, 'relative min-w-0 flex-1 cursor-[inherit] bg-transparent text-end outline-none placeholder:text-subtle focus:cursor-text', typing && 'select-text')}
       />
+      {unit && shown && <span aria-hidden className={cn(VALUE_TEXT, 'relative -ms-2')}>{unit}</span>}
     </div>
   )
 }
@@ -125,7 +178,7 @@ export function ColorField({ name, value, onSet }: { name: string; value: string
   const p = t.editor.props
   const hex = value && value !== 'mixed' ? value.slice(0, 7).toUpperCase() : ''
   const alpha = value && value !== 'mixed' ? Number.parseInt(value.slice(7, 9) || 'FF', 16) / 255 : undefined
-  const [draft, setDraft] = useState<string | null>(null)
+  const [draft, setDraft, typedNow] = useDraft()
   const commitHex = (text: string) => {
     setDraft(null)
     const h = (text.startsWith('#') ? text : `#${text}`).toUpperCase()
@@ -148,7 +201,7 @@ export function ColorField({ name, value, onSet }: { name: string; value: string
         placeholder={value === 'mixed' ? p.mixed : ''}
         spellCheck={false}
         onChange={(event) => setDraft(event.target.value)}
-        onBlur={(event) => draft !== null && commitHex(event.target.value)}
+        onBlur={(event) => typedNow.current !== null && commitHex(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === 'Enter') commitHex(event.currentTarget.value)
           event.stopPropagation()
