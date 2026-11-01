@@ -8,14 +8,14 @@
 // this one only. Each change is one undo step, and a scrub or a slider drag, however long, is one too.
 import { ArrowsClockwiseIcon, CaretRightIcon, ImageSquareIcon, XIcon } from '@phosphor-icons/react'
 import { withImage, type Editor } from '@dazbee/editor'
-import { BlendMode, brandRef, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@dazbee/schema'
+import { BlendMode, boundFillIndex, brandRef, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@dazbee/schema'
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format, type Messages } from '../../lib/i18n/index.ts'
 import { Select } from '../ui/select.tsx'
 import { CARD, CardHeader, FineTune, PICKED_RING, SWATCHES } from './card.tsx'
-import { CHIP, DASHED_BUTTON, FOCUS_RING } from './styles.ts'
+import { CHIP, DASHED_BUTTON, FOCUS_RING, SWATCH } from './styles.ts'
 import { ImagePickerButton } from './image-tool.tsx'
 import { useBrandKit } from './use-brand-kit.ts'
 import { useLiveDesign } from './use-live-design.ts'
@@ -328,7 +328,7 @@ function ListCard<T>({ id, title, p, target, field, fresh, onTop = fresh, topFir
       id={id}
       title={title}
       summary={list === 'mixed' ? p.mixed : list.length === 0 ? p.none : summaryOf?.(list) ?? String(list.length)}
-      action={<AddButton label={format(p.add, { name: title.toLowerCase() })} onClick={() => write((now) => (list === 'mixed' ? [fresh] : [...now, now.length === 0 ? fresh : onTop]))} />}
+      action={<AddButton label={format(p.add, { name: title.toLowerCase() })} onClick={() => write((now) => (list === 'mixed' && !topFirst ? [fresh] : [...now, now.length === 0 ? fresh : onTop]))} />}
     >
       {list === 'mixed'
         ? (
@@ -395,7 +395,7 @@ function DashField({ name, value, onSet }: { name: string; value: number[]; onSe
 }
 
 /** One stroke: its colour, width and position, then its dashes and the look of its ends and corners (#152). */
-function StrokeRow({ stroke, n: place, brandId, p, editor, onSet }: { stroke: Stroke; n: number; brandId: string; p: P; editor: Editor; onSet: (to: (now: Stroke) => Stroke) => void }) {
+function StrokeRow({ stroke, place, brandId, p, editor, onSet }: { stroke: Stroke; place: number; brandId: string; p: P; editor: Editor; onSet: (to: (now: Stroke) => Stroke) => void }) {
   const n = { n: place }
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -893,7 +893,7 @@ function Swatch({ color, label, on, onPick }: { color: string; label: string; on
       aria-pressed={on}
       onClick={onPick}
       style={{ backgroundColor: color }}
-      className={cn('size-[22px] shrink-0 cursor-pointer rounded-full border border-line-strong transition-transform duration-[var(--chrome-fast)] hover:scale-110', on && PICKED_RING)}
+      className={cn(SWATCH, 'size-[22px]', on && PICKED_RING)}
     />
   )
 }
@@ -984,13 +984,14 @@ function TextLook({ target, brandId, p }: { target: Target; brandId: string; p: 
 
 /** A shape's or frame's look: its fill from the brand, painted over its first solid fill. */
 function FillLook({ target, brandId, p }: { target: Target; brandId: string; p: P }) {
-  const firstSolid = (fills: Paint[]) => fills.find((f) => f.type === 'solid')
-  const current = shared(target.props.map((pr) => firstSolid((pr.fills ?? []) as Paint[])?.color))
+  // The fill a brand colour binds: the topmost one that shows.
+  const bound = (fills: Paint[]) => fills[boundFillIndex(fills)] as Extract<Paint, { type: 'solid' }> | undefined
+  const current = shared(target.props.map((pr) => bound((pr.fills ?? []) as Paint[])?.color))
   const paint = (hex: string) => set(target, (now) => {
     const fills = (now.fills ?? []) as Paint[]
-    const i = fills.findIndex((f) => f.type === 'solid')
+    const i = boundFillIndex(fills)
     const color = `${hex}FF`
-    return { fills: i < 0 ? [...fills, { type: 'solid', color }] : fills.map((f, j) => (j === i ? { type: 'solid' as const, color } : f)) }
+    return { fills: i < 0 ? [...fills, { type: 'solid', color }] : fills.map((f, j) => (j === i && f.type === 'solid' ? { ...f, color } : f)) }
   })
   // A picture goes into layers that have none; one that has a picture changes it from the Image card.
   const pictureless = target.props.every((pr) => !((pr.fills ?? []) as Paint[]).some((f) => f.type === 'image'))
@@ -1207,7 +1208,7 @@ export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Edit
               fresh={NEW_FILL}
               onTop={FILL_ON_TOP}
               topFirst
-              summaryOf={(list) => list.map((paint) => (paint.type === 'solid' ? paint.color.slice(0, 7) : p.paint[paint.type])).join(', ')}
+              summaryOf={(list) => list.filter((paint) => paint.visible !== false).map((paint) => (paint.type === 'solid' ? paint.color.slice(0, 7) : p.paint[paint.type])).join(', ') || p.none}
               render={(paint, n, change) => <PaintRow paint={paint} name={format(p.colour, { n })} brandId={brandId} editor={editor} p={p} onSet={change} />}
             />
           )}
@@ -1219,8 +1220,8 @@ export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Edit
               target={target}
               field="strokes"
               fresh={NEW_STROKE}
-              summaryOf={(list) => list.map((stroke) => `${stroke.width} px`).join(', ')}
-              render={(stroke, n, change) => <StrokeRow stroke={stroke} n={n} brandId={brandId} p={p} editor={editor} onSet={change} />}
+              summaryOf={(list) => list.filter((stroke) => stroke.paint.visible !== false).map((stroke) => `${stroke.width} px`).join(', ') || p.none}
+              render={(stroke, n, change) => <StrokeRow stroke={stroke} place={n} brandId={brandId} p={p} editor={editor} onSet={change} />}
             />
           )}
           <LayoutCard target={target} p={p} />

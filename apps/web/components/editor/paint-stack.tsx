@@ -17,17 +17,22 @@ import { SEGMENTED, segment } from '../ui/segmented.tsx'
 import { PICKED_RING } from './card.tsx'
 import { Choice, clamp, ColorField, NumberField, tidy } from './fields.tsx'
 import { ImagePickerButton } from './image-tool.tsx'
-import { CHIP, FOCUS_RING, ICON_BUTTON, POPOVER } from './styles.ts'
+import { CHIP, FOCUS_RING, ICON_BUTTON, POPOVER, SWATCH } from './styles.ts'
 import { useBrandKit } from './use-brand-kit.ts'
 
 type P = Messages['editor']['props']
 type Gradient = Extract<Paint, { type: 'linear' | 'radial' | 'angular' }>
 type Stop = Gradient['stops'][number]
+const isGradient = (paint: Paint): paint is Gradient => paint.type === 'linear' || paint.type === 'radial' || paint.type === 'angular'
+/** What a paint keeps whatever its kind: its own opacity and whether it shows. */
+const keepOf = (paint: Paint) => ({ ...(paint.opacity === undefined ? {} : { opacity: paint.opacity }), ...(paint.visible === undefined ? {} : { visible: paint.visible }) })
 export const PAINT_TYPES = ['solid', 'linear', 'radial', 'angular', 'image'] as const
 type PaintType = (typeof PAINT_TYPES)[number]
 
+/** A gradient's stops in order, as the renderer needs them. */
+const sorted = (stops: Stop[]) => [...stops].sort((a, b) => a.offset - b.offset)
 const thumbnail = (brandId: string, assetId: string) => `/brands/${encodeURIComponent(brandId)}/assets/${encodeURIComponent(assetId)}/thumbnail`
-const stopsCss = (stops: Stop[], unit: 'percent' | 'degrees') => stops.map((s) => `${s.color} ${tidy(s.offset * (unit === 'percent' ? 100 : 360))}${unit === 'percent' ? '%' : 'deg'}`).join(', ')
+const stopsCss = (stops: Stop[], unit: 'percent' | 'degrees') => sorted(stops).map((s) => `${s.color} ${tidy(s.offset * (unit === 'percent' ? 100 : 360))}${unit === 'percent' ? '%' : 'deg'}`).join(', ')
 /** A linear gradient's direction in degrees, clockwise from pointing right, as drawn in a square. */
 const angleOf = (g: Extract<Paint, { type: 'linear' }>) => Math.round((Math.atan2(g.to.y - g.from.y, g.to.x - g.from.x) * 180) / Math.PI)
 /** A linear gradient across the whole unit box at an angle, through its middle. */
@@ -48,22 +53,27 @@ export function paintBackground(paint: Paint, brandId: string): string {
   }
 }
 
-/** The paint a row turns into when its type is switched: the colours carried over where they can be. */
+/**
+ * The paint a row turns into when its type is switched: the colours carried over where they can
+ * be. A solid holds its opacity in its colour, where its row edits it.
+ */
 function convert(now: Paint, type: Exclude<PaintType, 'image'>): Paint {
-  const keep = { ...(now.opacity === undefined ? {} : { opacity: now.opacity }), ...(now.visible === undefined ? {} : { visible: now.visible }) }
+  const keep = keepOf(now)
   const stops: Stop[] = now.type === 'solid'
     ? [{ offset: 0, color: now.color }, { offset: 1, color: `${now.color.slice(0, 7)}00` }]
     : now.type === 'image' ? [{ offset: 0, color: '#000000FF' }, { offset: 1, color: '#FFFFFFFF' }] : now.stops
   switch (type) {
-    case 'solid': return { type, color: now.type === 'solid' ? now.color : stops[0]?.color ?? '#D9D9D9FF', ...keep }
+    case 'solid': {
+      const color = now.type === 'solid' ? now.color : now.type === 'image' ? '#D9D9D9FF' : stops[0]?.color ?? '#D9D9D9FF'
+      const alpha = Math.round(Number.parseInt(color.slice(7, 9) || 'FF', 16) * (now.opacity ?? 1))
+      return { type, color: `${color.slice(0, 7)}${alpha.toString(16).padStart(2, '0').toUpperCase()}`, ...(now.visible === undefined ? {} : { visible: now.visible }) }
+    }
     case 'linear': return { type, ...linearAt(90), stops, ...keep }
     case 'radial': return { type, center: { x: 0.5, y: 0.5 }, radius: 0.5, stops, ...keep }
     case 'angular': return { type, center: { x: 0.5, y: 0.5 }, angle: 0, stops, ...keep }
   }
 }
 
-/** A gradient's stops in order, as the renderer needs them. */
-const sorted = (stops: Stop[]) => [...stops].sort((a, b) => a.offset - b.offset)
 /** The colour a gradient has at an offset, for a stop added there. */
 function colourAt(stops: Stop[], at: number): string {
   const list = sorted(stops)
@@ -83,7 +93,7 @@ function colourAt(stops: Stop[], at: number): string {
 /** A paint's swatch over a checkerboard, so a see-through paint shows as one. */
 export function PaintSwatch({ paint, brandId, className }: { paint: Paint; brandId: string; className?: string }) {
   return (
-    <span aria-hidden className={cn('checker relative block overflow-hidden rounded-[6px] border border-line-strong', className)}>
+    <span aria-hidden className={cn('checker relative block overflow-hidden rounded-row border border-line-strong', className)}>
       <span className="absolute inset-0" style={{ background: paintBackground(paint, brandId), opacity: paint.opacity ?? 1 }} />
     </span>
   )
@@ -103,7 +113,7 @@ function BrandColours({ brandId, label, onPick }: { brandId: string; label: stri
           title={c.name}
           onClick={() => onPick(c.value)}
           style={{ backgroundColor: c.value }}
-          className={cn('size-6 cursor-pointer rounded-full border border-line-strong transition-transform duration-[var(--chrome-fast)] hover:scale-110', FOCUS_RING)}
+          className={cn(SWATCH, 'size-6', FOCUS_RING)}
         />
       ))}
     </div>
@@ -129,6 +139,23 @@ function GradientBar({ paint, picked, onPick, editor, p, onSet }: {
     return box ? tidy(clamp((clientX - box.left) / box.width, 0, 1)) : 0
   }
   const move = (i: number, offset: number) => onSet((now) => ({ ...now, stops: now.stops.map((s, j) => (j === i ? { ...s, offset: tidy(clamp(offset, 0, 1)) } : s)) }))
+  /** Puts the stops in order again, the stop at `i` still picked. */
+  const settle = (i: number) => {
+    let picked = i
+    onSet((now) => {
+      const next = sorted(now.stops)
+      picked = next.indexOf(now.stops[i] as Stop)
+      return next.every((s, j) => s === now.stops[j]) ? now : { ...now, stops: next }
+    })
+    onPick(picked)
+  }
+  const endDrag = () => {
+    const at = drag.current
+    if (!at) return
+    settle(at.i)
+    at.end()
+    drag.current = null
+  }
   const remove = (i: number) => {
     if (paint.stops.length <= 2) return
     onSet((now) => ({ ...now, stops: now.stops.filter((_, j) => j !== i) }))
@@ -148,9 +175,9 @@ function GradientBar({ paint, picked, onPick, editor, p, onSet }: {
           onSet((now) => ({ ...now, stops: sorted([...now.stops, { offset, color: colourAt(now.stops, offset) }]) }))
           onPick(sorted([...paint.stops, { offset, color: '' }]).findIndex((s) => s.color === ''))
         }}
-        className="checker relative h-6 cursor-copy rounded-[6px] border border-line-strong"
+        className="checker relative h-6 cursor-copy rounded-row border border-line-strong"
       >
-        <span className="pointer-events-none absolute inset-0 rounded-[5px]" style={{ background: `linear-gradient(90deg, ${stopsCss(sorted(paint.stops), 'percent')})` }} />
+        <span className="pointer-events-none absolute inset-0 rounded-[inherit]" style={{ background: `linear-gradient(90deg, ${stopsCss(sorted(paint.stops), 'percent')})` }} />
         {paint.stops.map((stop, i) => (
           <button
             key={i}
@@ -167,19 +194,17 @@ function GradientBar({ paint, picked, onPick, editor, p, onSet }: {
             onPointerMove={(e) => {
               if (drag.current?.i === i) move(i, at(e.clientX))
             }}
-            onPointerUp={() => {
-              if (!drag.current) return
-              // In order again, the stop dragged still picked.
-              const moved = paint.stops[i]
-              const order = sorted(paint.stops)
-              if (order.some((s, j) => s !== paint.stops[j])) onSet((now) => ({ ...now, stops: sorted(now.stops) }))
-              drag.current.end()
-              drag.current = null
-              if (moved) onPick(order.indexOf(moved))
-            }}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
             onKeyDown={(e: KeyboardEvent) => {
               const step = e.shiftKey ? 0.1 : 0.01
-              if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') move(i, stop.offset + (e.key === 'ArrowRight' ? step : -step))
+              if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                // A nudge and putting the stops in order again are one undo step.
+                const end = editor.beginGesture()
+                move(i, stop.offset + (e.key === 'ArrowRight' ? step : -step))
+                settle(i)
+                end()
+              }
               else if (e.key === 'Delete' || e.key === 'Backspace') remove(i)
               else return
               e.preventDefault()
@@ -197,8 +222,8 @@ function GradientBar({ paint, picked, onPick, editor, p, onSet }: {
 /** One paint's editor: its type, then a solid's colour, a gradient's stops and shape, or an image. */
 function PaintEditor({ paint, brandId, editor, p, onSet }: { paint: Paint; brandId: string; editor: Editor; p: P; onSet: (to: (now: Paint) => Paint) => void }) {
   const [picked, setPicked] = useState(0)
-  const stop = paint.type === 'linear' || paint.type === 'radial' || paint.type === 'angular' ? paint.stops[Math.min(picked, paint.stops.length - 1)] : undefined
-  const setGradient = (to: (now: Gradient) => Gradient) => onSet((now) => (now.type === 'linear' || now.type === 'radial' || now.type === 'angular' ? to(now) : now))
+  const stop = isGradient(paint) ? paint.stops[Math.min(picked, paint.stops.length - 1)] : undefined
+  const setGradient = (to: (now: Gradient) => Gradient) => onSet((now) => (isGradient(now) ? to(now) : now))
   const setStopColour = (color: (now: string | undefined) => string) => setGradient((now) => ({ ...now, stops: now.stops.map((s, j) => (j === Math.min(picked, now.stops.length - 1) ? { ...s, color: color(s.color) } : s)) }))
   const pct = (n: number) => tidy(n * 100)
   return (
@@ -209,7 +234,7 @@ function PaintEditor({ paint, brandId, editor, p, onSet }: { paint: Paint; brand
           const label = type === 'solid' ? p.solid : p.paint[type]
           if (type === 'image' && !on) {
             return (
-              <ImagePickerButton key={type} brandId={brandId} title={p.paint.image} testId="paint-image" className={segment(false)} onPick={(asset) => onSet((now) => ({ type: 'image', assetId: asset.id, fit: 'fill', opacity: now.opacity ?? 1, ...(now.visible === undefined ? {} : { visible: now.visible }) }))}>
+              <ImagePickerButton key={type} brandId={brandId} title={p.paint.image} testId="paint-image" className={segment(false)} onPick={(asset) => onSet((now) => ({ type: 'image', assetId: asset.id, fit: 'fill', opacity: 1, ...keepOf(now) }))}>
                 <span aria-hidden>{p.paintShort.image}</span>
               </ImagePickerButton>
             )
@@ -227,7 +252,7 @@ function PaintEditor({ paint, brandId, editor, p, onSet }: { paint: Paint; brand
           <BrandColours brandId={brandId} label={p.brandColours} onPick={(color) => onSet((now) => (now.type === 'solid' ? { ...now, color } : now))} />
         </>
       )}
-      {(paint.type === 'linear' || paint.type === 'radial' || paint.type === 'angular') && (
+      {isGradient(paint) && (
         <>
           <GradientBar paint={paint} picked={picked} onPick={setPicked} editor={editor} p={p} onSet={setGradient} />
           <div className="flex items-center gap-1">
@@ -298,7 +323,7 @@ export function PaintRow({ paint, name, brandId, editor, p, onSet }: { paint: Pa
           </button>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content side={side} align="start" sideOffset={12} collisionPadding={12} aria-label={format(p.editPaint, { name })} onKeyDown={(e) => e.stopPropagation()} className={cn(POPOVER, 'w-80')}>
+          <Popover.Content side={side} align="start" sideOffset={12} collisionPadding={12} aria-label={format(p.editPaint, { name })} className={cn(POPOVER, 'w-80')}>
             <PaintEditor paint={paint} brandId={brandId} editor={editor} p={p} onSet={onSet} />
           </Popover.Content>
         </Popover.Portal>
@@ -327,7 +352,6 @@ export function PaintRow({ paint, name, brandId, editor, p, onSet }: { paint: Pa
         type="button"
         aria-label={format(hidden ? p.showPaint : p.hidePaint, { name })}
         title={format(hidden ? p.showPaint : p.hidePaint, { name })}
-        aria-pressed={hidden}
         data-testid="paint-visible"
         onClick={() => onSet((now) => {
           if (now.visible !== false) return { ...now, visible: false }
@@ -362,6 +386,7 @@ export function Stack<T>({ items, field, topFirst = false, removeLabel, onWrite,
   const t = useMessages()
   const [dragging, setDragging] = useState<number | null>(null)
   const [over, setOver] = useState<number | null>(null)
+  const grips = useRef(new Map<number, HTMLButtonElement>())
   const shown = items.map((_, i) => i)
   if (topFirst) shown.reverse()
   /** Moves the item at `from` to where the item at `to` is, as the document holds them. */
@@ -380,7 +405,7 @@ export function Stack<T>({ items, field, topFirst = false, removeLabel, onWrite,
       {shown.map((i, row) => {
         const item = items[i] as T
         const n = row + 1
-        const style: CSSProperties | undefined = over === i && dragging !== null && dragging !== i ? { boxShadow: `inset 0 ${(dragging < i) === topFirst ? -2 : 2}px 0 var(--accent)` } : undefined
+        const style: CSSProperties | undefined = over === i && dragging !== null && dragging !== i ? { boxShadow: `inset 0 ${(dragging < i) === topFirst ? 2 : -2}px 0 var(--accent)` } : undefined
         return (
           // Paints have no ids; their place in the list is what they are.
           <div
@@ -416,13 +441,20 @@ export function Stack<T>({ items, field, topFirst = false, removeLabel, onWrite,
                 aria-label={format(t.editor.props.moveRow, { n })}
                 title={t.editor.props.moveHint}
                 data-testid="row-grip"
+                ref={(el) => {
+                  if (el) grips.current.set(i, el)
+                  else grips.current.delete(i)
+                }}
                 onKeyDown={(e) => {
                   // Up moves a row towards the top coat, which is the end of the list.
                   const to = e.key === 'ArrowUp' ? i + 1 : e.key === 'ArrowDown' ? i - 1 : null
                   if (to === null) return
                   e.preventDefault()
                   e.stopPropagation()
-                  if (to >= 0 && to < items.length) reorder(i, to)
+                  if (to < 0 || to >= items.length) return
+                  reorder(i, to)
+                  // The grip goes with its paint, so the next press moves it on.
+                  requestAnimationFrame(() => grips.current.get(to)?.focus())
                 }}
                 className={cn('grid w-4 shrink-0 cursor-grab place-items-center self-stretch text-subtle hover:text-text active:cursor-grabbing', FOCUS_RING)}
               >

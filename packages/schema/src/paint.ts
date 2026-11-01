@@ -72,3 +72,10 @@ export const ImagePaint = z.object({
 
 export const Paint = z.discriminatedUnion('type', [SolidPaint, LinearPaint, RadialPaint, AngularPaint, ImagePaint])
 export type Paint = z.infer<typeof Paint>
+
+/**
+ * The fill a brand colour binding colours, and the look cards' colour shows: the topmost solid
+ * fill that shows. -1 when there is none.
+ */
+export const boundFillIndex = (fills: readonly unknown[]) =>
+  fills.findLastIndex((f) => (f as { type?: unknown } | null)?.type === 'solid' && (f as { visible?: unknown }).visible !== false)
