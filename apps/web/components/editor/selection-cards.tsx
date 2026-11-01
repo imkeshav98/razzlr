@@ -9,7 +9,7 @@
 import { CaretRightIcon, MinusIcon, PlusIcon, XIcon } from '@phosphor-icons/react'
 import type { Editor } from '@razzlr/editor'
 import { BlendMode, brandRef, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@razzlr/schema'
-import { createContext, useContext, useId, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format, type Messages } from '../../lib/i18n/index.ts'
@@ -216,6 +216,26 @@ function Choice<T extends string>({ name, value, options, labels, onSet }: { nam
       {(value === 'mixed' || value === undefined) && <option value="mixed" disabled>{t.editor.props.mixed}</option>}
       {options.map((option) => <option key={option} value={option}>{labels[option]}</option>)}
     </select>
+  )
+}
+
+/**
+ * A checkbox for a value in the document. The cards see the document's change at the redraw after it,
+ * so a press shows at once and holds until the document's value changes.
+ */
+function DocCheckbox({ name, checked, onSet }: { name: string; checked: boolean; onSet: (checked: boolean) => void }) {
+  const [pressed, setPressed] = useState<boolean | null>(null)
+  useEffect(() => setPressed(null), [checked])
+  return (
+    <input
+      type="checkbox"
+      name={name}
+      checked={pressed ?? checked}
+      onChange={(event) => {
+        setPressed(event.target.checked)
+        onSet(event.target.checked)
+      }}
+    />
   )
 }
 
@@ -451,7 +471,7 @@ function ShapeCard({ target, p, kind, look }: { target: Target; p: P; kind: Shap
         )}
       {kind === 'rect' && (
         <label className="flex items-center gap-2 text-[12px]">
-          <input type="checkbox" name="each-corner" checked={each} onChange={(event) => eachCorner(event.target.checked)} />
+          <DocCheckbox name="each-corner" checked={each} onSet={eachCorner} />
           {p.eachCorner}
         </label>
       )}
@@ -931,7 +951,7 @@ function AutoLayoutCard({ target, p }: { target: Target; p: P }) {
         <Choice name={p.alignItems} value={value('align') as string} options={['start', 'center', 'end']} labels={p.alignItemsOptions} onSet={(align) => setLayout(() => ({ align }))} />
       </div>
       <label className="flex items-center gap-2 text-[12px]">
-        <input name="wrap" type="checkbox" checked={value('wrap') === true} onChange={(event) => setLayout(() => ({ wrap: event.target.checked }))} />
+        <DocCheckbox name="wrap" checked={value('wrap') === true} onSet={(wrap) => setLayout(() => ({ wrap }))} />
         {p.wrap}
       </label>
     </Card>
@@ -971,11 +991,10 @@ function FlowCard({ target, p, inFlow }: { target: Target; p: P; inFlow: boolean
       </div>
       {inFlow && (
         <label className="flex items-center gap-2 text-[12px]">
-          <input
-            type="checkbox"
+          <DocCheckbox
             name="absolute"
             checked={target.props.every((pr) => pr.absolute === true)}
-            onChange={(event) => set(target, () => ({ absolute: event.target.checked ? true : undefined }))}
+            onSet={(absolute) => set(target, () => ({ absolute: absolute ? true : undefined }))}
           />
           {p.absolute}
         </label>
