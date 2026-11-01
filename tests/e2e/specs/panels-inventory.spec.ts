@@ -8,7 +8,7 @@ import { join } from 'node:path'
 import { expect, test, type Browser, type Locator, type Page } from '../support/test.ts'
 import { EMPTY_BRAND_KIT, type DesignInput } from '@dazbee/schema'
 import { photo, upload } from '../support/assets.ts'
-import { designOf, exportHashOf, synced, writeOutput } from '../support/editor.ts'
+import { designOf, placed, synced, writeOutput } from '../support/editor.ts'
 import { importGoogleFonts } from '../support/fonts.ts'
 import { API_URL, DEV_BRAND } from '../support/seed.ts'
 import { choose } from '../support/select.ts'
@@ -20,7 +20,7 @@ test.describe.configure({ mode: 'parallel', timeout: 180_000 })
 test.use({ actionTimeout: 15_000 })
 
 /** Rows that fail today, with the bug filed for each. */
-const KNOWN: Record<number, number> = { 12: 243, 16: 244, 35: 245 }
+const KNOWN: Record<number, number> = { 12: 243, 16: 244, 25: 246, 35: 245 }
 
 const righteous = new Uint8Array(readFileSync(join(import.meta.dirname, '..', 'assets', 'fonts', 'Righteous-Regular.ttf')))
 const tile = new Uint8Array(readFileSync(join(import.meta.dirname, '..', '..', 'pixels', 'assets', 'tile.jpg')))
@@ -40,12 +40,12 @@ const solid = (color: string) => [{ type: 'solid' as const, color }]
 const rect = (x: number, y: number, width: number, height: number, color: string) =>
   ({ x, y, width, height, shape: { kind: 'rect' as const, cornerRadius: 16 }, fills: solid(color) })
 
-/** One of each kind of layer the panels have cards for; `formats: 2` adds a Story format. */
-const design = (formats: 1 | 2 = 1): DesignInput => ({
+/** One of each kind of layer the panels have cards for, in a Square format, and a Story with `withStory`. */
+const design = (withStory = false): DesignInput => ({
   meta: { schemaVersion: 3, designId: 'replaced-by-the-api', name: 'Panels inventory', kind: 'single', primaryFormatId: 'sq' },
   formats: {
     sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' },
-    ...(formats === 2 ? { story: { name: 'Story', width: 1080, height: 1920, order: 'a1' } } : {}),
+    ...(withStory ? { story: { name: 'Story', width: 1080, height: 1920, order: 'a1' } } : {}),
   },
   pages: { p1: { name: 'Page 1', order: 'a0', fills: solid('#FFFFFFFF') } },
   nodes: {
@@ -88,10 +88,8 @@ type Doc = {
 }
 const doc = async (page: Page) => JSON.parse(await designOf(page)) as Doc
 /** A layer's props as the Square format shows them. */
-const props = async (page: Page, id: string): Promise<Props> => {
-  const d = await doc(page)
-  return { ...d.nodes[id]?.props, ...d.overrides['format:sq']?.[id] }
-}
+const props = async (page: Page, id: string) => placed(await doc(page), id, 'sq') as Props
+const byOrder = <T extends { order: string }>(a: T, b: T) => (a.order < b.order ? -1 : 1)
 const style = async (page: Page, id: string) => (await props(page, id)).style ?? {}
 const fills = async (page: Page, id: string) => (await props(page, id)).fills ?? []
 const children = async (page: Page, parentId: string) => Object.entries((await doc(page)).nodes)
@@ -103,6 +101,15 @@ const enter = async (field: Locator, value: string) => {
   await field.press('Enter')
 }
 
+/** SHA-256 of the Square's PNG export, which waits for every image and font it draws. */
+const picture = (page: Page) =>
+  page.evaluate(async () => {
+    const file = await window.dazbee?.exportFiles({ pageIds: ['p1'], formatIds: ['sq'], type: 'png' })
+    if (!file) throw new Error('no editor')
+    const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(file.bytes))
+    return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
+  })
+
 /**
  * Does one thing with a control and checks it: `check` sees the change, the design is no longer
  * what it was and draws differently (unless `draws` is false, for a change the picture doesn't
@@ -110,12 +117,12 @@ const enter = async (field: Locator, value: string) => {
  */
 async function step(page: Page, act: () => Promise<unknown>, check: () => Promise<void>, { draws = true } = {}) {
   const before = await designOf(page)
-  const drawn = draws ? await exportHashOf(page) : ''
+  const drawn = draws ? await picture(page) : ''
   await act()
   await check()
   await expect.poll(() => designOf(page), { message: 'the design changed' }).not.toBe(before)
   const after = await designOf(page)
-  if (draws) await expect.poll(() => exportHashOf(page), { message: 'the design draws differently', timeout: 20_000 }).not.toBe(drawn)
+  if (draws) await expect.poll(() => picture(page), { message: 'the design draws differently', timeout: 20_000 }).not.toBe(drawn)
   await perform(page, 'undo')
   await expect.poll(() => designOf(page), { message: 'one undo puts it back' }).toBe(before)
   await perform(page, 'redo')
@@ -141,14 +148,14 @@ const select = async (page: Page, ids: string[]) => {
  * One row of the inventory: a test named by its number, expected to fail while its bug is open. A
  * failing row leaves a screenshot of where it stopped.
  */
-function row(n: number, title: string, body: (open: (formats?: 1 | 2) => Promise<Page>) => Promise<void>) {
+function row(n: number, title: string, body: (open: (withStory?: boolean) => Promise<Page>) => Promise<void>) {
   const name = String(n).padStart(2, '0')
   test(`${name} ${title}`, async ({ browser }: { browser: Browser }) => {
     test.fail(n in KNOWN, `#${KNOWN[n]}`)
     let page: Page | undefined
     try {
-      await body(async (formats = 1) => {
-        page = (await openStage(browser, design(formats))).page
+      await body(async (withStory = false) => {
+        page = (await openStage(browser, design(withStory))).page
         return page
       })
     } catch (error) {
@@ -162,7 +169,7 @@ function row(n: number, title: string, body: (open: (formats?: 1 | 2) => Promise
 
 test.describe('every selection', () => {
   row(1, 'apply changes to this format or all formats', async (open) => {
-    const page = await open(2)
+    const page = await open(true)
     await select(page, ['box'])
     const scope = page.getByTestId('scope-card')
     const x = page.getByTestId('layout-card').getByRole('textbox', { name: 'X position' })
@@ -180,7 +187,7 @@ test.describe('every selection', () => {
   })
 
   row(2, 'own changes: reset one, reset all', async (open) => {
-    const page = await open(2)
+    const page = await open(true)
     await select(page, ['box'])
     await enter(page.getByTestId('layout-card').getByRole('textbox', { name: 'X position' }), '200')
     await enter(page.getByTestId('fill-card').getByRole('textbox', { name: 'Colour 1 hex' }), '14213d')
@@ -239,6 +246,10 @@ test.describe('every selection', () => {
     // A frame starts as pass-through, which only groups and frames are offered.
     await select(page, ['stack'])
     await expect(blend).toHaveAttribute('data-value', 'pass-through')
+    await blend.click()
+    await expect(page.locator('[role="listbox"] [role="option"]')).toHaveCount(17)
+    await page.keyboard.press('Escape')
+    // Over a white page, the stack draws the same blended as a whole or layer by layer.
     await step(page, () => choose(blend, 'normal'), async () => {
       await expect.poll(async () => (await props(page, 'stack')).blendMode).toBe('normal')
     }, { draws: false })
@@ -400,9 +411,17 @@ test.describe('text', () => {
   row(13, 'weight', async (open) => {
     const page = await open()
     await select(page, ['headline'])
-    await step(page, () => choose(page.getByTestId('font-weight'), '400'), async () => {
-      await expect.poll(async () => (await style(page, 'headline')).fontWeight).toBe(400)
-    })
+    // The family's lightest and heaviest weights, and back to regular.
+    const field = page.getByTestId('font-weight')
+    await field.click()
+    const offered = (await page.locator('[role="listbox"] [role="option"]').evaluateAll((options) => options.map((o) => Number(o.getAttribute('data-value')))))
+    await page.keyboard.press('Escape')
+    expect(offered.length).toBeGreaterThan(2)
+    for (const weight of [offered[0] ?? 400, offered.at(-1) ?? 400, 400]) {
+      await step(page, () => choose(field, String(weight)), async () => {
+        await expect.poll(async () => (await style(page, 'headline')).fontWeight).toBe(weight)
+      })
+    }
     await reloads(page)
   })
 
@@ -543,11 +562,19 @@ test.describe('text', () => {
     const page = await open()
     await select(page, ['headline'])
     const field = page.getByTestId('paragraph-card').getByRole('combobox', { name: 'Box' })
-    for (const mode of ['autoWidth', 'autoHeight', 'fixed']) {
-      await step(page, () => choose(field, mode), async () => {
-        await expect.poll(async () => (await props(page, 'headline')).boxMode).toBe(mode)
-      }, { draws: false })
-    }
+    const size = async () => { const p = await props(page, 'headline'); return [p.width, p.height] }
+    // The lines start at the box's start and top in every mode, so the picture stays the same.
+    await step(page, () => choose(field, 'autoWidth'), async () => {
+      await expect.poll(async () => (await props(page, 'headline')).boxMode).toBe('autoWidth')
+      await expect.poll(async () => (await size())[0]).toBeLessThan(760)
+    }, { draws: false })
+    await step(page, () => choose(field, 'autoHeight'), async () => {
+      await expect.poll(async () => (await props(page, 'headline')).boxMode).toBe('autoHeight')
+      await expect.poll(async () => (await size())[1]).toBeLessThan(260)
+    }, { draws: false })
+    await step(page, () => choose(field, 'fixed'), async () => {
+      await expect.poll(async () => (await props(page, 'headline')).boxMode).toBe('fixed')
+    }, { draws: false })
     await reloads(page)
   })
 
@@ -555,6 +582,7 @@ test.describe('text', () => {
     const page = await open()
     await select(page, ['headline'])
     const card = page.getByTestId('paragraph-card')
+    // The text fits its box at 72 already, so turning it on changes nothing drawn.
     await step(page, () => card.getByRole('button', { name: 'Shrink to fit' }).click(), async () => {
       await expect.poll(async () => (await props(page, 'headline')).shrinkToFit).toBeTruthy()
     }, { draws: false })
@@ -666,10 +694,10 @@ test.describe('shapes and frames', () => {
     })
     await editor.getByRole('radio', { name: 'Radial gradient' }).click()
     await step(page, () => enter(editor.getByRole('textbox', { name: 'Gradient centre across' }), '20'), async () => {
-      await expect.poll(async () => JSON.stringify((await fills(page, 'box'))[0]?.center)).toContain('0.2')
+      await expect.poll(async () => (await fills(page, 'box'))[0]?.center).toMatchObject({ x: 0.2 })
     })
     await step(page, () => enter(editor.getByRole('textbox', { name: 'Gradient centre down' }), '70'), async () => {
-      await expect.poll(async () => JSON.stringify((await fills(page, 'box'))[0]?.center)).toContain('0.7')
+      await expect.poll(async () => (await fills(page, 'box'))[0]?.center).toMatchObject({ x: 0.2, y: 0.7 })
     })
     await step(page, () => enter(editor.getByRole('textbox', { name: 'Gradient size' }), '30'), async () => {
       await expect.poll(async () => (await fills(page, 'box'))[0]?.radius).toBe(0.3)
@@ -741,15 +769,19 @@ test.describe('shapes and frames', () => {
 
   row(37, 'dashes, dash offset, ends, corners', async (open) => {
     const page = await open()
-    await select(page, ['box'])
+    await select(page, ['poly'])
     const card = page.getByTestId('stroke-card')
     await card.getByRole('button', { name: 'Add stroke' }).click()
-    await enter(card.getByRole('textbox', { name: 'Stroke 1 width' }), '10')
-    const stroke = async () => (await props(page, 'box')).strokes?.[0] ?? {}
+    await enter(card.getByRole('textbox', { name: 'Stroke 1 width' }), '16')
+    const stroke = async () => (await props(page, 'poly')).strokes?.[0] ?? {}
+    for (const join of ['round', 'bevel', 'miter']) {
+      await step(page, () => choose(card.getByRole('combobox', { name: 'Stroke 1 corners' }), join), async () => { await expect.poll(stroke).toMatchObject({ join }) })
+    }
     await step(page, () => enter(card.getByRole('textbox', { name: 'Stroke 1 dashes' }), '30, 12'), async () => { await expect.poll(stroke).toMatchObject({ dashes: [30, 12] }) })
     await step(page, () => enter(card.getByRole('textbox', { name: 'Stroke 1 dash offset' }), '9'), async () => { await expect.poll(stroke).toMatchObject({ dashOffset: 9 }) })
-    await step(page, () => choose(card.getByRole('combobox', { name: 'Stroke 1 ends' }), 'round'), async () => { await expect.poll(stroke).toMatchObject({ cap: 'round' }) })
-    await step(page, () => choose(card.getByRole('combobox', { name: 'Stroke 1 corners' }), 'bevel'), async () => { await expect.poll(stroke).toMatchObject({ join: 'bevel' }) }, { draws: false })
+    for (const cap of ['round', 'square', 'butt']) {
+      await step(page, () => choose(card.getByRole('combobox', { name: 'Stroke 1 ends' }), cap), async () => { await expect.poll(stroke).toMatchObject({ cap }) })
+    }
     await reloads(page)
   })
 
@@ -759,15 +791,15 @@ test.describe('shapes and frames', () => {
     const card = page.getByTestId('shape-card')
     const shape = async () => (await props(page, 'box')).shape as Record<string, unknown>
     await step(page, () => card.getByRole('slider', { name: 'Corners' }).fill('60'), async () => { await expect.poll(shape).toMatchObject({ cornerRadius: 60 }) })
+    // Each corner starts at the radius all four had.
     await step(page, () => card.getByRole('checkbox', { name: 'Each corner its own radius' }).click(), async () => {
-      await expect.poll(async () => (await shape()).corners).toBeTruthy()
+      await expect.poll(async () => (await shape()).corners).toEqual([60, 60, 60, 60])
     }, { draws: false })
-    await step(page, () => enter(card.getByRole('textbox', { name: 'Top left radius' }), '0'), async () => {
-      await expect.poll(async () => ((await shape()).corners as number[])[0]).toBe(0)
-    })
-    await step(page, () => enter(card.getByRole('textbox', { name: 'Bottom right radius' }), '90'), async () => {
-      await expect.poll(async () => ((await shape()).corners as number[])[2]).toBe(90)
-    })
+    for (const [i, corner, radius] of [[0, 'Top left', 0], [1, 'Top right', 20], [2, 'Bottom right', 90], [3, 'Bottom left', 40]] as const) {
+      await step(page, () => enter(card.getByRole('textbox', { name: `${corner} radius` }), String(radius)), async () => {
+        await expect.poll(async () => ((await shape()).corners as number[])[i]).toBe(radius)
+      })
+    }
     await reloads(page)
   })
 
@@ -873,7 +905,7 @@ test.describe('photos', () => {
     await card.getByRole('button', { name: 'Fine-tune' }).click()
     for (const [name, key] of [['Exposure', 'exposure'], ['Contrast', 'contrast'], ['Saturation', 'saturation'], ['Temperature', 'temperature'], ['Tint', 'tint']] as const) {
       await step(page, () => enter(card.getByRole('textbox', { name }), '40'), async () => {
-        await expect.poll(async () => ((await image(page)).adjust as Record<string, number> | undefined)?.[key]).toBeTruthy()
+        await expect.poll(async () => ((await image(page)).adjust as Record<string, number> | undefined)?.[key]).toBe(40)
       })
     }
     await reloads(page)
@@ -975,6 +1007,9 @@ test.describe('frames and auto layout', () => {
     await step(page, () => choose(card.getByRole('combobox', { name: 'Width sizing' }), 'hug'), async () => {
       await expect.poll(async () => (await props(page, 'stack')).sizing).toMatchObject({ width: 'hug' })
     })
+    await step(page, () => choose(card.getByRole('combobox', { name: 'Width sizing' }), 'fixed'), async () => {
+      await expect.poll(async () => (await props(page, 'stack')).sizing).toMatchObject({ width: 'fixed' })
+    }, { draws: false })
     // Its height is already what its chips need, so hug draws it the same.
     await step(page, () => choose(card.getByRole('combobox', { name: 'Height sizing' }), 'hug'), async () => {
       await expect.poll(async () => (await props(page, 'stack')).sizing).toMatchObject({ height: 'hug' })
@@ -989,6 +1024,12 @@ test.describe('frames and auto layout', () => {
     await step(page, () => choose(card.getByRole('combobox', { name: 'Width sizing' }), 'fill'), async () => {
       await expect.poll(async () => (await props(page, 'chip1')).sizing).toMatchObject({ width: 'fill' })
     })
+    // Fixed keeps the width fill gave it; hug, with nothing inside, keeps it too.
+    for (const sizing of ['fixed', 'hug']) {
+      await step(page, () => choose(card.getByRole('combobox', { name: 'Width sizing' }), sizing), async () => {
+        await expect.poll(async () => (await props(page, 'chip1')).sizing).toMatchObject({ width: sizing })
+      }, { draws: false })
+    }
     // The chip is already as tall as the stack's inside.
     await step(page, () => choose(card.getByRole('combobox', { name: 'Height sizing' }), 'fill'), async () => {
       await expect.poll(async () => (await props(page, 'chip1')).sizing).toMatchObject({ height: 'fill' })
@@ -1033,7 +1074,7 @@ test.describe('nothing selected', () => {
     const layers = page.getByTestId('page-fills')
     await step(page, () => layers.getByRole('button', { name: 'Add a background layer' }).click(), async () => {
       await expect.poll(async () => (await background(page)).length).toBe(2)
-    }, { draws: false })
+    })
     await step(page, () => enter(layers.getByRole('textbox', { name: 'Background 1 hex' }), '2f6bff'), async () => {
       await expect.poll(async () => (await background(page))[1]?.color).toMatch(/^#2F6BFF/)
     })
@@ -1051,6 +1092,7 @@ test.describe('nothing selected', () => {
   row(61, 'formats: add a preset, a custom size, with checks', async (open) => {
     const page = await open()
     const count = async () => Object.keys((await doc(page)).formats).length
+    // A new format adds a frame; the Square, the picture checked, stays the same.
     await step(page, async () => {
       await page.getByRole('button', { name: 'Add format' }).click()
       await page.getByRole('dialog', { name: 'Add format' }).locator('[data-preset=story]').click()
@@ -1069,29 +1111,37 @@ test.describe('nothing selected', () => {
   })
 
   row(62, 'formats: rename, make primary, move, remove with undo, show alone', async (open) => {
-    const page = await open(2)
+    const page = await open(true)
     const formats = page.getByTestId('formats')
     const row = formats.locator('[data-format="story"]')
+    // A format's name isn't drawn.
     await step(page, async () => {
       await row.getByRole('button', { name: 'Rename: Story' }).dblclick()
       await row.getByRole('textbox', { name: 'Rename' }).fill('Reel')
       await row.getByRole('textbox', { name: 'Rename' }).press('Enter')
     }, async () => { await expect.poll(async () => (await doc(page)).formats.story?.name).toBe('Reel') }, { draws: false })
+    // Which format is primary changes no format's picture.
     await step(page, async () => {
       await row.hover()
       await row.getByRole('button', { name: 'Make primary' }).click()
-    }, async () => { await expect.poll(async () => (await doc(page)).meta.primaryFormatId).toBe('story') })
-    const order = async () => Object.entries((await doc(page)).formats).sort(([, a], [, b]) => (a.order < b.order ? -1 : 1)).map(([id]) => id)
+    }, async () => { await expect.poll(async () => (await doc(page)).meta.primaryFormatId).toBe('story') }, { draws: false })
+    // The order of formats is the order of the list, not of the picture.
+    const order = async () => Object.entries((await doc(page)).formats).sort(([, a], [, b]) => byOrder(a, b)).map(([id]) => id)
     await step(page, async () => {
       await row.hover()
       await row.getByRole('button', { name: 'Move up' }).click()
     }, async () => { await expect.poll(order).toEqual(['story', 'sq']) }, { draws: false })
+    await step(page, async () => {
+      await row.hover()
+      await row.getByRole('button', { name: 'Move down' }).click()
+    }, async () => { await expect.poll(order).toEqual(['sq', 'story']) }, { draws: false })
     const square = formats.locator('[data-format="sq"]')
+    const kept = await designOf(page)
     await square.hover()
     await square.getByRole('button', { name: 'Remove format' }).click()
     await expect.poll(async () => (await doc(page)).formats.sq).toBeUndefined()
     await page.getByTestId('removed-toast').getByRole('button', { name: 'Undo' }).click()
-    await expect.poll(async () => (await doc(page)).formats.sq?.name).toBe('Square')
+    await expect.poll(() => designOf(page), { message: 'the toast\'s Undo brings the format back whole' }).toBe(kept)
     await square.hover()
     await square.getByRole('button', { name: 'Show alone' }).click()
     await expect(page.getByTestId('focus-chip')).toBeVisible()
@@ -1103,7 +1153,8 @@ test.describe('nothing selected', () => {
   row(63, 'pages: add, duplicate, rename, move, delete with undo, show', async (open) => {
     const page = await open()
     const pages = page.getByTestId('pages')
-    const names = async () => Object.values((await doc(page)).pages).sort((a, b) => (a.order < b.order ? -1 : 1)).map((p) => p.name)
+    const names = async () => Object.values((await doc(page)).pages).sort(byOrder).map((p) => p.name)
+    // The picture checked is the first page's; these steps change the other pages or their names.
     await step(page, () => page.getByRole('button', { name: 'Add page' }).click(), async () => { await expect.poll(names).toEqual(['Page 1', 'Page 2']) }, { draws: false })
     const p1 = pages.locator('[data-page="p1"]')
     await step(page, async () => {
@@ -1121,17 +1172,24 @@ test.describe('nothing selected', () => {
       await offer.hover()
       await offer.getByRole('button', { name: 'Move up' }).click()
     }, async () => { await expect.poll(async () => (await names())[0]).toBe('Offer') }, { draws: false })
+    await step(page, async () => {
+      await offer.hover()
+      await offer.getByRole('button', { name: 'Move down' }).click()
+    }, async () => { await expect.poll(async () => (await names())[1]).toBe('Offer') }, { draws: false })
+    const kept = await designOf(page)
     await offer.hover()
     await offer.getByRole('button', { name: 'Delete page' }).click()
     await expect.poll(async () => (await names()).length).toBe(2)
     await page.getByTestId('removed-toast').getByRole('button', { name: 'Undo' }).click()
-    await expect.poll(async () => (await names())[0]).toBe('Offer')
+    await expect.poll(() => designOf(page), { message: 'the toast\'s Undo brings the page back whole' }).toBe(kept)
+    await expect(p1).not.toHaveAttribute('aria-current', 'page')
     await p1.getByRole('button', { name: 'Show Page 1' }).click()
     await expect(p1).toHaveAttribute('aria-current', 'page')
     await reloads(page)
   })
 
   row(64, 'snap and rulers', async (open) => {
+    // Snap and rulers are how this tab shows the design, not part of it: no undo, nothing to reload.
     const page = await open()
     const view = page.getByTestId('view-card')
     for (const name of ['Snap', 'Rulers']) {
@@ -1167,16 +1225,23 @@ test.describe('left panels and export', () => {
     })
     await item('Stack').getByRole('button', { name: 'Expand Stack' }).click()
     await expect(item('Chip 1')).toBeVisible()
-    const target = await item('Hex').boundingBox()
     // The dot overlaps nothing, so its new place shows only in the order.
     await step(page, () => item('Dot').dragTo(item('Hex'), { targetPosition: { x: 60, y: 3 } }), async () => {
       await expect.poll(async () => (await children(page, 'p1')).indexOf('dot')).toBe(2)
     }, { draws: false })
-    expect(target).not.toBeNull()
     const stack = await item('Stack').boundingBox()
     await step(page, () => item('Star').dragTo(item('Stack'), { targetPosition: { x: 60, y: (stack?.height ?? 28) / 2 } }), async () => {
       await expect.poll(async () => (await doc(page)).nodes.star?.parentId).toBe('stack')
     })
+    // Into a group: the group grows to hold it, and it is drawn where it was.
+    await select(page, ['dot', 'poly'])
+    await page.getByTestId('arrange').getByRole('button', { name: 'Group', exact: true }).click()
+    const group = (await doc(page)).nodes.dot?.parentId ?? ''
+    const groupRow = tree.getByRole('treeitem').filter({ has: page.locator(`text="${(await doc(page)).nodes[group]?.name ?? ''}"`) })
+    const groupBox = await groupRow.boundingBox()
+    await step(page, () => item('Rule').dragTo(groupRow, { targetPosition: { x: 60, y: (groupBox?.height ?? 28) / 2 } }), async () => {
+      await expect.poll(async () => (await doc(page)).nodes.rule?.parentId).toBe(group)
+    }, { draws: false })
     await reloads(page)
   })
 
@@ -1187,18 +1252,21 @@ test.describe('left panels and export', () => {
     const images = async () => Object.values((await doc(page)).nodes).filter((n) => n.props.fills?.some((f) => f.type === 'image')).length
     const name = `Inventory ${Date.now()}`
     await library.locator('input[type="file"]').setInputFiles({ name: `${name}.jpg`, mimeType: 'image/jpeg', buffer: Buffer.concat([tile, Buffer.from(name)]) })
-    await library.getByRole('searchbox', { name: 'Search by name or tag' }).fill('Inventory')
-    const item = library.locator('li[data-asset]').filter({ hasText: 'Inventory' }).first()
+    const item = library.locator('li[data-asset]').filter({ hasText: name })
     await expect(item).toBeVisible({ timeout: 30_000 })
+    await library.getByRole('searchbox', { name: 'Search by name or tag' }).fill(name)
+    await expect(library.locator('li[data-asset]')).toHaveCount(1)
     const place = item.getByRole('button', { name: /^Place .* on the design$/ })
     const stage = page.getByTestId('stage')
-    const box = await stage.boundingBox()
-    const drop = await page.evaluate(() => window.dazbee?.screenPoint(900, 900))
-    await step(page, () => place.dragTo(stage, { targetPosition: { x: (drop?.x ?? 0) - (box?.x ?? 0), y: (drop?.y ?? 0) - (box?.y ?? 0) } }), async () => {
+    /** Where a design pixel is, inside the stage. */
+    const onStage = async (x: number, y: number) => {
+      const [box, at] = await Promise.all([stage.boundingBox(), page.evaluate(({ x, y }) => window.dazbee?.screenPoint(x, y), { x, y })])
+      return { x: (at?.x ?? 0) - (box?.x ?? 0), y: (at?.y ?? 0) - (box?.y ?? 0) }
+    }
+    await step(page, async () => place.dragTo(stage, { targetPosition: await onStage(900, 900) }), async () => {
       await expect.poll(images).toBe(2)
     })
-    const onDot = await page.evaluate(() => window.dazbee?.screenPoint(820, 240))
-    await step(page, () => place.dragTo(stage, { targetPosition: { x: (onDot?.x ?? 0) - (box?.x ?? 0), y: (onDot?.y ?? 0) - (box?.y ?? 0) } }), async () => {
+    await step(page, async () => place.dragTo(stage, { targetPosition: await onStage(820, 240) }), async () => {
       await expect.poll(async () => (await fills(page, 'dot')).at(-1)?.type).toBe('image')
     })
     await reloads(page)
@@ -1213,6 +1281,7 @@ test.describe('left panels and export', () => {
       await expect.poll(async () => (await doc(page)).nodes.box?.bindings).toMatchObject({ fill: 'brand:berry' })
     })
     await page.evaluate(() => window.dazbee?.select(['headline']))
+    // Body is Noto Sans, the family the headline has already.
     await step(page, () => picker.getByRole('button', { name: 'Apply Body to the selection' }).click(), async () => {
       await expect.poll(async () => (await doc(page)).nodes.headline?.bindings).toMatchObject({ fontFamily: 'brand:body' })
     }, { draws: false })
@@ -1220,22 +1289,31 @@ test.describe('left panels and export', () => {
   })
 
   row(68, 'export: pages, formats, file type, JPG quality', async (open) => {
-    const page = await open(2)
-    await page.getByTestId('share-open').click()
-    await page.getByTestId('export-open').click()
+    const page = await open(true)
+    await page.getByRole('button', { name: 'Add page' }).click()
     const dialog = page.getByTestId('export')
+    const opened = async () => {
+      if (await dialog.isVisible()) return
+      await page.getByTestId('share-open').click()
+      await page.getByTestId('export-open').click()
+    }
+    await opened()
+    await choose(page.getByTestId('export-page'), 'all')
+    await expect(page.getByTestId('export-run')).toHaveText('Export 4 files')
     await choose(page.getByTestId('export-page'), 'p1')
     await expect(page.getByTestId('export-run')).toHaveText('Export 2 files')
     await dialog.locator('[data-format="story"]').uncheck()
     await dialog.locator('[data-type="jpg"]').click()
-    await page.getByTestId('export-quality').fill('70')
     await expect(page.getByTestId('export-run')).toHaveText('Export 1 file')
-    const [jpg] = await Promise.all([page.waitForEvent('download'), page.getByTestId('export-run').click()])
-    expect(jpg.suggestedFilename()).toMatch(/Square\.jpg$/)
-    if (!(await dialog.isVisible())) {
-      await page.getByTestId('share-open').click()
-      await page.getByTestId('export-open').click()
+    const jpgAt = async (quality: string) => {
+      await opened()
+      await page.getByTestId('export-quality').fill(quality)
+      const [jpg] = await Promise.all([page.waitForEvent('download'), page.getByTestId('export-run').click()])
+      expect(jpg.suggestedFilename()).toMatch(/Square\.jpg$/)
+      return readFileSync(await jpg.path()).length
     }
+    expect(await jpgAt('30')).toBeLessThan(await jpgAt('95'))
+    await opened()
     await dialog.locator('[data-type="png"]').click()
     await dialog.locator('[data-format="story"]').check()
     const [zip] = await Promise.all([page.waitForEvent('download'), page.getByTestId('export-run').click()])
