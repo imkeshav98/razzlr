@@ -3,7 +3,8 @@
 // frosted surfaces over it, so the page crawls (#144); the root's data-render says to hold it still.
 
 const SOFTWARE = /swiftshader|llvmpipe|softpipe|software|basic render/i
-const KEY = 'render'
+/** Kept for the browser session only, so a browser that drew in software once probes again next time. */
+const KEY = 'razzlr.render'
 
 /** Reads the WebGL renderer's name; a browser without WebGL draws in software too. */
 function probe(): 'software' | 'gpu' {
@@ -19,14 +20,14 @@ function probe(): 'software' | 'gpu' {
 export function markRender() {
   let render: string | null = null
   try {
-    render = localStorage.getItem(KEY)
+    render = sessionStorage.getItem(KEY)
   } catch {
     // Storage can be blocked; probing again is cheap enough.
   }
   if (render !== 'software' && render !== 'gpu') {
     render = probe()
     try {
-      localStorage.setItem(KEY, render)
+      sessionStorage.setItem(KEY, render)
     } catch {
       // As above.
     }

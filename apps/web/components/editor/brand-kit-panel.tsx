@@ -14,7 +14,7 @@ import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { FontPreview, useFontCatalog } from './font-panel.tsx'
 import { useEditorDesign } from './formats-panel.tsx'
-import { kitUrl, loadKit, showKit, useBrandKit } from './use-brand-kit.ts'
+import { loadKit, saveKit, showKit, useBrandKit } from './use-brand-kit.ts'
 
 /** How long a run of changes (a colour picker's drag) waits before it is saved. */
 const SAVE_DELAY_MS = 400
@@ -82,7 +82,7 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
     const { kit: next } = saving.current
     saving.current = { timer: null, kit: null }
     if (!next) return
-    fetch(kitUrl(brandId), { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(next) })
+    saveKit(brandId, next)
       .then(async (response) => {
         if (response.ok) return setError(null)
         const body: unknown = await response.json().catch(() => null)
