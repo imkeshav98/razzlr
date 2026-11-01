@@ -461,6 +461,32 @@ test.describe('text', () => {
     })
     await expect(field).toHaveValue('')
     await expect(field).toHaveAttribute('placeholder', 'Auto')
+    // Leaving an emptied field does the same.
+    await enter(field, '1.4')
+    await step(page, async () => {
+      await field.fill('')
+      await field.press('Tab')
+    }, async () => {
+      await expect.poll(async () => (await style(page, 'headline')).lineHeight).toBeUndefined()
+    })
+    // Two texts, one at 1.6 and its copy at Auto: emptied, both are Auto.
+    await enter(field, '1.6')
+    await page.getByTestId('arrange').getByRole('group', { name: 'Layer' }).getByRole('button', { name: 'Duplicate' }).click()
+    const copy = (await page.evaluate(() => window.dazbee?.selection() ?? []))[0] ?? ''
+    await select(page, [copy])
+    await enter(field, '')
+    await select(page, ['headline', copy])
+    await expect(field).toHaveAttribute('placeholder', 'Mixed')
+    await field.press('Enter')
+    expect((await style(page, 'headline')).lineHeight).toBe(1.6)
+    await step(page, async () => {
+      await field.fill('1')
+      await field.fill('')
+      await field.press('Enter')
+    }, async () => {
+      await expect.poll(async () => [(await style(page, 'headline')).lineHeight, (await style(page, copy)).lineHeight]).toEqual([undefined, undefined])
+    })
+    await select(page, ['headline'])
     // A field with no unset value keeps its number when emptied.
     const before = await designOf(page)
     const spacing = page.getByTestId('text-card').getByRole('textbox', { name: 'Letter spacing' })
