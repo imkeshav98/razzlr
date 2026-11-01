@@ -50,6 +50,8 @@ export const brands = pgTable('brands', {
   id: text().primaryKey(),
   workspaceId: text('workspace_id').notNull().references(() => workspaces.id),
   name: text().notNull(),
+  // The brand's website, given when it was added, for reading its kit later; null when none was.
+  website: text(),
   createdAt: createdAt(),
 }, (t) => [
   index('brands_workspace').on(t.workspaceId),

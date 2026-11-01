@@ -61,7 +61,9 @@ export const updateWorkspace = (patch: UpdateWorkspace) => call(WorkspaceSummary
 
 export const listBrands = () => call(BrandSummary.array(), '/brands')
 
-export const createBrand = (name: string) => call(BrandSummary, '/brands', { method: 'POST', body: { name } })
+/** Adds a brand, with the website it was started from when there was one (#203). */
+export const createBrand = (name: string, website?: string | null) =>
+  call(BrandSummary, '/brands', { method: 'POST', body: website ? { name, website } : { name } })
 
 /** Renames a design (#159). */
 export const renameDesign = (brandId: string, designId: string, name: string) =>

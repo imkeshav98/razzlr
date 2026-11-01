@@ -63,7 +63,7 @@ test('each card saves who Dazbee is for, and the words follow', async ({ page })
     await page.getByRole('button', { name: 'Continue' }).click()
     await expect(page).toHaveURL(/\/welcome\?step=brand$/)
     expect(await kindNow()).toBe(kind)
-    await expect(page.getByText(`Your first ${kind === 'agency' ? 'client' : 'brand'} takes its name from it.`, { exact: false })).toBeVisible()
+    await expect(page.getByText(`Or just type your ${kind === 'agency' ? 'client' : 'brand'}'s name.`, { exact: false })).toBeVisible()
     await page.goto('/settings')
     await expect(page.getByTestId('brand-switcher')).toContainText(words)
   }

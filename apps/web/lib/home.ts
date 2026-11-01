@@ -33,3 +33,30 @@ export function nameFromWebsite(text: string): string | null {
   if (!name || !/[a-z]/i.test(name)) return null
   return name.split(/[-_]+/).filter(Boolean).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 }
+
+/** What a brand's start field holds (#203): its name, and its website when an address was typed. */
+export type BrandStart = { name: string; website: string | null }
+
+/**
+ * Reads the one field that starts a brand: an address (`harbour-coffee.com`, with or without
+ * https://) names the brand and is kept as its website; anything else is the name itself. Null
+ * when it is empty.
+ */
+export function readBrandStart(text: string): BrandStart | null {
+  const trimmed = text.trim()
+  if (!trimmed) return null
+  const scheme = /^([a-z][a-z\d+.-]*):\/\//i.exec(trimmed)?.[1]?.toLowerCase()
+  const address = !/\s/.test(trimmed) && /^([a-z][a-z\d+.-]*:\/\/)?[^/?#\s]+\.[a-z]{2,}([/:?#]|$)/i.test(trimmed)
+  const name = address ? nameFromWebsite(trimmed) : null
+  if (!name) return { name: trimmed.slice(0, 120), website: null }
+  const website = scheme === undefined || scheme === 'http' || scheme === 'https' ? new URL(scheme ? trimmed : `https://${trimmed}`).href : null
+  return { name, website }
+}
+
+/** The brand a start form sends: its `start` field, and the `name` typed over it with Change. */
+export function brandFromForm(form: FormData): BrandStart | null {
+  const start = readBrandStart(String(form.get('start') ?? ''))
+  const typed = String(form.get('name') ?? '').trim().slice(0, 120)
+  if (!start) return null
+  return { name: typed || start.name, website: start.website }
+}

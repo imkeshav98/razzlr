@@ -15,12 +15,12 @@ test('each client has a card with its design count, and New client adds one', as
 
   const name = `Juniper Bakery ${crypto.randomUUID().slice(0, 4)}`
   await clients.getByRole('button', { name: /^New (client|brand)$/ }).click()
-  const field = clients.getByRole('textbox', { name: /^(Client|Brand) name$/ })
+  const field = clients.getByRole('textbox', { name: 'Website or name' })
   await expect(field).toBeFocused()
   // Esc puts the card back; opening it again keeps going.
   await field.press('Escape')
   await clients.getByRole('button', { name: /^New (client|brand)$/ }).click()
-  await clients.getByRole('textbox', { name: /^(Client|Brand) name$/ }).fill(name)
+  await clients.getByRole('textbox', { name: 'Website or name' }).fill(name)
   writeOutput('clients-2-new.png', await page.screenshot())
   await clients.getByRole('button', { name: 'Create' }).click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(`What are we making for ${name}?`)

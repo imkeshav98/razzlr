@@ -23,8 +23,8 @@ export async function listBrands(db: Db, workspaceId: string): Promise<BrandSumm
     .where(eq(brands.workspaceId, workspaceId)).orderBy(asc(brands.name), asc(brands.id))
 }
 
-export async function createBrand(db: Db, workspaceId: string, name: string): Promise<BrandSummary> {
-  const [row] = await db.insert(brands).values({ id: randomUUID(), workspaceId, name }).returning({ id: brands.id, name: brands.name })
+export async function createBrand(db: Db, workspaceId: string, name: string, website?: string): Promise<BrandSummary> {
+  const [row] = await db.insert(brands).values({ id: randomUUID(), workspaceId, name, website: website ?? null }).returning({ id: brands.id, name: brands.name })
   if (!row) throw new Error('insert returned no brand')
   return row
 }

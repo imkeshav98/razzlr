@@ -1,12 +1,13 @@
 'use client'
 
-// The last row of the crumb's brand menu: New brand (New client in an agency). It opens into a name
-// field in place; creating the brand opens its home. It is there for every kind of workspace, so a
+// The last row of the crumb's brand menu: New brand (New client in an agency). It opens into a
+// website-or-name field in place (#203); creating the brand opens its home. It is there for every kind of workspace, so a
 // solo or company workspace that opens straight on its one brand can still add another.
 import { PlusIcon } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { cn } from '../lib/cn.ts'
+import { BrandNaming, type NamingWords } from './brand-naming.tsx'
 import { buttonStyles } from './ui/button.tsx'
 
 function Create({ label }: { label: string }) {
@@ -16,9 +17,10 @@ function Create({ label }: { label: string }) {
 
 export function NewBrandRow({ action, words }: {
   action: (form: FormData) => Promise<void>
-  words: { add: string; name: string; create: string }
+  words: NamingWords & { add: string; start: string; placeholder: string; create: string }
 }) {
   const [open, setOpen] = useState(false)
+  const [start, setStart] = useState('')
   const field = useRef<HTMLInputElement>(null)
   useEffect(() => {
     if (open) field.current?.focus()
@@ -38,20 +40,24 @@ export function NewBrandRow({ action, words }: {
   }
   return (
     <form action={action} className="flex flex-col gap-2 p-2">
-      <label htmlFor="menu-new-brand" className="text-[12px] font-semibold text-muted">{words.name}</label>
+      <label htmlFor="menu-new-brand" className="text-[12px] font-semibold text-muted">{words.start}</label>
       <div className="flex items-center gap-2">
         <input
           ref={field}
           id="menu-new-brand"
-          name="name"
+          name="start"
           required
-          maxLength={120}
-          autoComplete="organization"
+          maxLength={2048}
+          autoComplete="url"
+          placeholder={words.placeholder}
+          value={start}
+          onChange={(e) => setStart(e.target.value)}
           onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
           className="h-9 min-w-0 flex-1 rounded-row border border-line bg-bg px-3 text-[14px] outline-none hover:border-line-strong focus:border-accent"
         />
         <Create label={words.create} />
       </div>
+      <BrandNaming start={start} words={words} />
     </form>
   )
 }
