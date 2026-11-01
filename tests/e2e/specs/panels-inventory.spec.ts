@@ -127,6 +127,8 @@ async function step(page: Page, act: () => Promise<unknown>, check: () => Promis
   await expect.poll(() => designOf(page), { message: 'one undo puts it back' }).toBe(before)
   await perform(page, 'redo')
   await expect.poll(() => designOf(page), { message: 'redo brings it again' }).toBe(after)
+  // The panels draw the redone design before the next control is used.
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
 }
 
 /** Waits for the sync server to have every change, reloads, and checks the design came back the same. */
@@ -661,6 +663,7 @@ test.describe('shapes and frames', () => {
       await expect.poll(async () => (await fills(page, 'box')).length).toBe(2)
     })
     // Top first: the new fill is the first row; moving it down puts it under the red.
+    await expect(card.locator('[data-row]')).toHaveCount(2)
     await enter(card.getByRole('textbox', { name: 'Colour 1 hex' }), '2f6bff')
     await expect.poll(async () => (await fills(page, 'box'))[1]?.color).toBe('#2F6BFF33')
     await step(page, () => card.locator('[data-row="1"]').getByTestId('row-grip').press('ArrowDown'), async () => {
