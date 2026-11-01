@@ -28,7 +28,8 @@ export function BriefComposer({ t, brandId, brandName, kit, references, action }
   action: (form: FormData) => Promise<void>
 }) {
   return (
-    <section aria-labelledby="brief-title" className="pt-2 pb-10 md:-mt-8 md:pt-0 md:pb-12">
+    // Above the size row under it, so the brief's dropdowns open over it.
+    <section aria-labelledby="brief-title" className="relative z-10 pt-2 pb-10 md:-mt-8 md:pt-0 md:pb-12">
       <h1 id="brief-title" className="mx-auto max-w-5xl text-center font-display text-3xl font-bold tracking-tight text-balance md:text-[2.75rem] md:leading-tight">
         <Prompt template={t.home.prompt} word={t.home.promptToday} />
       </h1>
