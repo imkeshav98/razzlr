@@ -1,6 +1,7 @@
 // Brand kits (#53) in Chromium: set up a kit with a colour, apply it to a layer, change the colour
 // and see the layer change, with the design itself untouched; another design bound to the same
-// colour opens in the new one, and one undo lets the layer go of the brand again.
+// colour opens in the new one, and one undo lets the layer go of the brand again. The flyout opens
+// as a picker: its colour tiles and font rows apply the kit, and the Page card shows the colours.
 import { expect, test, type Page } from '../support/test.ts'
 import { BrandKit, EMPTY_BRAND_KIT, type DesignInput } from '@razzlr/schema'
 import { editorPath, writeOutput } from '../support/editor.ts'
@@ -45,7 +46,10 @@ test('a layer bound to a brand colour changes when the brand colour does', async
   const { page, errors } = await openStage(browser, design())
   await page.locator('[data-panel="brand"]').click()
   const kit = page.getByTestId('brand-kit')
-  await expect(kit).toBeVisible()
+  await expect(kit).toHaveAttribute('data-mode', 'pick')
+  await expect(kit.getByText('No colours yet. Add them with Edit.')).toBeVisible()
+  await kit.getByRole('button', { name: 'Edit', exact: true }).click()
+  await expect(kit).toHaveAttribute('data-mode', 'edit')
 
   // Set up the kit: one colour, named and given a value.
   await kit.getByRole('button', { name: 'Add colour' }).click()
@@ -95,6 +99,41 @@ test('a layer bound to a brand colour changes when the brand colour does', async
   await page.evaluate(() => window.razzlr?.perform('undo'))
   await expect.poll(() => storedFill(page)).toEqual({ bindings: undefined, color: navy })
   await expect.poll(() => boxColor(page)).toEqual([20, 33, 61])
+  expect(errors).toEqual([])
+})
+
+test('the picker applies a colour tile and a font row, and the Page card shows the colours', async ({ browser }) => {
+  const kit = { ...EMPTY_BRAND_KIT, colors: [{ token: 'sun', name: 'Sun', value: '#FF8A3DFF' }, { token: 'roast', name: 'Roast', value: '#2A140AFF' }], fonts: [{ token: 'body', name: 'Body', family: 'Noto Sans' }] }
+  await fetch(`${API_URL}/brands/${DEV_BRAND}/kit`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(kit) })
+  const content = design()
+  content.nodes.title = {
+    type: 'text', parentId: 'p1', index: 'a1', name: 'Title',
+    props: { x: 80, y: 80, width: 600, height: 120, text: 'Cold brew', style: { fontFamily: 'Noto Sans', fontSize: 96, fontWeight: 700, color: '#111111FF' } },
+  } as DesignInput['nodes'][string]
+  const { page, errors } = await openStage(browser, content)
+
+  // With nothing selected, the Page card offers the brand's colours before the fixed set.
+  const brandRow = page.getByTestId('page-brand-colors')
+  await expect(brandRow.getByRole('button')).toHaveCount(2)
+  await brandRow.getByRole('button', { name: 'Sun #FF8A3D' }).click()
+  await expect.poll(async () => ((await read(page)) as unknown as { pages: Record<string, { fills: unknown[] }> }).pages.p1?.fills).toEqual([{ type: 'solid', color: '#FF8A3DFF' }])
+
+  await page.locator('[data-panel="brand"]').click()
+  const picker = page.getByTestId('brand-kit')
+  await expect(picker).toHaveAttribute('data-mode', 'pick')
+  const sun = picker.getByRole('button', { name: 'Apply Sun to the selection' })
+  await expect(sun).toBeDisabled()
+  await page.evaluate(() => window.razzlr?.select(['box']))
+  await sun.click()
+  await expect.poll(() => storedFill(page)).toEqual({ bindings: { fill: 'brand:sun' }, color: '#FF8A3DFF' })
+  await expect(picker.getByRole('button', { name: 'Stop following Sun' })).toHaveAttribute('aria-pressed', 'true')
+  // The font rows need text selected.
+  await expect(picker.getByRole('button', { name: 'Apply Body to the selection' })).toBeDisabled()
+  await page.evaluate(() => window.razzlr?.select(['title']))
+  await picker.getByRole('button', { name: 'Apply Body to the selection' }).click()
+  await expect.poll(async () => ((await read(page)).nodes.title as unknown as { bindings?: Record<string, string> }).bindings).toMatchObject({ fontFamily: 'brand:body' })
+  await page.evaluate(() => window.razzlr?.drawn())
+  writeOutput('brand-kit-3-picker.png', await page.screenshot())
   expect(errors).toEqual([])
 })
 
