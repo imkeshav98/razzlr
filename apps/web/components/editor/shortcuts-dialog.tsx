@@ -83,7 +83,7 @@ export function ShortcutsButton() {
                   {actions.map((action) => {
                     const keys = SHORTCUTS.find((s) => s.action === action)?.keys ?? []
                     return (
-                      <div key={action} data-action={action} className="flex items-center justify-between gap-3 border-t border-line py-1.5 first:border-t-0">
+                      <div key={action} data-shortcut={action} className="flex items-center justify-between gap-3 border-t border-line py-1.5 first:border-t-0">
                         <dt className="min-w-0 text-[13px]">{t.actions[action]}</dt>
                         <dd className="flex shrink-0 flex-wrap justify-end gap-1.5" dir="ltr">
                           {keys.slice(0, 2).map((spec, n) => (
