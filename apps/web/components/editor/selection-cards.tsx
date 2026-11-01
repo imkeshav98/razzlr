@@ -7,12 +7,12 @@
 // is one undo step, and a scrub, however long, is one too.
 import { MinusIcon, PlusIcon } from '@phosphor-icons/react'
 import type { Editor } from '@razzlr/editor'
-import { BlendMode, ContainerBlendMode, LineEnd, type Design, type Effect, type Paint, type Shape } from '@razzlr/schema'
+import { BlendMode, ContainerBlendMode, ImageFilter, LineEnd, type Design, type Effect, type ImageAdjust, type Paint, type Shape } from '@razzlr/schema'
 import { useId, useRef, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
 import { format, type Messages } from '../../lib/i18n/index.ts'
-import { CARD, CardHeader } from './card.tsx'
+import { CARD, CardHeader, FineTune } from './card.tsx'
 import { ICON_BUTTON } from './formats-panel.tsx'
 import { useLiveDesign } from './use-live-design.ts'
 
@@ -771,6 +771,94 @@ function ParagraphCard({ target, p }: { target: Target; p: P }) {
 
 type BoxMode = 'autoWidth' | 'autoHeight' | 'fixed'
 
+type ImageFill = Extract<Paint, { type: 'image' }>
+const ADJUSTMENTS = ['exposure', 'contrast', 'saturation', 'temperature', 'tint'] as const
+/** Each filter's tile: the image's picture with a CSS look near the one the renderer draws. */
+const FILTER_LOOK: Record<ImageFilter, string> = {
+  none: 'none',
+  mono: 'grayscale(1)',
+  sepia: 'sepia(0.85)',
+  vivid: 'saturate(1.7) contrast(1.1)',
+  fade: 'contrast(0.75) brightness(1.12) saturate(0.75)',
+  warm: 'sepia(0.3) saturate(1.35) hue-rotate(-12deg)',
+  cool: 'saturate(0.9) hue-rotate(18deg) brightness(1.04)',
+}
+
+/**
+ * An image fill's own settings (#154): its filter as tiles of the picture itself, how it fits the
+ * layer, and behind Fine-tune its opacity and adjustments (exposure, contrast, saturation,
+ * temperature, tint). It acts on the first image fill the selected layers share.
+ */
+function ImageCard({ target, p, brandId, index, paint }: { target: Target; p: P; brandId: string; index: number; paint: ImageFill }) {
+  const [fine, setFine] = useState(false)
+  const setPaint = (change: (now: ImageFill) => Partial<ImageFill>) => set(target, (now) => {
+    const fills = (now.fills ?? []) as Paint[]
+    const at = fills[index]
+    if (at?.type !== 'image') return null
+    return { fills: fills.map((f, i) => (i === index ? { ...at, ...change(at) } : f)) }
+  })
+  const setAdjust = (key: keyof ImageAdjust, to: (n: number) => number) => setPaint((now) => {
+    const adjust = { exposure: 0, contrast: 0, saturation: 0, temperature: 0, tint: 0, ...now.adjust }
+    return { adjust: { ...adjust, [key]: Math.round(clamp(to(adjust[key]), -100, 100)) } }
+  })
+  const picture = `/brands/${encodeURIComponent(brandId)}/assets/${encodeURIComponent(paint.assetId)}/thumbnail`
+  const filter = paint.filter ?? 'none'
+  return (
+    <section aria-labelledby="image-card-title" className={CARD} data-testid="image-card">
+      <CardHeader id="image-card-title" title={p.image} note={target.names.join(', ')} />
+      <div className="flex flex-col gap-3 px-[18px] pb-3">
+        <div role="radiogroup" aria-label={p.filter} className="grid grid-cols-4 gap-1.5">
+          {ImageFilter.options.map((name) => (
+            <button
+              key={name}
+              type="button"
+              role="radio"
+              aria-checked={filter === name}
+              onClick={() => setPaint(() => ({ filter: name === 'none' ? undefined : name }))}
+              className="group flex min-w-0 cursor-pointer flex-col items-center gap-1 text-[10px] font-semibold text-muted aria-checked:text-text"
+            >
+              <span className="block aspect-square w-full overflow-hidden rounded-[8px] border border-line group-aria-checked:shadow-[0_0_0_2px_var(--surface),0_0_0_4px_var(--accent)]">
+                <img src={picture} alt="" draggable={false} loading="lazy" style={{ filter: FILTER_LOOK[name] }} className="size-full object-cover" />
+              </span>
+              <span className="w-full truncate text-center">{p.filters[name]}</span>
+            </button>
+          ))}
+        </div>
+        <Choice name={p.fit} value={paint.fit} options={['fill', 'fit', 'crop', 'tile'] as const} labels={p.fits} onSet={(fit) => setPaint(() => ({ fit }))} />
+      </div>
+      <FineTune open={fine} onToggle={() => setFine(!fine)} label={p.fineTune} />
+      {fine && (
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2 px-[18px] pb-4">
+          <NumberField
+            label="%"
+            name={p.imageOpacity}
+            value={paint.opacity}
+            scale={100}
+            min={0}
+            max={1}
+            editor={target.editor}
+            onSet={(v) => setPaint(() => ({ opacity: tidy(v) }))}
+            onShift={(by) => setPaint((now) => ({ opacity: tidy(clamp(now.opacity + by, 0, 1)) }))}
+          />
+          {ADJUSTMENTS.map((key) => (
+            <NumberField
+              key={key}
+              label={p.adjustShort[key]}
+              name={p.adjust[key]}
+              value={paint.adjust?.[key] ?? 0}
+              min={-100}
+              max={100}
+              editor={target.editor}
+              onSet={(v) => setAdjust(key, () => v)}
+              onShift={(by) => setAdjust(key, (n) => n + by)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
 type Layout = { direction: 'row' | 'column'; gap: number; padding: Record<'top' | 'right' | 'bottom' | 'left', number>; justify: string; align: string; wrap: boolean; lineGap: number }
 
 function AutoLayoutCard({ target, p }: { target: Target; p: P }) {
@@ -843,7 +931,7 @@ function ScopeSwitch({ everyFormat, onChange, p }: { everyFormat: boolean; onCha
  * The selection's cards, after the font: the look first, then Arrange (first of all for several
  * layers, as the mock's "3 selected"), then position, size and the rest.
  */
-export function SelectionCards({ editor, ids, arrange }: { editor: Editor; ids: string[]; arrange: ReactNode }) {
+export function SelectionCards({ editor, brandId, ids, arrange }: { editor: Editor; brandId: string; ids: string[]; arrange: ReactNode }) {
   const t = useMessages()
   const p = t.editor.props
   const { design } = useLiveDesign(editor)
@@ -867,6 +955,10 @@ export function SelectionCards({ editor, ids, arrange }: { editor: Editor; ids: 
     return node?.type === 'graphic' ? node.props.shape.kind : null
   }))
   const [shapeKind] = shapeKinds
+  // The first image fill, when every selected layer has the same fills.
+  const fills = shared(target.props.map((pr) => (pr.fills ?? []) as Paint[]))
+  const imageIndex = fills === 'mixed' ? -1 : fills.findIndex((f) => f.type === 'image')
+  const imageFill = fills !== 'mixed' && imageIndex >= 0 ? { index: imageIndex, paint: fills[imageIndex] as ImageFill } : null
   const ownShape = shapeKinds.size === 1 && (shapeKind === 'rect' || shapeKind === 'polygon' || shapeKind === 'star' || shapeKind === 'line') ? shapeKind : null
   return (
     <>
@@ -875,6 +967,7 @@ export function SelectionCards({ editor, ids, arrange }: { editor: Editor; ids: 
       {all('text') && <TextCard target={target} p={p} />}
       {all('text') && <ParagraphCard target={target} p={p} />}
       {ownShape && <ShapeCard target={target} p={p} kind={ownShape} />}
+      {all('graphic', 'frame', 'boolean') && imageFill && <ImageCard target={target} p={p} brandId={brandId} index={imageFill.index} paint={imageFill.paint} />}
       {all('graphic', 'frame', 'boolean') && (
         <ListCard<Paint>
           id="fill-card"
