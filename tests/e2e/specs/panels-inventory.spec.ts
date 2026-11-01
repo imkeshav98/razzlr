@@ -20,7 +20,7 @@ test.describe.configure({ mode: 'parallel', timeout: 180_000 })
 test.use({ actionTimeout: 15_000 })
 
 /** Rows that fail today, with the bug filed for each. */
-const KNOWN: Record<number, number> = { 12: 243, 16: 244, 25: 246, 35: 245 }
+const KNOWN: Record<number, number> = { 12: 243, 16: 244, 25: 246 }
 
 const righteous = new Uint8Array(readFileSync(join(import.meta.dirname, '..', 'assets', 'fonts', 'Righteous-Regular.ttf')))
 const tile = new Uint8Array(readFileSync(join(import.meta.dirname, '..', '..', 'pixels', 'assets', 'tile.jpg')))
@@ -743,8 +743,14 @@ test.describe('shapes and frames', () => {
     const strokes = async () => (await props(page, 'box')).strokes ?? []
     await step(page, () => card.getByRole('button', { name: 'Add stroke' }).click(), async () => { await expect.poll(async () => (await strokes()).length).toBe(1) })
     await step(page, () => card.getByRole('button', { name: 'Add stroke' }).click(), async () => { await expect.poll(async () => (await strokes()).length).toBe(2) })
+    // Top first: Stroke 1 is the newest, drawn on top; a colour of its own shows which is on top.
     await enter(card.getByRole('textbox', { name: 'Stroke 1 width' }), '12')
+    await enter(card.getByRole('textbox', { name: 'Stroke 1 colour hex' }), 'ff48b0')
+    await expect.poll(async () => (await strokes()).map((s) => s.width)).toEqual([2, 12])
     await step(page, () => card.locator('[data-row="1"]').getByTestId('row-grip').press('ArrowDown'), async () => {
+      await expect.poll(async () => (await strokes()).map((s) => s.width)).toEqual([12, 2])
+    })
+    await step(page, () => card.locator('[data-row="2"]').dragTo(card.locator('[data-row="1"]')), async () => {
       await expect.poll(async () => (await strokes()).map((s) => s.width)).toEqual([2, 12])
     })
     await step(page, () => card.getByRole('button', { name: 'Remove stroke 1' }).click(), async () => { await expect.poll(async () => (await strokes()).length).toBe(1) })
