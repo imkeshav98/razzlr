@@ -640,6 +640,137 @@ function TextCard({ target, p }: { target: Target; p: P }) {
   )
 }
 
+type Toggle = { name: string; label: string; on: boolean | 'mixed'; onSet: (on: boolean) => void }
+
+/** Buttons that each turn something on or off, such as underline; pressed while it is on. */
+function Toggles({ items }: { items: Toggle[] }) {
+  return (
+    <div className="flex gap-1">
+      {items.map((item) => (
+        <button
+          key={item.name}
+          type="button"
+          aria-label={item.name}
+          title={item.name}
+          aria-pressed={item.on === 'mixed' ? 'mixed' : item.on}
+          onClick={() => item.onSet(item.on !== true)}
+          className="h-7 min-w-8 cursor-pointer rounded-row border border-line px-2 text-[12px] text-muted hover:bg-hover aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent-text"
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * The text's box and paragraphs (#153): how the box sizes, lines shown at most, shrinking to fit,
+ * paragraph spacing, lists, underline and strikethrough, and an outline along the glyphs.
+ */
+function ParagraphCard({ target, p }: { target: Target; p: P }) {
+  const value = (key: string) => shared(target.props.map((pr) => pr[key])) as unknown
+  const styles = target.props.map((pr) => pr.style as Style)
+  const style = (key: string) => shared(styles.map((s) => s[key]))
+  const setStyle = (change: (now: Style) => Record<string, unknown>) => set(target, (now) => ({ style: { ...(now.style as Style), ...change(now.style as Style) } }))
+  const flag = (key: string) => {
+    const on = style(key)
+    return on === 'mixed' ? 'mixed' : on === true
+  }
+  const shrink = value('shrinkToFit') as { min: number; max: number } | undefined | 'mixed'
+  const outline = style('outline') as { width: number; color: string } | undefined | 'mixed'
+  const outlined = outline === 'mixed' || (outline !== undefined && outline.width > 0)
+  return (
+    <Card id="paragraph-card" title={p.paragraph}>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+        <Choice name={p.boxMode} value={value('boxMode') as BoxMode | 'mixed' | undefined ?? 'autoHeight'} options={['autoWidth', 'autoHeight', 'fixed'] as const} labels={p.boxModes} onSet={(boxMode) => set(target, () => ({ boxMode }))} />
+        <Choice name={p.list} value={(value('list') ?? 'none') as 'none' | 'bullet' | 'number' | 'mixed'} options={['none', 'bullet', 'number'] as const} labels={p.lists} onSet={(list) => set(target, () => ({ list: list === 'none' ? undefined : list }))} />
+        <NumberField
+          label="≡"
+          name={p.maxLines}
+          value={value('maxLines') as number | 'mixed' | undefined}
+          min={0}
+          placeholder={p.noLimit}
+          editor={target.editor}
+          // 0 lifts the limit.
+          onSet={(v) => set(target, () => ({ maxLines: Math.round(v) >= 1 ? Math.round(v) : undefined }))}
+          onShift={(by) => set(target, (now) => {
+            const next = Math.round(((now.maxLines as number | undefined) ?? 0) + by)
+            return { maxLines: next >= 1 ? next : undefined }
+          })}
+        />
+        <NumberField
+          label="¶"
+          name={p.paragraphSpacing}
+          value={(value('paragraphSpacing') ?? 0) as number | 'mixed'}
+          min={0}
+          editor={target.editor}
+          onSet={(v) => set(target, () => ({ paragraphSpacing: v }))}
+          onShift={(by) => set(target, (now) => ({ paragraphSpacing: tidy(clamp(((now.paragraphSpacing as number | undefined) ?? 0) + by, 0)) }))}
+        />
+      </div>
+      <Toggles
+        items={[
+          { name: p.underline, label: 'U', on: flag('underline'), onSet: (on) => setStyle(() => ({ underline: on })) },
+          { name: p.strikethrough, label: 'S', on: flag('strikethrough'), onSet: (on) => setStyle(() => ({ strikethrough: on })) },
+          { name: p.shrinkToFit, label: p.shrinkToFitShort, on: shrink === 'mixed' ? 'mixed' : shrink !== undefined, onSet: (on) => set(target, (now) => {
+            const size = (now.style as Style).fontSize
+            return { shrinkToFit: on ? { min: tidy(Math.max(1, size / 2)), max: size } : undefined }
+          }) },
+          { name: p.outline, label: p.outlineShort, on: outline === 'mixed' ? 'mixed' : outlined, onSet: (on) => setStyle((now) => ({ outline: on ? { width: 2, color: (now.outline as { color?: string } | undefined)?.color ?? '#000000FF' } : undefined })) },
+        ]}
+      />
+      {shrink !== undefined && shrink !== 'mixed' && (
+        <div className="grid grid-cols-2 gap-x-3">
+          {(['min', 'max'] as const).map((end) => (
+            <NumberField
+              key={end}
+              label={end === 'min' ? '↓' : '↑'}
+              name={p.shrinkSize[end]}
+              value={shrink[end]}
+              min={1}
+              editor={target.editor}
+              onSet={(v) => set(target, (now) => {
+                const was = now.shrinkToFit as { min: number; max: number } | undefined
+                if (!was) return null
+                const next = { ...was, [end]: v }
+                return { shrinkToFit: end === 'min' ? { min: Math.min(next.min, next.max), max: next.max } : { min: next.min, max: Math.max(next.min, next.max) } }
+              })}
+              onShift={(by) => set(target, (now) => {
+                const was = now.shrinkToFit as { min: number; max: number } | undefined
+                if (!was) return null
+                const v = tidy(Math.max(1, was[end] + by))
+                return { shrinkToFit: end === 'min' ? { min: Math.min(v, was.max), max: was.max } : { min: was.min, max: Math.max(v, was.min) } }
+              })}
+            />
+          ))}
+        </div>
+      )}
+      {outlined && outline !== 'mixed' && outline && (
+        <div className="flex items-center gap-1">
+          <div className="w-20 shrink-0">
+            <NumberField
+              label="W"
+              name={p.outlineWidth}
+              value={outline.width}
+              min={0}
+              step={0.5}
+              editor={target.editor}
+              onSet={(width) => setStyle((now) => ({ outline: { ...(now.outline as object), width } }))}
+              onShift={(by) => setStyle((now) => {
+                const was = now.outline as { width: number; color: string } | undefined
+                return was ? { outline: { ...was, width: tidy(clamp(was.width + by, 0)) } } : {}
+              })}
+            />
+          </div>
+          <ColorField name={p.outline} value={outline.color} onSet={(color) => setStyle((now) => ({ outline: { ...(now.outline as object), color } }))} />
+        </div>
+      )}
+    </Card>
+  )
+}
+
+type BoxMode = 'autoWidth' | 'autoHeight' | 'fixed'
+
 type Layout = { direction: 'row' | 'column'; gap: number; padding: Record<'top' | 'right' | 'bottom' | 'left', number>; justify: string; align: string; wrap: boolean; lineGap: number }
 
 function AutoLayoutCard({ target, p }: { target: Target; p: P }) {
@@ -742,6 +873,7 @@ export function SelectionCards({ editor, ids, arrange }: { editor: Editor; ids: 
       {several && arrange}
       {Object.keys(design.formats).length > 1 && <ScopeSwitch everyFormat={everyFormat} onChange={setEveryFormat} p={p} />}
       {all('text') && <TextCard target={target} p={p} />}
+      {all('text') && <ParagraphCard target={target} p={p} />}
       {ownShape && <ShapeCard target={target} p={p} kind={ownShape} />}
       {all('graphic', 'frame', 'boolean') && (
         <ListCard<Paint>
