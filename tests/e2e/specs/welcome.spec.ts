@@ -28,7 +28,10 @@ test('on a phone the website field fits', async ({ browser }) => {
   const page = await context.newPage()
   await page.goto('/welcome')
   const field = await page.getByRole('textbox', { name: 'Website or name' }).boundingBox()
-  expect(field?.width ?? 0).toBeGreaterThan(200)
+  // The field shares its bar with Open it, which stays on screen beside it.
+  expect(field?.width ?? 0).toBeGreaterThan(160)
+  const open = await page.getByRole('button', { name: 'Open it' }).boundingBox()
+  expect((open?.x ?? 0) + (open?.width ?? 0)).toBeLessThanOrEqual(390)
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
   await page.waitForTimeout(400)
   await writeOutput('welcome-phone.png', await page.screenshot({ fullPage: true }))
