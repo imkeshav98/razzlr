@@ -33,14 +33,17 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   async function save(form: FormData) {
     'use server'
     const kind = WorkspaceKind.safeParse(form.get('kind'))
-    if (kind.success) await updateWorkspace({ kind: kind.data })
+    if (!kind.success) redirect('/settings')
+    await updateWorkspace({ kind: kind.data })
     redirect('/settings?saved=kind')
   }
 
   async function rename(form: FormData) {
     'use server'
     const name = String(form.get('name') ?? '').trim()
-    if (name) await updateWorkspace({ name: name.slice(0, 120) })
+    // A name of spaces only is no name: nothing is saved, and nothing says it was.
+    if (!name) redirect('/settings')
+    await updateWorkspace({ name: name.slice(0, 120) })
     redirect('/settings?saved=name')
   }
 

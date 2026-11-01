@@ -61,7 +61,7 @@ export function ShareMenu({ editor, brandId, brandName, designName, everyBrand }
       {open === 'menu' && (
         <div id={id} role="menu" aria-label={t.editor.share.title} className="pop-in-end absolute end-0 top-full z-30 mt-2 flex w-80 flex-col rounded-card border surface-frost p-1.5 shadow-panel">
           {/* As in the final mock: "Share" and the design's name, then each item with a line on what it does. */}
-          <div className="flex items-baseline justify-between gap-3 px-3 pt-2 pb-2.5">
+          <div role="none" className="flex items-baseline justify-between gap-3 px-3 pt-2 pb-2.5">
             <span className="font-display text-[15px] font-bold tracking-tight">{t.editor.share.open}</span>
             <span className="min-w-0 truncate text-[11px] font-medium text-muted">{designName}</span>
           </div>
