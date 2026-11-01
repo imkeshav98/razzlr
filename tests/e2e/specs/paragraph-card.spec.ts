@@ -42,8 +42,8 @@ test('the Box and paragraphs card sets the box, lines, lists, decoration, fit an
 
   await choose(card.getByRole('combobox', { name: 'Box' }), 'fixed')
   await choose(card.getByRole('combobox', { name: 'List' }), 'bullet')
-  await enter(card.getByRole('textbox', { name: 'Paragraph spacing' }), '24')
-  await enter(card.getByRole('textbox', { name: 'Lines at most' }), '2')
+  await enter(card.getByRole('spinbutton', { name: 'Paragraph spacing' }), '24')
+  await enter(card.getByRole('spinbutton', { name: 'Lines at most' }), '2')
   await expect.poll(() => copy(page)).toMatchObject({ boxMode: 'fixed', list: 'bullet', paragraphSpacing: 24, maxLines: 2 })
 
   await card.getByRole('button', { name: 'Underline' }).click()
@@ -53,7 +53,7 @@ test('the Box and paragraphs card sets the box, lines, lists, decoration, fit an
   await expect.poll(async () => (await copy(page)).style).toMatchObject({ underline: true, strikethrough: false })
 
   await card.getByRole('button', { name: 'Outline', exact: true }).click()
-  await enter(card.getByRole('textbox', { name: 'Outline width' }), '4')
+  await enter(card.getByRole('spinbutton', { name: 'Outline width' }), '4')
   await enter(card.getByRole('textbox', { name: 'Outline hex' }), 'ff3d6e')
   await expect.poll(async () => (await copy(page)).style.outline).toEqual({ width: 4, color: '#FF3D6EFF' })
   await page.evaluate(() => window.dazbee?.drawn())
@@ -62,11 +62,11 @@ test('the Box and paragraphs card sets the box, lines, lists, decoration, fit an
   // Shrink to fit starts from half the size up to the size; the smallest can't pass the largest.
   await card.getByRole('button', { name: 'Shrink to fit' }).click()
   await expect.poll(async () => (await copy(page)).shrinkToFit).toEqual({ min: 36, max: 72 })
-  await enter(card.getByRole('textbox', { name: 'Smallest size' }), '90')
+  await enter(card.getByRole('spinbutton', { name: 'Smallest size' }), '90')
   await expect.poll(async () => (await copy(page)).shrinkToFit).toEqual({ min: 72, max: 72 })
 
   // 0 lines lifts the limit; turning things off removes them.
-  await enter(card.getByRole('textbox', { name: 'Lines at most' }), '0')
+  await enter(card.getByRole('spinbutton', { name: 'Lines at most' }), '0')
   await choose(card.getByRole('combobox', { name: 'List' }), 'none')
   await card.getByRole('button', { name: 'Shrink to fit' }).click()
   await card.getByRole('button', { name: 'Outline', exact: true }).click()
@@ -74,7 +74,7 @@ test('the Box and paragraphs card sets the box, lines, lists, decoration, fit an
     const props = await copy(page)
     return [props.maxLines, props.list, props.shrinkToFit, props.style.outline]
   }).toEqual([undefined, undefined, undefined, undefined])
-  await expect(card.getByRole('textbox', { name: 'Lines at most' })).toHaveValue('')
+  await expect(card.getByRole('spinbutton', { name: 'Lines at most' })).toHaveValue('')
 
   // One undo takes the outline back.
   await page.evaluate(() => window.dazbee?.perform('undo'))

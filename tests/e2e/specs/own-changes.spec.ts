@@ -35,8 +35,8 @@ test('the scope card lists what this format has of its own and resets it', async
   await expect(scope.getByTestId('own-changes')).toHaveCount(0)
 
   // Changes made to this format only show up, grouped as the cards are.
-  await enter(page.getByTestId('layout-card').getByRole('textbox', { name: 'X position' }), '200')
-  await enter(page.getByTestId('layout-card').getByRole('textbox', { name: 'Width' }), '400')
+  await enter(page.getByTestId('layout-card').getByRole('spinbutton', { name: 'X position' }), '200')
+  await enter(page.getByTestId('layout-card').getByRole('spinbutton', { name: 'Width' }), '400')
   await enter(page.getByTestId('fill-card').getByRole('textbox', { name: 'Colour 1 hex' }), '14213d')
   await expect.poll(() => squareOwn(page)).toMatchObject({ x: 200, width: 400 })
   const own = scope.getByTestId('own-changes')
@@ -52,6 +52,6 @@ test('the scope card lists what this format has of its own and resets it', async
   await own.getByRole('button', { name: 'Reset all' }).click()
   await expect.poll(() => squareOwn(page)).toEqual({})
   await expect(scope.getByTestId('own-changes')).toHaveCount(0)
-  await expect(page.getByTestId('layout-card').getByRole('textbox', { name: 'X position' })).toHaveValue('80')
+  await expect(page.getByTestId('layout-card').getByRole('spinbutton', { name: 'X position' })).toHaveValue('80')
   expect(errors).toEqual([])
 })

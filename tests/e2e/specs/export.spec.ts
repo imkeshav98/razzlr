@@ -128,6 +128,7 @@ test('one format as JPG downloads as itself, at the quality picked, the same byt
   for (const formatId of ['sq', 'pt', 'story', 'mpu']) await page.getByTestId('export').locator(`[data-format="${formatId}"]`).uncheck()
   await page.locator('[data-type="jpg"]').click()
   await page.getByTestId('export-quality').fill('70')
+  await page.getByTestId('export-quality').press('Enter')
   await expect(page.getByTestId('export-run')).toHaveText('Export 1 file')
   writeOutput('export-3-jpg-menu.png', await page.screenshot())
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByTestId('export-run').click()])

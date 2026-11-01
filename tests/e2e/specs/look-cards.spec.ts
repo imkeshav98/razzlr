@@ -38,6 +38,7 @@ test('the look comes first: size and brand colour, effect tiles, and the numbers
   // Text: the size slider and the brand's colours, the colour it has now leading them.
   const look = page.getByTestId('text-look')
   await look.getByRole('slider', { name: 'Size' }).fill('64')
+  await look.getByRole('slider', { name: 'Size' }).press('Enter')
   await expect.poll(async () => (await node(page, 'headline')).props.style?.fontSize).toBe(64)
   const colours = look.getByRole('group', { name: 'Brand colours' })
   await expect(colours.getByRole('button')).toHaveCount(3)
@@ -60,7 +61,7 @@ test('the look comes first: size and brand colour, effect tiles, and the numbers
   writeOutput('look-cards-text.png', await page.screenshot())
   // Fine-tune opens the picked effect's numbers.
   await effects.getByRole('button', { name: 'Fine-tune' }).click()
-  await expect(effects.getByRole('textbox', { name: 'Drop shadow 1 Blur' })).toBeVisible()
+  await expect(effects.getByRole('spinbutton', { name: 'Drop shadow 1 Blur' })).toBeVisible()
   await effects.locator('[data-tile="none"]').click()
   await expect.poll(async () => {
     const props = (await node(page, 'headline')).props
@@ -72,9 +73,9 @@ test('the look comes first: size and brand colour, effect tiles, and the numbers
   const position = details.getByTestId('layout-card')
   await expect(position.locator('[data-fold]')).toHaveAttribute('aria-expanded', 'false')
   await expect(position).toContainText('76, 162 · 610×204')
-  await expect(position.getByRole('textbox', { name: 'X position' })).toHaveCount(0)
+  await expect(position.getByRole('spinbutton', { name: 'X position' })).toHaveCount(0)
   await position.locator('[data-fold]').click()
-  await expect(position.getByRole('textbox', { name: 'X position' })).toHaveValue('76')
+  await expect(position.getByRole('spinbutton', { name: 'X position' })).toHaveValue('76')
 
   // A shape: its fill from the same colours, and Blur in place of Outline; the open row stays open.
   await page.evaluate(() => window.dazbee?.select(['badge']))

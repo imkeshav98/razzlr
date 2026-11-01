@@ -122,11 +122,10 @@ test('an ad set rebuilt in 5 formats through real input exports PNG, JPG, PDF an
   // An upload from the list joins the brand's fonts and is set at once.
   await page.getByTestId('font-upload').setInputFiles({ name: 'Righteous-Regular.ttf', mimeType: 'font/ttf', buffer: Buffer.from(righteous) })
   await expect.poll(async () => ((await stored(page)).nodes[headline]?.props.style as { fontFamily: string }).fontFamily).toBe('Righteous')
-  // The size slider runs from 8 to 240: a click 57% along sets about 140.
-  const slider = page.getByTestId('text-look').getByRole('slider', { name: 'Size' })
-  const track = await slider.boundingBox()
-  if (!track) throw new Error('no size slider')
-  await page.mouse.click(track.x + (track.width * (140 - 8)) / (240 - 8), track.y + track.height / 2)
+  // The size is a number to drag or type: 140, typed.
+  await page.getByTestId('text-look').getByRole('slider', { name: 'Size' }).click()
+  await page.keyboard.type('140')
+  await page.keyboard.press('Enter')
   await expect.poll(async () => ((await stored(page)).nodes[headline]?.props.style as { fontSize: number }).fontSize).toBeGreaterThan(120)
   await page.mouse.click(40, 900)
   await page.locator('[data-panel="brand"]').click()

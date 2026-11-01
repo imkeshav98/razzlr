@@ -44,12 +44,12 @@ test('the Shape card sets corners, sides, points and line ends', async ({ browse
 
   await select(page, ['box'])
   await expect(card.getByRole('heading')).toHaveText('Rectangle')
-  await card.getByRole('slider', { name: 'Corners' }).fill('40')
+  await enter(card.getByRole('slider', { name: 'Corners' }), '40')
   await expect.poll(() => shapeOf(page, 'box')).toEqual({ kind: 'rect', cornerRadius: 40 })
   // Each corner its own: all four start at the one radius, then one changes alone.
   await card.getByRole('checkbox', { name: 'Each corner its own radius' }).check()
   await expect.poll(() => shapeOf(page, 'box')).toMatchObject({ corners: [40, 40, 40, 40] })
-  await enter(card.getByRole('textbox', { name: 'Bottom right radius' }), '120')
+  await enter(card.getByRole('spinbutton', { name: 'Bottom right radius' }), '120')
   await expect.poll(() => shapeOf(page, 'box')).toMatchObject({ corners: [40, 40, 120, 40] })
   await page.evaluate(() => window.dazbee?.drawn())
   writeOutput('shape-card-rect.png', await page.screenshot())
@@ -60,15 +60,15 @@ test('the Shape card sets corners, sides, points and line ends', async ({ browse
   await select(page, ['hex'])
   await expect(card.getByRole('heading')).toHaveText('Polygon')
   // Sides are whole and at least three: Home takes the slider to its start.
-  await card.getByRole('slider', { name: 'Sides' }).fill('8')
+  await enter(card.getByRole('slider', { name: 'Sides' }), '8')
   await expect.poll(async () => (await shapeOf(page, 'hex')).sides).toBe(8)
   await card.getByRole('slider', { name: 'Sides' }).press('Home')
   await expect.poll(async () => (await shapeOf(page, 'hex')).sides).toBe(3)
 
   await select(page, ['star'])
-  await card.getByRole('slider', { name: 'Points' }).fill('8')
-  await card.getByRole('slider', { name: 'Inner' }).fill('0.6')
-  await card.getByRole('slider', { name: 'Points' }).press('ArrowRight')
+  await enter(card.getByRole('slider', { name: 'Points' }), '8')
+  await enter(card.getByRole('slider', { name: 'Inner' }), '60')
+  await card.getByRole('slider', { name: 'Points' }).press('ArrowUp')
   await expect.poll(() => shapeOf(page, 'star')).toMatchObject({ points: 9, innerRadius: 0.6 })
 
   await select(page, ['rule'])

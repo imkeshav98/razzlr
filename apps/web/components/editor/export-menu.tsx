@@ -11,6 +11,7 @@ import { useMessages } from '../../lib/i18n/client.tsx'
 import { format } from '../../lib/i18n/index.ts'
 import { Button } from '../ui/button.tsx'
 import { Select } from '../ui/select.tsx'
+import { NumberField } from './fields.tsx'
 
 const byOrder = <T extends { order: string }>(items: Record<string, T>) =>
   Object.entries(items).sort(([a, x], [b, y]) => (x.order < y.order ? -1 : x.order > y.order ? 1 : a < b ? -1 : 1))
@@ -125,13 +126,16 @@ export function ExportForm({ id, editor, design }: { id: string; editor: Editor;
       </fieldset>
 
       {type === 'jpg' && (
-        <label className="flex flex-col gap-1.5">
-          <span className={cn(LABEL, 'flex justify-between')}>
-            {t.editor.exports.quality}
-            <span className="font-mono font-normal tabular-nums">{quality}</span>
-          </span>
-          <input name="quality" type="range" min={1} max={100} value={quality} onChange={(event) => setQuality(Number(event.target.value))} data-testid="export-quality" />
-        </label>
+        <NumberField
+          label={t.editor.exports.quality}
+          name={t.editor.exports.quality}
+          value={quality}
+          min={1}
+          max={100}
+          testId="export-quality"
+          onSet={(to) => setQuality(Math.round(to))}
+          onShift={(by) => setQuality((now) => Math.round(Math.min(100, Math.max(1, now + by))))}
+        />
       )}
 
       <Button variant="primary" disabled={count === 0 || progress !== null} onClick={() => void run()} data-testid="export-run">
