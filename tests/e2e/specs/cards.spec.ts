@@ -37,7 +37,10 @@ test('the cards float over a full-width canvas and the ads fit between the capsu
   for (const card of ['page-card', 'formats', 'pages']) await expect(page.getByTestId(card)).toBeVisible()
   // Each card is as tall as what it holds, and frosted.
   const pageCard = page.getByTestId('page-card')
-  expect((await box(page, 'page-card')).height).toBeLessThan(140)
+  // The brand's own colours, when its kit has any, add a row of their own above the fixed set.
+  const brandRow = pageCard.getByTestId('page-brand-colors')
+  const brandRowHeight = (await brandRow.count()) > 0 ? (await brandRow.boundingBox())?.height ?? 0 : 0
+  expect((await box(page, 'page-card')).height).toBeLessThan(140 + brandRowHeight)
   expect(await pageCard.evaluate((el) => getComputedStyle(el).backdropFilter)).toContain('blur(18px)')
 
   // The square, fitted, sits wholly between the capsule and the cards, centred in that gap: as
@@ -90,7 +93,7 @@ test('a selection swaps the design cards for Arrange, which aligns, distributes 
   // One layer aligns to its format; distribute and group need more.
   await expect(arrange.getByRole('button', { name: 'Align left' })).toBeEnabled()
   await expect(arrange.getByRole('button', { name: 'Distribute horizontally' })).toBeDisabled()
-  await expect(arrange.getByRole('button', { name: 'Group' })).toBeDisabled()
+  await expect(arrange.getByRole('button', { name: 'Group', exact: true })).toBeDisabled()
   // The align buttons are the big ones.
   const big = await arrange.getByRole('button', { name: 'Align left' }).boundingBox()
   const small = await arrange.getByRole('button', { name: 'Distribute horizontally' }).boundingBox()
@@ -100,7 +103,7 @@ test('a selection swaps the design cards for Arrange, which aligns, distributes 
   await expect(arrange.getByRole('button', { name: 'Distribute horizontally' })).toBeEnabled()
   await shoot(page, 'arrange')
   const before = Object.keys(JSON.parse(await designOf(page)).nodes).length
-  await arrange.getByRole('button', { name: 'Group' }).click()
+  await arrange.getByRole('button', { name: 'Group', exact: true }).click()
   await expect.poll(async () => Object.values(JSON.parse(await designOf(page)).nodes as Record<string, { type: string }>).filter((n) => n.type === 'group').length).toBe(1)
   expect(Object.keys(JSON.parse(await designOf(page)).nodes).length).toBe(before + 1)
 
