@@ -493,6 +493,7 @@ function TextCard({ target, p }: { target: Target; p: P }) {
           editor={target.editor}
           onSet={(v) => setStyle('lineHeight', v)}
           onShift={(by) => shiftStyle('lineHeight', by, 0.5, 1.2)}
+          onClear={() => setStyle('lineHeight', undefined)}
         />
         <NumberField label="↔" name={p.letterSpacing} value={(style('letterSpacing') ?? 0) as number | 'mixed'} step={0.1} editor={target.editor} onSet={(v) => setStyle('letterSpacing', v)} onShift={(by) => shiftStyle('letterSpacing', by)} />
         <Choice name={p.textCase} value={(style('textCase') ?? 'none') as string} options={['none', 'upper', 'lower', 'title']} labels={p.textCases} onSet={(v) => setStyle('textCase', v)} />

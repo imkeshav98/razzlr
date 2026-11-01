@@ -20,7 +20,7 @@ test.describe.configure({ mode: 'parallel', timeout: 180_000 })
 test.use({ actionTimeout: 15_000 })
 
 /** Rows that fail today, with the bug filed for each. */
-const KNOWN: Record<number, number> = { 12: 243, 16: 244, 25: 246, 35: 245 }
+const KNOWN: Record<number, number> = { 12: 243, 25: 246, 35: 245 }
 
 const righteous = new Uint8Array(readFileSync(join(import.meta.dirname, '..', 'assets', 'fonts', 'Righteous-Regular.ttf')))
 const tile = new Uint8Array(readFileSync(join(import.meta.dirname, '..', '..', 'pixels', 'assets', 'tile.jpg')))
@@ -127,6 +127,8 @@ async function step(page: Page, act: () => Promise<unknown>, check: () => Promis
   await expect.poll(() => designOf(page), { message: 'one undo puts it back' }).toBe(before)
   await perform(page, 'redo')
   await expect.poll(() => designOf(page), { message: 'redo brings it again' }).toBe(after)
+  // The panels draw the redone design before the next control is used.
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
 }
 
 /** Waits for the sync server to have every change, reloads, and checks the design came back the same. */
@@ -459,6 +461,40 @@ test.describe('text', () => {
     await step(page, () => enter(field, ''), async () => {
       await expect.poll(async () => (await style(page, 'headline')).lineHeight).toBeUndefined()
     })
+    await expect(field).toHaveValue('')
+    await expect(field).toHaveAttribute('placeholder', 'Auto')
+    // Leaving an emptied field does the same.
+    await enter(field, '1.4')
+    await step(page, async () => {
+      await field.fill('')
+      await field.press('Tab')
+    }, async () => {
+      await expect.poll(async () => (await style(page, 'headline')).lineHeight).toBeUndefined()
+    })
+    // Two texts, one at 1.6 and its copy at Auto: emptied, both are Auto.
+    await enter(field, '1.6')
+    await page.getByTestId('arrange').getByRole('group', { name: 'Layer' }).getByRole('button', { name: 'Duplicate' }).click()
+    const copy = (await page.evaluate(() => window.dazbee?.selection() ?? []))[0] ?? ''
+    await select(page, [copy])
+    await enter(field, '')
+    await select(page, ['headline', copy])
+    await expect(field).toHaveAttribute('placeholder', 'Mixed')
+    await field.press('Enter')
+    expect((await style(page, 'headline')).lineHeight).toBe(1.6)
+    await step(page, async () => {
+      await field.fill('1')
+      await field.fill('')
+      await field.press('Enter')
+    }, async () => {
+      await expect.poll(async () => [(await style(page, 'headline')).lineHeight, (await style(page, copy)).lineHeight]).toEqual([undefined, undefined])
+    })
+    await select(page, ['headline'])
+    // A field with no unset value keeps its number when emptied.
+    const before = await designOf(page)
+    const spacing = page.getByTestId('text-card').getByRole('textbox', { name: 'Letter spacing' })
+    await enter(spacing, '')
+    await expect(spacing).toHaveValue('0')
+    expect(await designOf(page)).toBe(before)
     await reloads(page)
   })
 
@@ -627,6 +663,7 @@ test.describe('shapes and frames', () => {
       await expect.poll(async () => (await fills(page, 'box')).length).toBe(2)
     })
     // Top first: the new fill is the first row; moving it down puts it under the red.
+    await expect(card.locator('[data-row]')).toHaveCount(2)
     await enter(card.getByRole('textbox', { name: 'Colour 1 hex' }), '2f6bff')
     await expect.poll(async () => (await fills(page, 'box'))[1]?.color).toBe('#2F6BFF33')
     await step(page, () => card.locator('[data-row="1"]').getByTestId('row-grip').press('ArrowDown'), async () => {
