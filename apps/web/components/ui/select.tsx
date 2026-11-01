@@ -63,11 +63,13 @@ export function Select({ name, label, value, options, onChange, placeholder, dis
   }
 
   // Under the field, or over it when there is no room below; as wide as the field, at least 10rem.
+  // It follows the field as what holds the field scrolls, and closes once the field leaves the window.
   useLayoutEffect(() => {
     if (!open || !field.current) return
     const place = () => {
       const box = field.current?.getBoundingClientRect()
       if (!box) return
+      if (box.bottom < 0 || box.top > window.innerHeight) return close(false)
       const height = Math.min(list.current?.scrollHeight ?? 240, 288)
       const up = box.bottom + 6 + height > window.innerHeight && box.top - 6 - height > 0
       const width = Math.max(box.width, 160)
@@ -76,25 +78,25 @@ export function Select({ name, label, value, options, onChange, placeholder, dis
       const left = Math.min(Math.max(rtl ? box.right - width : box.left, 8), window.innerWidth - width - 8)
       setPlace({ top: up ? box.top - 6 - height : box.bottom + 6, left, width, up })
     }
+    const onScroll = (event: Event) => !list.current?.contains(event.target as Node) && place()
     place()
     window.addEventListener('resize', place)
-    return () => window.removeEventListener('resize', place)
+    window.addEventListener('scroll', onScroll, true)
+    return () => {
+      window.removeEventListener('resize', place)
+      window.removeEventListener('scroll', onScroll, true)
+    }
   }, [open])
 
-  // A press outside, or the page scrolling under it, closes the list.
+  // A press outside closes the list.
   useEffect(() => {
     if (!open) return
     const onPress = (event: PointerEvent) => {
       const target = event.target as Node
       if (!field.current?.contains(target) && !list.current?.contains(target)) close(false)
     }
-    const onScroll = (event: Event) => !list.current?.contains(event.target as Node) && close(false)
     window.addEventListener('pointerdown', onPress)
-    window.addEventListener('scroll', onScroll, true)
-    return () => {
-      window.removeEventListener('pointerdown', onPress)
-      window.removeEventListener('scroll', onScroll, true)
-    }
+    return () => window.removeEventListener('pointerdown', onPress)
   }, [open])
 
   // The active option stays in view, scrolling the list alone: scrollIntoView would scroll the page too.
