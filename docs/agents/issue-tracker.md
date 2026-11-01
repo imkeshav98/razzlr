@@ -53,7 +53,7 @@ Used by `/wayfinder`. The **map** is a single issue with **child** issues as tic
 
 GitHub's GraphQL API is blocked there, so `gh issue create/view/list/edit` fail with HTTP 403. Use the REST API through `gh api` instead:
 
-- Create: `gh api repos/imkeshav98/razzlr/issues -f title=... -F body=@file.md -f 'labels[]=ready-for-agent'`
-- Read: `gh api repos/imkeshav98/razzlr/issues/<n>` and `.../issues/<n>/comments`
-- Sub-issue: `gh api --method POST repos/imkeshav98/razzlr/issues/<parent>/sub_issues -F sub_issue_id=<child-db-id>`
-- Blocked by: `gh api --method POST repos/imkeshav98/razzlr/issues/<n>/dependencies/blocked_by -F issue_id=<blocker-db-id>`
+- Create: `gh api repos/imkeshav98/dazbee/issues -f title=... -F body=@file.md -f 'labels[]=ready-for-agent'`
+- Read: `gh api repos/imkeshav98/dazbee/issues/<n>` and `.../issues/<n>/comments`
+- Sub-issue: `gh api --method POST repos/imkeshav98/dazbee/issues/<parent>/sub_issues -F sub_issue_id=<child-db-id>`
+- Blocked by: `gh api --method POST repos/imkeshav98/dazbee/issues/<n>/dependencies/blocked_by -F issue_id=<blocker-db-id>`
