@@ -8,7 +8,7 @@ import type { ReactNode } from 'react'
 import { cn } from '../lib/cn.ts'
 import type { BrandWords, Messages } from '../lib/i18n/index.ts'
 import { SESSION_COOKIE } from '../lib/sign-in.ts'
-import type { BrandSummary } from '@razzlr/schema'
+import type { BrandSummary, WorkspaceSummary } from '@razzlr/schema'
 import { initialsOf } from '../lib/initials.ts'
 import { AccountMenu } from './account-menu.tsx'
 import { BrandMark } from './brand-mark.tsx'
@@ -84,8 +84,8 @@ function BrandSwitcher({ t, words, brands, active, showAll }: { t: Messages; wor
  */
 export async function TopBar({ t, workspace, children }: {
   t: Messages
-  /** The workspace's name, for the account avatar. */
-  workspace: string
+  /** The workspace, for the account avatar and menu. */
+  workspace: Pick<WorkspaceSummary, 'name' | 'kind'>
   /** The crumb. */
   children: ReactNode
 }) {
@@ -97,7 +97,7 @@ export async function TopBar({ t, workspace, children }: {
       </Link>
       <div className="flex min-w-0 items-center gap-1 text-[13px]">{children}</div>
       <span className="ms-auto">
-        <AccountMenu name={workspace} signedIn={jar.has(SESSION_COOKIE)} />
+        <AccountMenu name={workspace.name} kind={workspace.kind} signedIn={jar.has(SESSION_COOKIE)} />
       </span>
     </header>
   )
@@ -107,8 +107,8 @@ export async function LibraryShell({ t, words, workspace, brands, activeBrandId,
   t: Messages
   /** "Clients" in an agency workspace, "Brands" otherwise. */
   words: BrandWords
-  /** The workspace's name, for the account avatar. */
-  workspace: string
+  /** The workspace, for the account avatar and menu. */
+  workspace: Pick<WorkspaceSummary, 'name' | 'kind'>
   brands: BrandSummary[]
   activeBrandId?: string
   /** Whether the workspace has brands to switch between; one brand and no clients goes without (#84). */

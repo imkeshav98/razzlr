@@ -29,7 +29,7 @@ export const en = {
     noDesigns: 'No designs yet. Name one above to start.',
     edited: 'Edited {when}',
     templates: 'Templates',
-    templatesLead: 'Start a design from one: you get your own copy to change.',
+    templatesMeta: 'Made for this brand',
     noTemplates: 'No templates yet. Save a design as a template from the editor.',
     useTemplate: 'Use {name}',
   },
@@ -487,7 +487,7 @@ export const en = {
     dark: 'Dark',
   },
   language: { label: 'Language' },
-  account: { open: 'Your account', settings: 'Settings' },
+  account: { open: 'Your account', settings: 'Settings', kinds: { solo: 'Personal workspace', company: 'Company workspace', agency: 'Agency workspace' } },
   signIn: {
     title: 'Sign in to Dazbee',
     /** The sign-in page's headline, in two lines. */

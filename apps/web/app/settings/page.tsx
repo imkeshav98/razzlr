@@ -45,7 +45,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   }
 
   return (
-    <LibraryShell t={t} words={brandWords(t, workspace.kind)} workspace={workspace.name} brands={brands} showBrands={showsBrandList(workspace.kind, brands)} place="settings">
+    <LibraryShell t={t} words={brandWords(t, workspace.kind)} workspace={workspace} brands={brands} showBrands={showsBrandList(workspace.kind, brands)} place="settings">
       <div className="mx-auto max-w-5xl pt-2 md:pt-4">
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
           <h1 className="font-display text-3xl font-bold tracking-tight md:text-[2.5rem] md:leading-tight">{t.settings.title}</h1>

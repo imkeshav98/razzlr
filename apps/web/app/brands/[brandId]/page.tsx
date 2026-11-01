@@ -93,7 +93,7 @@ export default async function BrandPage({ params, searchParams }: { params: Prom
     )
 
   return (
-    <LibraryShell t={t} words={words} workspace={workspace.name} brands={brands} activeBrandId={brand.id} showBrands={switcher} glow recentCount={designs.length}>
+    <LibraryShell t={t} words={words} workspace={workspace} brands={brands} activeBrandId={brand.id} showBrands={switcher} glow recentCount={designs.length}>
       <HomeStage
         home={`/brands/${brand.id}`}
         brief={<BriefComposer t={t} brandId={brand.id} brandName={brand.name} kit={kit} references={recent.map(({ id, name, updatedAt, cover }) => ({ id, name, updatedAt, cover }))} action={make} />}
@@ -101,7 +101,7 @@ export default async function BrandPage({ params, searchParams }: { params: Prom
         closeLabel={t.home.close}
         panels={{
           recent: { title: t.home.recent, meta: designs.length > 0 ? format(t.home.count, { count: designs.length }) : undefined, body: recentBody },
-          templates: { title: t.library.templates, lead: t.library.templatesLead, body: templatesBody },
+          templates: { title: t.library.templates, meta: t.library.templatesMeta, body: templatesBody },
         }}
       />
     </LibraryShell>
