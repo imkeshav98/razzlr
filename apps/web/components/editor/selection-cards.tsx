@@ -1,13 +1,13 @@
 'use client'
 
-// The selection's property cards (#60): position and size, appearance, fill, stroke, effects, text
-// and auto layout, for one layer or several. A value the selected layers don't share shows as
+// The selection's property cards (#60): the shape's own settings (#151), position and size,
+// appearance, fill, stroke, effects, text and auto layout, for one layer or several. A value the selected layers don't share shows as
 // mixed; setting it gives them all the same one, and scrubbing or the arrow keys move each from its
 // own. With more than one format the changes go to every format or to this one only. Each change
 // is one undo step, and a scrub, however long, is one too.
 import { MinusIcon, PlusIcon } from '@phosphor-icons/react'
 import type { Editor } from '@razzlr/editor'
-import { BlendMode, ContainerBlendMode, type Design, type Effect, type Paint } from '@razzlr/schema'
+import { BlendMode, ContainerBlendMode, LineEnd, type Design, type Effect, type Paint, type Shape } from '@razzlr/schema'
 import { useId, useRef, useState, type ReactNode } from 'react'
 import { cn } from '../../lib/cn.ts'
 import { useMessages } from '../../lib/i18n/client.tsx'
@@ -304,6 +304,103 @@ function AppearanceCard({ target, p }: { target: Target; p: P }) {
   )
 }
 
+type ShapeKind = 'rect' | 'polygon' | 'star' | 'line'
+/** The corners as the shape stores them, from the top left clockwise. */
+const CORNERS = ['tl', 'tr', 'br', 'bl'] as const
+/**
+ * The order the fields sit in, two by two as the corners do: top left, top right, bottom left,
+ * bottom right. They keep left to right in either direction, as the ad does.
+ */
+const CORNER_FIELDS = [0, 1, 3, 2] as const
+
+/**
+ * A shape's own settings (#151), for layers that are all the same kind: a rectangle's corner radius
+ * or each corner's own, a polygon's sides, a star's points and inner radius, a line's ends.
+ */
+function ShapeCard({ target, p, kind }: { target: Target; p: P; kind: ShapeKind }) {
+  const shapes = target.props.map((pr) => pr.shape as Shape)
+  const value = (key: string) => shared(shapes.map((s) => (s as Record<string, unknown>)[key])) as number | string | 'mixed' | undefined
+  const setShape = (change: (now: Record<string, unknown>) => Record<string, unknown>) =>
+    set(target, (now) => ({ shape: { ...(now.shape as Record<string, unknown>), ...change(now.shape as Record<string, unknown>) } }))
+  const field = (key: string, label: string, name: string, { min = 0, max, whole = false, scale = 1 }: { min?: number; max?: number; whole?: boolean; scale?: number } = {}) => {
+    const fit = (n: number) => clamp(whole ? Math.round(n) : tidy(n), min, max)
+    return (
+      <NumberField
+        label={label}
+        name={name}
+        value={value(key) as number | 'mixed' | undefined}
+        min={min}
+        max={max}
+        scale={scale}
+        step={scale === 1 ? 1 : 1 / scale}
+        editor={target.editor}
+        onSet={(v) => setShape(() => ({ [key]: fit(v) }))}
+        onShift={(by) => setShape((now) => ({ [key]: fit(((now[key] as number | undefined) ?? 0) + by) }))}
+      />
+    )
+  }
+  // A rectangle with each corner's own radius keeps them in its corners; one radius for all drops them.
+  const each = kind === 'rect' && shapes.every((s) => s.kind === 'rect' && s.corners)
+  const eachCorner = (on: boolean) => set(target, (now) => {
+    const { corners, ...rest } = now.shape as Record<string, unknown>
+    const r = (rest.cornerRadius as number | undefined) ?? 0
+    return { shape: on ? { ...rest, corners: [r, r, r, r] } : { ...rest, cornerRadius: (corners as number[] | undefined)?.[0] ?? r } }
+  })
+  const setCorner = (i: number, to: (r: number) => number) => setShape((now) => {
+    const corners = [...((now.corners as number[] | undefined) ?? [0, 0, 0, 0])]
+    corners[i] = tidy(Math.max(0, to(corners[i] ?? 0)))
+    return { corners }
+  })
+  return (
+    <Card id="shape-card" title={p.shapeKinds[kind]} note={target.names.join(', ')}>
+      {kind === 'line'
+        ? (
+          <div className="grid grid-cols-2 gap-x-3">
+            {(['start', 'end'] as const).map((end) => (
+              <Choice
+                key={end}
+                name={p.lineEnd[end]}
+                value={value(end) as LineEnd | 'mixed' | undefined}
+                options={LineEnd.options}
+                labels={p.lineEnds}
+                onSet={(v) => setShape(() => ({ [end]: v }))}
+              />
+            ))}
+          </div>
+        )
+        : (
+          <div dir={each ? 'ltr' : undefined} className="grid grid-cols-2 gap-x-3 gap-y-2">
+            {kind === 'polygon' && field('sides', '#', p.sides, { min: 3, max: 100, whole: true })}
+            {kind === 'star' && field('points', '★', p.points, { min: 3, max: 100, whole: true })}
+            {kind === 'star' && field('innerRadius', '%', p.innerRadius, { max: 1, scale: 100 })}
+            {!each && field('cornerRadius', '◜', p.cornerRadius)}
+            {each && CORNER_FIELDS.map((i) => CORNERS[i]).map((corner, n) => {
+              const i = CORNER_FIELDS[n] ?? 0
+              return (
+              <NumberField
+                key={corner}
+                label={p.cornersShort[corner]}
+                name={p.corners[corner]}
+                value={shared(shapes.map((s) => (s.kind === 'rect' ? s.corners?.[i] : undefined)))}
+                min={0}
+                editor={target.editor}
+                onSet={(v) => setCorner(i, () => v)}
+                onShift={(by) => setCorner(i, (r) => r + by)}
+              />
+              )
+            })}
+          </div>
+        )}
+      {kind === 'rect' && (
+        <label className="flex items-center gap-2 text-[12px]">
+          <input type="checkbox" name="each-corner" checked={each} onChange={(event) => eachCorner(event.target.checked)} />
+          {p.eachCorner}
+        </label>
+      )}
+    </Card>
+  )
+}
+
 /** A list of paints, strokes or effects that every selected layer has the same of, or a way to make it so. */
 function ListCard<T>({ id, title, p, target, field, fresh, render }: {
   id: string
@@ -572,11 +669,18 @@ export function SelectionCards({ editor, ids, arrange }: { editor: Editor; ids: 
   }
   const all = (...kinds: string[]) => types.every((type) => kinds.includes(type))
   const several = live.length > 1
+  const shapeKinds = new Set(live.map((id) => {
+    const node = design.nodes[id]
+    return node?.type === 'graphic' ? node.props.shape.kind : null
+  }))
+  const [shapeKind] = shapeKinds
+  const ownShape = shapeKinds.size === 1 && (shapeKind === 'rect' || shapeKind === 'polygon' || shapeKind === 'star' || shapeKind === 'line') ? shapeKind : null
   return (
     <>
       {several && arrange}
       {Object.keys(design.formats).length > 1 && <ScopeSwitch everyFormat={everyFormat} onChange={setEveryFormat} p={p} />}
       {all('text') && <TextCard target={target} p={p} />}
+      {ownShape && <ShapeCard target={target} p={p} kind={ownShape} />}
       {all('graphic', 'frame', 'boolean') && (
         <ListCard<Paint>
           id="fill-card"

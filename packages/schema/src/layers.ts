@@ -54,6 +54,7 @@ export const Stroke = z.object({
 
 /** What the end of a line looks like (#44). */
 export const LineEnd = z.enum(['none', 'arrow', 'triangle', 'circle'])
+export type LineEnd = z.infer<typeof LineEnd>
 
 const Radius = z.number().min(0)
 
@@ -85,6 +86,8 @@ export const Shape = z.discriminatedUnion('kind', [
   /** SVG path data in the layer's own box; evenodd lets a path have holes. */
   z.object({ kind: z.literal('path'), d: z.string().min(1), fillRule: z.enum(['nonzero', 'evenodd']).default('nonzero') }),
 ])
+
+export type Shape = z.infer<typeof Shape>
 
 export const GraphicProps = z.object({
   ...commonProps,
