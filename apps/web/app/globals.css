@@ -252,7 +252,26 @@ body {
   animation-name: ai-sheen-rtl;
 }
 
-/* Frosted surfaces (#81) for chrome that floats over the canvas: dock, zoom, flyouts, menus. */
+/*
+ * A scrolling stack with a hidden scrollbar fades out at its bottom edge while there is more below,
+ * and not once scrolled to the end. The scroll timeline is inactive while nothing overflows, so a
+ * stack that fits never fades.
+ */
+@property --fade-more {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@keyframes fade-more {
+  from { --fade-more: 40px; }
+  to { --fade-more: 0px; }
+}
+.fade-more {
+  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--fade-more)), transparent);
+  animation: fade-more linear both;
+  animation-timeline: scroll(self);
+}
+
 /* On phones the property cards are one frosted sheet with a grab handle (#125): the cards inside
    drop their own surface and are parted by hairlines. */
 @media (max-width: 639px) {
@@ -289,7 +308,10 @@ body {
   }
 }
 
-/* Faint text on a frosted surface stays readable whatever the ad behind it shows. */
+/*
+ * Frosted surfaces (#81) for chrome that floats over the canvas: dock, zoom, flyouts, menus. Faint
+ * text on them stays readable whatever the ad behind it shows.
+ */
 .surface-frost {
   --text-subtle: var(--frost-subtle);
   background-color: var(--glass);
@@ -444,13 +466,14 @@ body {
 /* What the editor draws over the canvas, in screen pixels (the stage keeps dir=ltr). */
 .stage-overlay .frame-label {
   position: absolute;
+  font-family: var(--font-mono);
   display: flex;
   align-items: baseline;
   gap: 8px;
   height: 20px;
   margin-top: -24px;
   overflow: hidden;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 20px;
   white-space: nowrap;
   color: var(--text-subtle);
@@ -469,8 +492,6 @@ body {
 }
 .stage-overlay .frame-size {
   margin-inline-start: auto;
-  font-family: var(--font-mono);
-  font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
 /* Selection (#40): the box with its handles, each selected layer's outline, hover and marquee. */
