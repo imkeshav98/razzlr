@@ -14,7 +14,7 @@ export const SWATCHES = ['#FFFFFF', '#FBF7F2', '#1A1420', '#FF48B0', '#3D6BFF', 
 export const PICKED_RING = 'shadow-[0_0_0_2px_var(--surface),0_0_0_4px_var(--accent)]'
 
 /** One floating card: frosted, rounded, as tall as its content. */
-export const CARD = 'card-rise shrink-0 overflow-hidden rounded-[16px] surface-frost border shadow-panel'
+export const CARD = 'card-rise shrink-0 overflow-hidden rounded-[16px] surface-frost'
 
 /** A card's content under its title row. */
 export const CARD_BODY = 'px-[18px] pb-4'

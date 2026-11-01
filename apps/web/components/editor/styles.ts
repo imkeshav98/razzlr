@@ -17,7 +17,7 @@ export const DASHED_BUTTON = `flex h-8 cursor-pointer items-center justify-cente
 export const ASSET_TILE = 'grid aspect-square place-items-center overflow-hidden rounded-[10px] border border-line bg-bg/40 transition-colors duration-[var(--chrome-fast)]'
 
 /** A popover's frosted panel, as the cards are: the shape menu, the image picker, Add format. */
-export const POPOVER = 'pop-in z-50 rounded-card surface-frost border shadow-panel'
+export const POPOVER = 'pop-in z-50 rounded-card surface-frost'
 
 /** A tool dock button's shape; its width is the caller's. */
 export const DOCK_BUTTON = `grid h-10 cursor-pointer place-items-center rounded-[12px] transition-colors duration-[var(--chrome-fast)] ${FOCUS_RING}`

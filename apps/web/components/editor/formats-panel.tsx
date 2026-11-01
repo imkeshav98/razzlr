@@ -297,7 +297,7 @@ export function FocusChip({ editor }: { editor: Editor }) {
   const name = focused ? design.formats[focused]?.name : undefined
   if (!focused || name === undefined) return null
   return (
-    <div role="status" data-testid="focus-chip" className="pointer-events-auto flex h-9 items-center gap-1 rounded-full surface-frost border ps-3.5 pe-1 text-[13px] shadow-panel">
+    <div role="status" data-testid="focus-chip" className="pointer-events-auto flex h-9 items-center gap-1 rounded-full surface-frost ps-3.5 pe-1 text-[13px]">
       <ArrowsInSimpleIcon size={14} aria-hidden className="text-accent-text" />
       <span className="ms-1">{format(t.editor.formats.focusing, { name })}</span>
       <Button variant="ghost" className="ms-1 h-7 rounded-full px-2.5 text-xs" onClick={() => editor.focus(null)}>{t.editor.formats.exitFocus}</Button>
@@ -325,7 +325,7 @@ export function UndoToast({ editor, message, onDone }: { editor: Editor; message
       onPointerLeave={() => setHeld(false)}
       onFocus={() => setHeld(true)}
       onBlur={() => setHeld(false)}
-      className="toast-in pointer-events-auto flex h-10 items-center gap-2 rounded-card surface-frost border ps-3.5 pe-1.5 text-[13px] shadow-panel">
+      className="toast-in pointer-events-auto flex h-10 items-center gap-2 rounded-card surface-frost ps-3.5 pe-1.5 text-[13px]">
       <TrashIcon size={14} aria-hidden className="text-subtle" />
       <span>{message}</span>
       <Button

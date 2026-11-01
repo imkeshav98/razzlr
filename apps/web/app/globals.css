@@ -38,12 +38,13 @@
   --warning: #f5b83d;
   --ring: #ff8acb;
   --shadow: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 12px 32px -12px rgb(0 0 0 / 0.6);
-  /* The panel colour, darkened, over 17% of what lies behind: over the pasteboard it looks like the
-     panel at 52%, and its text stays readable over a white ad (#138). A tint rather than a
-     brightness() in the backdrop filter, which would cost a pass on every frame. */
-  --glass: rgb(20 16 24 / 0.83);
-  /* Faint text on glass: 4.9:1 even with a white ad behind it. */
-  --frost-subtle: #b3a6be;
+  /* The panel colour, darkened, over 28% of what lies behind: as clear as it goes while muted text
+     stays a visible step (about 1.5:1) from text and both read over a white ad, text at 6.9:1 and muted
+     at 4.6:1 (#138). A tint rather than a brightness() in the backdrop filter, which would cost a
+     pass on every frame. */
+  --glass: rgb(20 16 24 / 0.72);
+  /* Muted and faint text on glass: 4.6:1 even with a white ad behind it. */
+  --glass-muted: #d1c7d8;
   --glass-line: rgb(255 255 255 / 0.1);
   --ai-3: #ffd23f;
 }
@@ -74,10 +75,11 @@
   --warning: #8a5a00;
   --ring: #c2106c;
   --shadow: 0 1px 2px rgb(60 30 60 / 0.06), 0 12px 32px -16px rgb(60 30 60 / 0.22);
-  /* White over 23% of what lies behind, so dark text stays readable over a black ad (#138). */
-  --glass: rgb(255 255 255 / 0.77);
-  /* Faint text on glass: 4.6:1 even with a black ad behind it. */
-  --frost-subtle: #574c61;
+  /* White over 38% of what lies behind: as clear as it goes while muted text stays a visible step
+     (about 1.5:1) from text and both read over a black ad, text at 6.7:1 and muted at 4.6:1 (#138). */
+  --glass: rgb(255 255 255 / 0.62);
+  /* Muted and faint text on glass: 4.6:1 even with a black ad behind it. */
+  --glass-muted: #393141;
   --glass-line: rgb(26 20 32 / 0.08);
   --ai-3: #ffc21a;
 }
@@ -286,37 +288,9 @@ body {
   }
 }
 
-/*
- * A scrolling stack fades out at its bottom edge while there is more below,
- * and not once scrolled to the end. The scroll timeline is inactive while nothing overflows, so a
- * stack that fits never fades.
- */
-@property --fade-more {
-  syntax: '<length>';
-  inherits: false;
-  initial-value: 0px;
-}
-@keyframes fade-more {
-  from { --fade-more: 40px; }
-  to { --fade-more: 0px; }
-}
-.fade-more {
-  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--fade-more)), transparent);
-  animation: fade-more linear both;
-  animation-timeline: scroll(self);
-}
-
-/* On phones the property cards are one frosted sheet with a grab handle (#125): the cards inside
-   drop their own surface and are parted by hairlines. */
+/* On phones the property cards are one frosted sheet with a grab handle (#125): the sheet takes
+   surface-frost, and the cards inside drop their own surface and are parted by hairlines. */
 @media (max-width: 639px) {
-  .editor-cards {
-    border: 1px solid var(--glass-line);
-    border-radius: 22px;
-    background-color: var(--glass);
-    background-image: var(--grain);
-    backdrop-filter: blur(18px) saturate(1.4);
-    box-shadow: var(--shadow);
-  }
   .editor-cards::before {
     content: '';
     position: sticky;
@@ -343,15 +317,27 @@ body {
 }
 
 /*
- * Frosted surfaces (#81) for chrome that floats over the canvas: dock, zoom, flyouts, menus. Faint
- * text on them stays readable whatever the ad behind it shows.
+ * Glass (#81): the one frosted surface, for chrome that floats over the canvas or a page (dock,
+ * zoom, islands, flyouts, cards, menus, dialogs). Glass is defined here and nowhere else: a surface
+ * that should look frosted takes this utility, and a variant is a token or a modifier on it, never
+ * a second copy. Muted and faint text on it stays readable whatever the ad behind it shows.
+ * Its backdrop filter sees only what is painted inside its nearest ancestor with a mask, filter,
+ * opacity below 1, clip-path, blend mode or backdrop filter, so glass over the canvas has no such
+ * ancestor.
+ * A dialog that is glass dims and softens the page behind it.
  */
-.surface-frost {
-  --text-subtle: var(--frost-subtle);
+@utility surface-frost {
+  --text-muted: var(--glass-muted);
+  --text-subtle: var(--glass-muted);
+  border: 1px solid var(--glass-line);
   background-color: var(--glass);
   background-image: var(--grain);
-  border-color: var(--glass-line);
+  box-shadow: var(--shadow);
   backdrop-filter: blur(18px) saturate(1.4);
+  &::backdrop {
+    background: rgb(0 0 0 / 0.4);
+    backdrop-filter: blur(2px);
+  }
 }
 
 
@@ -606,13 +592,13 @@ body {
   line-height: 14px;
   font-variant-numeric: tabular-nums;
 }
-/* Rulers (#42) along the stage's top and start edges, in the selected frame's design pixels. */
+/* Rulers (#42) along the stage's top and start edges, in the selected frame's design pixels: solid
+   strips, not glass, so their small numbers read over any ad. */
 .stage-overlay .ruler,
 .stage-overlay .ruler-corner {
   position: absolute;
   overflow: hidden;
-  background-color: color-mix(in oklab, var(--surface) 92%, transparent);
-  backdrop-filter: blur(6px);
+  background-color: var(--surface);
 }
 .stage-overlay .ruler {
   background-image: linear-gradient(var(--line-strong), var(--line-strong));

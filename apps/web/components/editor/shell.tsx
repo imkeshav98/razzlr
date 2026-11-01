@@ -310,7 +310,7 @@ export function EditorShell({ brandId, brandName, designName, onRename, status, 
               small frosted pill, so its words read over an ad zoomed in under it; the end island's
               buttons are solid and need none. */}
           <header className="pointer-events-none absolute start-6 end-4 rtl:start-4 rtl:end-6 top-6 z-30 flex items-center justify-between gap-3">
-            <div ref={startIsland} data-testid="island-start" className="pointer-events-auto flex min-w-0 items-center gap-2 rounded-full border surface-frost py-0.5 ps-0.5 pe-3 shadow-panel">
+            <div ref={startIsland} data-testid="island-start" className="pointer-events-auto flex min-w-0 items-center gap-2 rounded-full surface-frost py-0.5 ps-0.5 pe-3">
               <Link href="/" aria-label={t.library.home} className="grid size-9 shrink-0 place-items-center rounded-row hover:bg-hover">
                 <BrandMark size={28} />
               </Link>
@@ -332,7 +332,7 @@ export function EditorShell({ brandId, brandName, designName, onRename, status, 
               data-testid="rail"
               className={cn(
                 // Clipped, so the AI button's moving glow stays inside and never shows on the canvas.
-                'absolute z-20 flex gap-2 overflow-hidden rounded-full surface-frost border p-2 shadow-panel',
+                'absolute z-20 flex gap-2 overflow-hidden rounded-full surface-frost p-2',
                 // A vertical capsule at the start edge; on phones a tab bar floating at the bottom.
                 'start-5 top-1/2 -translate-y-1/2 flex-col sm:p-2.5 max-sm:start-1/2 max-sm:top-auto max-sm:bottom-3 max-sm:translate-y-0 max-sm:flex-row max-sm:-translate-x-1/2 max-sm:rtl:translate-x-1/2',
               )}
@@ -388,7 +388,7 @@ export function EditorShell({ brandId, brandName, designName, onRename, status, 
                   exit={{ opacity: 0, x: rtl ? 12 : -12 }}
                   transition={chrome}
                   data-testid="flyout"
-                  className="absolute start-[7.25rem] top-20 z-10 flex max-h-[calc(100%-5.75rem)] w-[21.5rem] flex-col overflow-hidden rounded-[16px] surface-frost border shadow-panel max-sm:inset-x-3 max-sm:start-3 max-sm:top-auto max-sm:bottom-[9rem] max-sm:w-auto"
+                  className="absolute start-[7.25rem] top-20 z-10 flex max-h-[calc(100%-5.75rem)] w-[21.5rem] flex-col overflow-hidden rounded-[16px] surface-frost max-sm:inset-x-3 max-sm:start-3 max-sm:top-auto max-sm:bottom-[9rem] max-sm:w-auto"
                 >
                   {/* The title at the start and, as in the mock, a small grey note at the end: the brand, or the page and format. */}
                   <div className="flex h-14 shrink-0 items-center gap-2 ps-[18px] pe-2">
@@ -409,7 +409,7 @@ export function EditorShell({ brandId, brandName, designName, onRename, status, 
 
             <main ref={stage} className="canvas-dots relative min-w-0 flex-1 overflow-hidden">
               {children}
-              <div ref={dock} role="toolbar" aria-label={t.editor.tools} className={cn('absolute inset-x-0 bottom-4 z-10 mx-auto flex w-max max-sm:bottom-[5.25rem] items-center gap-1 rounded-[18px] surface-frost border p-1.5 shadow-panel', panel === 'properties' && 'max-sm:hidden')}>
+              <div ref={dock} role="toolbar" aria-label={t.editor.tools} className={cn('absolute inset-x-0 bottom-4 z-10 mx-auto flex w-max max-sm:bottom-[5.25rem] items-center gap-1 rounded-[18px] surface-frost p-1.5', panel === 'properties' && 'max-sm:hidden')}>
                 {TOOLS.map(({ id, icon: ToolIcon, key }) => {
                   if (id === 'shape') {
                     return (
@@ -476,10 +476,10 @@ export function EditorShell({ brandId, brandName, designName, onRename, status, 
                 className={cn(
                   // A stack at the top end, below the end island, each card only as tall as its content;
                   // past the room above the zoom pill the stack scrolls. Its gaps let clicks through.
-                  'fade-more pointer-events-none absolute end-3 top-20 z-20 flex max-h-[calc(100%-9.5rem)] w-72 flex-col gap-2.5 overflow-y-auto overscroll-contain [&>*:not(.os-scrollbar)]:pointer-events-auto',
+                  'pointer-events-none absolute end-3 top-20 z-20 flex max-h-[calc(100%-9.5rem)] w-72 flex-col gap-2.5 overflow-y-auto overscroll-contain [&>*:not(.os-scrollbar)]:pointer-events-auto',
                   // On phones, one sheet with a grab handle above the tab bar, opened from it; the dock
                   // steps aside while it is open (see .editor-cards).
-                  'editor-cards max-sm:pointer-events-auto max-sm:inset-x-2 max-sm:top-auto max-sm:bottom-[5rem] max-sm:max-h-[55%] max-sm:w-auto max-sm:gap-0 max-sm:not-data-[open]:hidden',
+                  'editor-cards max-sm:surface-frost max-sm:rounded-[22px] max-sm:pointer-events-auto max-sm:inset-x-2 max-sm:top-auto max-sm:bottom-[5rem] max-sm:max-h-[55%] max-sm:w-auto max-sm:gap-0 max-sm:not-data-[open]:hidden',
                 )}
               >
                 {inspector}

@@ -175,7 +175,7 @@ export function Select({ name, label, value, options, onChange, placeholder, dis
           // The list sits outside the menu or dialog that holds its field; a press on it is not one
           // outside them, so it doesn't reach their close-on-outside-press listeners.
           onPointerDown={(event) => event.stopPropagation()}
-          className={cn('pop-in fixed z-[60] max-h-72 overflow-y-auto overscroll-contain rounded-[12px] border surface-frost p-1 shadow-panel', place?.up && 'origin-bottom')}
+          className={cn('pop-in fixed z-[60] max-h-72 overflow-y-auto overscroll-contain rounded-[12px] surface-frost p-1', place?.up && 'origin-bottom')}
         >
           {options.map((option, i) => (
             <li

@@ -213,7 +213,7 @@ export function AssetLibrary({ editor, brandId }: { editor: Editor; brandId: str
                     aria-label={`${t.edit}: ${name}`}
                     aria-pressed={editing === asset.id}
                     onClick={() => setEditing(editing === asset.id ? null : asset.id)}
-                    className="absolute end-1 top-1 grid size-6 cursor-pointer place-items-center rounded-full surface-frost border text-muted opacity-0 shadow-panel transition-opacity duration-[var(--chrome-fast)] group-hover:opacity-100 hover:text-text focus-visible:opacity-100 aria-pressed:text-accent-text aria-pressed:opacity-100"
+                    className="absolute end-1 top-1 grid size-6 cursor-pointer place-items-center rounded-full surface-frost text-muted opacity-0 transition-opacity duration-[var(--chrome-fast)] group-hover:opacity-100 hover:text-text focus-visible:opacity-100 aria-pressed:text-accent-text aria-pressed:opacity-100"
                   >
                     <PencilSimpleIcon size={12} aria-hidden />
                   </button>
