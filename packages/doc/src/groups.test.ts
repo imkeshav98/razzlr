@@ -176,8 +176,63 @@ describe('groups', () => {
     expect(readDesign(doc)).toEqual(after)
   })
 
+  it('node.frame wraps layers in a frame that hugs them in each format, without a fill or clipping, and nothing moves', () => {
+    const doc = fresh()
+    const tab = openSession(doc)
+    const before = drawnAll(readDesign(doc), LEAVES)
+
+    const id = tab.run('node.frame', { ids: ['c', 'g2'] })
+
+    const after = readDesign(doc)
+    expect(after.nodes[id]).toMatchObject({ type: 'frame', parentId: 'f', name: 'Frame', props: { clip: false, fills: [] } })
+    expect(childrenOf(after, id).map(([child]) => child)).toEqual(['c', 'g2'])
+    for (const scope of SCOPES) {
+      const hug = boundsOf([boxOf(after, scope, 'c'), boxOf(after, scope, 'g2')])
+      const box = boxOf(after, scope, id)
+      expect([box.x, box.y, box.width, box.height]).toEqual([hug.x, hug.y, hug.width, hug.height].map((n) => Math.round(n * 100) / 100))
+    }
+    expectSame(drawnAll(after, LEAVES), before)
+
+    tab.undo()
+    expect(readDesign(doc)).toEqual(readDesign(fresh()))
+  })
+
+  it('node.enclose moves layers into a frame drawn around them, placing the frame around them in every format', () => {
+    const doc = fresh()
+    const tab = openSession(doc)
+    // A frame drawn in the square around A and B, 20 px clear of them.
+    const square = boundsOf([boxOf(readDesign(doc), 'format:sq', 'a'), boxOf(readDesign(doc), 'format:sq', 'b')])
+    const drawnBox = { x: square.x - 20, y: square.y - 20, width: square.width + 40, height: square.height + 40 }
+    const id = tab.run('node.create', { parentId: 'p1', layer: { type: 'frame', name: 'Frame', props: drawnBox } })
+    const before = drawnAll(readDesign(doc), LEAVES)
+
+    tab.run('node.enclose', { id, ids: ['b', 'a'], scope: 'format:sq' })
+
+    const after = readDesign(doc)
+    expect(childrenOf(after, id).map(([child]) => child)).toEqual(['a', 'b'])
+    expectSame(drawnAll(after, LEAVES), before)
+    // In the square it stays where it was drawn; in the banner, where A is smaller and elsewhere, it holds them as it did.
+    expect(boxOf(after, 'format:sq', id)).toMatchObject({ x: drawnBox.x, y: drawnBox.y, width: drawnBox.width, height: drawnBox.height })
+    for (const scope of SCOPES) {
+      const kids = boundsOf([boxOf(after, scope, 'a'), boxOf(after, scope, 'b')])
+      const box = boxOf(after, scope, id)
+      expect(box.x).toBeLessThanOrEqual(kids.x)
+      expect(box.y).toBeLessThanOrEqual(kids.y)
+      expect(box.x + box.width).toBeGreaterThanOrEqual(kids.x + kids.width - 0.01)
+      expect(box.y + box.height).toBeGreaterThanOrEqual(kids.y + kids.height - 0.01)
+    }
+
+    tab.undo()
+    const undone = readDesign(doc)
+    expect(undone.nodes.a?.parentId).toBe('p1')
+    expect(undone.nodes[id]?.props).toMatchObject(drawnBox)
+  })
+
   it('refuses what it can not do', () => {
     const tab = openSession(fresh())
+    expect(() => tab.run('node.frame', { ids: ['a', 'c'] })).toThrow(/frame must share a parent/)
+    expect(() => tab.run('node.enclose', { id: 'g2', ids: ['d'], scope: 'format:sq' })).toThrow(/not a frame/)
+    expect(() => tab.run('node.enclose', { id: 'f', ids: ['c'], scope: 'format:sq' })).toThrow(/not beside/)
     expect(() => tab.run('node.group', { ids: ['a', 'c'] })).toThrow(/share a parent/)
     expect(() => tab.run('node.ungroup', { ids: ['f'] })).toThrow(/frame, not a group/)
     tab.run('node.lock', { ids: ['g2'], lock: { delete: true } })

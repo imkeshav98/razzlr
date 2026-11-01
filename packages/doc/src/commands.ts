@@ -421,12 +421,12 @@ const depthOf = (design: Design, id: string) => {
   return depth
 }
 
-/** What wrapping layers in a new group or boolean checks: they exist, share a parent, and the parent can hold the wrapper. */
-function wrapProblem(ctx: CommandContext, ids: string[], id: string | undefined, type: 'group' | 'boolean') {
+/** What wrapping layers in a new group, frame or boolean checks: they exist, share a parent, and the parent can hold the wrapper. */
+function wrapProblem(ctx: CommandContext, ids: string[], id: string | undefined, type: 'group' | 'frame' | 'boolean') {
   const { design } = ctx
   const missing = ids.map((layer) => (design.nodes[layer] ? undefined : `no layer "${layer}"`)).find(Boolean)
   if (missing) return missing
-  if (new Set(ids.map((layer) => design.nodes[layer]?.parentId)).size > 1) return `layers to ${type === 'group' ? 'group' : 'combine'} must share a parent`
+  if (new Set(ids.map((layer) => design.nodes[layer]?.parentId)).size > 1) return `layers to ${type === 'boolean' ? 'combine' : type} must share a parent`
   const parentId = design.nodes[ids[0] as string]?.parentId as string
   return parentProblem(design, parentId, type) ?? idProblem(ctx, id)
 }
@@ -435,7 +435,7 @@ function wrapProblem(ctx: CommandContext, ids: string[], id: string | undefined,
  * Puts layers that share a parent inside a new layer of `type` where the topmost of them was,
  * without moving anything on screen: its box hugs them in each format.
  */
-function wrap({ r, design }: CommandContext, ids: string[], id: string, layer: { type: 'group' | 'boolean'; name: string; props?: Record<string, unknown> }) {
+function wrap({ r, design }: CommandContext, ids: string[], id: string, layer: { type: 'group' | 'frame' | 'boolean'; name: string; props?: Record<string, unknown> }) {
   const parentId = design.nodes[ids[0] as string]?.parentId as string
   const inside = childrenOf(design, parentId).filter(([child]) => ids.includes(child))
   const top = inside.at(-1)?.[1] as LayerT
@@ -465,6 +465,59 @@ export const nodeGroup = defineCommand({
   input: z.object({ ids: NodeId.array().min(1), id: NodeId.optional(), name: z.string().default('Group') }),
   check: (ctx, { ids, id }) => wrapProblem(ctx, ids, id, 'group'),
   apply: (ctx, { ids, id = nanoid(), name }) => wrap(ctx, ids, id, { type: 'group', name }),
+})
+
+/**
+ * Wraps layers that share a parent in a new frame where the topmost of them was, without changing
+ * anything on screen: its box hugs them in each format, it has no fill, and it doesn't clip, so a
+ * stroke or shadow past a layer's box still shows. Returns the frame's id.
+ */
+export const nodeFrame = defineCommand({
+  name: 'node.frame',
+  input: z.object({ ids: NodeId.array().min(1), id: NodeId.optional(), name: z.string().default('Frame') }),
+  check: (ctx, { ids, id }) => wrapProblem(ctx, ids, id, 'frame'),
+  apply: (ctx, { ids, id = nanoid(), name }) => wrap(ctx, ids, id, { type: 'frame', name, props: { clip: false } }),
+})
+
+/**
+ * Moves layers into a frame beside them, as when a frame is drawn around them, without moving them
+ * on screen. The frame was drawn in one format (`scope`); in every other scope it is placed around
+ * the layers as they are there, as far from them and as large against them as where it was drawn,
+ * so it holds them in every format. They keep their order inside it.
+ */
+export const nodeEnclose = defineCommand({
+  name: 'node.enclose',
+  input: z.object({ id: NodeId, ids: NodeId.array().min(1), scope: FormatScope }),
+  check: ({ design }, { id, ids, scope }) => {
+    const frame = design.nodes[id]
+    if (!frame) return `no layer "${id}"`
+    if (frame.type !== 'frame') return `"${id}" is a ${frame.type}, not a frame`
+    if (!design.formats[formatIdOf(scope) ?? '']) return `no format "${formatIdOf(scope) ?? scope}"`
+    for (const layer of ids) {
+      const node = design.nodes[layer]
+      if (!node) return `no layer "${layer}"`
+      if (layer === id) return `can't put "${id}" inside itself`
+      if (node.parentId !== frame.parentId) return `"${layer}" is not beside "${id}"`
+      if (!canHold('frame', node.type)) return `a frame can't hold a ${node.type}`
+    }
+    return undefined
+  },
+  apply: ({ r, design }, { id, ids, scope }) => {
+    const place = new Placement(design)
+    const drawnIn = scope as `format:${string}`
+    const drawn = place.get(drawnIn, id)
+    const was = boundsOf(ids.map((layer) => place.get(drawnIn, layer)))
+    for (const other of place.scopes) {
+      if (other === scope) continue
+      const now = boundsOf(ids.map((layer) => place.get(other, layer)))
+      const kx = was.width > 0 ? now.width / was.width : 1
+      const ky = was.height > 0 ? now.height / was.height : 1
+      place.set(other, id, { x: now.x + (drawn.x - was.x) * kx, y: now.y + (drawn.y - was.y) * ky, width: drawn.width * kx, height: drawn.height * ky })
+    }
+    place.write(r)
+    // Their indexes already order them; they only change parent.
+    for (const layer of ids) r.nodes.get(layer)?.set('parentId', id)
+  },
 })
 
 /**
@@ -907,6 +960,8 @@ export const COMMANDS = {
   'node.duplicate': nodeDuplicate,
   'design.place': designPlace,
   'node.group': nodeGroup,
+  'node.frame': nodeFrame,
+  'node.enclose': nodeEnclose,
   'node.boolean': nodeBoolean,
   'node.ungroup': nodeUngroup,
   'node.hug': nodeHug,

@@ -6,15 +6,26 @@ import type { Point } from './hit-test.ts'
 export const SHAPE_TOOLS = ['rect', 'ellipse', 'polygon', 'star', 'line', 'arrow'] as const
 export type ShapeTool = (typeof SHAPE_TOOLS)[number]
 export const isShapeTool = (tool: string): tool is ShapeTool => (SHAPE_TOOLS as readonly string[]).includes(tool)
+/** What a drag draws: a shape, or a frame. */
+export type DrawTool = ShapeTool | 'frame'
+export const isDrawTool = (tool: string): tool is DrawTool => tool === 'frame' || isShapeTool(tool)
 
 /** The size a click without a drag draws, in design pixels. */
 export const CLICK_SIZE = 100
+/** A frame clicked without a drag is bigger: room for what goes in it. */
+export const FRAME_CLICK_SIZE = 200
 /** New shapes are a neutral grey until a style is picked; lines a near-black stroke. */
 const FILL = '#C9CED6FF'
 const INK = '#1F2329FF'
 
 /** A layer as node.create takes it. */
-export interface NewLayer { type: 'graphic'; name: string; props: Record<string, unknown> }
+export interface NewLayer { type: 'graphic' | 'frame'; name: string; props: Record<string, unknown> }
+
+/** A new frame for the frame tool, at no size yet: white, as frames start in most design tools. */
+export const newFrame = (): NewLayer => ({ type: 'frame', name: 'Frame', props: { x: 0, y: 0, width: 0, height: 0, fills: [{ type: 'solid', color: '#FFFFFFFF' }] } })
+
+/** A new layer for a drawing tool, at no size yet. */
+export const newDrawn = (tool: DrawTool): NewLayer => (tool === 'frame' ? newFrame() : newShape(tool))
 
 /** A new layer for a shape tool, at no size yet. */
 export function newShape(tool: ShapeTool): NewLayer {
@@ -46,7 +57,7 @@ export type Drawn = { x: number; y: number; width: number; height: number; rotat
  * steps of 45°; Alt draws a shape out from its centre. A line runs along its box's middle, so its
  * box is as long as the line, no taller than nothing, and turned to the line's angle.
  */
-export function drawnBox(tool: ShapeTool, from: Point, to: Point, shift: boolean, alt: boolean): Drawn {
+export function drawnBox(tool: DrawTool, from: Point, to: Point, shift: boolean, alt: boolean): Drawn {
   let dx = to.x - from.x
   let dy = to.y - from.y
   if (tool === 'line' || tool === 'arrow') {
@@ -70,10 +81,11 @@ export function drawnBox(tool: ShapeTool, from: Point, to: Point, shift: boolean
   return { x: round(Math.min(x0, x1)), y: round(Math.min(y0, y1)), width: round(Math.abs(x1 - x0)), height: round(Math.abs(y1 - y0)), rotation: 0 }
 }
 
-/** What a click without a drag draws: CLICK_SIZE across, centred where it landed. */
-export function clickedBox(tool: ShapeTool, at: Point): Drawn {
+/** What a click without a drag draws: CLICK_SIZE across (a frame FRAME_CLICK_SIZE), centred where it landed. */
+export function clickedBox(tool: DrawTool, at: Point): Drawn {
   if (tool === 'line' || tool === 'arrow') return { x: round(at.x - CLICK_SIZE / 2), y: round(at.y), width: CLICK_SIZE, height: 0, rotation: 0 }
-  return { x: round(at.x - CLICK_SIZE / 2), y: round(at.y - CLICK_SIZE / 2), width: CLICK_SIZE, height: CLICK_SIZE, rotation: 0 }
+  const size = tool === 'frame' ? FRAME_CLICK_SIZE : CLICK_SIZE
+  return { x: round(at.x - size / 2), y: round(at.y - size / 2), width: size, height: size, rotation: 0 }
 }
 
 /** New text is near-black Noto Sans until a style is picked: the family every script falls back to. */
@@ -105,11 +117,16 @@ export function newImage(asset: { id: string; name: string; width: number; heigh
   // Whole pixels, so the image starts sharp.
   const width = Math.max(1, Math.round(asset.width * scale))
   const height = Math.max(1, Math.round(asset.height * scale))
+  return imageIn(asset, { x: Math.round(at.x - width / 2), y: Math.round(at.y - height / 2), width, height })
+}
+
+/** A graphic filled with an image asset in a box, such as one the image tool dragged: the image covers it. */
+export function imageIn(asset: { id: string; name: string }, box: { x: number; y: number; width: number; height: number }): NewLayer {
   return {
     type: 'graphic',
     name: asset.name.trim() || 'Image',
     props: {
-      x: Math.round(at.x - width / 2), y: Math.round(at.y - height / 2), width, height,
+      ...box,
       shape: { kind: 'rect' },
       fills: [{ type: 'image', assetId: asset.id, fit: 'fill' }],
     },

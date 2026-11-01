@@ -1,12 +1,12 @@
 'use client'
 
-// The Arrange card (#42, #44, #83): align, distribute, group and combine the selection, and (#156)
+// The Arrange card (#42, #44, #83): align, distribute, group, frame and combine the selection, and (#156)
 // duplicate it, change its order, ungroup it or use it as a mask: the same actions as their
 // shortcuts, which the tooltips show. Several layers line up with each other; one layer lines up
 // with the format, or the group or frame it is in. Two or more shapes combine into a live boolean.
 import {
   AlignBottomIcon, AlignCenterHorizontalIcon, AlignCenterVerticalIcon, AlignLeftIcon, AlignRightIcon, AlignTopIcon, ArrowDownIcon, ArrowLineDownIcon, ArrowLineUpIcon,
-  ArrowsHorizontalIcon, ArrowsVerticalIcon, ArrowUpIcon, CircleHalfIcon, CopyIcon, ExcludeSquareIcon, IntersectSquareIcon, SelectionPlusIcon, SelectionSlashIcon,
+  ArrowsHorizontalIcon, ArrowsVerticalIcon, ArrowUpIcon, CircleHalfIcon, CopyIcon, ExcludeSquareIcon, FrameCornersIcon, IntersectSquareIcon, SelectionPlusIcon, SelectionSlashIcon,
   SubtractSquareIcon, UniteSquareIcon, type Icon,
 } from '@phosphor-icons/react'
 import { SHORTCUTS, type Editor, type ShortcutAction } from '@dazbee/editor'
@@ -18,7 +18,7 @@ import { Tooltip } from '../ui/tooltip.tsx'
 import { CARD, CardHeader } from './card.tsx'
 import { CHIP, ICON_BUTTON, useEditorDesign } from './formats-panel.tsx'
 
-type Action = Extract<ShortcutAction, `align${string}` | `distribute${string}` | `boolean${string}` | 'group' | 'ungroup' | 'duplicate' | 'mask' | 'bringToFront' | 'bringForward' | 'sendBackward' | 'sendToBack'>
+type Action = Extract<ShortcutAction, `align${string}` | `distribute${string}` | `boolean${string}` | 'group' | 'frameSelection' | 'ungroup' | 'duplicate' | 'mask' | 'bringToFront' | 'bringForward' | 'sendBackward' | 'sendToBack'>
 const ALIGN: { action: Action; icon: Icon }[] = [
   { action: 'alignLeft', icon: AlignLeftIcon },
   { action: 'alignCentre', icon: AlignCenterHorizontalIcon },
@@ -124,7 +124,10 @@ export function ArrangePanel({ editor }: { editor: Editor }) {
       </div>
       <div className="px-[18px]">
         <div dir="ltr" className="flex items-center justify-between gap-2 border-t border-line py-3">
-          {button({ action: 'group', icon: SelectionPlusIcon }, selected.length < 2, 'chip')}
+          <div className="flex items-center gap-0.5">
+            {button({ action: 'group', icon: SelectionPlusIcon }, selected.length < 2, 'chip')}
+            {button({ action: 'frameSelection', icon: FrameCornersIcon }, selected.length === 0)}
+          </div>
           <div role="group" aria-label={t.editor.arrange.combine} className="flex gap-0.5">
             {COMBINE.map((c) => button(c, selected.length < 2))}
           </div>

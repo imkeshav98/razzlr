@@ -107,17 +107,20 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
   // The dock follows the editor's tool: a key picks one, and drawing a shape goes back to select.
   const [tool, setEditorTool] = useState<Tool>('select')
   const [shape, setShape] = useState<ShapeTool>('rect')
+  // The image tool's picker shows until an image is picked; any other tool forgets the pick.
+  const [imagePicked, setImagePicked] = useState(false)
   useEffect(() => {
     if (!editor) return
     const stop = editor.onTool((next) => {
       setEditorTool(next)
+      if (next !== 'image') setImagePicked(false)
       if ((SHAPE_TOOLS as readonly string[]).includes(next)) setShape(next as ShapeTool)
     })
     return () => {
       stop()
     }
   }, [editor])
-  const dockTool = tool === 'hand' || tool === 'select' || tool === 'pen' || tool === 'text' ? tool : 'shape'
+  const dockTool = tool === 'hand' || tool === 'select' || tool === 'pen' || tool === 'text' || tool === 'frame' || tool === 'image' ? tool : 'shape'
   const dismissRemoved = useCallback(() => setRemoved(null), [])
 
   // The stage's edges the capsule, cards and dock cover (#83): the editor fits the ads between
@@ -194,7 +197,19 @@ export function EditorStage({ designId, designName, brandId, brandName, everyBra
       shape={shape}
       onToolChange={(tool, picked) => {
         setShape(picked)
-        editor?.setTool(tool === 'hand' || tool === 'pen' || tool === 'text' ? tool : tool === 'shape' ? picked : 'select')
+        // Pressing the image tool again asks for another image.
+        if (tool === 'image') {
+          editor?.armImage(null)
+          setImagePicked(false)
+        }
+        editor?.setTool(tool === 'hand' || tool === 'pen' || tool === 'text' || tool === 'frame' || tool === 'image' ? tool : tool === 'shape' ? picked : 'select')
+      }}
+      image={{
+        picking: !imagePicked,
+        onPick: (asset) => {
+          editor?.armImage(asset)
+          setImagePicked(true)
+        },
       }}
       onInsets={onInsets}
       fitted={editor !== null && fittedTo === editor}
