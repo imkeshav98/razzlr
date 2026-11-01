@@ -72,6 +72,7 @@ export function PagesPanel({ editor, onRemoved, onShow }: { editor: Editor; onRe
               </span>
               {renaming === id ? (
                 <input
+                  name="page-name"
                   aria-label={t.editor.pages.rename}
                   defaultValue={page.name}
                   autoFocus

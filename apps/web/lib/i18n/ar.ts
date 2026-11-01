@@ -96,6 +96,7 @@ export const ar: Messages = {
   settings: {
     title: 'الإعدادات',
     kind: 'لمن Dazbee',
+    kindLead: 'يغيّر بضع كلمات وإعدادات فقط، ولا يغيّر عملك.',
     save: 'حفظ',
     saved: 'تم الحفظ',
   },

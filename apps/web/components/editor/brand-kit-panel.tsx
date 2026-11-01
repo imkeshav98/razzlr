@@ -131,6 +131,7 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
             return (
               <li key={c.token} data-token={c.token} className="flex items-start gap-1.5">
                 <input
+                  name="colour"
                   type="color"
                   value={c.value.slice(0, 7)}
                   aria-label={format(t.pick, { name: c.name })}
@@ -139,6 +140,7 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
                 />
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <input
+                    name="colour-name"
                     key={`name-${c.name}`}
                     defaultValue={c.name}
                     aria-label={format(t.colorName, { n: i + 1 })}
@@ -148,6 +150,7 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
                     className={field}
                   />
                   <input
+                    name="colour-hex"
                     key={`hex-${c.value}`}
                     defaultValue={shown(c.value)}
                     aria-label={format(t.colorValue, { name: c.name })}
@@ -200,6 +203,7 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
               <li key={f.token} data-token={f.token} className="flex items-start gap-1.5">
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <input
+                    name="font-name"
                     key={`name-${f.name}`}
                     defaultValue={f.name}
                     aria-label={format(t.fontName, { n: i + 1 })}
@@ -208,7 +212,7 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
                     onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                     className={field}
                   />
-                  <select value={f.family} aria-label={format(t.fontFamily, { name: f.name })} onChange={(e) => setFont(i, { family: e.target.value })} className={cn(field, 'h-7 text-xs')}>
+                  <select name="font-family" value={f.family} aria-label={format(t.fontFamily, { name: f.name })} onChange={(e) => setFont(i, { family: e.target.value })} className={cn(field, 'h-7 text-xs')}>
                     {[...new Set([f.family, ...families])].map((family) => <option key={family} value={family}>{family}</option>)}
                   </select>
                 </div>
@@ -249,6 +253,7 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
             {kit.logoAssetId && <img src={`/brands/${encodeURIComponent(brandId)}/assets/${encodeURIComponent(kit.logoAssetId)}/thumbnail`} alt="" className="size-full object-contain" />}
           </div>
           <select
+            name="logo"
             value={kit.logoAssetId ?? ''}
             aria-label={t.logo}
             onChange={(e) => change({ ...kit, logoAssetId: e.target.value || null })}
@@ -263,6 +268,7 @@ export function BrandKitPanel({ editor, brandId }: { editor: Editor; brandId: st
       <section aria-labelledby="kit-voice" className="flex flex-col gap-2.5 border-t border-line px-[18px] py-4">
         <h3 id="kit-voice" className={heading}>{t.voice}</h3>
         <textarea
+          name="voice"
           key={`voice-${kit.voice}`}
           defaultValue={kit.voice}
           aria-label={t.voice}

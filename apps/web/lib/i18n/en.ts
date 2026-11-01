@@ -103,6 +103,7 @@ export const en = {
   settings: {
     title: 'Settings',
     kind: 'Who Dazbee is for',
+    kindLead: 'It changes only a few words and defaults, never your work.',
     save: 'Save',
     saved: 'Saved',
   },
