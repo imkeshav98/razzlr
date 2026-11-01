@@ -29,4 +29,4 @@ Packages only depend downward: schema → doc → renderer → editor, and never
 
 ## Vercel previews
 
-One-time setup by the repo owner: in Vercel, **Add New → Project**, import `imkeshav98/razzlr`, set **Root Directory** to `apps/web` (framework Next.js; Vercel detects pnpm and the workspace). Every pull request then gets a preview URL.
+One-time setup by the repo owner: in Vercel, **Add New → Project**, import `imkeshav98/dazbee`, set **Root Directory** to `apps/web` (framework Next.js; Vercel detects pnpm and the workspace). Every pull request then gets a preview URL.

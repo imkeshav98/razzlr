@@ -32,7 +32,7 @@ Use `ui-ux-pro-max` (vendored in `.claude/skills/ui-ux-pro-max`, MIT, source com
 
 ### Issue tracker
 
-Issues and specs live in GitHub Issues on imkeshav98/razzlr. See `docs/agents/issue-tracker.md`.
+Issues and specs live in GitHub Issues on imkeshav98/dazbee. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
