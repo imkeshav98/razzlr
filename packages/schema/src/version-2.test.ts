@@ -128,7 +128,7 @@ describe('migration from version 1', () => {
     const result = parse(input)
     if (!result.success) throw new Error(result.errors.join('\n'))
     const { design } = result
-    expect(design.meta.schemaVersion).toBe(2)
+    expect(design.meta.schemaVersion).toBe(SCHEMA_VERSION)
     expect(design.nodes.g?.props).toMatchObject({ blendMode: 'pass-through', opacity: 0.5 })
     expect(design.nodes.f?.props.blendMode).toBe('pass-through')
     // Other modes, and layers that aren't containers, stay as they were.
@@ -146,7 +146,7 @@ describe('migration from version 1', () => {
     expect(props(current, 'g').blendMode).toBe('normal')
     const newer = designWith({}, SCHEMA_VERSION + 1)
     expect(migrateDesign(newer)).toBe(newer)
-    expect(errors(newer)).toEqual(['meta.schemaVersion: Invalid input: expected 2'])
+    expect(errors(newer)).toEqual([`meta.schemaVersion: Invalid input: expected ${SCHEMA_VERSION}`])
     for (const junk of [null, 'design', [], { meta: { schemaVersion: 1 } }]) expect(() => migrateDesign(junk)).not.toThrow()
   })
 

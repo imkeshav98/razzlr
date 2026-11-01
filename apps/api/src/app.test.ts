@@ -129,7 +129,7 @@ describe('designs per brand', () => {
 
   it('starts a design from given content, under its own id and name', async () => {
     const content = {
-      meta: { schemaVersion: 2, designId: 'ignored', name: 'Ignored', kind: 'carousel', primaryFormatId: 'pt' },
+      meta: { schemaVersion: 3, designId: 'ignored', name: 'Ignored', kind: 'carousel', primaryFormatId: 'pt' },
       formats: { pt: { name: 'Portrait', width: 1080, height: 1350, order: 'a0' } },
       pages: { p1: { name: 'Card 1', order: 'a0' }, p2: { name: 'Card 2', order: 'a1' } },
       nodes: {},
@@ -261,7 +261,7 @@ describe('templates (#54)', { timeout: 60_000 }, () => {
   }
   /** A design with a shape, text and one of the brand's images, in two formats. */
   const content = (assetId: string) => ({
-    meta: { schemaVersion: 2, designId: 'any', name: 'Sale', kind: 'single', primaryFormatId: 'sq' },
+    meta: { schemaVersion: 3, designId: 'any', name: 'Sale', kind: 'single', primaryFormatId: 'sq' },
     formats: { sq: { name: 'Square', width: 400, height: 400, order: 'a0' }, wide: { name: 'Wide', width: 800, height: 400, order: 'a1' } },
     pages: { p1: { name: 'Page 1', order: 'a0', fills: [{ type: 'solid', color: '#FFF6E8FF' }] } },
     nodes: {
@@ -537,7 +537,7 @@ describe('image uploads', { timeout: 30_000 }, () => {
 // A design's picture for the home's bento (#84), drawn with CanvasKit like an export.
 describe('design thumbnails', { timeout: 30_000 }, () => {
   const story = (color: string) => ({
-    meta: { schemaVersion: 2, designId: 'ignored', name: 'Story', kind: 'single', primaryFormatId: 'st' },
+    meta: { schemaVersion: 3, designId: 'ignored', name: 'Story', kind: 'single', primaryFormatId: 'st' },
     formats: { sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' }, st: { name: 'Story', width: 1080, height: 1920, order: 'a1' } },
     pages: { p1: { name: 'Page 1', order: 'a0', fills: [{ type: 'solid', color }] } },
     nodes: {},

@@ -16,7 +16,7 @@ const label = (parentId: string, index: string, x: number, y: number, text: stri
   ({ type: 'text', parentId, index, name: text, props: { x, y, width: text.length * 10, height: 20, text, boxMode: 'autoWidth', style: { fontFamily: 'Noto Sans', fontSize: 16, color: '#000000FF' } } }) as Node
 
 const design = (): DesignInput => ({
-  meta: { schemaVersion: 2, designId: 'd', name: 'Switch', kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: 3, designId: 'd', name: 'Switch', kind: 'single', primaryFormatId: 'sq' },
   formats: { sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' }, wide: { name: 'Wide', width: 1200, height: 628, order: 'a1' } },
   pages: { p1: { name: 'Page 1', order: 'a0' } },
   nodes: {

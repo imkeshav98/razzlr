@@ -74,7 +74,7 @@ const merge = (...parts: Pick<DesignInput, 'nodes' | 'overrides'>[]) => {
 
 /** One page in five formats: the box, the headline and `fill` layers under them. */
 const fiveFormats = (fill: number): DesignInput => ({
-  meta: { schemaVersion: 2, designId: 'replaced-by-the-api', name: 'Five formats', kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: 3, designId: 'replaced-by-the-api', name: 'Five formats', kind: 'single', primaryFormatId: 'sq' },
   formats: FORMATS,
   pages: { p1: { name: 'Page 1', order: 'a0', fills: [{ type: 'solid', color: '#FFF8F0FF' }] } },
   ...merge(heroes('p1', 'Summer sale'), { nodes: filler('p1', fill) }),
@@ -90,7 +90,7 @@ const carousel = (cards: number): DesignInput => {
     parts.push(heroes(id, `Card ${i + 1}`), { nodes: filler(id, 10, i * 10) })
   }
   return {
-    meta: { schemaVersion: 2, designId: 'replaced-by-the-api', name: 'Carousel', kind: 'carousel', primaryFormatId: 'sq' },
+    meta: { schemaVersion: 3, designId: 'replaced-by-the-api', name: 'Carousel', kind: 'carousel', primaryFormatId: 'sq' },
     formats: FORMATS, pages, ...merge(...parts),
   }
 }

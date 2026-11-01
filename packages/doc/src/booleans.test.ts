@@ -11,7 +11,7 @@ const shape = (index: string, x: number, kind: z.input<typeof Shape>, color: str
 })
 
 const design = (): DesignInput => ({
-  meta: { schemaVersion: 2, designId: 'd1', name: 'Booleans', kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: 3, designId: 'd1', name: 'Booleans', kind: 'single', primaryFormatId: 'sq' },
   formats: { sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' }, wide: { name: 'Wide', width: 1200, height: 628, order: 'a1' } },
   pages: { p1: { name: 'Page 1', order: 'a0' } },
   nodes: {

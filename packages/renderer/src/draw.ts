@@ -570,8 +570,12 @@ export function fillPath(ck: CanvasKit, canvas: Canvas, path: Path, fill: Paint,
   paint.delete()
 }
 
-/** A CanvasKit paint for one schema paint. Gradient and image geometry is placed in the layer's box. */
+/**
+ * A CanvasKit paint for one schema paint, or null for a hidden one. Gradient and image geometry is
+ * placed in the layer's box; the paint's own opacity multiplies its colours' alpha.
+ */
 function paintFor(ck: CanvasKit, fill: Paint, box: Box, resources: Resources): CkPaint | null {
+  if (fill.visible === false) return null
   const paint = new ck.Paint()
   paint.setAntiAlias(true)
   let shader: Shader | null = null
@@ -615,6 +619,8 @@ function paintFor(ck: CanvasKit, fill: Paint, box: Box, resources: Resources): C
       break
     }
   }
+  const opacity = fill.opacity ?? 1
+  if (fill.type !== 'image' && opacity < 1) paint.setAlphaf((paint.getColor()[3] ?? 1) * opacity)
   if (shader) {
     paint.setShader(shader)
     shader.delete()

@@ -4,15 +4,23 @@ import { AssetId, Color, Point } from './primitives.ts'
 const GradientStop = z.object({ offset: z.number().min(0).max(1), color: Color })
 const Stops = GradientStop.array().min(2)
 
-export const SolidPaint = z.object({ type: z.literal('solid'), color: Color })
+/**
+ * What every paint has (#219): an opacity of its own, on top of its colours' alpha, and whether it
+ * shows. A hidden paint keeps its settings, so showing it again brings it back as it was. Left out,
+ * a paint is opaque and shows.
+ */
+const paintCommon = { opacity: z.number().min(0).max(1).optional(), visible: z.boolean().optional() }
+
+export const SolidPaint = z.object({ type: z.literal('solid'), color: Color, ...paintCommon })
 
 /** Gradient geometry is in the layer's unit box: (0,0) top left, (1,1) bottom right. */
-export const LinearPaint = z.object({ type: z.literal('linear'), from: Point, to: Point, stops: Stops })
+export const LinearPaint = z.object({ type: z.literal('linear'), from: Point, to: Point, stops: Stops, ...paintCommon })
 export const RadialPaint = z.object({
   type: z.literal('radial'),
   center: Point,
   radius: z.number().positive(),
   stops: Stops,
+  ...paintCommon,
 })
 
 /**
@@ -24,6 +32,7 @@ export const AngularPaint = z.object({
   center: Point,
   angle: z.number().default(0),
   stops: Stops,
+  ...paintCommon,
 })
 
 /** A crop is the fill's transform: the visible part of the image, in image pixels. */
@@ -56,6 +65,7 @@ export const ImagePaint = z.object({
   fit: z.enum(['fill', 'fit', 'crop', 'tile']).default('fill'),
   crop: ImageCrop.optional(),
   opacity: z.number().min(0).max(1).default(1),
+  visible: paintCommon.visible,
   adjust: ImageAdjust.optional(),
   filter: ImageFilter.optional(),
 })

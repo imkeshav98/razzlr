@@ -27,7 +27,7 @@ type Node = Record<string, unknown>
 const rect = (index: string, props: Record<string, unknown>, parentId = 'p1'): Node =>
   ({ type: 'graphic', parentId, index, name: index, props: { x: 0, y: 0, width: 100, height: 100, shape: { kind: 'rect' }, ...props } })
 const design = (nodes: Record<string, Node>) => ({
-  meta: { schemaVersion: 2, designId: 'd', name: 'Image fills', kind: 'single', primaryFormatId: 'f' },
+  meta: { schemaVersion: 3, designId: 'd', name: 'Image fills', kind: 'single', primaryFormatId: 'f' },
   formats: { f: { name: 'F', width: 100, height: 100, order: 'a0' } },
   pages: { p1: { name: 'Page', order: 'a0', fills: [{ type: 'solid', color: '#FFFFFFFF' }] } },
   nodes,

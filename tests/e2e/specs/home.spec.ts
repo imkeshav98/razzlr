@@ -10,7 +10,7 @@ const shoot = async (page: Page, name: string, fullPage = false) => writeOutput(
 
 /** A design in one format with a coloured page and a block, so its picture is easy to tell apart. */
 const poster = (name: string, width: number, height: number, page: string, block: string): DesignInput => ({
-  meta: { schemaVersion: 2, designId: 'replaced-by-the-api', name, kind: 'single', primaryFormatId: 'f' },
+  meta: { schemaVersion: 3, designId: 'replaced-by-the-api', name, kind: 'single', primaryFormatId: 'f' },
   formats: { f: { name: 'Format', width, height, order: 'a0' } },
   pages: { p1: { name: 'Page 1', order: 'a0', fills: [{ type: 'solid', color: page }] } },
   nodes: {

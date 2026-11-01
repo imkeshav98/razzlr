@@ -3,7 +3,7 @@
 // before validation, and never change what they are given.
 
 /** The version every design is written at. */
-export const SCHEMA_VERSION = 2
+export const SCHEMA_VERSION = 3
 
 type Json = Record<string, unknown>
 const isRecord = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -36,8 +36,15 @@ function toVersion2(design: Json): Json {
   return { ...design, nodes: migratedNodes, ...(design.overrides === undefined ? {} : { overrides }) }
 }
 
+/**
+ * Version 3 lets every paint have an opacity of its own and be hidden (#219). Version 2 paints
+ * have neither, and without them a paint is opaque and shows, so a version 2 design comes up as
+ * it is.
+ */
+const toVersion3 = (design: Json): Json => design
+
 /** Each step takes a design from the version it is listed under to the next one. */
-const STEPS: Record<number, (design: Json) => Json> = { 1: toVersion2 }
+const STEPS: Record<number, (design: Json) => Json> = { 1: toVersion2, 2: toVersion3 }
 
 /** The version a design says it was saved at, if it says one. */
 export const versionOf = (input: unknown) => {

@@ -2,7 +2,7 @@ import type { DesignInput } from '@dazbee/schema'
 
 /** A small design for tests: one page, a square and a banner, a box and a headline. */
 export const testDesign = (): DesignInput => ({
-  meta: { schemaVersion: 2, designId: 'd1', name: 'Test', kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: 3, designId: 'd1', name: 'Test', kind: 'single', primaryFormatId: 'sq' },
   formats: {
     sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' },
     banner: { name: 'Banner', width: 320, height: 50, order: 'a1' },

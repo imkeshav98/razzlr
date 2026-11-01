@@ -12,7 +12,7 @@ import { editorPath, exportHashOf, writeOutput } from '../support/editor.ts'
 import { DEV_BRAND, seed } from '../support/seed.ts'
 
 const adWith = (assetId: string): DesignInput => ({
-  meta: { schemaVersion: 2, designId: 'replaced-by-the-api', name: 'Sneaker ad', kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: 3, designId: 'replaced-by-the-api', name: 'Sneaker ad', kind: 'single', primaryFormatId: 'sq' },
   formats: { sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' } },
   pages: { p1: { name: 'Page 1', order: 'a0', fills: [{ type: 'solid', color: '#F4EFE6FF' }] } },
   nodes: {

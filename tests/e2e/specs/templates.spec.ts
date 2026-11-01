@@ -12,7 +12,7 @@ test.describe.configure({ timeout: 120_000 })
 
 const run = randomUUID().slice(0, 8)
 const design = (): DesignInput => ({
-  meta: { schemaVersion: 2, designId: 'replaced-by-the-api', name: `Autumn sale ${run}`, kind: 'single', primaryFormatId: 'sq' },
+  meta: { schemaVersion: 3, designId: 'replaced-by-the-api', name: `Autumn sale ${run}`, kind: 'single', primaryFormatId: 'sq' },
   formats: { sq: { name: 'Square', width: 1080, height: 1080, order: 'a0' } },
   pages: { p1: { name: 'Page 1', order: 'a0', fills: [{ type: 'solid', color: '#FFF4E6FF' }] } },
   nodes: {

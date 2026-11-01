@@ -1,6 +1,6 @@
 // Schema version 2 at the commands seam (#43): node.update sets every new property, and a
 // document saved at version 1 is migrated when a tab opens it, outside its undo history.
-import { parseDesign, type DesignInput } from '@dazbee/schema'
+import { parseDesign, SCHEMA_VERSION, type DesignInput } from '@dazbee/schema'
 import { describe, expect, it } from 'vitest'
 import * as Y from 'yjs'
 import { loadDesign, migrateDoc, openSession, readDesign } from './index.ts'
@@ -91,10 +91,10 @@ const version1Doc = () => {
 }
 
 describe('a version 1 document', () => {
-  it('reads as version 2 before anything writes to it', () => {
+  it('reads as the current version before anything writes to it', () => {
     const doc = version1Doc()
     const design = readDesign(doc)
-    expect(design.meta.schemaVersion).toBe(2)
+    expect(design.meta.schemaVersion).toBe(SCHEMA_VERSION)
     expect(design.nodes.g?.props.blendMode).toBe('pass-through')
     expect(design.overrides['format:banner']?.g).toEqual({ blendMode: 'pass-through', opacity: 0.5 })
     expect(root(doc).meta.get('schemaVersion')).toBe(1)
@@ -104,7 +104,7 @@ describe('a version 1 document', () => {
     const doc = version1Doc()
     const tab = openSession(doc)
     const r = root(doc)
-    expect(r.meta.get('schemaVersion')).toBe(2)
+    expect(r.meta.get('schemaVersion')).toBe(SCHEMA_VERSION)
     expect((r.nodes.get('g')?.get('props') as Y.Map<unknown>).get('blendMode')).toBe('pass-through')
     expect(r.overrides.get('format:banner|g|blendMode')).toBe('pass-through')
     // Only what changed was written: the box's blend mode was already right.
@@ -122,10 +122,10 @@ describe('a version 1 document', () => {
     Y.applyUpdate(doc, Y.encodeStateAsUpdate(version1Doc()))
     expect(root(doc).meta.get('schemaVersion')).toBe(1)
     tab.run('node.update', { ids: ['box'], patch: { x: 10 } })
-    expect(root(doc).meta.get('schemaVersion')).toBe(2)
+    expect(root(doc).meta.get('schemaVersion')).toBe(SCHEMA_VERSION)
     tab.undo()
     expect(readDesign(doc).nodes.box?.props.x).toBe(100)
-    expect(root(doc).meta.get('schemaVersion')).toBe(2)
+    expect(root(doc).meta.get('schemaVersion')).toBe(SCHEMA_VERSION)
   })
 
   it('migrated by two tabs at once merges to one result', () => {
