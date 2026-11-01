@@ -78,6 +78,7 @@ export function TemplateForm({ id, editor, brandId, brandName, designName, every
             <label className="flex flex-col gap-1.5">
               <span className={LABEL}>{t.editor.templates.name}</span>
               <input
+                name="template-name"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 maxLength={120}

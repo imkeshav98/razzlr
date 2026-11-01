@@ -2,7 +2,7 @@
 import 'server-only'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignCover, DesignSummary, DesignThumbnail, FontFace, FontFamily, FontLink, FontUploadTicket, SignedIn, SignedLink, SignedOut, SignInLink, SyncToken, TemplateSummary, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type SaveTemplate, type UpdateAsset, type WorkspaceKind } from '@razzlr/schema'
+import { ApiError, AssetLink, AssetSummary, BrandKit, BrandSummary, DesignCover, DesignSummary, DesignThumbnail, FontFace, FontFamily, FontLink, FontUploadTicket, SignedIn, SignedLink, SignedOut, SignInLink, SyncToken, TemplateSummary, UploadTicket, WorkspaceSummary, type FontType, type ImageType, type SaveTemplate, type UpdateAsset, type UpdateWorkspace } from '@razzlr/schema'
 import type { z } from 'zod'
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8787'
@@ -56,8 +56,8 @@ export const signOutLink = async () => (await call(SignedOut, '/auth/sign-out', 
 
 export const getWorkspace = () => call(WorkspaceSummary, '/workspace')
 
-/** Saves who the workspace is for (#109); it changes only words and defaults (ADR-0011). */
-export const setWorkspaceKind = (kind: WorkspaceKind) => call(WorkspaceSummary, '/workspace', { method: 'PATCH', body: { kind } })
+/** Saves who the workspace is for (#109), which changes only words and defaults (ADR-0011), or its name. */
+export const updateWorkspace = (patch: UpdateWorkspace) => call(WorkspaceSummary, '/workspace', { method: 'PATCH', body: patch })
 
 export const listBrands = () => call(BrandSummary.array(), '/brands')
 

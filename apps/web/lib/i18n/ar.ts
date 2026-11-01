@@ -102,7 +102,10 @@ export const ar: Messages = {
   },
   settings: {
     title: 'الإعدادات',
+    workspace: 'مساحة العمل',
+    workspaceName: 'اسم مساحة العمل',
     kind: 'لمن Dazbee',
+    kindLead: 'يغيّر بضع كلمات وإعدادات فقط، ولا يغيّر عملك.',
     save: 'حفظ',
     saved: 'تم الحفظ',
   },
@@ -284,7 +287,7 @@ export const ar: Messages = {
       rename: 'اسم {name}',
       hint: 'اسحب لإعادة الترتيب أو للإدخال في مجموعة. الأسهم للتنقل، و Enter لإعادة التسمية، و Alt مع الأسهم لنقل الطبقة.',
     },
-    share: { open: 'مشاركة', title: 'المشاركة والتصدير' },
+    share: { open: 'مشاركة', title: 'المشاركة والتصدير', exportHint: 'PNG أو JPG، لأي صفحة ومقاس', templateHint: 'لـ {brand} أو {all}' },
     view: { title: 'العرض', snap: 'المحاذاة', rulers: 'المساطر', rulersKey: 'Shift+R' },
     templates: {
       open: 'حفظ كقالب',
