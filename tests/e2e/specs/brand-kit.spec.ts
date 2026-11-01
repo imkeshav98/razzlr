@@ -48,7 +48,7 @@ test('a layer bound to a brand colour changes when the brand colour does', async
   const kit = page.getByTestId('brand-kit')
   await expect(kit).toHaveAttribute('data-mode', 'pick')
   await expect(kit.getByText('No colours yet. Add them with Edit.')).toBeVisible()
-  await kit.getByRole('button', { name: 'Edit brand kit' }).click()
+  await kit.getByRole('button', { name: 'Edit', exact: true }).click()
   await expect(kit).toHaveAttribute('data-mode', 'edit')
 
   // Set up the kit: one colour, named and given a value.

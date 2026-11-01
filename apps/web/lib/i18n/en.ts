@@ -212,7 +212,6 @@ export const en = {
       saveFailed: 'Couldn’t save the brand kit: {reason}',
       pickHint: 'Select layers, then pick a colour or font. They follow the brand from then on.',
       edit: 'Edit',
-      editKit: 'Edit brand kit',
       done: 'Done',
       noColors: 'No colours yet. Add them with Edit.',
       noFonts: 'No fonts yet. Add them with Edit.',
